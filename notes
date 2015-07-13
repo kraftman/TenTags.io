@@ -6,7 +6,24 @@ hide reposts
 no page 2
 
 submitting
-tag the post with either tags or metags
+tag post with multiple tags
 
 viewing
 posts tagged with the users selected tags show up
+show top comment from comments underneath link
+
+
+link related stories
+link types
+-duplicate
+-related
+-alternate
+
+
+voting
+increased vote weight
+if the person clicked the link/viewed the comments
+
+no page 2
+once a set of posts have been displayed to the user
+send posts to 'seen' page
