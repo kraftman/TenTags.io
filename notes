@@ -1,29 +1,33 @@
+Crossposts
+- submit to each sub
+- comments either per sub or all together, allow filtering
+- Each submission has a submissionID + node
+- linking posts as duplicate links to same node
+- same comment sper node
+- different votes per submission, not node
+- linking posts needs to eithe be a threshold by users or done by mods
 
-ideas:
-remove crossposts by using tags instead
-link related stories
-hide reposts
-no page 2
-
-submitting
-tag post with multiple tags
-
-viewing
-posts tagged with the users selected tags show up
-show top comment from comments underneath link
-
-
-link related stories
-link types
--duplicate
--related
--alternate
+Reposts
+- Allow linking to other submissions
+- Link types, duplicate or related
+- If a person has already seen that node, dont show it again
+- Optionally hide the posts theyve already seen after they lcick on them or are served them
 
 
-voting
-increased vote weight
-if the person clicked the link/viewed the comments
+Vote Weighting
+- wieght votes depending on wether the person is subscribed, wehter they viewed the link, etc
 
-no page 2
-once a set of posts have been displayed to the user
-send posts to 'seen' page
+
+
+Other Ideas from reddit
+- Option to turn of PM's
+- Add optional link to credit/original source
+- Rank posts based on discussion (number of comments, length of comments etc)
+- other tags like NSFL, spoiler, etc
+- Vote out mods
+- Instead of deleted, mark as 'deleted by <name>'
+- show related sub based on common user base
+- Limit number of subs a mod can moderate
+- sub specific report reasons
+- sticky comments in a post
+- allow changing title within time duration
