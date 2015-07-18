@@ -10,9 +10,33 @@ local schema = require("lapis.db.schema")
 --local types = schema.types
 local salt = 'poopants'
 
-app:get("/", function()
+app:get("/", function(self)
+  if self.session.current_user then
+    return 'you are logged in as: '..self.session.current_user
+  end
+end)
 
+app:get('/login',function(self)
+  return { render = "login" }
+end)
 
+app:post('/login', function(self)
+  local res = db.select("username,passwordHash from user where username = ?", self.params.username)
+  res = res[1]
+  if res.active = false then
+    return 'you need to activate your account via email'
+  end
+  if scrypt.check(self.params.password,res.passwordHash) then
+    self.session.current_user = res.username
+    return 'login successful!'
+  else
+   return 'login failed'
+  end
+
+end)
+
+app:get('/test',function(self)
+  return self.session.current_user
 end)
 
 app:get('/register', function()
