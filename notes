@@ -1,6 +1,6 @@
 Crossposts
-- submit to each sub
-- comments either per sub or all together, allow filtering
+- submit to each tag
+- comments either per tag or all together, allow filtering
 - Each submission has a submissionID + node
 - linking posts as duplicate links to same node
 - same comment sper node

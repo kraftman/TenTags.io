@@ -10,7 +10,7 @@ events {
 
 http {
   include mime.types;
-
+  resolver 8.8.8.8;
   server {
     listen 8080;
     lua_code_cache off;
