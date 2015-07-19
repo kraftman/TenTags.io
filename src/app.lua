@@ -9,6 +9,7 @@ app:enable("etlua")
 local schema = require("lapis.db.schema")
 --local types = schema.types
 local salt = 'poopants'
+local tags = require 'tags'
 
 app:get("/", function(self)
   if self.session.current_user then
@@ -23,7 +24,7 @@ end)
 app:post('/login', function(self)
   local res = db.select("username,passwordHash from user where username = ?", self.params.username)
   res = res[1]
-  if res.active = false then
+  if res.active == false then
     return 'you need to activate your account via email'
   end
   if scrypt.check(self.params.password,res.passwordHash) then
@@ -130,6 +131,8 @@ app:get('/email',function(self)
   return 'test'
 end)
 
+
+tags:Register(app)
 
 
 return app
