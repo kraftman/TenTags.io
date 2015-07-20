@@ -4,17 +4,28 @@ local uuid = require 'uuid'
 
 local m = {}
 m.__index = m
+
+function m:DisplayTag(tag)
+  local query = "SELECT p.title from post p inner join posttags pt on p.id = pt.postID where pt.tagID = '"..tag.id.."'"
+  print(query)
+  local res = db.query(query)
+  print('found results: ',#res)
+  self.request.posts = res
+  return {render = 'tag'}
+end
+
 function m:ParseTags()
 
   local tagName = self.request.params.splat:match('(%w+)')
   tagName = tagName:lower()
-  local res = db.select('name,title,description from tag where name = ?',tagName)
+  local res = db.select('id,name,title,description from tag where name = ?',tagName)
 
   if #res == 0 then
-    return ' tag doesnt exist, click here to create it: '..self.request:build_url()..self.request:url_for('createtag')
+    return ' tag doesnt exist, click here to create it: '..self.request:build_url()..self.request:url_for('/createtag')
   else
     res = res[1]
-    return res.name..' '..res.title..' '..res.description
+    return self:DisplayTag(res)
+    ---return res.name..' '..res.title..' '..res.description
   end
 
   return tagName
@@ -35,7 +46,6 @@ end
 function m:Register(app)
   app:get('/tag/*',
   function(request)
-    print('test')
     local tag = setmetatable({}, m)
     tag.request = request
     return tag:ParseTags()

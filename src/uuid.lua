@@ -43,6 +43,10 @@ local function parse(id)
     return lib.uuid_parse(id, uid) == 0 and uid or nil
 end
 
+local function stripdashes(msg)
+  return msg:gsub('%-','')
+end
+
 function uuid.generate()
     lib.uuid_generate(uid)
     return unparse(uid)
@@ -50,7 +54,7 @@ end
 
 function uuid.generate_random()
     lib.uuid_generate_random(uid)
-    return unparse(uid)
+    return stripdashes(unparse(uid))
 end
 
 function uuid.generate_time()

@@ -10,6 +10,7 @@ local schema = require("lapis.db.schema")
 --local types = schema.types
 local salt = 'poopants'
 local tags = require 'tags'
+local posts = require 'posts'
 
 app:get("/", function(self)
   if self.session.current_user then
@@ -133,6 +134,7 @@ end)
 
 
 tags:Register(app)
+posts:Register(app)
 
 
 return app
