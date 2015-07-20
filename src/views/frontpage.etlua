@@ -1,0 +1,3 @@
+<% for i, post in pairs(posts) do %>
+ Title: <%= post.title -%> Sub: <%= post.name -%></br>
+<% end %>

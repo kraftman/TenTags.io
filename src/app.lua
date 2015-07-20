@@ -11,12 +11,15 @@ local schema = require("lapis.db.schema")
 local salt = 'poopants'
 local tags = require 'tags'
 local posts = require 'posts'
+local frontpage = require 'frontpage'
 
+--[[
 app:get("/", function(self)
   if self.session.current_user then
     return 'you are logged in as: '..self.session.current_user
   end
 end)
+]]
 
 app:get('/login',function(self)
   return { render = "login" }
@@ -135,6 +138,7 @@ end)
 
 tags:Register(app)
 posts:Register(app)
+frontpage:Register(app)
 
 
 return app
