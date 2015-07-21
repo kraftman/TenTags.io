@@ -1,2 +1,2 @@
-
+<% render("views.loginbox") %>
 you've registered!

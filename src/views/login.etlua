@@ -1,5 +1,5 @@
-
-<form id='register' action='login' method='post'
+<% render("views.loginbox") %>
+<form id='register' action='/login' method='post'
     accept-charset='UTF-8'>
 <fieldset >
 <legend>Register</legend>

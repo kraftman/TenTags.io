@@ -13,7 +13,7 @@ local respond_to = (require 'lapis.application').respond_to
 
 local function CreatePost(self)
 
-  print(self.params.selectedtags)
+
   local selected = from_json(self.params.selectedtags)
 
 
@@ -27,25 +27,36 @@ local function CreatePost(self)
 
   for _, tagID in pairs(selected) do
     local postTagInfo = {
-      postID = info.id,
+      itemID = info.id,
       tagID = tagID,
       up = 0,
       down = 0,
       date = ngx.time()
     }
-    local res = db.insert('posttags', postTagInfo)
+    local res = db.insert('itemtags', postTagInfo)
   end
+
+  local nodeInfo = {
+    id = uuid.generate_random()
+  }
+  res = db.insert('node',nodeInfo)
+
+  local nodePosts =  {
+    postID = info.id,
+    nodeID = nodeInfo.id
+  }
+  res = db.insert('nodeposts',nodeInfo)
 
   return {json = self.req.selectedtags}
 end
 
 local function GetPost(self)
-
+  return {render = 'post'}
 end
 
 local function CreatePostForm(self)
   local res = db.select('* from tag ')
-  print(#res)
+
   self.tags = res
 
   return { render = 'createpost' }

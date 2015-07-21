@@ -7,7 +7,7 @@
 <script src="/static/js/createpost.js"></script>
 </head>
 <body>
-
+<% render("views.loginbox") %>
 <form id='createpost' action='/post/new' method='post'
     accept-charset='UTF-8'>
 <fieldset >

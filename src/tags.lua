@@ -6,7 +6,7 @@ local m = {}
 m.__index = m
 
 function m:DisplayTag(tag)
-  local query = "SELECT p.title from post p inner join posttags pt on p.id = pt.postID where pt.tagID = '"..tag.id.."'"
+  local query = "SELECT p.title from post p inner join itemtags pt on p.id = pt.itemID where pt.tagID = '"..tag.id.."'"
   print(query)
   local res = db.query(query)
   print('found results: ',#res)
@@ -21,7 +21,7 @@ function m:ParseTags()
   local res = db.select('id,name,title,description from tag where name = ?',tagName)
 
   if #res == 0 then
-    return ' tag doesnt exist, click here to create it: '..self.request:build_url()..self.request:url_for('/createtag')
+    return {render = 'createtag'}
   else
     res = res[1]
     return self:DisplayTag(res)
@@ -52,7 +52,7 @@ function m:Register(app)
 
   end)
 
-  app:get('/createtag','/createtag',function()
+  app:get('createtag','/createtag',function()
     return {render = 'createtag'}
   end)
 
