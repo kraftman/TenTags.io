@@ -1,0 +1,8 @@
+<a href="<%= url_for('home') %>">Home</a>
+<% if session.current_user then %>
+  <a href="<%= url_for('viewuser',{id =session.current_user}) %>"><%= session.current_user %> </a> <a href="<%= url_for('logout') %>">logout</a>
+  <a href="<%= url_for('settings') %>">Settings</a>
+<% else %>
+  <a href="<%= url_for('newuser') %>">Create account</a> <a href="<%= url_for('login') %>">login</a>
+
+<% end %>
