@@ -3,7 +3,7 @@ Crossposts
 - comments either per tag or all together, allow filtering
 - Each submission has a submissionID + node
 - linking posts as duplicate links to same node
-- same comment sper node
+- same comments per post/xpost
 - different votes per submission, not node
 - linking posts needs to eithe be a threshold by users or done by mods
 
@@ -15,7 +15,7 @@ Reposts
 
 
 Vote Weighting
-- wieght votes depending on wether the person is subscribed, wehter they viewed the link, etc
+- weight votes depending on wether the person is subscribed, wehter they viewed the link, etc
 
 
 
@@ -31,3 +31,56 @@ Other Ideas from reddit
 - sub specific report reasons
 - sticky comments in a post
 - allow changing title within time duration
+
+
+Nodes
+ reposts are going to have different titles anyway, so that needs to be supported, and leads to the idea of enable crossposts directly from that post
+ posts have a node, the node gets changed to the node of the original post,
+ post has the title, then the text, then the list of reposts(expandable)
+ split comments into tabs  (current/previous/all etc) and default to just submissions for the current post.
+
+Keeping it simple:
+ - Show the title of the post, the address of the link, and the tags on the main page
+ - Show the title, the History, and the comments on the post page
+ - 'Add Tag' - auto crosspost with same title to another sub, otherwise have option to change title etc.
+
+Front page views
+ Minimal, hacker-news style
+ - Just title, domain, and tags
+ Pantopikos style
+ - Expand all pictures into neverending grid
+
+
+Prevent crosspost spam
+- people may try to crosspost to as many subs as possible to maximise karma
+- allow maximum x number of tags
+- allow banning/post approval
+
+Related posts
+need a link type for media, e.g. gifs, videos, article related to a common subject.
+
+
+Frontpage workflow
+ select posts where tagID in userLikedTags
+ and tagID not in userDislikeTags
+ and nodeID not in userSeenNodes
+ and tagCreationTime > (currentTime - X)
+ orderBy score (where score is time score + postScore, possible with user weighting)
+
+ insert into userSeenTags
+  (new shownTagID)
+
+Incentive - sweet sweet karma
+incentive for crossposts = karma from that crosspost
+incentive for linking to original post??
+incentive not to link posts that arent related?
+
+Alternative for hiding clicked posts rather than seen:
+ - prepend all text links with a passthrough url like /passthrough/<userID>/<postID>
+
+Edge cases
+ - user sees a post, its node gets added to seenNodes
+ - post gets linked to original post, its node changes to original posts
+ - user will end up seeing the post again.
+
+ alternative is to have a postslink table linking posts together, and check for postlinks each time?
