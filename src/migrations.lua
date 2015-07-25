@@ -12,6 +12,7 @@ return {
     })
     schema.create_table("post", {
       { "id", types.text },
+      { "parentID",types.text},
       { "title", types.text },
       { "link", types.text },
       { "text", types.text },
@@ -35,13 +36,6 @@ return {
       { "username", types.integer },
       { "text", types.integer },
       { "date", types.integer }
-    })
-    schema.create_table("node", {
-      { "id", types.text }
-    })
-    schema.create_table('nodeposts',{
-      {'nodeID',types.text},
-      {'postID',types.text}
     }
     )
   end

@@ -83,4 +83,25 @@ Edge cases
  - post gets linked to original post, its node changes to original posts
  - user will end up seeing the post again.
 
- alternative is to have a postslink table linking posts together, and check for postlinks each time?
+nodes
+  selecting:
+    select posts where tags in usertags and node id not in userseen
+  updating:
+    update post set nodeid = newnodeid
+    insert newnode into seennodes where oldnode in seennodes
+    delete oldnode from users where oldnode in seennodes
+
+
+new idea
+post has parentID
+post has postlinks table:
+ - postID
+ - postparentid
+ - up
+ - down
+
+top voted postlink becomes post parent id
+
+retrieve posts with:
+  select post where postid not in seenposts
+  and parentpostid not in seenposts
