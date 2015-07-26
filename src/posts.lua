@@ -36,16 +36,6 @@ local function CreatePost(self)
     local res = db.insert('itemtags', postTagInfo)
   end
 
-  local nodeInfo = {
-    id = uuid.generate_random()
-  }
-  res = db.insert('node',nodeInfo)
-
-  local nodePosts =  {
-    postID = info.id,
-    nodeID = nodeInfo.id
-  }
-  res = db.insert('nodeposts',nodeInfo)
 
   return {json = self.req.selectedtags}
 end
