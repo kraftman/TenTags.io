@@ -16,6 +16,7 @@ return {
       { "title", types.text },
       { "link", types.text },
       { "text", types.text },
+      { 'commentCount',types.integer}
     })
     schema.create_table("postparents", {
       { "postID", types.text },
@@ -38,10 +39,12 @@ return {
     })
     schema.create_table("comment", {
       { "id", types.text },
+      {"parentID",types.text},
       { "userID", types.text },
-      { "username", types.integer },
-      { "text", types.integer },
-      { "date", types.integer }
+      { "text", types.text },
+      { "date", types.integer },
+      { "up", types.integer},
+      { "down",types.integer}
     }
     )
   end

@@ -1,7 +1,7 @@
 <div>
   <div >
     <a href="<%= post.link -%>"> <%= post.title -%></a>
-    <a href="<%= url_for('viewpost',{postID = post.id}) %>">comments</a>  Sub: <%= post.name -%>
+    <a href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>  Sub: <%= post.name -%>
   </div>
 
 

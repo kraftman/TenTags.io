@@ -50,7 +50,7 @@ local function LoginPost(self)
   end
   if scrypt.check(self.params.password,res.passwordHash) then
     self.session.current_user = res.username
-    self.session.currend_user_id = res.id
+    self.session.current_user_id = res.id
     return 'login successful!'
   else
    return 'login failed'
