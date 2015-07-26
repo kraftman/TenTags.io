@@ -112,7 +112,11 @@ local function LoginForm(self)
 end
 
 local function ViewUser(self)
-  return 'meeeeeeeeep'
+  self.comments = db.select('* from comment c inner join user u on c.userID = u.id where u.username = ?',self.params.username)
+  for k,v in pairs(self.comments) do
+    print(k)
+  end
+  return {render = true}
 end
 
 
@@ -123,7 +127,7 @@ function m:Register(app)
     POST = RegisterUser
   }))
 
-  app:get('viewuser','/user/:id',ViewUser)
+  app:get('viewuser','/user/:username',ViewUser)
 
   app:match('login','/login', respond_to({
     GET = LoginForm,

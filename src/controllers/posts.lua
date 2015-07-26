@@ -60,7 +60,7 @@ end
 local function GetComments(postID)
 
     local comments = db.select([[
-      c.text,c.id,u.username,c.parentID,c.up,c.down from comment c
+      c.text,c.id,u.username,c.parentID,c.up,c.down,c.date from comment c
       inner join user u
       on c.userID = u.id
       WHERE c.postID = ?]],postID)
@@ -81,6 +81,9 @@ local function GetComments(postID)
 
   for k,v in pairs(flat) do
     table.sort(v,function(a,b)
+      if a.up+a.down == b.up+b.down then
+        return a.date > b.date
+      end
       return (a.up+a.down > b.up+b.down)
     end)
   end
@@ -90,17 +93,19 @@ local function GetComments(postID)
   return tree,indexedComments
 end
 
-local function RenderComment(comments,commentTree,text)
+local function RenderComment(self,comments,commentTree,text)
   local t = text or ''
 
 
   for k,v in pairs(commentTree) do
     --print(k,type(v),to_json(v))
-    t = t..'<div id="comment">\n'
-    t = t..'  <div id="commentinfo" >\n'..(comments[k].text or 'no text')..'\n  </div>\n'
+    t = t..'<div class="comment">\n'
+    t = t..'  <div class="commentinfo" >\n'..'<a href="'..
+              self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>'..'\n  </div>\n'
+    t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
     if next(v) then
       t = t..'<div id="commentchildren">'
-      t = t..RenderComment(comments,v)
+      t = t..RenderComment(self,comments,v)
       t = t..'</div>'
     end
     t = t..'</div>\n'
@@ -110,7 +115,7 @@ local function RenderComment(comments,commentTree,text)
 end
 
 local function RenderComments(self)
-  return RenderComment(self.comments,self.commentTree)
+  return RenderComment(self,self.comments,self.commentTree)
 end
 
 local function GetPost(self)

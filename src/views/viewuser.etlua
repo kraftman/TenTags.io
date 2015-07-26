@@ -1,0 +1,7 @@
+<% render("views.loginbox") %>
+<div>
+<%= url_for('sendmessage',(username = self.params.username)) %>
+</div>
+<% for i, comment in pairs(comments) do %>
+  <% render("views.st.comment",{comment = comment}) %>
+<% end %>

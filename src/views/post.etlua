@@ -1,5 +1,6 @@
 <head>
 <link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
+<link rel="stylesheet" type="text/css" href="/static/css/post.css">
 <script src="/static/js/jquery-2.1.4.js"></script>
 <script src="/static/chosen/chosen.jquery.js"></script>
 <script src="/static/js/jquery.form.js"></script>
