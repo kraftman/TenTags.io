@@ -1,6 +1,9 @@
 <% render("views.loginbox") %>
 
 </br>
+<a href="<%= url_for('newpost') %>">New Post</a>
+<a href="<%= url_for('newtag') %>">New Tag</a>
+
 <% for i, post in pairs(posts) do %>
   <% render("views.st.postelement",{post = post}) %>
 <% end %>

@@ -17,6 +17,12 @@ return {
       { "link", types.text },
       { "text", types.text },
     })
+    schema.create_table("postparents", {
+      { "postID", types.text },
+      { "parentID",types.text},
+      { "up", types.integer},
+      { "down", types.integer },
+    })
     schema.create_table("tag", {
       { "id", types.text },
       { "name", types.text },

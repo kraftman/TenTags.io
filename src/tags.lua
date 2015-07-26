@@ -52,7 +52,7 @@ function m:Register(app)
 
   end)
 
-  app:get('createtag','/createtag',function()
+  app:get('newtag','/createtag',function()
     return {render = 'createtag'}
   end)
 

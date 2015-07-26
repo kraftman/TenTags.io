@@ -41,6 +41,9 @@ local function CreatePost(self)
 end
 
 local function GetPost(self)
+  local post = db.select('* from post where id = ?',self.params.postID)
+  
+  self.post = post
   return {render = 'post'}
 end
 
@@ -58,7 +61,7 @@ function m:Register(app)
     POST = CreatePost
   }))
 
-  app:get('/post/*',GetPost)
+  app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
 
 end

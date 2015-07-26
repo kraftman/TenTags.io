@@ -1,1 +1,8 @@
-Title: <%= post.title -%> Sub: <%= post.name -%></br>
+<div>
+  <div >
+    <a href="<%= post.link -%>"> <%= post.title -%></a>
+    <a href="<%= url_for('viewpost',{postID = post.id}) %>">comments</a>  Sub: <%= post.name -%>
+  </div>
+
+
+</div>
