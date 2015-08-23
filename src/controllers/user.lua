@@ -102,7 +102,8 @@ end
 
 local function LogOut(self)
   self.session.current_user = nil
-  return 'logged out!'
+  self.session.current_user_id = nil
+  return { redirect_to = self:url_for("home") }
 end
 
 local function LoginForm(self)
@@ -115,6 +116,34 @@ local function ViewUser(self)
   return {render = 'viewuser'}
 end
 
+local function ValidateUser(self)
+  local email = self.params.email
+  local password = self.params.password
+  if not email or not password then
+    return { redirect_to = self:url_for("register") }
+  end
+
+  local userInfo = DAL:LoadUserByEmail(email)
+
+  if not userInfo then
+    return { render = 'newuser' }
+  end
+
+  print(userInfo.active)
+  if userInfo.active ~= 1 then
+    return 'Your account has not been activated, please click the link in your email'
+  end
+
+  if scrypt.check(password,userInfo.passwordHash) then
+    self.session.current_user = userInfo.username
+    self.session.current_user_id = userInfo.id
+    return { redirect_to = self:url_for("home") }
+  else
+   return { render = 'newuser' }
+  end
+
+
+end
 
 function m:Register(app)
 
@@ -122,6 +151,8 @@ function m:Register(app)
     GET = NewUserForm,
     POST = RegisterUser
   }))
+
+  app:post('validateuser','/user/validate',ValidateUser)
 
   app:get('viewuser','/user/:username',ViewUser)
 

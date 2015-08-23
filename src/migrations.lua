@@ -44,7 +44,7 @@ return {
     })
     schema.create_table("comment", {
       { "id", types.text },
-      { "postID",types.text}
+      { "postID",types.text},
       { "parentID",types.text},
       { "createdBy", types.text },
       { "text", types.text },
@@ -54,13 +54,22 @@ return {
     })
     schema.create_table("filter", {
       { "id",types.text},
-      { "name",types.text},
+      { "title",types.text},
+      { "description",types.text},
+      { "label",types.text},
       { "createdBy",types.text},
-      { "createdAt", types.text}
+      { "createdAt", types.text},
+      { "ownerID", types.text}
     })
     schema.create_table("filtertags", {
       { "id",types.text},
       { "filterID",types.text}
+    })
+    schema.create_table("filtermods", {
+      { "id",types.text},
+      { "filterID",types.text},
+      { "userID",types.text}
+
     })
 end
 }

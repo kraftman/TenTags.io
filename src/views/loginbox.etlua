@@ -4,7 +4,10 @@
   <a href="<%= url_for('viewuser',{username =session.current_user}) %>"><%= session.current_user %> </a> <a href="<%= url_for('logout') %>">logout</a>
   <a href="<%= url_for('settings') %>">Settings</a>
 <% else %>
-  <a href="<%= url_for('newuser') %>">Create account</a> <a href="<%= url_for('login') %>">login</a>
-
+  <form id='register' action='<%= url_for('validateuser') %>' method='post' accept-charset='UTF-8'>
+    <input type='text' name='email' id='email' maxlength="50" placeholder="email"/>
+    <input type='password' name='password' id='password' placeholder="password" maxlength="50" />
+    <input type='submit' name='Submit' value='Sign Up/In' />
+  </form>
 <% end %>
 </div>

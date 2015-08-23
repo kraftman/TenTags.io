@@ -10,7 +10,7 @@
   width: 900px;
   background-color: lightblue;
   color:#0000FF;
-  height: 20px;
+  height: 25px;
 
 }
 
@@ -36,6 +36,10 @@
 .post {
   margin: 2px;
   padding:5px;
+}
+
+#register {
+  display:inline-block;
 }
 
 .tag {

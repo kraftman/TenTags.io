@@ -34,16 +34,22 @@ function DAL:AddTagsToPosts(posts)
 end
 
 function DAL:LoadUserByUsername(username)
-  local res = db.select("username,passwordHash,id from user where username = ?", username)
+  local res = db.select("* from user where username = ?", username)
+  return res[1]
+end
+
+function DAL:LoadUserByEmail(email)
+  local res = db.select("* from user where email = ?", email)
   return res[1]
 end
 
 function DAL:ActivateUser(userID)
-  local res = db.query('UPDATE user set active = true where id = ?',userID)
+  print('activating user')
+  local res = db.query('UPDATE user set active = 1 where id = ?',userID)
 end
 
 function DAL:LoadUserCredentialsByEmail(email)
-  local res = db.select("username,passwordHash,id from user where email = ?", email)
+  local res = db.select("* from user where email = ?", email)
   return res[1]
 end
 
