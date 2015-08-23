@@ -1,7 +1,7 @@
 
 
 local uuid = require 'uuid'
-local db = require("lapis.db")
+local DAL = require 'DAL'
 local util = require("lapis.util")
 
 local from_json = util.from_json
@@ -16,34 +16,38 @@ local tinsert = table.insert
 
 local function CreatePost(self)
 
-
   local selected = from_json(self.params.selectedtags)
-
   local newID =  uuid.generate_random()
 
   if trim(self.params.link) == '' then
     self.params.link = nil
   end
 
+
   local info ={
     id = newID,
     title = self.params.title,
     link = self.params.link or self:url_for('viewpost',{postID = newID}),
-    text = self.params.text
+    text = self.params.text,
+
+    createdAt = ngx.time(),
+    createdBy = self.session.current_user_id
   }
-  local res = db.insert('post', info)
+  local tags = {}
 
   for _, tagID in pairs(selected) do
-    local postTagInfo = {
-      itemID = info.id,
+    local tagInfo = {
+      postID = info.id,
       tagID = tagID,
-      up = 0,
+      up = 1,
       down = 0,
-      date = ngx.time()
+      createdAt = ngx.time(),
+      createdBy = self.session.current_user_id
     }
-    local res = db.insert('itemtags', postTagInfo)
+    table.insert(tags,tagInfo)
   end
 
+  DAL:CreatePost(info,tags)
 
   return {json = self.req.selectedtags}
 end
@@ -59,11 +63,12 @@ end
 
 local function GetComments(postID)
 
-    local comments = db.select([[
-      c.text,c.id,u.username,c.parentID,c.up,c.down,c.date from comment c
-      inner join user u
-      on c.userID = u.id
-      WHERE c.postID = ?]],postID)
+  local comments = DAL:GetCommentsForPost(postID)
+  print('getting comments for post ',postID,' found: ',#comments)
+
+  for k,v in pairs(comments) do
+    print(v.text)
+  end
   local flat = {}
   flat[postID] = {}
   local indexedComments = {}
@@ -128,16 +133,15 @@ local function GetPost(self)
   self.comments = comments
   self.RenderComments = RenderComments
 
-  local post = db.select('* from post where id = ?',self.params.postID)
+  local post = DAL:GetPost(self.params.postID)
   post = post[1]
   self.post = post
   return {render = 'post'}
 end
 
 local function CreatePostForm(self)
-  local res = db.select('* from tag ')
 
-  self.tags = res
+  self.tags = DAL:GetAllTags()
 
   return { render = 'createpost' }
 end
@@ -150,13 +154,11 @@ local function CreateComment(self)
     id = newCommentID,
     parentID = self.params.parentID,
     postID = self.params.postID,
-    userID = self.session.current_user_id,
+    createdBy = self.session.current_user_id,
     text = self.params.commentText,
-    date = ngx.time(),
+    createdAt = ngx.time(),
   }
-  local res = db.insert('comment',commentInfo)
-  res = db.query('update post set commentCount = commentCount +1 where id = ?',self.params.postID)
-
+  DAL:CreateComment(commentInfo,self.params.postID)
   return 'created!'
 
 end

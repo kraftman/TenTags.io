@@ -1,17 +1,18 @@
-<head>
+
 <link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
 <link rel="stylesheet" type="text/css" href="/static/css/post.css">
 <script src="/static/js/jquery-2.1.4.js"></script>
 <script src="/static/chosen/chosen.jquery.js"></script>
 <script src="/static/js/jquery.form.js"></script>
 <script src="/static/js/comment.js"></script>
-</head>
 
-<% render("views.loginbox") %>
-</br>
+
+
+<div>
 <a href="<%= post.link -%>"> <%= post.title -%></a>
 <p><%= post.text -%></p>
 
 <%- RenderComments() %>
 
 <% render("views.st.newcomment") %>
+</div>

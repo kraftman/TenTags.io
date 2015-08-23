@@ -1,0 +1,50 @@
+#centerPage {
+  width: 900px;
+  height: 1200px;
+  margin:0 auto;
+
+  background-color: #D6ECF2;
+
+}
+#titleBox {
+  width: 900px;
+  background-color: lightblue;
+  color:#0000FF;
+  height: 20px;
+
+}
+
+#contents {
+  padding:10px;
+}
+
+.postLink {
+
+}
+
+.commentLink {
+  font-size: 10px;
+}
+
+.postLink {
+}
+
+#posts {
+
+}
+
+.post {
+  margin: 2px;
+  padding:5px;
+}
+
+.tag {
+  display:inline-block;
+  background-color: lightblue;
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-radius: 3px;
+  font-size: 12px;
+}

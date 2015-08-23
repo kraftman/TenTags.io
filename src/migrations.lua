@@ -16,13 +16,17 @@ return {
       { "title", types.text },
       { "link", types.text },
       { "text", types.text },
-      { 'commentCount',types.integer}
+      { 'commentCount',types.integer},
+      { "createdBy",types.text},
+      { "createdAt",types.integer }
     })
     schema.create_table("postparents", {
       { "postID", types.text },
       { "parentID",types.text},
       { "up", types.integer},
       { "down", types.integer },
+      { "createdBy",types.text},
+      { "createdAt",types.integer}
     })
     schema.create_table("tag", {
       { "id", types.text },
@@ -30,22 +34,33 @@ return {
       { "title", types.text },
       { "description", types.text }
     })
-    schema.create_table("itemtags", {
-      { "itemID", types.text },
+    schema.create_table("posttags", {
+      { "postID", types.text },
       { "tagID", types.text },
       { "up", types.integer },
       { "down", types.integer },
-      { "date", types.integer }
+      { "createdAt", types.integer },
+      { 'createdBy', types.text}
     })
     schema.create_table("comment", {
       { "id", types.text },
-      {"parentID",types.text},
-      { "userID", types.text },
+      { "postID",types.text}
+      { "parentID",types.text},
+      { "createdBy", types.text },
       { "text", types.text },
-      { "date", types.integer },
+      { "createdAt", types.integer },
       { "up", types.integer},
       { "down",types.integer}
-    }
-    )
-  end
+    })
+    schema.create_table("filter", {
+      { "id",types.text},
+      { "name",types.text},
+      { "createdBy",types.text},
+      { "createdAt", types.text}
+    })
+    schema.create_table("filtertags", {
+      { "id",types.text},
+      { "filterID",types.text}
+    })
+end
 }

@@ -1,7 +1,14 @@
 <div>
-  <div >
-    <a href="<%= post.link -%>"> <%= post.title -%></a>
-    <a href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>  Sub: <%= post.name -%>
+  <div class='post' >
+    <a class ='postLink' href="<%= post.link -%>"> <%= post.title -%></a>
+    </br>
+      <a class='commentLink' href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>
+      <% for _,tag in pairs(post.tags) do %>
+        <div class = 'tag'>
+          <%= tag.name %>
+        </div>
+      <% end %>
+
   </div>
 
 

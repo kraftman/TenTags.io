@@ -1,18 +1,35 @@
-Crossposts
-- submit to each tag
-- comments either per tag or all together, allow filtering
-- Each submission has a submissionID + node
-- linking posts as duplicate links to same node
-- same comments per post/xpost
-- different votes per submission, not node
-- linking posts needs to eithe be a threshold by users or done by mods
+Post
+- Title
+- Creator
+- Link
+- Text
+- Tags
+
+Tags
+- Can be added by anyone, but each person can only add one
+- Can be upvoted and downvoted
+- If you add a tag you own it and its up/down votes
+- Only tags of a certain threshold are included in filters
+- Upvoting a post as a whole upvotes all tags shared between the post and the user
+
+Filters
+- Select posts with certain tags or without certain tags
+
+Source
+- Anyone can add a source
+- Most upvoted shows at top
 
 Reposts
-- Allow linking to other submissions
-- Link types, duplicate or related
-- If a person has already seen that node, dont show it again
-- Optionally hide the posts theyve already seen after they lcick on them or are served them
+- Automate where possible, check if the link exists/image has been posted
+- Allow anyone to add a parent post
+- Highest rated parent post gets marked as parent after certain threshold
+- Each user has a list of posts theyve seen, dont show them nodes from this list
+- Optionally hide the posts theyve already seen after they click them or are served them
 
+
+Crosspost vs repost
+Crosspost: add tags
+Repost: post again with different tags/title etc, completely seperate until linked back to the parent
 
 Vote Weighting
 - weight votes depending on wether the person is subscribed, wehter they viewed the link, etc
@@ -105,3 +122,7 @@ top voted postlink becomes post parent id
 retrieve posts with:
   select post where postid not in seenposts
   and parentpostid not in seenposts
+
+
+Each post has its own tags that can be up and downvoted
+filters select posts based on tag score.

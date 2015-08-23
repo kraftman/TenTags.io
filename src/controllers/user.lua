@@ -8,7 +8,7 @@ local email = require 'testemail'
 local uuid = require 'uuid'
 local salt = 'poopants'
 local respond_to = (require 'lapis.application').respond_to
-local db = require("lapis.db")
+local DAL = require 'DAL'
 
 local function NewUserForm(self)
   return {render = 'newuser'}
@@ -26,32 +26,33 @@ local function CreateNewUser(self)
   info.active = false
   info.email = self.params.email
 
-
-  db.insert('user',{
+  local userInfo = {
     id = info.id,
     username = info.username,
     email = info.email,
     passwordHash = info.passwordHash,
     active = info.active
-  })
+  }
+
+  DAL:CreateUser(userInfo)
+
   return GetActivationKey(ngx.md5(info.username..info.email..salt))
 end
 
 local function LoginPost(self)
 
-  local res = db.select("username,passwordHash,id from user where username = ?", self.params.username)
-  res = res[1]
-  if not res then
+  local userInfo = DAL:LoadUserByUsername(self.params.username)
+  if not userInfo then
     return 'login failed!'
   end
 
-  if res.active == false then
+  if userInfo.active == false then
     return 'you need to activate your account via email'
   end
-  if scrypt.check(self.params.password,res.passwordHash) then
-    self.session.current_user = res.username
-    self.session.current_user_id = res.id
-    return 'login successful!'
+  if scrypt.check(self.params.password,userInfo.passwordHash) then
+    self.session.current_user = userInfo.username
+    self.session.current_user_id = userInfo.id
+    return { redirect_to = self:url_for("home") }
   else
    return 'login failed'
   end
@@ -85,16 +86,13 @@ end
 local function ConfirmEmail(self)
   -- check for username and activateKey
 
-  local res = db.select("username,passwordHash from user where email = ?", self.params.email)
 
-  res = res[1]
+  local userInfo = DAL:LoadUserCredentialsByEmail(self.params.email)
 
-  local newHash  = ngx.md5(res.username..self.params.email..salt)
+  local newHash  = ngx.md5(userInfo.username..self.params.email..salt)
 
   if GetActivationKey(newHash) == self.params.activateKey then
-    db.update('user', {
-      active = true
-    })
+    DAL:ActivateUser(userInfo.id)
     return 'you have successfully activated your account, please login!'
   else
     return 'activation failed, you suckkkk'
@@ -112,11 +110,9 @@ local function LoginForm(self)
 end
 
 local function ViewUser(self)
-  self.comments = db.select('* from comment c inner join user u on c.userID = u.id where u.username = ?',self.params.username)
-  for k,v in pairs(self.comments) do
-    print(k)
-  end
-  return {render = true}
+  self.comments = DAL:GetUserComments(self.params.username)
+
+  return {render = 'viewuser'}
 end
 
 

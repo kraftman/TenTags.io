@@ -1,4 +1,4 @@
-<% render("views.loginbox") %>
+
 <form id='register' action='/login' method='post'
     accept-charset='UTF-8'>
 <fieldset >
