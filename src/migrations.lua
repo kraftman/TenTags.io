@@ -31,7 +31,6 @@ return {
     schema.create_table("tag", {
       { "id", types.text },
       { "name", types.text },
-      { "title", types.text },
       { "description", types.text }
     })
     schema.create_table("posttags", {

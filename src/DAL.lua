@@ -114,4 +114,41 @@ function DAL:CreateFilter(filterInfo,tags)
   end
 end
 
+function DAL:LoadAllFilters()
+  return db.select('* from filter')
+end
+
+function DAL:LoadFilterTags(filterLabel)
+  return db.select([[
+    t.id, t.name,ft.filterType from filter f
+    inner join filtertags ft
+    on ft.filterID = f.id
+    inner join tag t
+    on t.id = ft.tagID
+    where f.id = ?
+  ]],filterLabel)
+end
+
+function DAL:LoadFilteredPosts(requiredTags,bannedTags)
+    local required = "'"..table.concat(requiredTags,"','").."'"
+    local banned = "'"..table.concat(bannedTags,"','").."'"
+
+    local query = [[
+    select p.id,p.title from post p
+    where p.id in
+    	( SELECT  postID from posttags
+    	where tagID in (]]..required..[[)
+    	group by postID
+    	having count(DISTINCT tagID) = 1)
+    and p.id not in (
+  		SELECT postID from posttags
+  		where tagID in (]]..banned..[[)
+  		group by postID
+      )
+    ]]
+    local res = db.query(query)
+    return res
+
+end
+
 return DAL
