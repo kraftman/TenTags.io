@@ -38,6 +38,11 @@ function DAL:LoadUserByUsername(username)
   return res[1]
 end
 
+function DAL:LoadFilter(filterlabel)
+  local res = db.select('* from filter where label = ?',filterlabel)
+  return res[1]
+end
+
 function DAL:LoadUserByEmail(email)
   local res = db.select("* from user where email = ?", email)
   return res[1]
@@ -83,7 +88,7 @@ function DAL:GetCommentsForPost(postID)
 end
 
 function DAL:CreatePost(postDetails,tags)
-  print(postDetails.title)
+
   local res = db.insert('post',postDetails)
 
   for _,tagInfo in pairs(tags) do
@@ -99,6 +104,14 @@ end
 function DAL:CreateComment(commentInfo,postID)
   local res = db.insert('comment',commentInfo)
   res = db.query('update post set commentCount = commentCount +1 where id = ?',postID)
+end
+
+function DAL:CreateFilter(filterInfo,tags)
+  local res = db.insert('filter',filterInfo)
+
+  for _,tagInfo in pairs(tags) do
+    res = db.insert('filtertags',tagInfo)
+  end
 end
 
 return DAL

@@ -62,8 +62,11 @@ return {
       { "ownerID", types.text}
     })
     schema.create_table("filtertags", {
-      { "id",types.text},
-      { "filterID",types.text}
+      { "filterID",types.text},
+      { "tagID",types.text},
+      { "filterType",types.text},
+      { "createdBy",types.text},
+      { "createdAt", types.text},
     })
     schema.create_table("filtermods", {
       { "id",types.text},

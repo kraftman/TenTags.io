@@ -12,6 +12,7 @@ require 'frontpage':Register(app)
 require 'user':Register(app)
 require 'settings':Register(app)
 require 'messages':Register(app)
+require 'filters':Register(app)
 
 
 
