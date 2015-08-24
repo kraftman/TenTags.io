@@ -1,0 +1,5 @@
+<div id='posts'>
+  <% for i, post in pairs(posts) do %>
+    <% render("views.st.postelement",{post = post}) %>
+  <% end %>
+</div>

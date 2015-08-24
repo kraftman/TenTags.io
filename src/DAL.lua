@@ -125,7 +125,7 @@ function DAL:LoadFilterTags(filterLabel)
     on ft.filterID = f.id
     inner join tag t
     on t.id = ft.tagID
-    where f.id = ?
+    where f.label = ?
   ]],filterLabel)
 end
 
@@ -139,13 +139,14 @@ function DAL:LoadFilteredPosts(requiredTags,bannedTags)
     	( SELECT  postID from posttags
     	where tagID in (]]..required..[[)
     	group by postID
-    	having count(DISTINCT tagID) = 1)
+    	having count(DISTINCT tagID) = ]]..#requiredTags..[[)
     and p.id not in (
   		SELECT postID from posttags
   		where tagID in (]]..banned..[[)
   		group by postID
       )
     ]]
+    print(query)
     local res = db.query(query)
     return res
 
