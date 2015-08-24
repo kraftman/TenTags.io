@@ -8,11 +8,6 @@
 <label for='tagname' >Tag Name:</label>
 <input type='text' name='tagname' id='tagname' maxlength="50" />
 
-<label for='tagtitle' >Tag Title:</label>
-<input type='text' name='tagtitle' id='tag title' maxlength="50" />
-
-<label for='tagdesc' >Tag description:</label>
-<input type='text' name='tagdesc' id='tagdesc' maxlength="50" />
 
 
 <input type='submit' name='Submit' value='Submit' />

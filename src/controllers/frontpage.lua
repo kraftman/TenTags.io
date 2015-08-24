@@ -25,9 +25,6 @@ local function FrontPage(self)
     posts = LoadDefaults(self)
   end
 
-  for _,v in pairs(posts) do
-    print(v.link)
-  end
 
   self.posts = posts
   return {render = 'frontpage'}

@@ -35,9 +35,9 @@ local function CreateTag(self)
 
   local info ={
     id = uuid.generate_random(),
-    title = self.params.tagtitle,
     name = self.params.tagname,
-    description = self.params.tagdesc
+    createdAt = ngx.time(),
+    createdBy = self.session.current_user_id
   }
   local res = db.insert('tag', info)
   return 'tag created!'
