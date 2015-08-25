@@ -14,6 +14,8 @@
 
 }
 
+
+
 #contents {
   padding:10px;
 }
@@ -33,6 +35,15 @@
 
 }
 
+.upvote {
+  color: #001100;
+  text-decoration:none;
+}
+.downvote {
+  color: #110000;
+  text-decoration:none;
+}
+
 .post {
   margin: 2px;
   padding:5px;
@@ -50,7 +61,7 @@
   padding-top: 2px;
   padding-bottom: 2px;
   border-radius: 3px;
-  font-size: 12px;
+  text-decoration:none;
 }
 
 .filterContainer {

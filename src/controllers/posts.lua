@@ -3,6 +3,7 @@
 local uuid = require 'uuid'
 local DAL = require 'DAL'
 local util = require("lapis.util")
+local score = require 'scoring'
 
 local from_json = util.from_json
 local to_json = util.to_json
@@ -136,7 +137,9 @@ local function GetPost(self)
   local post = DAL:GetPost(self.params.postID)
   post = post[1]
   self.post = post
-  return {render = 'post'}
+  self.tags = DAL:GetPostTags(post.id)
+  print(to_json(self.tags))
+  return {render = true}
 end
 
 local function CreatePostForm(self)
@@ -163,12 +166,39 @@ local function CreateComment(self)
 
 end
 
+
+local function UpvoteTag(self)
+  local postTag = DAL:GetPostTag(self.params.tagID,self.params.postID)
+  -- increment the post count
+  -- check if the user has already up/downvoted
+  postTag.up = postTag.up + 1
+  local oldScore = postTag.score or 0
+  local newScore = score:BestScore(postTag.up,postTag.down)
+
+  postTag.score = newScore
+  DAL:UpdatePostTag(postTag)
+    print(postTag.up,postTag.down,'  ',newScore)
+
+  --recalculate the tags score
+  if postTag.score > 0.1 and postTag.active == 0 then
+    --activate the tag
+    -- check any filters that need it and add them
+  else if postTag.score < -5 and postTag.active == 1 then
+    --deactivate the tag
+    -- check any filters that need it remove and remove it
+  end
+
+
+
+
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
     POST = CreatePost
   }))
-
+  app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)

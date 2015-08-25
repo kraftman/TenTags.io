@@ -39,6 +39,8 @@ return {
       { "tagID", types.text },
       { "up", types.integer },
       { "down", types.integer },
+      { "score",types.integer},
+      { "active", types.boolean}
       { "createdAt", types.integer },
       { 'createdBy', types.text}
     })
@@ -72,7 +74,16 @@ return {
       { "id",types.text},
       { "filterID",types.text},
       { "userID",types.text}
-
+    })
+    schema.create_table("filterposts", {
+      { "filterID",types.text},
+      { "postID",types.text}
+    })
+    schema.create_table("userseenposts", {
+      { "userID",types.text},
+      { "nodeID",types.text},
+      { "seenAt",types.integer},
+      { "seenType",types.text} -- displayed/clicked/voted
     })
 end
 }

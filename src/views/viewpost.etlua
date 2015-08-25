@@ -7,10 +7,14 @@
 <script src="/static/js/comment.js"></script>
 
 
+<input type="hidden" id='postID' value="<%= post.id -%>">
 
 <div>
 <a href="<%= post.link -%>"> <%= post.title -%></a>
 <p><%= post.text -%></p>
+<% for _,tag in pairs(tags) do %>
+  <% render("views.st.tag",{tag = tag}) %>
+<% end %>
 
 <%- RenderComments() %>
 

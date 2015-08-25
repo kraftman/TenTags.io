@@ -75,8 +75,25 @@ function DAL:GetUserComments(username)
   return db.select('* from comment c inner join user u on c.createdBy = u.id where u.username = ?',username)
 end
 
+function DAL:GetPostTags(postID)
+  local query = [[select t.id, t.name,pt.up,pt.down from posttags pt
+      inner join tag t
+      on t.id = pt.tagID
+      where pt.postID = ']]..postID.."'"
+  local res = db.query(query)
+
+  return res
+end
+
 function DAL:GetPost(postID)
   return db.select('* from post where id = ?',postID)
+end
+
+function DAL:GetPostTag(tagID,postID)
+  local query = "select * from posttags where tagID = '"..tagID..
+  "' and postID = '"..postID.."'"
+  local res = db.query(query)
+  return res[1]
 end
 
 function DAL:GetCommentsForPost(postID)
@@ -112,6 +129,20 @@ function DAL:CreateFilter(filterInfo,tags)
   for _,tagInfo in pairs(tags) do
     res = db.insert('filtertags',tagInfo)
   end
+end
+
+function DAL:UpdatePostTag(postTag)
+  local query = [[
+    update posttags set
+    up = ']]..postTag.up..[[',
+    down = ']]..postTag.down..[[',
+    score = ']]..postTag.score..[['
+    where postID = ']]..postTag.postID..[['
+    and tagID = ']]..postTag.tagID..[['
+
+    ]]
+  
+  db.query(query)
 end
 
 function DAL:LoadAllFilters()
