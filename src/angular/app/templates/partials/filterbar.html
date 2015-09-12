@@ -1,0 +1,6 @@
+<input id='filterSearch' ng-model="filterquery">
+<div ng-repeat="sub in subs | filter:filterquery">
+  <a href="#/f/{{sub.name}}">
+    {{sub.name}}
+  </a>
+</div>

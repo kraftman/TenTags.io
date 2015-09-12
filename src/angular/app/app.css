@@ -8,8 +8,8 @@ html, body {margin:0;padding:0;height:100%;}
   background-color: #006600;
 
 }
-.sideBar {
-  width: 100px;
+.filterBar {
+  width: 150px;
   height: 100%;
   background-color: #99C299;
   float: left;
@@ -18,4 +18,8 @@ html, body {margin:0;padding:0;height:100%;}
 .holder {
   width: 100%;
   height: 100%;
+}
+
+#filterSearch {
+  width: 95%;
 }
