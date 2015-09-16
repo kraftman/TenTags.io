@@ -2,25 +2,28 @@
 
 var myApp = angular.module('myApp', [
   'ui.router',
-  'myApp.version'
+  'myApp.version',
+  'ngMaterial'
 ]);
 
-myApp.config(function($stateProvider, $urlRouterProvider) {
+myApp.config(function($stateProvider, $urlRouterProvider,$mdThemingProvider) {
   $urlRouterProvider.otherwise('/');
+
+  $mdThemingProvider.theme('default')
+      .primaryPalette('green')
+      .accentPalette('red');
 
   $stateProvider
     .state('home',{
         url: '/',
         views: {
-            'header': {
-                templateUrl: 'templates/partials/header.html'
-            },
             'filterbar': {
                 templateUrl: 'templates/partials/filterbar.html',
                 controller: 'FilterBarController'
             },
             'content': {
-                templateUrl: 'templates/partials/content.html'
+                templateUrl: 'templates/partials/content.html',
+                controller: 'FilterController'
             }
         }
     })
@@ -28,15 +31,22 @@ myApp.config(function($stateProvider, $urlRouterProvider) {
         url: 'f/:subname',
         views: {
           'content@': {
-              templateUrl: 'templates/partials/content2.html',
+              templateUrl: 'templates/partials/content.html',
               controller: 'FilterController'
           }
         }
     })
 });
 
-myApp.controller('FilterController', ['$scope','$stateParams', function($scope,$stateParams) {
-  $scope.subname = $stateParams.subname;
+myApp.controller('FilterController', ['$scope','$stateParams','$http', function($scope,$stateParams,$http) {
+  if (typeof($stateParams.subname) !== 'undefined') {
+    $scope.subname = $stateParams.subname;
+  } else {
+    $scope.subname = 'default';
+  };
+  $http.get('/static/'+$scope.subname+'.json').success(function(data) {
+    $scope.posts = data;
+  });
 
 }]);
 
