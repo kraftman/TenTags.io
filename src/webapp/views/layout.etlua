@@ -11,6 +11,7 @@
 </head>
 <body>
   <% render("views.navigation") %>
+    <% render("views.filterbar") %>
     <% content_for("inner") %>
   <% render("views.footer") %>
 </body>

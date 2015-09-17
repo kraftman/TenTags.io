@@ -1,8 +1,10 @@
-<div class='filterContainer'>
+<li>
+<button type = "button" class='filterContainer'>
   <a class='postLink' href="<%= url_for('filter',{filterlabel = filter.label}) %>">
     /f/<%= filter.label -%>: <%= filter.title -%>
   </a>
   <p class = 'filterDescription'>
     <%= filter.description -%>
   </p>
-</div>
+</button>
+</li>

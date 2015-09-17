@@ -40,7 +40,7 @@ return {
       { "up", types.integer },
       { "down", types.integer },
       { "score",types.integer},
-      { "active", types.boolean}
+      { "active", types.boolean},
       { "createdAt", types.integer },
       { 'createdBy', types.text}
     })

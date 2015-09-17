@@ -8,7 +8,7 @@ local DAL = require 'DAL'
 
 local m = {}
 
-local function LoadUserFilters()
+local function LoadUserPosts()
   return DAL:GetUserFrontPage()
 end
 
@@ -16,17 +16,25 @@ local function LoadDefaults()
   return DAL:LoadDefaults()
 end
 
+local function LoadUserFilters()
+ return {}
+end
+
+local function LoadDefaultFilters()
+  return DAL:LoadDefaultFilters()
+end
+
 local function FrontPage(self)
 
-  local posts
+
   if self.session.current_user then
-    posts = LoadUserFilters(self)
+    self.posts = LoadUserFilters(self)
   else
-    posts = LoadDefaults(self)
+    self.posts = LoadDefaults(self)
   end
 
 
-  self.posts = posts
+
   return {render = 'frontpage'}
 end
 

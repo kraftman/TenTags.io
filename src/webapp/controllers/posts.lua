@@ -177,20 +177,16 @@ local function UpvoteTag(self)
 
   postTag.score = newScore
   DAL:UpdatePostTag(postTag)
-    print(postTag.up,postTag.down,'  ',newScore)
+  print(postTag.up,postTag.down,'  ',newScore)
 
   --recalculate the tags score
   if postTag.score > 0.1 and postTag.active == 0 then
     --activate the tag
     -- check any filters that need it and add them
-  else if postTag.score < -5 and postTag.active == 1 then
+  elseif postTag.score < -5 and postTag.active == 1 then
     --deactivate the tag
     -- check any filters that need it remove and remove it
   end
-
-
-
-
 end
 
 function m:Register(app)

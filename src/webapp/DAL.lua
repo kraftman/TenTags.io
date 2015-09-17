@@ -20,6 +20,11 @@ function DAL:GetUserFrontPage()
   return posts
 end
 
+function DAL:LoadDefaultFilters()
+  local query = 'select * from filter'
+  return db.query(query)
+end
+
 function DAL:AddTagsToPosts(posts)
   local query
   for _,post in pairs(posts) do
@@ -141,7 +146,7 @@ function DAL:UpdatePostTag(postTag)
     and tagID = ']]..postTag.tagID..[['
 
     ]]
-  
+
   db.query(query)
 end
 

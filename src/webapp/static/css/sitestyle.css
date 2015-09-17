@@ -6,6 +6,15 @@
   background-color: #D6ECF2;
 
 }
+
+html {
+  font-family: ‘Trebuchet MS’, Helvetica, sans-serif;
+}
+
+div {
+    border: 1px solid #000000;
+}
+
 #titleBox {
   width: 900px;
   background-color: lightblue;
@@ -14,10 +23,30 @@
 
 }
 
+#filterbar {
+  width: 200px;
+  height: 100%;
+  float:left;
+}
+ul {
+  padding-left: 0px;
+}
+
+.filterbarelement {
+  display: block;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  vertical-align: middle;
+}
 
 
-#contents {
+
+.contents {
   padding:10px;
+  width: 670px;
+  float: left;
 }
 
 .postLink {

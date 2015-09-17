@@ -1,0 +1,23 @@
+
+
+top down
+
+client
+- fairly dumb initially
+- SPA later for offloading
+
+webapp
+- terminate SSL
+- rate limit
+- shdict cache of redis
+- geoip later
+
+worker
+- process client input
+- update mysql/redis
+- calculate which subs need updating and update them
+
+redis
+- cache of frequent mysql requests
+sorted sets of all posts per filta for both date and score
+mysql

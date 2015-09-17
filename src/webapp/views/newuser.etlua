@@ -1,4 +1,4 @@
-
+<div class='contents'>
 <form id='register' action='/user/new' method='post'
     accept-charset='UTF-8'>
 <fieldset >
@@ -18,3 +18,4 @@
 
 </fieldset>
 </form>
+<div>
