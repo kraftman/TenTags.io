@@ -19,5 +19,8 @@ worker
 
 redis
 - cache of frequent mysql requests
-sorted sets of all posts per filta for both date and score
+- outputs json
+- sorted sets of all posts per filta for both date and score
+
 mysql
+- stores everything
