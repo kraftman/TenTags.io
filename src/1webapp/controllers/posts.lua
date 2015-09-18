@@ -1,9 +1,9 @@
 
 
 local uuid = require 'uuid'
-local DAL = require 'DAL'
+local cache = require 'cache'
 local util = require("lapis.util")
-local score = require 'scoring'
+local worker = require 'worker'
 
 local from_json = util.from_json
 local to_json = util.to_json
@@ -48,7 +48,7 @@ local function CreatePost(self)
     table.insert(tags,tagInfo)
   end
 
-  DAL:CreatePost(info,tags)
+  worker:CreatePost(info,tags)
 
   return {json = self.req.selectedtags}
 end
@@ -64,7 +64,7 @@ end
 
 local function GetComments(postID)
 
-  local comments = DAL:GetCommentsForPost(postID)
+  local comments = cache:GetCommentsForPost(postID)
   print('getting comments for post ',postID,' found: ',#comments)
 
   for k,v in pairs(comments) do
@@ -134,17 +134,17 @@ local function GetPost(self)
   self.comments = comments
   self.RenderComments = RenderComments
 
-  local post = DAL:GetPost(self.params.postID)
+  local post = cache:GetPost(self.params.postID)
   post = post[1]
   self.post = post
-  self.tags = DAL:GetPostTags(post.id)
+  self.tags = cache:GetPostTags(post.id)
   print(to_json(self.tags))
   return {render = true}
 end
 
 local function CreatePostForm(self)
 
-  self.tags = DAL:GetAllTags()
+  self.tags = cache:GetAllTags()
 
   return { render = 'createpost' }
 end
@@ -161,14 +161,14 @@ local function CreateComment(self)
     text = self.params.commentText,
     createdAt = ngx.time(),
   }
-  DAL:CreateComment(commentInfo,self.params.postID)
+  worker:CreateComment(commentInfo,self.params.postID)
   return 'created!'
 
 end
 
 
 local function UpvoteTag(self)
-  local postTag = DAL:GetPostTag(self.params.tagID,self.params.postID)
+  local postTag = cache:GetPostTag(self.params.tagID,self.params.postID)
   -- increment the post count
   -- check if the user has already up/downvoted
   postTag.up = postTag.up + 1
@@ -176,7 +176,7 @@ local function UpvoteTag(self)
   local newScore = score:BestScore(postTag.up,postTag.down)
 
   postTag.score = newScore
-  DAL:UpdatePostTag(postTag)
+  cache:UpdatePostTag(postTag)
   print(postTag.up,postTag.down,'  ',newScore)
 
   --recalculate the tags score

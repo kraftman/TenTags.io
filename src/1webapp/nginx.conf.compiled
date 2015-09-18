@@ -11,7 +11,20 @@ events {
 http {
   include mime.types;
   resolver 8.8.8.8;
+  lua_shared_dict filterlist 1m;
+  lua_shared_dict frontpages 10m;
+  lua_shared_dict postinfo 10m;
   lua_package_path "./controllers/?.lua;;";
+
+  upstream worker {
+    server localhost:8081;
+  }
+
+  upstream cache {
+    server localhost:8082;
+  }
+
+
   server {
     listen 8080;
     lua_code_cache off;

@@ -1,6 +1,6 @@
 local lapis = require("lapis")
 local app = lapis.Application()
-local DAL = require 'DAL'
+local cache = require 'cache'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
@@ -9,9 +9,9 @@ app.layout = require 'views.layout'
 
 app:before_filter(function(self)
   if self.session.current_user then
-    self.filters = DAL:LoadDefaultFilters(self)
+    self.filters = cache:LoadFilterList('default')
   else
-    self.filters = DAL:LoadDefaultFilters(self)
+    self.filters = cache:LoadFilterList('default')
   end
 end)
 

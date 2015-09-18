@@ -2,7 +2,8 @@
 
 local M = {}
 
-local DAL = require 'DAL'
+local cache = require 'cache'
+local worker = require 'worker'
 local uuid = require 'uuid'
 
 
@@ -51,7 +52,7 @@ local function NewFilter(self)
     table.insert(tags,tagInfo)
   end
 
-  DAL:CreateFilter(info,tags)
+  worker:CreateFilter(info,tags)
 
 end
 
@@ -63,13 +64,13 @@ end
 local function DisplayFilter(self)
   -- does the filter exist? if not then lets make it
 
-  local filter = DAL:LoadFilter(self.params.filterlabel)
+  local filter = cache:LoadFilter(self.params.filterlabel)
   if not filter then
     return CreateFilter(self)
   end
 
 
-  local tags = DAL:LoadFilterTags(self.params.filterlabel)
+  local tags = cache:LoadFilterTags(self.params.filterlabel)
   print(to_json(tags))
   local requiredTagID = {}
   local bannedTagID = {}
@@ -82,7 +83,7 @@ local function DisplayFilter(self)
     end
   end
 
-  self.posts = DAL:LoadFilteredPosts(requiredTagID,bannedTagID)
+  self.posts = cache:LoadFilteredPosts(requiredTagID,bannedTagID)
 
   DAL:AddTagsToPosts(self.posts)
 
@@ -92,7 +93,7 @@ end
 
 local function LoadAllFilters(self)
 
-  self.filters = DAL:LoadAllFilters()
+  self.filters = cache:LoadAllFilters()
 
   return {render = 'allfilters'}
 end

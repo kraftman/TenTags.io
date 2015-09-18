@@ -3,12 +3,10 @@
 local m = {}
 m.__index = m
 
-local scrypt = require 'scrypt'
-local email = require 'testemail'
 local uuid = require 'uuid'
 local salt = 'poopants'
 local respond_to = (require 'lapis.application').respond_to
-local DAL = require 'DAL'
+local cache = require 'cache'
 
 local function NewUserForm(self)
   return {render = 'newuser'}
@@ -34,14 +32,14 @@ local function CreateNewUser(self)
     active = info.active
   }
 
-  DAL:CreateUser(userInfo)
+  worker:CreateUser(userInfo)
 
   return GetActivationKey(ngx.md5(info.username..info.email..salt))
 end
 
 local function LoginPost(self)
 
-  local userInfo = DAL:LoadUserByUsername(self.params.username)
+  local userInfo = cache:LoadUserByUsername(self.params.username)
   if not userInfo then
     return 'login failed!'
   end
@@ -87,12 +85,12 @@ local function ConfirmEmail(self)
   -- check for username and activateKey
 
 
-  local userInfo = DAL:LoadUserCredentialsByEmail(self.params.email)
+  local userInfo = cache:LoadUserCredentialsByEmail(self.params.email)
 
   local newHash  = ngx.md5(userInfo.username..self.params.email..salt)
 
   if GetActivationKey(newHash) == self.params.activateKey then
-    DAL:ActivateUser(userInfo.id)
+    cache:ActivateUser(userInfo.id)
     return 'you have successfully activated your account, please login!'
   else
     return 'activation failed, you suckkkk'
@@ -111,7 +109,7 @@ local function LoginForm(self)
 end
 
 local function ViewUser(self)
-  self.comments = DAL:GetUserComments(self.params.username)
+  self.comments = cache:GetUserComments(self.params.username)
 
   return {render = 'viewuser'}
 end
@@ -123,7 +121,7 @@ local function ValidateUser(self)
     return { redirect_to = self:url_for("register") }
   end
 
-  local userInfo = DAL:LoadUserByEmail(email)
+  local userInfo = cache:LoadUserByEmail(email)
 
   if not userInfo then
     return { render = 'newuser' }
