@@ -1,13 +1,15 @@
 
 
 local cache = {}
-cache.__index = cache
 local http = require 'http'
 local filterList = ngx.shared.filterlist
 local frontpages = ngx.shared.frontpages
 local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
 local util = require("lapis.util")
+
+local FILTER_LIST_CACHE_TIME = 5
+local TAG_CACHE_TIME = 5
 
 
 function cache:LoadCachedPosts(posts)
@@ -70,10 +72,10 @@ function cache:LoadUncachedPosts(posts)
 
 end
 
-function cache:LoadFrontPage(username,offset)
+function cache:GetDefaultFrontPage(offset)
   offset = offset or 0
 
-  local frontPageList = self:LoadFrontPageList(username)
+  local frontPageList = self:LoadFrontPageList('default')
   local posts = {}
   local max = math.min(#frontPageList,offset)
   local postID
@@ -115,7 +117,31 @@ function cache:LoadFrontPageList(username)
 
 end
 
-function cache:LoadFilterList(username)
+function cache:GetTag(tagName)
+  local result,err = tags:get(tagName)
+  if err then
+    ngx.log(ngx.ERR, 'unable to load from tags: ',err)
+    return
+  end
+  if result then
+    return from_json(result)
+  end
+
+  local res= ngx.location.capture('/cache/tag/'..tagName)
+  if res.status == 200 then
+    local tagInfo = from_json(res.body)
+    if tagInfo.name then
+      tags:set(tagInfo.name,res.body,TAG_CACHE_TIME)
+      return tagInfo
+    end
+  else
+    ngx.log(ngx.ERR, 'unable to get tag: code ',res.status,' body: ',res.body)
+  end
+
+end
+
+
+function cache:GetUserFilters(username)
   local result,err = filterList:get('default')
   if err then
     ngx.log(ngx.ERR, 'unable to get from shdict filterelist: ',err)
@@ -128,14 +154,10 @@ function cache:LoadFilterList(username)
 
   local res = ngx.location.capture('/cache/filterlist/'..username)
 
-  if not res then
-    ngx.log(ngx.ERR, 'error requesting upstream: ',err)
-    return {}
-  end
 
   if res.status == 200 then
     print(res.body)
-     filterList:set(username,res.body,5)
+     filterList:set(username,res.body,FILTER_LIST_CACHE_TIME)
      return util.from_json(res.body)
   elseif res.status == 404 then
     return {}
@@ -145,10 +167,4 @@ function cache:LoadFilterList(username)
 end
 
 
-local function newCache()
-  local c = setmetatable({}, cache)
-
-  return c
-end
-
-return newCache
+return cache

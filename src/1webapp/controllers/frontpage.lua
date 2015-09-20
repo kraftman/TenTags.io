@@ -4,7 +4,7 @@ local uuid = require 'uuid'
 
 local util = require("lapis.util")
 
-local cache = require 'cache'()
+local api = require 'api'
 local worker = require 'worker'
 
 local m = {}
@@ -13,9 +13,9 @@ local m = {}
 local function FrontPage(self)
 
   if self.session.current_user then
-    self.posts = LoadUserFilters(self)
+
   else
-    self.posts = cache:LoadFrontPage('default')
+    self.posts = api:GetDefaultFrontPage(offset)
   end
 
   return {render = 'frontpage'}

@@ -7,11 +7,20 @@ client
 - SPA later for offloading
 
 webapp
-- terminate SSL
-- rate limit
-- shdict cache of redis
-- LRU cache for common tables
-- geoip later
+  api
+    - rate limitting
+    - access control
+    - load from cache
+    - write to workers
+  cache
+    - LRU cache for filter lits
+    - shdict for the rest
+    - load
+
+  other
+  - terminate SSL
+  - rate limit
+  -geoip
 
 worker
 - process client input
@@ -38,3 +47,9 @@ worker checks redis to see whats missing
 adds anything missing from mysql
   - messy to check
   - no mysql calls on redis miss
+
+push means redis HAS to store everything and workers have to somehow check whats not in redis and load it
+pull means redis only checks on a miss and that shouldnt be too bad if there are mysql slaves
+pull means if a worker tries to update a list in redis that doesnt exist, redis will need to notice and grab the list from mysql
+
+going to go with pull + expiring old data for now.

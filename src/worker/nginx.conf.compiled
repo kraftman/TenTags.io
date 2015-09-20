@@ -10,6 +10,7 @@ events {
 
 http {
   include mime.types;
+  lua_package_path "./controllers/?.lua;;";
 
   server {
     listen 8081;

@@ -1,6 +1,8 @@
 local db = require("lapis.db")
 
 local uuid = require 'uuid'
+local util = require 'lapis.util'
+local api = require 'api'
 
 local m = {}
 m.__index = m
@@ -39,12 +41,12 @@ local function CreateTag(self)
     createdAt = ngx.time(),
     createdBy = self.session.current_user_id
   }
-  local tagInfo = {tag = info}
-  local res = ngx.location.capture('/worker/tag',{method = 'POST',body = util.to_json(tagInfo)})
-  if res.status = 200 then
+
+  local ok, err = api:CreateTag(info)
+  if ok then
     return 'tag created!'
   else
-    ngx.log(ngx.ERR, 'error creating tag: ',res.status)
+    return 'error! '..(err or 'no error')
   end
 end
 

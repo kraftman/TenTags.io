@@ -1,4 +1,4 @@
-<% render("views.loginbox") %>
+
 <form id='createtag' action='/createtagpost' method='post'
     accept-charset='UTF-8'>
 <fieldset >

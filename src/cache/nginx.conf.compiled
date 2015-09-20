@@ -11,6 +11,7 @@ events {
 http {
   include mime.types;
 
+
   server {
     listen 8082;
     lua_code_cache off;
