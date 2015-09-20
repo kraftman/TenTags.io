@@ -21,7 +21,7 @@ local function LoadFrontPage(self)
   local username = self.params.username
   local filterList = cache:LoadFilterList(username)
   local posts = cache:LoadFilterPosts(filterList, 0,50)
-  print(to_json(posts))
+  
   return {json = posts}
 
 end

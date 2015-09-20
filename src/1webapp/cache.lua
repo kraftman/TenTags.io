@@ -112,13 +112,10 @@ function cache:LoadFrontPageList(username)
 
   if res.status == 200 then
     local frontPageList = util.from_json(res.body)
-    print(res.body)
-    if #frontPageList > 0 then
-     frontpages:set(username,res.body,FRONTPAGE_CACHE_TIME)
-     return frontPageList
-   else
-     return {}
-   end
+
+    frontpages:set(username,res.body,FRONTPAGE_CACHE_TIME)
+    return frontPageList
+
   else
     ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
   end
@@ -165,7 +162,6 @@ function cache:GetUserFilters(username)
 
 
   if res.status == 200 then
-    print(res.body)
      filterList:set(username,res.body,FILTER_LIST_CACHE_TIME)
      return util.from_json(res.body)
   elseif res.status == 404 then

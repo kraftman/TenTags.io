@@ -1,4 +1,4 @@
-env LAPIS_ENVIRONMENT=development;
+env LAPIS_ENVIRONMENT=production;
 worker_processes 1;
 error_log stderr notice;
 daemon off;
@@ -16,6 +16,8 @@ http {
   lua_shared_dict frontpages 10m;
   lua_shared_dict postinfo 10m;
   lua_package_path "./controllers/?.lua;;";
+  proxy_cache_path  cache  levels=1:2    keys_zone=STATIC:10m
+    inactive=24h  max_size=1g;
 
   upstream worker {
     server localhost:8081;
@@ -28,7 +30,7 @@ http {
 
   server {
     listen 8080;
-    lua_code_cache off;
+    lua_code_cache on;
 
     location / {
       default_type text/html;
@@ -39,6 +41,9 @@ http {
 
     location /cache/ {
       proxy_pass http://cache;
+      proxy_cache            STATIC;
+      proxy_cache_valid      200  3s;
+      proxy_cache_lock on;
     }
 
     location /worker/ {
