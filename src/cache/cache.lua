@@ -28,6 +28,14 @@ local function SetKeepalive(red)
   end
 end
 
+function M:ConvertListToTable(list)
+  local info = {}
+  for i = 1,#list, 2 do
+    info[list[i]] = list[i+1]
+  end
+  return info
+end
+
 function M:LoadAllTags()
   local red = GetRedisConnection()
   local ok, err = red:smembers('tags')
@@ -73,6 +81,11 @@ function M:LoadFilterPosts(filterList,startAt,endAt)
       ngx.log(ngx.ERR, 'error getting posts for filters:',err)
       return {}
     end
+    for k,v in pairs(results) do
+      if not next(v) then
+        results[k] = nil
+      end
+    end
 
     return results
 
@@ -89,6 +102,19 @@ function M:BatchLoadPosts(posts)
     ngx.log(ngx.ERR, 'unable batch get post info:', err)
   end
   return results
+end
+
+function M:GetTag(tagName)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall('tag:'..tagName)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load tag:',err)
+    return
+  end
+  local tagInfo = self:ConvertListToTable(ok)
+
+  return tagInfo
 end
 
 

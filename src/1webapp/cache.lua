@@ -7,9 +7,12 @@ local frontpages = ngx.shared.frontpages
 local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
 local util = require("lapis.util")
+local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
 
 local FILTER_LIST_CACHE_TIME = 5
 local TAG_CACHE_TIME = 5
+local FRONTPAGE_CACHE_TIME = 5
 
 
 function cache:LoadCachedPosts(posts)
@@ -36,7 +39,10 @@ function cache:GetAllTags()
   local res = ngx.location.capture('/cache/tags')
   if res.status == 200 then
     result,err = tags:set('all',res.body,60)
-    return util.from_json(result)
+    if err then
+      ngx.log(ngx.ERR, 'unable to set tags ',err)
+    end
+    return util.from_json(res.body)
   else
     ngx.log(ngx.ERR, 'error requesting from api, status:',status,' message: ',res.body)
     return {}
@@ -77,9 +83,9 @@ function cache:GetDefaultFrontPage(offset)
 
   local frontPageList = self:LoadFrontPageList('default')
   local posts = {}
-  local max = math.min(#frontPageList,offset)
+
   local postID
-  for i = offset, offset+10 do
+  for i = 1+offset,10+offset do
     postID = frontPageList[i]
     if postID then
       posts[postID] = {}
@@ -102,14 +108,17 @@ function cache:LoadFrontPageList(username)
     return util.from_json(result)
   end
 
-
   local res = ngx.location.capture('/cache/frontpage/'..username)
 
   if res.status == 200 then
-     frontpages:set(username,res.body,600)
-     return util.from_json(res.body)
-  elseif res.status == 404 then
-    return {}
+    local frontPageList = util.from_json(res.body)
+    print(res.body)
+    if #frontPageList > 0 then
+     frontpages:set(username,res.body,FRONTPAGE_CACHE_TIME)
+     return frontPageList
+   else
+     return {}
+   end
   else
     ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
   end

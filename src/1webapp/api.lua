@@ -38,5 +38,18 @@ function api:CreateTag(tagInfo)
 
 end
 
+function api:CreatePost(postInfo)
+  -- rate limit
+  -- basic sanity check
+  -- send to worker
+  return worker:CreatePost(postInfo)
+
+end
+
+function api:GetAllTags()
+
+  return cache:GetAllTags()
+end
+
 
 return api

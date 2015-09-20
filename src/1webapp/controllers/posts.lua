@@ -1,9 +1,8 @@
 
 
 local uuid = require 'uuid'
-local cache = (require 'cache')
+local api = require 'api'
 local util = require("lapis.util")
-local worker = require 'worker'
 
 local from_json = util.from_json
 local to_json = util.to_json
@@ -17,40 +16,31 @@ local tinsert = table.insert
 
 local function CreatePost(self)
 
-  local selected = from_json(self.params.selectedtags)
+  local selectedTags = from_json(self.params.selectedtags)
   local newID =  uuid.generate_random()
 
   if trim(self.params.link) == '' then
     self.params.link = nil
   end
 
-
   local info ={
     id = newID,
     title = self.params.title,
     link = self.params.link or self:url_for('viewpost',{postID = newID}),
     text = self.params.text,
-
     createdAt = ngx.time(),
-    createdBy = self.session.current_user_id
+    createdBy = self.session.current_user_id,
+    tags = selectedTags
   }
-  local tags = {}
 
-  for _, tagID in pairs(selected) do
-    local tagInfo = {
-      postID = info.id,
-      tagID = tagID,
-      up = 1,
-      down = 0,
-      createdAt = ngx.time(),
-      createdBy = self.session.current_user_id
-    }
-    table.insert(tags,tagInfo)
+  local ok, err = api:CreatePost(info)
+
+  if ok then
+    return
+  else
+    return {status = 500}
   end
 
-  worker:CreatePost(info,tags)
-
-  return {json = self.req.selectedtags}
 end
 
 local function AddChildren(parentID,flat)
@@ -143,7 +133,7 @@ local function GetPost(self)
 end
 
 local function CreatePostForm(self)
-  local tags = cache:GetAllTags()
+  local tags = api.GetAllTags(api)
 
   self.tags = tags
 
