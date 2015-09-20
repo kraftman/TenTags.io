@@ -28,6 +28,20 @@ local function SetKeepalive(red)
   end
 end
 
+function M:LoadAllTags()
+  local red = GetRedisConnection()
+  local ok, err = red:smembers('tags')
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load tags:',err)
+    return {}
+  end
+  SetKeepalive(red)
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
 
 function M:LoadFilterList(username)
 

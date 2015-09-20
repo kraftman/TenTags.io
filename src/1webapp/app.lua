@@ -1,6 +1,6 @@
 local lapis = require("lapis")
 local app = lapis.Application()
-local cache = require 'cache'
+local cache = (require 'cache')()
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'

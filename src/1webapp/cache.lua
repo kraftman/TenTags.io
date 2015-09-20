@@ -1,19 +1,14 @@
 
 
 local cache = {}
+cache.__index = cache
 local http = require 'http'
-local upstream = require "ngx.upstream"
-local get_servers = upstream.get_servers
 local filterList = ngx.shared.filterlist
 local frontpages = ngx.shared.frontpages
+local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
 local util = require("lapis.util")
 
-local function GetCacheURL()
-  local servers = get_servers('cache')
-
-  return servers[1].addr
-end
 
 function cache:LoadCachedPosts(posts)
   local result,err
@@ -27,6 +22,23 @@ function cache:LoadCachedPosts(posts)
 end
 
 function cache:GetAllTags()
+  local result,err = tags:get('all')
+  if err then
+    ngx.log(ngx.ERR, 'unable to load all tags: ',err)
+  end
+
+  if result then
+    return util.from_json(result)
+  end
+
+  local res = ngx.location.capture('/cache/tags')
+  if res.status == 200 then
+    result,err = tags:set('all',res.body,60)
+    return util.from_json(result)
+  else
+    ngx.log(ngx.ERR, 'error requesting from api, status:',status,' message: ',res.body)
+    return {}
+  end
 
 end
 
@@ -43,10 +55,8 @@ function cache:LoadUncachedPosts(posts)
     return
   end
 
-  local httpc = http.new()
-  local cacheURL = 'http://'..GetCacheURL()
   local postList = table.concat(uncached,',')
-  local res, err = httpc:request_uri(cacheURL..'/posts?posts='..postList)
+  local res = ngx.location.capture('/cache/posts?posts='..postList)
   if not res or res.status ~= 200 then
     ngx.log(ngx.ERR, 'error requesting upstream: ',err,' status: ',res.status)
     return
@@ -90,14 +100,8 @@ function cache:LoadFrontPageList(username)
     return util.from_json(result)
   end
 
-  --need to build a frontpage from each filter they have
-  local httpc = http.new()
-  local cacheURL = GetCacheURL()
-  local res, err = httpc:request_uri('http://'..cacheURL..'/frontpage/'..username)
-  if not res then
-    ngx.log(ngx.ERR, 'error requesting upstream: ',err)
-    return {}
-  end
+
+  local res = ngx.location.capture('/cache/frontpage/'..username)
 
   if res.status == 200 then
      frontpages:set(username,res.body,600)
@@ -122,10 +126,7 @@ function cache:LoadFilterList(username)
   end
 
 
-  local httpc = http.new()
-  local cacheURL = GetCacheURL()
-  print('http://'..cacheURL..'/filterlist/'..username)
-  local res, err = httpc:request_uri('http://'..cacheURL..'/filterlist/'..username)
+  local res = ngx.location.capture('/cache/filterlist/'..username)
 
   if not res then
     ngx.log(ngx.ERR, 'error requesting upstream: ',err)
@@ -144,5 +145,10 @@ function cache:LoadFilterList(username)
 end
 
 
+local function newCache()
+  local c = setmetatable({}, cache)
 
-return cache
+  return c
+end
+
+return newCache

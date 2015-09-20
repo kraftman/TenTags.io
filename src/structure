@@ -10,6 +10,7 @@ webapp
 - terminate SSL
 - rate limit
 - shdict cache of redis
+- LRU cache for common tables
 - geoip later
 
 worker
@@ -24,3 +25,16 @@ redis
 
 mysql
 - stores everything
+
+
+push v pull redis
+options:
+redis loads from mysql when it cant find something
+  - more logic
+  - needs to contact mysql for every miss
+  - needs to write to master redis
+
+worker checks redis to see whats missing
+adds anything missing from mysql
+  - messy to check
+  - no mysql calls on redis miss

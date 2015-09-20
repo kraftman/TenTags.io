@@ -39,8 +39,13 @@ local function CreateTag(self)
     createdAt = ngx.time(),
     createdBy = self.session.current_user_id
   }
-  local res = db.insert('tag', info)
-  return 'tag created!'
+  local tagInfo = {tag = info}
+  local res = ngx.location.capture('/worker/tag',{method = 'POST',body = util.to_json(tagInfo)})
+  if res.status = 200 then
+    return 'tag created!'
+  else
+    ngx.log(ngx.ERR, 'error creating tag: ',res.status)
+  end
 end
 
 function m:Register(app)

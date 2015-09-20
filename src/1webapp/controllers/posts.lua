@@ -1,7 +1,7 @@
 
 
 local uuid = require 'uuid'
-local cache = require 'cache'
+local cache = (require 'cache')()
 local util = require("lapis.util")
 local worker = require 'worker'
 
@@ -143,8 +143,9 @@ local function GetPost(self)
 end
 
 local function CreatePostForm(self)
+  local tags = cache:GetAllTags()
 
-  self.tags = cache:GetAllTags()
+  self.tags = tags
 
   return { render = 'createpost' }
 end

@@ -4,7 +4,7 @@ local uuid = require 'uuid'
 
 local util = require("lapis.util")
 
-local cache = require 'cache'
+local cache = require 'cache'()
 local worker = require 'worker'
 
 local m = {}

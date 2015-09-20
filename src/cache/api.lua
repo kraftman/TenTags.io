@@ -49,10 +49,16 @@ local function LoadPosts(self)
 
 end
 
+function LoadTags()
+  local tags = cache:LoadAllTags()
+  return {json = tags}
+end
+
 function M:Register(app)
-  app:get('filterlist','/filterlist/:username',LoadFilterList)
-  app:get('frontpage','/frontpage/:username',LoadFrontPage)
-  app:get('getpostinfo','/posts',LoadPosts)
+  app:get('filterlist','/cache/filterlist/:username',LoadFilterList)
+  app:get('frontpage','/cache/frontpage/:username',LoadFrontPage)
+  app:get('getpostinfo','/cache/posts',LoadPosts)
+  app:get('tags','/cache/tags',LoadTags)
 
 end
 

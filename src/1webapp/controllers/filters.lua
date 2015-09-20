@@ -57,7 +57,7 @@ local function NewFilter(self)
 end
 
 local function CreateFilter(self)
-  self.tags = DAL:GetAllTags()
+  self.tags = cache:GetAllTags()
   return {render = 'createfilter'}
 end
 
