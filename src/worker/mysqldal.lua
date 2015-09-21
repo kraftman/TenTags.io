@@ -36,6 +36,18 @@ function dal:CreateTag(tagInfo)
     return
   end
   return res
+end
+
+function dal:CreatePost(postInfo)
+  local db = GetMysqlConnection()
+  local query = 'REPLACE INTO post set '..
+              'id = '..safeQuote(postInfo.id)..
+              ',parentID = '..safeQuote(postInfo.parentID)..
+              ', title = '..safeQuote(postInfo.title)..
+              ', link = '..safeQuote(postInfo.link)..
+              ', text = '..safeQuote(postInfo.text)..
+              ', createdAt = '..safeQuote(postInfo.createdAt)..
+              ', createdBy = '..safeQuote(post)
 
 
 end

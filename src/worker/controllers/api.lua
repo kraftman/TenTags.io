@@ -44,6 +44,8 @@ local function CreatePost(self)
     return {json = {},status = 400}
   end
 
+  local ok, err = mysqlwrite:CreatePost()
+
   -- add the post to mysql
   -- add the post to redis 'posts'
   -- work out which filters want this post
