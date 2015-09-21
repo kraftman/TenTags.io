@@ -38,6 +38,7 @@ local function CreatePost(self)
   if ok then
     return
   else
+    ngx.log(ngx.ERR, 'error from api: ',err or 'none')
     return {status = 500}
   end
 

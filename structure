@@ -1,55 +1,13 @@
 
 
-top down
-
-client
-- fairly dumb initially
-- SPA later for offloading
-
 webapp
-  api
-    - rate limitting
-    - access control
-    - load from cache
-    - write to workers
-  cache
-    - LRU cache for filter lits
-    - shdict for the rest
-    - load
-
-  other
-  - terminate SSL
-  - rate limit
-  -geoip
-
-worker
-- process client input
-- update mysql/redis
-- calculate which subs need updating and update them
-
-redis
-- cache of frequent mysql requests
-- outputs json
-- sorted sets of all posts per filta for both date and score
-
-mysql
-- stores everything
+  - lapis creating pages
+  - api with lru cache, shdict cache
 
 
-push v pull redis
-options:
-redis loads from mysql when it cant find something
-  - more logic
-  - needs to contact mysql for every miss
-  - needs to write to master redis
 
-worker checks redis to see whats missing
-adds anything missing from mysql
-  - messy to check
-  - no mysql calls on redis miss
+redis slaves
+redis master
 
-push means redis HAS to store everything and workers have to somehow check whats not in redis and load it
-pull means redis only checks on a miss and that shouldnt be too bad if there are mysql slaves
-pull means if a worker tries to update a list in redis that doesnt exist, redis will need to notice and grab the list from mysql
-
-going to go with pull + expiring old data for now.
+mysql slaves
+mysql master

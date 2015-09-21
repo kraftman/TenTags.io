@@ -3,8 +3,7 @@
   rate limitting
   business logic
 ]]
-local cache = require 'cache'
-local worker = require 'worker'
+local cache = require 'api.cache'
 local api = {}
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -12,7 +11,6 @@ local from_json = (require 'lapis.util').from_json
 
 
 function api:GetUserFilters(username)
-  -- rate limit
   return cache:GetUserFilters(username)
 end
 
