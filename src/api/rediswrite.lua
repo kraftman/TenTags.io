@@ -25,6 +25,20 @@ local function SetKeepalive(red)
   end
 end
 
+function write:CreateFilter(filterInfo)
+  local requiredTags = filterInfo.requiredTags
+  local bannedTags = filterInfo.bannedTags
+  filterInfo.bannedTags = nil
+  filterInfo.requiredTags = nil
+
+  -- write tags to filter:tag:required:filterid
+  -- and filter:tag:banned:filterid
+
+  -- write other filter info to hmest filter:filterid
+
+
+end
+
 function write:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do

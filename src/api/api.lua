@@ -64,6 +64,10 @@ function api:CreatePost(postInfo)
   postInfo.parentID = postInfo.id
   postInfo.createdBy = postInfo.createdBy or 'default'
 
+  if not postInfo or trim(postInfo.link) == '' then
+    tinsert(postInfo.tags,'self')
+  end
+
   for k,v in pairs(postInfo.tags) do
     v = trim(v:lower())
     postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
@@ -92,14 +96,26 @@ function api:CreateFilter(filterInfo)
 
   local tags = {}
 
-
   for k,v in pairs(filterInfo.requiredTags) do
-    self:CreateTag(v, filterInfo.createdBy)
+    local tag = self:CreateTag(v, filterInfo.createdBy)
+    if tag then
+      tag.filterID = filterInfo.id
+      tag.filterType = 'required'
+      tinsert(tags,tag)
+      filterInfo.requiredTags[k] = tag
+    end
   end
 
   for k,v in pairs(filterInfo.bannedTags) do
-    self:CreateTag(v, filterInfo.createdBy)
+    local tag = self:CreateTag(v, filterInfo.createdBy)
+    if tag then
+      tag.filterID = filterInfo.id
+      tag.filterType = 'banned'
+      tinsert(tags,tag)
+      filterInfo.bannedTags[k] = tag
+    end
   end
+  filterInfo.tags = tags
 
   worker:CreateFilter(filterInfo)
 
