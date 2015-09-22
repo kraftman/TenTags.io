@@ -2,7 +2,7 @@ local db = require("lapis.db")
 
 local uuid = require 'uuid'
 local util = require 'lapis.util'
-local api = require 'api'
+local api = require 'api.api'
 
 local m = {}
 m.__index = m

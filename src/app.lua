@@ -11,7 +11,7 @@ app:before_filter(function(self)
   if self.session.current_user then
     self.filters = api:GetUserFilters('default')
   else
-    self.filters = api:GetUserFilters('default')
+    self.filters = api:GetDefaultFilters()
   end
 end)
 

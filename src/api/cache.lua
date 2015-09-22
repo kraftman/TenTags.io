@@ -1,14 +1,12 @@
-
-
 local cache = {}
-local http = require 'http'
 local filterList = ngx.shared.filterlist
 local frontpages = ngx.shared.frontpages
 local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
-local util = require("lapis.util")
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
+local redisread = require 'api.redisread'
+local lru = require 'api.lrucache'
 
 local FILTER_LIST_CACHE_TIME = 5
 local TAG_CACHE_TIME = 5
@@ -33,7 +31,7 @@ function cache:GetAllTags()
   end
 
   if result then
-    return util.from_json(result)
+    return from_json(result)
   end
 
   local res = ngx.location.capture('/cache/tags')
@@ -42,7 +40,7 @@ function cache:GetAllTags()
     if err then
       ngx.log(ngx.ERR, 'unable to set tags ',err)
     end
-    return util.from_json(res.body)
+    return from_json(res.body)
   else
     ngx.log(ngx.ERR, 'error requesting from api, status:',status,' message: ',res.body)
     return {}
@@ -70,7 +68,7 @@ function cache:LoadUncachedPosts(posts)
     return
   end
 
-  for k,v in pairs(util.from_json(res.body)) do
+  for k,v in pairs(from_json(res.body)) do
     if posts[k] then
       posts[k] = v
     end
@@ -105,17 +103,14 @@ function cache:LoadFrontPageList(username)
     return {}
   end
   if result then
-    return util.from_json(result)
+    return from_json(result)
   end
 
-  local res = ngx.location.capture('/cache/frontpage/'..username)
+  local res = redisread:LoadFrontPageList(username)
 
-  if res.status == 200 then
-    local frontPageList = util.from_json(res.body)
-
-    frontpages:set(username,res.body,FRONTPAGE_CACHE_TIME)
-    return frontPageList
-
+  if res then
+    frontpages:set(username,to_json(res),FRONTPAGE_CACHE_TIME)
+    return res
   else
     ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
   end
@@ -147,27 +142,30 @@ function cache:GetTag(tagName)
 end
 
 
-function cache:GetUserFilters(username)
+function cache:GetDefaultFilters()
+  local filters = lru:GetDefaultFilters()
+  if filters then
+    return filters
+  end
+
   local result,err = filterList:get('default')
   if err then
     ngx.log(ngx.ERR, 'unable to get from shdict filterelist: ',err)
     return {}
   end
   if result then
-    return util.from_json(result)
+    result = from_json(result)
+    lru:SetDefaultFilters(result)
+    return result
   end
 
-
-  local res = ngx.location.capture('/cache/filterlist/'..username)
-
-
-  if res.status == 200 then
-     filterList:set(username,res.body,FILTER_LIST_CACHE_TIME)
-     return util.from_json(res.body)
-  elseif res.status == 404 then
-    return {}
+  local res = redisread:GetUserFilters('default')
+  if res then
+    lru:SetDefaultFilters(result)
+    filterList:set('default',to_json(res),FILTER_LIST_CACHE_TIME)
+    return res
   else
-    ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
+    return {}
   end
 end
 

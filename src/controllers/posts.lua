@@ -1,7 +1,7 @@
 
 
 local uuid = require 'uuid'
-local api = require 'api'
+local api = require 'api.api'
 local util = require("lapis.util")
 
 local from_json = util.from_json

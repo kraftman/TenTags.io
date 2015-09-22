@@ -10,8 +10,8 @@ local from_json = (require 'lapis.util').from_json
 --self.session.current_user
 
 
-function api:GetUserFilters(username)
-  return cache:GetUserFilters(username)
+function api:GetDefaultFilters()
+  return cache:GetDefaultFilters()
 end
 
 function api:GetDefaultFrontPage(offset)

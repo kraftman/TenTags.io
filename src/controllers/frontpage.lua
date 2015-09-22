@@ -1,11 +1,8 @@
 
 
 local uuid = require 'uuid'
-
 local util = require("lapis.util")
-
-local api = require 'api'
-local worker = require 'worker'
+local api = require 'api.api'
 
 local m = {}
 

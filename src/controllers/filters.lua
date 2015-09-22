@@ -3,7 +3,6 @@
 local M = {}
 
 local cache = require 'cache'
-local worker = require 'worker'
 local uuid = require 'uuid'
 
 
