@@ -1,6 +1,7 @@
 
 
 local redis = require "resty.redis"
+local tinsert = table.insert
 
 local read = {}
 
@@ -31,19 +32,29 @@ function read:ConvertListToTable(list)
   return info
 end
 
-function read:LoadAllTags()
+function read:GetAllTags()
   local red = GetRedisConnection()
   local ok, err = red:smembers('tags')
   if not ok then
     ngx.log(ngx.ERR, 'unable to load tags:',err)
     return {}
   end
-  SetKeepalive(red)
-  if ok == ngx.null then
-    return {}
-  else
-    return ok
+
+  red:init_pipeline()
+  for k,v in pairs(ok) do
+    red:hgetall('tag:'..v)
   end
+  local results, err = red:commit_pipeline(#ok)
+
+  for k,v in pairs(results) do
+    results[k] = self:ConvertListToTable(v)
+  end
+
+  if err then
+    ngx.log(ngx.ERR, 'error reading tags from reds: ',err)
+  end
+  SetKeepalive(red)
+  return results
 end
 
 
@@ -98,12 +109,18 @@ function read:BatchLoadPosts(posts)
   local red = GetRedisConnection()
   red:init_pipeline()
   for k,postID in pairs(posts) do
-      red:hgetall(postID)
+      red:hgetall('post:'..postID)
   end
   local results, err = red:commit_pipeline()
   if not results then
     ngx.log(ngx.ERR, 'unable batch get post info:', err)
   end
+  local processedResults = {}
+
+  for k,v in pairs(results) do
+    tinsert(processedResults,self:ConvertListToTable(v))
+  end
+
   return results
 end
 

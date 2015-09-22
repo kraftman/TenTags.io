@@ -25,7 +25,7 @@
 </br>
 <select name='tagselect' id='test2select' style="width:350px;" multiple='true' class="chosen-select">
   <% for i, tag in pairs(tags) do %>
-   <option name='option["<%= i -%>"]' value = "<%= tag -%>"><%= tag -%></option>
+   <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
   <% end %>
 </select>
 

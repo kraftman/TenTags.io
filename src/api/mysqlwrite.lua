@@ -47,8 +47,54 @@ function dal:CreatePost(postInfo)
               ', link = '..safeQuote(postInfo.link)..
               ', text = '..safeQuote(postInfo.text)..
               ', createdAt = '..safeQuote(postInfo.createdAt)..
-              ', createdBy = '..safeQuote(post)
+              ', createdBy = '..safeQuote(postInfo.createdBy)
+  local ok, err = db:query(query)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create post in mysql: ',err)
+  end
 
+  self:CreatePostTags(postInfo.id, postInfo.tags, postInfo.createdBy)
+end
+
+function dal:CreatePostTags(postID, tags, createdBy)
+  local db = GetMysqlConnection()
+  for k,v in pairs(tags) do
+    local query = 'REPLACE INTO posttags set '..
+                'postID = '..safeQuote(postID)..
+                ', tagID = '..safeQuote(v.id)..
+                ', up = '..safeQuote(v.up)..
+                ', down = '..safeQuote(v.down)..
+                ', score = '..safeQuote(v.score)..
+                ', active = '..safeQuote(v.active and '1' or '0')..
+                ', createdAt = '..safeQuote(ngx.time())..
+                ', createdBy = '..safeQuote(createdBy)
+    local ok, err = db:query(query)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to write posttag: ',err)
+    end
+  end
+end
+
+function dal:CreateFilter(filterInfo)
+  local db = GetMysqlConnection()
+  local query = 'REPLACE INTO post set'..
+              ' id = '..safeQuote(filterInfo.id)..
+              ', label = '..safeQuote(filterInfo.label)..
+              ', description = '..safeQuote(filterInfo.description)..
+              ', ownerID = '..safeQuote(filterInfo.ownerID)..
+              ', createdAt = '..safeQuote(filterInfo.createdAt)..
+              ', createdBy = '..safeQuote(filterInfo.createdBy)
+  local ok, err = db.query(query)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create post in mysql: ',err)
+  end
+end
+
+function dal:CreateFilterTags(tags)
+  local db = GetMysqlConnection()
+  for k,v in pairs(tags) do
+
+  end
 
 end
 
@@ -56,13 +102,14 @@ end
 
 return dal
 
+--[=[
+
 local db = require("lapis.db")
 local DAL = {}
 
 
 function DAL:GetUserFrontPage()
-  local query = [[SELECT p.id,p.title,p.link,p.commentCount
-    from post p]]
+
   local posts = db.query(query)
 
   for _,post in pairs(posts) do
@@ -246,3 +293,6 @@ function DAL:LoadFilteredPosts(requiredTags,bannedTags)
 end
 
 return DAL
+
+
+--]=]

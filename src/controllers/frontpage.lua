@@ -13,6 +13,7 @@ local function FrontPage(self)
 
   else
     self.posts = api:GetDefaultFrontPage(offset)
+    print(util.to_json(self.posts))
   end
 
   return {render = 'frontpage'}

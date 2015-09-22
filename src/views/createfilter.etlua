@@ -27,14 +27,14 @@
     <label for='plustagselect'>Required Tags</label>
     <select name='plustagselect' id='requiredSelect' style="width:350px;" multiple='true' class="chosen-select">
       <% for i, tag in pairs(tags) do %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.id -%>"><%= tag.name -%></option>
+       <option name='option["<%= i -%>"]' value = "<%= tag -%>"><%= tag -%></option>
       <% end %>
     </select>
     </br>
     <label for='minustagselect'>Excluded Tags</label>
     <select name='minustagselect' id='bannedSelect' style="width:350px;" multiple='true' class="chosen-select">
       <% for i, tag in pairs(tags) do %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.id -%>"><%= tag.name -%></option>
+       <option name='option["<%= i -%>"]' value = "<%= tag -%>"><%= tag -%></option>
       <% end %>
     </select>
 

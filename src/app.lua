@@ -5,8 +5,6 @@ local api = require 'api.api'
 app:enable("etlua")
 app.layout = require 'views.layout'
 
-
-
 app:before_filter(function(self)
   if self.session.current_user then
     self.filters = api:GetUserFilters('default')

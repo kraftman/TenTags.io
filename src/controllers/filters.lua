@@ -2,7 +2,7 @@
 
 local M = {}
 
-local cache = require 'cache'
+local api = require 'api.api'
 local uuid = require 'uuid'
 
 
@@ -18,7 +18,6 @@ local function NewFilter(self)
   local bannedTags = from_json(self.params.bannedTags)
 
   local info ={
-    id = newID,
     title = self.params.title,
     label= self.params.label ,
     description = self.params.description,
@@ -28,35 +27,21 @@ local function NewFilter(self)
   }
   local tags = {}
 
-  for _, tagID in pairs(requiredTags) do
-    local tagInfo = {
-      filterID = newID,
-      tagID = tagID,
-      filterType = 'required',
-      createdAt = ngx.time(),
-      createdBy = self.session.current_user_id
-    }
-    table.insert(tags,tagInfo)
+  info.bannedTags = bannedTags
+  info.requiredTags = requiredTags
+
+  local ok, err = api:CreateFilter(info)
+  if ok then
+    return
+  else
+    ngx.log(ngx.ERR, 'error creating filter: ',err)
+    return {status = 500}
   end
-
-  for _, tagID in pairs(bannedTags) do
-    local tagInfo = {
-      filterID = newID,
-      tagID = tagID,
-      tagID = tagID,
-      filterType = 'banned',
-      createdAt = ngx.time(),
-      createdBy = self.session.current_user_id
-    }
-    table.insert(tags,tagInfo)
-  end
-
-  worker:CreateFilter(info,tags)
-
 end
 
 local function CreateFilter(self)
-  self.tags = cache:GetAllTags()
+  self.tags = api:GetAllTags()
+  print(to_json(self.tags))
   return {render = 'createfilter'}
 end
 
@@ -99,7 +84,7 @@ end
 
 function M:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = DisplayFilter,POST = NewFilter}))
-  app:match('createfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
+  app:match('newfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
   app:get('allfilters','/f',LoadAllFilters)
 
 end

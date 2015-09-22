@@ -1,6 +1,5 @@
 
 
-local uuid = require 'uuid'
 local api = require 'api.api'
 local util = require("lapis.util")
 
@@ -17,7 +16,6 @@ local tinsert = table.insert
 local function CreatePost(self)
 
   local selectedTags = from_json(self.params.selectedtags)
-  local newID =  uuid.generate_random()
 
   if trim(self.params.link) == '' then
     self.params.link = nil
@@ -26,7 +24,7 @@ local function CreatePost(self)
   local info ={
     id = newID,
     title = self.params.title,
-    link = self.params.link or self:url_for('viewpost',{postID = newID}),
+    link = self.params.link,
     text = self.params.text,
     createdAt = ngx.time(),
     createdBy = self.session.current_user_id,

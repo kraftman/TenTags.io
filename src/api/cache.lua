@@ -24,28 +24,24 @@ function cache:LoadCachedPosts(posts)
   end
 end
 
+function cache:AddPost(post)
+  result,err = postInfo:set(post.id,to_json(postInfo))
+end
+
 function cache:GetAllTags()
-  local result,err = tags:get('all')
-  if err then
-    ngx.log(ngx.ERR, 'unable to load all tags: ',err)
+  local tags = lru:GetAllTags()
+  if tags then
+    return tags
   end
 
-  if result then
-    return from_json(result)
-  end
-
-  local res = ngx.location.capture('/cache/tags')
-  if res.status == 200 then
-    result,err = tags:set('all',res.body,60)
-    if err then
-      ngx.log(ngx.ERR, 'unable to set tags ',err)
-    end
-    return from_json(res.body)
+  local res = redisread:GetAllTags()
+  if res then
+    lru:SetAllTags(res)
+    return res
   else
-    ngx.log(ngx.ERR, 'error requesting from api, status:',status,' message: ',res.body)
+    ngx.log(ngx.ERR, 'error requesting from api')
     return {}
   end
-
 end
 
 function cache:LoadUncachedPosts(posts)
@@ -119,26 +115,13 @@ function cache:LoadFrontPageList(username)
 end
 
 function cache:GetTag(tagName)
-  local result,err = tags:get(tagName)
-  if err then
-    ngx.log(ngx.ERR, 'unable to load from tags: ',err)
-    return
-  end
-  if result then
-    return from_json(result)
-  end
-
-  local res= ngx.location.capture('/cache/tag/'..tagName)
-  if res.status == 200 then
-    local tagInfo = from_json(res.body)
-    if tagInfo.name then
-      tags:set(tagInfo.name,res.body,TAG_CACHE_TIME)
-      return tagInfo
+  local tags = self:GetAllTags()
+  for k,v in pairs(tags) do
+    if v.name == tagName then
+      return v
     end
-  else
-    ngx.log(ngx.ERR, 'unable to get tag: code ',res.status,' body: ',res.body)
   end
-
+  return
 end
 
 
