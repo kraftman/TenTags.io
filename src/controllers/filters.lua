@@ -53,7 +53,7 @@ local function DisplayFilter(self)
     return CreateFilter(self)
   end
 
-  self.posts = cache:LoadFilterTopPosts(filter)
+  self.posts = api:LoadFilterPosts(filter)
 
 
   return {render = 'viewfilter'}

@@ -90,6 +90,10 @@ function api:FilterIsValid(filterInfo)
   return true
 end
 
+function api:LoadFilterPosts(filter)
+  return {}
+end
+
 function api:GetFilter(filterName)
   return cache:GetFilter(filterName)
 end
