@@ -115,6 +115,8 @@ function api:CreateFilter(filterInfo)
     if tag then
       tag.filterID = filterInfo.id
       tag.filterType = 'required'
+      tag.createdBy = filterInfo.createdBy
+      tag.createdAt = filterInfo.createdAt
       tinsert(tags,tag)
       filterInfo.requiredTags[k] = tag
     end
@@ -125,6 +127,8 @@ function api:CreateFilter(filterInfo)
     if tag then
       tag.filterID = filterInfo.id
       tag.filterType = 'banned'
+      tag.createdBy = filterInfo.createdBy
+      tag.createdAt = filterInfo.createdAt
       tinsert(tags,tag)
       filterInfo.bannedTags[k] = tag
     end
