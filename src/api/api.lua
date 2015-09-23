@@ -63,6 +63,7 @@ function api:CreatePost(postInfo)
   postInfo.id = uuid.generate_random()
   postInfo.parentID = postInfo.id
   postInfo.createdBy = postInfo.createdBy or 'default'
+  postInfo.commentCount = 0
 
   if not postInfo or trim(postInfo.link) == '' then
     tinsert(postInfo.tags,'self')
@@ -79,11 +80,18 @@ function api:CreatePost(postInfo)
     end
   end
 
-  cache:AddPost(postInfo)
   worker:CreatePost(postInfo)
 
   return true
 
+end
+
+function api:FilterIsValid(filterInfo)
+  return true
+end
+
+function api:GetFilter(filterName)
+  return cache:GetFilter(filterName)
 end
 
 function api:CreateFilter(filterInfo)
@@ -93,6 +101,8 @@ function api:CreateFilter(filterInfo)
   end
 
   filterInfo.id = uuid.generate_random()
+  filterInfo.subscribers = 0
+  filterInfo.name = filterInfo.name:lower()
 
   local tags = {}
 

@@ -31,13 +31,31 @@ function write:CreateFilter(filterInfo)
   filterInfo.bannedTags = nil
   filterInfo.requiredTags = nil
 
-  -- write tags to filter:tag:required:filterid
-  -- and filter:tag:banned:filterid
+  local red = GetRedisConnection()
+  local ok, err = red:zadd('filters',filterInfo.createdAt,filterInfo.name)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add filter to sorted set:',err)
+  end
+  ok, err = red:hmset('filter:'..filterInfo.id, filterInfo)
+  if not ok then
+    ngx.log(ngx.ERR, 'unablet to add filter info: ',err)
+  end
 
-  -- write other filter info to hmest filter:filterid
+  for k, v in pairs(requiredTags) do
+    ok, err = red:sadd('filter:requiredtags:'..filterInfo.name)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to add required tags: ',err)
+    end
+  end
 
-
+  for k, v in pairs(bannedTags) do
+    ok, err = red:sadd('filter:bannedtags:'..filterInfo.name)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to add banned tags: ',err)
+    end
+  end
 end
+
 
 function write:ConvertListToTable(list)
   local info = {}
@@ -70,8 +88,9 @@ function write:CreatePost(postInfo)
   postInfo.tags = nil
   local tagNames = {}
 
-  for k,v in pairs(tags) do
-    tinsert(tagNames,v.name)
+  for k,tag in pairs(tags) do
+    tinsert(tagNames,tag.name)
+    local ok, err = red:hmset('posttags:'..postInfo.id..':'..tag.name,tag)
   end
 
   local ok, err = red:sadd('post:tags:'..postInfo.id,unpack(tagNames))
@@ -79,7 +98,7 @@ function write:CreatePost(postInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to create post:',err)
   end
-  local ok, err = red:sadd('posts',postInfo.id)
+  local ok, err = red:zadd('posts',postInfo.createdAt,postInfo.id)
   SetKeepalive(red)
 end
 

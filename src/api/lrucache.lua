@@ -3,6 +3,7 @@ local lrucache = require "resty.lrucache"
 
 local userFilters = lrucache.new(1000)  -- allow up to 200 items in the cache
 local tags = lrucache.new(1)
+local filters = lrucache.new(100)
 if not userFilters then
     return error("failed to create the cache: " .. (err or "unknown"))
 end
@@ -29,6 +30,14 @@ end
 
 function _M:GetAllTags()
   return tags:get('all')
+end
+
+function _M:GetFilter(filterName)
+  return tags:get(filterName)
+end
+
+function _M:SetFilter(filterName,filterInfo)
+  return tags:set(filterName,filterInfo,600)
 end
 
 return _M

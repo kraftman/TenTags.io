@@ -9,12 +9,7 @@ local m = {}
 
 local function FrontPage(self)
 
-  if self.session.current_user then
-
-  else
-    self.posts = api:GetDefaultFrontPage(offset)
-    print(util.to_json(self.posts))
-  end
+  self.posts = api:GetDefaultFrontPage(offset) or {}
 
   return {render = 'frontpage'}
 end

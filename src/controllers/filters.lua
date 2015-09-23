@@ -19,7 +19,7 @@ local function NewFilter(self)
 
   local info ={
     title = self.params.title,
-    label= self.params.label ,
+    name= self.params.label ,
     description = self.params.description,
     createdAt = ngx.time(),
     createdBy = self.session.current_user_id,
@@ -48,28 +48,13 @@ end
 local function DisplayFilter(self)
   -- does the filter exist? if not then lets make it
 
-  local filter = cache:LoadFilter(self.params.filterlabel)
+  local filter = api:GetFilter(self.params.filterlabel)
   if not filter then
     return CreateFilter(self)
   end
 
+  self.posts = cache:LoadFilterTopPosts(filter)
 
-  local tags = cache:LoadFilterTags(self.params.filterlabel)
-  print(to_json(tags))
-  local requiredTagID = {}
-  local bannedTagID = {}
-
-  for _,tag in pairs(tags) do
-    if tag.filterType == 'required' then
-      table.insert(requiredTagID,tag.id)
-    elseif tag.filterType == 'banned' then
-      table.insert(bannedTagID,tag.id)
-    end
-  end
-
-  self.posts = cache:LoadFilteredPosts(requiredTagID,bannedTagID)
-
-  DAL:AddTagsToPosts(self.posts)
 
   return {render = 'viewfilter'}
 

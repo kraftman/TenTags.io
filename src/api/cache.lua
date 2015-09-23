@@ -1,5 +1,6 @@
 local cache = {}
 local filterList = ngx.shared.filterlist
+local filterDict = ngx.shared.filters
 local frontpages = ngx.shared.frontpages
 local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
@@ -13,17 +14,6 @@ local TAG_CACHE_TIME = 5
 local FRONTPAGE_CACHE_TIME = 5
 
 
-function cache:LoadCachedPosts(posts)
-  local result,err
-  for postID,v in pairs(posts) do
-    result,err = postInfo:get(postID)
-    if result then
-      posts[postID] = result
-      posts[postID].cached = true
-    end
-  end
-end
-
 function cache:AddPost(post)
   result,err = postInfo:set(post.id,to_json(postInfo))
 end
@@ -31,6 +21,7 @@ end
 function cache:GetAllTags()
   local tags = lru:GetAllTags()
   if tags then
+    print(to_json(tags))
     return tags
   end
 
@@ -44,49 +35,77 @@ function cache:GetAllTags()
   end
 end
 
-function cache:LoadUncachedPosts(posts)
-  local uncached = {}
-  local found = false
-  for postID, v in pairs(posts) do
-    if not v.cached then
-      table.insert(uncached,postID)
-      found = true
-    end
+
+function cache:GetPost(postID)
+  local res, err = postInfo:get(postID)
+  if err then
+    ngx.log(ngx.ERR, 'unable to load post info: ', err)
   end
-  if not found then
-    return
+  if res then
+    return from_json(res)
   end
 
-  local postList = table.concat(uncached,',')
-  local res = ngx.location.capture('/cache/posts?posts='..postList)
-  if not res or res.status ~= 200 then
-    ngx.log(ngx.ERR, 'error requesting upstream: ',err,' status: ',res.status)
-    return
-  end
-
-  for k,v in pairs(from_json(res.body)) do
-    if posts[k] then
-      posts[k] = v
+  local result = redisread:GetPost(postID)
+  if result and result ~= ngx.null then
+    print('found in redis')
+    res, err = postInfo:set(postID,to_json(result))
+    if err then
+      ngx.log(ngx.ERR, 'unable to set postInfo: ',err)
     end
+    return result
+  else
+    print('couldnt find post')
   end
 
 end
 
+function cache:GetFilter(filterName)
+  local res = lru:GetFilter(filterName)
+  if res then
+    return res
+  end
+  local res, err = filterDict:get(filterName)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get filter info from shdict: ',err)
+  end
+  if res then
+    local filterInfo = from_json(res)
+    lru:SetFilter(filterName,filterInfo)
+    return filterInfo
+  end
+
+  local result = redisread:GetFilter(filterName)
+  if result then
+    res, err = filterDict:set(filterName,to_json(result))
+    if err then
+      ngx.log('unablet to set filterdict: ',err)
+    end
+    lru:SetFilter(filterName,result)
+    return result
+  else
+    ngx.log(ngx.ERR, 'could not find filter')
+  end
+
+
+end
+
 function cache:GetDefaultFrontPage(offset)
-  offset = offset or 0
+  offset = 0
 
   local frontPageList = self:LoadFrontPageList('default')
+
   local posts = {}
 
   local postID
-  for i = 1+offset,10+offset do
+  for i = 1,5 do
+
     postID = frontPageList[i]
+
     if postID then
-      posts[postID] = {}
+      posts[postID] = self:GetPost(postID)
+
     end
   end
-  self:LoadCachedPosts(posts)
-  self:LoadUncachedPosts(posts)
 
   return posts
 
@@ -110,8 +129,6 @@ function cache:LoadFrontPageList(username)
   else
     ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
   end
-
-
 end
 
 function cache:GetTag(tagName)

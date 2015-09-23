@@ -5,11 +5,8 @@
       <a class='commentLink' href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>
       <% for _,tag in pairs(post.tags) do %>
         <div class = 'tag'>
-          <%= tag.name %>
+          <%= tag.name%>
         </div>
       <% end %>
-
   </div>
-
-
 </div>

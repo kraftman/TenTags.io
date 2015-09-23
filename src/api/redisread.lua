@@ -61,11 +61,17 @@ end
 function read:GetUserFilters(username)
 
   local red = GetRedisConnection()
-  local ok, err = red:smembers('filterlist:'..username)
+
+  local ok, err
+  if username == 'default' then
+    ok, err = red:zrange('filters',0,-1)
+  else
+    ok, err = red:smembers('filterlist:'..username)
+  end
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'error getting filter list for user "',username,'", error:',err)
-    return
+    return {}
   end
 
   if ok == ngx.null then
@@ -75,12 +81,93 @@ function read:GetUserFilters(username)
   end
 end
 
+function read:GetFilter(filterName)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall('filter:'..filterName)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load filter info: ',err)
+  end
+  if ok == ngx.null then
+    return nil
+  end
+  local filter = self:ConvertListToTable(ok)
+
+  ok, err = red:smembers('filter:bannedtags:'..filterName)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load banned tags: ',err)
+  end
+  if ok == ngx.null then
+    filter.bannedTags = {}
+  else
+    filter.bannedTags = ok
+  end
+
+  ok, err = red:smembers('filter:requiredtags:'..filterName)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load required tags: ',err)
+  end
+  if ok == ngx.null then
+    filter.requiredTags = {}
+  else
+    filter.requiredTags = ok
+  end
+  return filter
+
+
+end
+
+function read:GetPost(postID)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall('post:'..postID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get post:',err)
+  end
+
+  if ok == ngx.null then
+    return nil
+  end
+
+  local post = self:ConvertListToTable(ok)
+  local postTags,err = red:smembers('post:tags:'..postID)
+  if not postTags then
+    ngx.log(ngx.ERR, 'unable to get post tags:',err)
+  end
+  if postTags == ngx.null then
+    postTags = {}
+  end
+
+  post.tags = {}
+
+  for k, tagName in pairs(postTags) do
+    ok, err = red:hgetall('posttags:'..postID..':'..tagName)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to load posttags:',err)
+    end
+
+    if ok ~= ngx.null then
+      tinsert(post.tags,self:ConvertListToTable(ok))
+    end
+  end
+
+  return post
+end
+
 
 function read:LoadFrontPageList(username)
   local filterList = self:GetUserFilters(username)
 
-  startAt = startAt or 0
   local red = GetRedisConnection()
+
+  if username == 'default' then
+    local ok, err = red:zrange('posts',0,-1)
+    if ok == ngx.null then
+      return {}
+    else
+      return ok
+    end
+  end
+
+  startAt = startAt or 0
   red:init_pipeline()
   for k, v in pairs(filterList) do
     red:zrange(v..':score',0,50)

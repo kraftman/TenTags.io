@@ -10,8 +10,120 @@
 
 local redis = require 'redis'
 local client = redis.connect('127.0.0.1', 6379)
+local random = math.random
+local tinsert = table.insert
 
+function TestPost()
+  --[[
+    each post needs a sorted set by date,
+    a sorted set by score
+    a set of tags
+    a hash of properties
+  ]]
+  local post = {}
+  local tags = {}
+  local params = {}
+  local comments = {}
+  local count = 0
+  for i = 1,1000000 do
+    if i % 10000 == 0 then
+      print(i)
+    end
+    client:pipeline(function(p)
+        count = count + 1
+        params = {}
+        post = {}
+        post.id = 'postidbutshouldremainabought'..i
+        tags = {}
+        comments = {}
+        for j = 5,5+random(10)do
+          tinsert(tags,'etnlongpostid approaching32cha'..j)
+        end
+        for j = 1,20 do
+          tinsert(params,'randomstatorparam'..j)
+        end
+        for j = 1,200 do
+          tinsert(comments,'some long commment that hopefully is an average size comment some long commment that hopefully is an average size commentsome long commment that hopefully is an average size commentsome long commment that hopefully is an average size comment')
+        end
+        p:zadd('posts:score',i,post.id)
+        p:zadd('posts:date',i,post.id)
+        p:sadd('post:tags:'..post.id, unpack(tags))
+        p:hmset('postinfo:'..post.id, unpack(params))
+        p:sadd('post:comments:'..post.id, unpack(comments))
 
+    end)
+  end
+  print(count)
+end
+
+function TestPostNoComments()
+  --[[
+    each post needs a sorted set by date,
+    a sorted set by score
+    a set of tags
+    a hash of properties
+  ]]
+  local post = {}
+  local tags = {}
+  local params = {}
+  local count = 0
+  for i = 1,100000 do
+    if i % 10000 == 0 then
+      print(i)
+    end
+    client:pipeline(function(p)
+        count = count + 1
+        params = {}
+        post = {}
+        post.id = 'postidbutshouldremainabought'..i
+        tags = {}
+        for j = 5,5+random(10)do
+          tinsert(tags,'etnlongpostid approaching32cha'..j)
+        end
+        for j = 1,20 do
+          tinsert(params,'randomstatorparam'..j)
+        end
+        p:zadd('posts:score',i,post.id)
+        p:zadd('posts:date',i,post.id)
+        p:sadd('post:tags:'..post.id, unpack(tags))
+        p:hmset('postinfo:'..post.id, unpack(params))
+
+    end)
+  end
+  print(count)
+end
+
+function TestComments()
+  local comment = {}
+  for i = 1, 100000 do
+    if i % 10000 == 0 then
+      print(i)
+    end
+    comment = {}
+    comment.id = 'ariosetnoairsenoiarestaiorseooia'..i
+    comment.text = 'aernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatr'
+    comment.up = random(1000)
+    comment.down =  random(1000)
+    comment.userid = 'oairestoiarsetoairoseniarestn'..i
+    comment.postID = 'oairestoiarsetoairoeniarestn'..i
+    client:pipeline(function(p)
+      p:hset('comment:'..comment.id,'id',comment.id)
+      p:hset('comment:'..comment.id,'text',comment.text)
+      p:hset('comment:'..comment.id,'up',comment.up)
+      p:hset('comment:'..comment.id,'down',comment.down)
+      p:hset('comment:'..comment.id,'userid',comment.userid)
+      p:hset('comment:'..comment.id,'postID',comment.postID)
+
+      p:zadd('post'..(i/10)..'comment:date',i,comment.id)
+      p:zadd('post'..(i/10)..'comment:score',i,comment.id)
+    end)
+  end
+
+end
+TestComments()
+--TestPostNoComments()
+
+--[[
 function testposts()
   for i = 1, 1000000 do
     client:zadd('posts',i,i)
@@ -42,3 +154,4 @@ function voteSize()
 end
 
 voteSize()
+--]]
