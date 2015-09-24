@@ -12,6 +12,13 @@ local redis = require 'redis'
 local client = redis.connect('127.0.0.1', 6379)
 local random = math.random
 local tinsert = table.insert
+local uuid = require 'uuid'
+
+function string.fromhex(str)
+    return (str:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
 
 function TestPost()
   --[[
@@ -120,7 +127,23 @@ function TestComments()
   end
 
 end
-TestComments()
+
+function TestRedisKeys()
+  local new = uuid.new
+  local uuid
+  client:pipeline(function(p)
+    for i = 1, 100000 do
+      if i % 10000 == 0 then
+        print(i)
+      end
+      p:sadd(i,'testkeys')
+    end
+  end)
+end
+TestRedisKeys()
+
+
+--TestComments()
 --TestPostNoComments()
 
 --[[
