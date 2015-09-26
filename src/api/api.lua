@@ -96,8 +96,8 @@ function api:LoadFilterPosts(filter)
   return {}
 end
 
-function api:GetFilter(filterName)
-  return cache:GetFilter(filterName)
+function api:GetFilterByName(filterName)
+  return cache:GetFilterByName(filterName)
 end
 
 function api:GetFiltersBySubs(offset,count)

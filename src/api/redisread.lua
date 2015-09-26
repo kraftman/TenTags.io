@@ -77,11 +77,16 @@ end
 
 function read:GetFilterID(filterName)
   local red = GetRedisConnection()
-  local ok, err = red:get('filtername:'..filterName)
+  local ok, err = red:get('filterid:'..filterName)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter id from name: ',err)
   end
-  return ok == ngx.null and {} or ok
+  SetKeepalive(red)
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
 end
 
 function read:GetUserFilterIDs(username)
@@ -122,7 +127,7 @@ function read:GetFilter(filterName)
     return nil
   end
   local filter = self:ConvertListToTable(ok)
-  print(to_json(filter))
+  --print(to_json(filter))
 
   ok, err = red:smembers('filter:bannedtags:'..filterName)
   if not ok then

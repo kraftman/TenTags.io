@@ -47,8 +47,7 @@ end
 
 local function DisplayFilter(self)
   -- does the filter exist? if not then lets make it
-
-  local filter = api:GetFilter(self.params.filterlabel)
+  local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
     return CreateFilter(self)
   end
