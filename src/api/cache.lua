@@ -1,5 +1,5 @@
 local cache = {}
-local filterList = ngx.shared.filterlist
+local userFilterIDs = ngx.shared.userFilterIDs
 local filterDict = ngx.shared.filters
 local frontpages = ngx.shared.frontpages
 local tags = ngx.shared.tags
@@ -59,34 +59,67 @@ function cache:GetPost(postID)
 
 end
 
-function cache:GetFilter(filterName)
-  local res = lru:GetFilter(filterName)
+
+
+function cache:GetFilterID(filterName)
+  --cache later
+  return redisread:GetFilterID(filterName)
+end
+
+function cache:GetFilterByName(filterName)
+  local filterID = self:GetFilterID(filterName)
+  return self:GetFilterByID(filterID) or {}
+end
+
+function cache:GetFilterByID(filterID)
+  --[[
+  local res = lru:GetFilter(filterID)
   if res then
     return res
   end
-  local res, err = filterDict:get(filterName)
+  local res, err = filterDict:get(filterID)
   if err then
     ngx.log(ngx.ERR, 'unable to get filter info from shdict: ',err)
   end
   if res then
     local filterInfo = from_json(res)
-    lru:SetFilter(filterName,filterInfo)
+    lru:SetFilter(filterID,filterInfo)
     return filterInfo
   end
+  ]]
 
-  local result = redisread:GetFilter(filterName)
+  local result = redisread:GetFilter(filterID)
+  return result or {}
+  --[[
   if result then
-    res, err = filterDict:set(filterName,to_json(result))
+    res, err = filterDict:set(filterID,to_json(result))
     if err then
       ngx.log('unablet to set filterdict: ',err)
     end
-    lru:SetFilter(filterName,result)
+    lru:SetFilter(filterID,result)
     return result
   else
     ngx.log(ngx.ERR, 'could not find filter')
   end
+  ]]
 
+end
 
+function cache:GetFilterInfo(filterIDs)
+  local filterInfo = {}
+  for k,v in pairs(filterIDs) do
+    filterInfo[k] = self:GetFilterByID(v)
+  end
+  return filterInfo
+end
+
+function cache:GetFiltersBySubs(startAt,endAt)
+
+  local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
+  if not filterIDs then
+    return {}
+  end
+  return self:GetFilterInfo(filterIDs)
 end
 
 function cache:GetDefaultFrontPage(offset)
@@ -100,10 +133,8 @@ function cache:GetDefaultFrontPage(offset)
   for i = 1,5 do
 
     postID = frontPageList[i]
-
     if postID then
       posts[postID] = self:GetPost(postID)
-
     end
   end
 
@@ -142,31 +173,39 @@ function cache:GetTag(tagName)
 end
 
 
-function cache:GetDefaultFilters()
-  local filters = lru:GetDefaultFilters()
+function cache:GetUserFilterIDs(username)
+  username = username or 'default'
+  --[[
+
+  local filters = lru:GetUserFilterIDs(username)
   if filters then
     return filters
   end
 
-  local result,err = filterList:get('default')
+  local result,err = userFilterIDs:get(username)
   if err then
-    ngx.log(ngx.ERR, 'unable to get from shdict filterelist: ',err)
+    ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)
     return {}
   end
+
   if result then
     result = from_json(result)
-    lru:SetDefaultFilters(result)
+    lru:SetUserFilterIDs(username,result)
     return result
   end
+  ]]
 
-  local res = redisread:GetUserFilters('default')
+  local res = redisread:GetUserFilterIDs(username)
+  return res or {}
+  --[[
   if res then
-    lru:SetDefaultFilters(result)
-    filterList:set('default',to_json(res),FILTER_LIST_CACHE_TIME)
+    lru:SetUserFilterIDs(username,result)
+    userFilterIDs:set('default',to_json(res),FILTER_LIST_CACHE_TIME)
     return res
   else
     return {}
   end
+  --]]
 end
 
 

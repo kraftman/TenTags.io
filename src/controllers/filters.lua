@@ -3,7 +3,7 @@
 local M = {}
 
 local api = require 'api.api'
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 
 
 local util = require("lapis.util")
@@ -62,7 +62,8 @@ end
 
 local function LoadAllFilters(self)
 
-  self.filters = cache:LoadAllFilters()
+  self.filters = api:GetFiltersBySubs()
+  print(to_json(self.filters))
 
   return {render = 'allfilters'}
 end

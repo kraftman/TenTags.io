@@ -1,27 +1,26 @@
 local _M = {}
 local lrucache = require "resty.lrucache"
 
-local userFilters = lrucache.new(1000)  -- allow up to 200 items in the cache
+local userFilterIDs = lrucache.new(1000)  -- allow up to 200 items in the cache
+if not userFilterIDs then
+  ngx.log(ngx.ERR, 'unable to create userFilterIDs  cache: ',err or 'unkown')
+end
 local tags = lrucache.new(1)
-local filters = lrucache.new(100)
-if not userFilters then
-    return error("failed to create the cache: " .. (err or "unknown"))
+if not tags then
+  ngx.log(ngx.ERR, 'unable to create the tags cache: ',err or 'unkown')
+end
+local filters = lrucache.new(1000)
+if not filters then
+  ngx.log(ngx.ERR, 'unable to create the filters cache: ',err or 'unkown')
 end
 
-function _M:GetUserFilters(username)
-  return userFilters:get(username)
+
+function _M:GetUserFilterIDs(username)
+  return userFilterIDs:get(username,5)
 end
 
-function _M:SetUserFilters(username,filters)
-  userFilters:set(username,filters)
-end
-
-function _M:GetDefaultFilters()
-  return userFilters:get('default')
-end
-
-function _M:SetDefaultFilters(filters)
-  userFilters:set('default',filters,60)
+function _M:SetUserFilterIDs(username,filters)
+  userFilterIDs:set(username,filters)
 end
 
 function _M:SetAllTags(newTags)
@@ -33,11 +32,12 @@ function _M:GetAllTags()
 end
 
 function _M:GetFilter(filterName)
-  return tags:get(filterName)
+  return filters:get(filterName)
 end
 
 function _M:SetFilter(filterName,filterInfo)
-  return tags:set(filterName,filterInfo,600)
+  return filters:set(filterName,filterInfo,600)
 end
+
 
 return _M

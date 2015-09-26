@@ -14,11 +14,12 @@
     <legend>Create Filter</legend>
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
+    <label for='filterlabel' >Filter Name</label>
+    <input type='text' name='filterlabel' id='filterlabel' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
+
     <label for='filtertitle' >Filter Title:</label>
     <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
 
-    <label for='filterlabel' >Filter Label</label>
-    <input type='text' name='filterlabel' id='filterlabel' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
 
     <label for='filterdescription' >Filter Description</label>
     <input type='text' name='filterdescription' id='filterdescription' maxlength="50" />

@@ -7,7 +7,7 @@ local cache = require 'api.cache'
 local api = {}
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
 local tinsert = table.insert
 local trim = (require 'lapis.util').trim
@@ -15,8 +15,10 @@ local trim = (require 'lapis.util').trim
 --self.session.current_user
 
 
-function api:GetDefaultFilters()
-  return cache:GetDefaultFilters()
+function api:GetUserFilters(username)
+  local filterIDs = cache:GetUserFilterIDs(username)
+
+  return cache:GetFilterInfo(filterIDs)
 end
 
 function api:GetDefaultFrontPage(offset)
@@ -98,6 +100,15 @@ function api:GetFilter(filterName)
   return cache:GetFilter(filterName)
 end
 
+function api:GetFiltersBySubs(offset,count)
+  offset = offset or 0
+  count = count or 10
+  local filters = cache:GetFiltersBySubs(offset,count)
+  return filters
+
+
+end
+
 function api:CreateFilter(filterInfo)
 
   if not api:FilterIsValid(filterInfo) then
@@ -107,6 +118,7 @@ function api:CreateFilter(filterInfo)
   filterInfo.id = uuid.generate_random()
   filterInfo.subscribers = 0
   filterInfo.name = filterInfo.name:lower()
+  filterInfo.subs = 1
 
   local tags = {}
 

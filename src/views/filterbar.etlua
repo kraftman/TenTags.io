@@ -1,6 +1,6 @@
 
 <div id='filterbar'>
-  <% for i, filter in pairs(filters) do %>
+  <% for i, filter in pairs(userFilters) do %>
     <% render("views.st.filterbarelement",{filter = filter}) %>
   <% end %>
 </div>

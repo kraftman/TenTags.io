@@ -4,12 +4,15 @@ local api = require 'api.api'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
-local to_json = (require 'lapis.util').to_json
+
+
+-- DEV ONLY
+to_json = (require 'lapis.util').to_json
 
 app:before_filter(function(self)
 
-  self.filters = api:GetDefaultFilters() or {}
-  print(to_json(self.filters))
+  self.userFilters = api:GetUserFilters() or {}
+  --print(to_json(self.userFilters))
 
 end)
 

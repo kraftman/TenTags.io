@@ -1,8 +1,8 @@
 
 <ul>
-  <a href ='<%=url_for('filter',{filterlabel = filter})%>' class='filterbarelement'>
+  <a href ='<%=url_for('filter',{filterlabel = filter.name})%>' class='filterbarelement'>
     <span >
-      <%= filter%>
+      <%= filter.name%>
     </span>
   </a>
 </ul>

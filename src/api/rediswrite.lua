@@ -32,7 +32,14 @@ function write:CreateFilter(filterInfo)
   filterInfo.requiredTags = nil
 
   local red = GetRedisConnection()
-  local ok, err = red:zadd('filters',filterInfo.createdAt,filterInfo.name)
+  local ok, err = red:set('filterid:'..filterInfo.name,filterInfo.id)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add filter id, err: ',err)
+  end
+
+  local ok, err = red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
+
+  local ok, err = red:zadd('filters',filterInfo.createdAt,filterInfo.id)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add filter to sorted set:',err)
   end
@@ -42,14 +49,14 @@ function write:CreateFilter(filterInfo)
   end
 
   for k, v in pairs(requiredTags) do
-    ok, err = red:sadd('filter:requiredtags:'..filterInfo.name)
+    ok, err = red:sadd('filter:requiredtags:'..filterInfo.id)
     if not ok then
       ngx.log(ngx.ERR, 'unable to add required tags: ',err)
     end
   end
 
   for k, v in pairs(bannedTags) do
-    ok, err = red:sadd('filter:bannedtags:'..filterInfo.name)
+    ok, err = red:sadd('filter:bannedtags:'..filterInfo.id)
     if not ok then
       ngx.log(ngx.ERR, 'unable to add banned tags: ',err)
     end

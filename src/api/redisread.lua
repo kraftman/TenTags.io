@@ -57,18 +57,49 @@ function read:GetAllTags()
   return results
 end
 
+function read:GetFiltersBySubs(startAt,endAt)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('filters',startAt,endAt)
 
-function read:GetUserFilters(username)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get filters: ',err)
+    SetKeepalive(red)
+    return
+  end
+
+  if ok == ngx.null then
+    SetKeepalive(red)
+    return
+  else
+    return ok
+  end
+end
+
+function read:GetFilterID(filterName)
+  local red = GetRedisConnection()
+  local ok, err = red:get('filtername:'..filterName)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get filter id from name: ',err)
+  end
+  return ok == ngx.null and {} or ok
+end
+
+function read:GetUserFilterIDs(username)
 
   local red = GetRedisConnection()
 
   local ok, err
   if username == 'default' then
     ok, err = red:zrange('filters',0,-1)
+    if ok then
+      return self:ConvertListToTable(ok)
+    end
   else
     ok, err = red:smembers('filterlist:'..username)
   end
+
   SetKeepalive(red)
+
   if not ok then
     ngx.log(ngx.ERR, 'error getting filter list for user "',username,'", error:',err)
     return {}
@@ -91,6 +122,7 @@ function read:GetFilter(filterName)
     return nil
   end
   local filter = self:ConvertListToTable(ok)
+  print(to_json(filter))
 
   ok, err = red:smembers('filter:bannedtags:'..filterName)
   if not ok then
@@ -154,7 +186,7 @@ end
 
 
 function read:LoadFrontPageList(username)
-  local filterList = self:GetUserFilters(username)
+  local filterList = self:GetUserFilterIDs(username)
 
   local red = GetRedisConnection()
 
