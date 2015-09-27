@@ -189,15 +189,6 @@ function read:LoadFrontPageList(username)
 
   local red = GetRedisConnection()
 
-  if username == 'default' then
-    local ok, err = red:zrange('posts',0,-1)
-    if ok == ngx.null then
-      return {}
-    else
-      return ok
-    end
-  end
-
   startAt = startAt or 0
   red:init_pipeline()
   for k, v in pairs(filterList) do

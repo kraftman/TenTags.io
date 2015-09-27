@@ -54,7 +54,7 @@ function api:UnsubscribeFromFilter(username,filterID)
   end
 
   worker:UnsubscribeFromFilter(username,filterID)
-  
+
 end
 
 function api:CreateTag(tagName,createdBy)

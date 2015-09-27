@@ -31,23 +31,28 @@ function write:CreateFilter(filterInfo)
   filterInfo.bannedTags = nil
   filterInfo.requiredTags = nil
 
+  -- add id to name conversion table
   local red = GetRedisConnection()
   local ok, err = red:set('filterid:'..filterInfo.name,filterInfo.id)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add filter id, err: ',err)
   end
 
+  -- add to list ranked by subs
   local ok, err = red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
 
+  -- add to list of filters
   local ok, err = red:zadd('filters',filterInfo.createdAt,filterInfo.id)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add filter to sorted set:',err)
   end
+  -- add all filter info
   ok, err = red:hmset('filter:'..filterInfo.id, filterInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unablet to add filter info: ',err)
   end
 
+  -- add list of required tags
   for k, v in pairs(requiredTags) do
     ok, err = red:sadd('filter:requiredtags:'..filterInfo.id,v)
     if not ok then
@@ -55,6 +60,7 @@ function write:CreateFilter(filterInfo)
     end
   end
 
+  -- add list of banned tags
   for k, v in pairs(bannedTags) do
     ok, err = red:sadd('filter:bannedtags:'..filterInfo.id,v)
     if not ok then
@@ -89,6 +95,7 @@ function write:SubscribeToFilter(username,filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)
   end
+
 end
 
 function write:UnsubscribeFromFilter(username, filterID)
@@ -143,6 +150,12 @@ function write:CreatePost(postInfo)
     ngx.log(ngx.ERR, 'unable to create post:',err)
   end
   local ok, err = red:zadd('posts',postInfo.createdAt,postInfo.id)
+
+  -- find filters that want the tags
+  -- find filters that dont want the tags
+  -- subtract 2nd set from first
+
+
   SetKeepalive(red)
 end
 
