@@ -26,6 +26,37 @@ function api:GetDefaultFrontPage(offset)
   return cache:GetDefaultFrontPage(offset)
 end
 
+function api:SubscribeToFilter(username,filterID)
+  local filterIDs =  cache:GetUserFilterIDs(username)
+
+  for k, v in pairs(filterIDs) do
+    if v == filterID then
+      -- they are already subbed
+      return
+    end
+  end
+
+  worker:SubscribeToFilter(username,filterID)
+
+end
+
+function api:UnsubscribeFromFilter(username,filterID)
+  local filterIDs = cache:GetUserFilterIDs(username)
+  local found = false
+  for k,v in pairs(filterIDs) do
+    if v == filterID then
+      found = true
+    end
+  end
+  if not found then
+    -- no need to unsubscribe
+    return
+  end
+
+  worker:UnsubscribeFromFilter(username,filterID)
+  
+end
+
 function api:CreateTag(tagName,createdBy)
   --check if the tag already exists
   -- create it
@@ -90,6 +121,9 @@ end
 
 function api:FilterIsValid(filterInfo)
   return true
+  -- lower case it
+  -- check for invalid chars
+  -- check it doesnt already exist
 end
 
 function api:LoadFilterPosts(filter)
@@ -116,7 +150,6 @@ function api:CreateFilter(filterInfo)
   end
 
   filterInfo.id = uuid.generate_random()
-  filterInfo.subscribers = 0
   filterInfo.name = filterInfo.name:lower()
   filterInfo.subs = 1
 

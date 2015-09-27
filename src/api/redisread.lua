@@ -94,14 +94,8 @@ function read:GetUserFilterIDs(username)
   local red = GetRedisConnection()
 
   local ok, err
-  if username == 'default' then
-    ok, err = red:zrange('filters',0,-1)
-    if ok then
-      return self:ConvertListToTable(ok)
-    end
-  else
-    ok, err = red:smembers('filterlist:'..username)
-  end
+
+  ok, err = red:smembers('filterlist:'..username)
 
   SetKeepalive(red)
 

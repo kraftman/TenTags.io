@@ -49,19 +49,20 @@ function write:CreateFilter(filterInfo)
   end
 
   for k, v in pairs(requiredTags) do
-    ok, err = red:sadd('filter:requiredtags:'..filterInfo.id)
+    ok, err = red:sadd('filter:requiredtags:'..filterInfo.id,v)
     if not ok then
       ngx.log(ngx.ERR, 'unable to add required tags: ',err)
     end
   end
 
   for k, v in pairs(bannedTags) do
-    ok, err = red:sadd('filter:bannedtags:'..filterInfo.id)
+    ok, err = red:sadd('filter:bannedtags:'..filterInfo.id,v)
     if not ok then
       ngx.log(ngx.ERR, 'unable to add banned tags: ',err)
     end
   end
 end
+
 
 
 function write:ConvertListToTable(list)
@@ -71,6 +72,42 @@ function write:ConvertListToTable(list)
   end
   return info
 end
+
+
+function write:SubscribeToFilter(username,filterID)
+  local red = GetRedisConnection()
+  local ok, err = red:sadd('filterlist:'..username, filterID)
+
+  if not ok then
+    SetKeepalive(red)
+    ngx.log(ngx.ERR, 'unable to add filter to list: ',err)
+    return
+  end
+
+  ok, err = red:hincrby('filter:'..filterID,'subs',1)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
+  end
+end
+
+function write:UnsubscribeFromFilter(username, filterID)
+  local red = GetRedisConnection()
+  local ok, err = red:srem('filterlist:'..username,filterID)
+  if not ok then
+    SetKeepalive(red)
+    ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)
+    return
+  end
+
+  ok, err = red:hincrby('filter:'..filterID,'subs',-1)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
+  end
+
+end
+
 
 
 function write:CreateTag(tagInfo)

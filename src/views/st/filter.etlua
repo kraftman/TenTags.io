@@ -7,4 +7,9 @@
     <%= filter.description -%>
   </p>
 </button>
+<form action="/f/<%= filter.title -%>" method="post">
+  <input type="hidden" name="setdefault" value="true">
+  <input type="hidden" name="filterID" value="<%= filter.id -%>">
+  <button type="submit">Default</button>
+</form>
 </li>

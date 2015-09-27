@@ -15,8 +15,6 @@ local function FrontPage(self)
 end
 
 function m:Register(app)
-
-
   app:get('home','/',FrontPage)
 
 end

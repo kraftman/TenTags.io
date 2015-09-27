@@ -14,6 +14,14 @@ function worker:CreateFilter(filterInfo)
   rediswrite:CreateFilter(filterInfo)
 end
 
+function worker:SubscribeToFilter(username,filterID)
+  rediswrite:SubscribeToFilter(username, filterID)
+end
+
+function worker:UnsubscribeFromFilter(username,filterID)
+  rediswrite:UnsubscribeFromFilter(username,filterID)
+end
+
 
 
 return worker

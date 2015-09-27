@@ -12,7 +12,21 @@ local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
 
+local function ToggleDefault(self)
+
+  if self.params.setdefault == 'true' then
+    api:SubscribeToFilter('default',self.params.filterID)
+  elseif self.params.setdefault == 'false' then
+    api:UnsubscribeFromFilter('default',self.params.filterID)
+  end
+end
+
 local function NewFilter(self)
+
+  if self.params.setdefault then
+    return ToggleDefault(self)
+  end
+
   local newID =  uuid.generate_random()
   local requiredTags = from_json(self.params.requiredTags)
   local bannedTags = from_json(self.params.bannedTags)
@@ -67,10 +81,15 @@ local function LoadAllFilters(self)
   return {render = 'allfilters'}
 end
 
+local function UpdateFilter(self)
+
+end
+
 function M:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = DisplayFilter,POST = NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
   app:get('allfilters','/f',LoadAllFilters)
+
 
 end
 

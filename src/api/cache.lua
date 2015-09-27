@@ -130,7 +130,7 @@ function cache:GetDefaultFrontPage(offset)
   local posts = {}
 
   local postID
-  for i = 1,5 do
+  for i = offset+1,offset+10 do
 
     postID = frontPageList[i]
     if postID then
