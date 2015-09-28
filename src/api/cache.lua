@@ -8,6 +8,7 @@ local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = require 'api.redisread'
 local lru = require 'api.lrucache'
+local tinsert = table.insert
 
 local FILTER_LIST_CACHE_TIME = 5
 local TAG_CACHE_TIME = 5
@@ -37,6 +38,7 @@ end
 
 
 function cache:GetPost(postID)
+  --[[
   local res, err = postInfo:get(postID)
   if err then
     ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -44,8 +46,11 @@ function cache:GetPost(postID)
   if res then
     return from_json(res)
   end
+  --]]
 
   local result = redisread:GetPost(postID)
+  return result or {}
+  --[[
   if result and result ~= ngx.null then
     print('found in redis')
     res, err = postInfo:set(postID,to_json(result))
@@ -56,6 +61,7 @@ function cache:GetPost(postID)
   else
     print('couldnt find post')
   end
+  --]]
 
 end
 
@@ -105,6 +111,15 @@ function cache:GetFilterByID(filterID)
 
 end
 
+function cache:GetFilterIDsByTags(tags)
+
+  -- return all filters that are interested in these tags
+  return redisread:GetFilterIDsByTags(tags)
+
+end
+
+
+
 function cache:GetFilterInfo(filterIDs)
   local filterInfo = {}
   for k,v in pairs(filterIDs) do
@@ -133,6 +148,7 @@ function cache:GetDefaultFrontPage(offset)
   for i = offset+1,offset+10 do
 
     postID = frontPageList[i]
+  
     if postID then
       posts[postID] = self:GetPost(postID)
     end
@@ -143,6 +159,9 @@ function cache:GetDefaultFrontPage(offset)
 end
 
 function cache:LoadFrontPageList(username)
+
+
+  --[[
   local result,err = frontpages:get(username)
   if err then
     ngx.log(ngx.ERR, 'error getting frontpage for user:',username,', err:', err)
@@ -151,15 +170,28 @@ function cache:LoadFrontPageList(username)
   if result then
     return from_json(result)
   end
+  ]]
 
   local res = redisread:LoadFrontPageList(username)
+  print(to_json(res))
 
+  --later on we need to add filters to post where there are multiple
+  local posts = {}
+  for filterID,filterPosts in pairs(res) do
+    for _,postID in pairs(filterPosts) do
+      tinsert(posts,postID)
+    end
+  end
+  print(to_json(posts))
+  return posts
+  --[[
   if res then
     frontpages:set(username,to_json(res),FRONTPAGE_CACHE_TIME)
     return res
   else
     ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
   end
+  --]]
 end
 
 function cache:GetTag(tagName)

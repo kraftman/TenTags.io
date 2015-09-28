@@ -22,6 +22,10 @@ function worker:UnsubscribeFromFilter(username,filterID)
   rediswrite:UnsubscribeFromFilter(username,filterID)
 end
 
+function worker:AddPostToFilters(finalFilters,postInfo)
+  rediswrite:AddPostToFilters(finalFilters,postInfo)
+end
+
 
 
 return worker

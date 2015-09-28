@@ -25,51 +25,6 @@ local function SetKeepalive(red)
   end
 end
 
-function write:CreateFilter(filterInfo)
-  local requiredTags = filterInfo.requiredTags
-  local bannedTags = filterInfo.bannedTags
-  filterInfo.bannedTags = nil
-  filterInfo.requiredTags = nil
-
-  -- add id to name conversion table
-  local red = GetRedisConnection()
-  local ok, err = red:set('filterid:'..filterInfo.name,filterInfo.id)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to add filter id, err: ',err)
-  end
-
-  -- add to list ranked by subs
-  local ok, err = red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
-
-  -- add to list of filters
-  local ok, err = red:zadd('filters',filterInfo.createdAt,filterInfo.id)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to add filter to sorted set:',err)
-  end
-  -- add all filter info
-  ok, err = red:hmset('filter:'..filterInfo.id, filterInfo)
-  if not ok then
-    ngx.log(ngx.ERR, 'unablet to add filter info: ',err)
-  end
-
-  -- add list of required tags
-  for k, v in pairs(requiredTags) do
-    ok, err = red:sadd('filter:requiredtags:'..filterInfo.id,v)
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to add required tags: ',err)
-    end
-  end
-
-  -- add list of banned tags
-  for k, v in pairs(bannedTags) do
-    ok, err = red:sadd('filter:bannedtags:'..filterInfo.id,v)
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to add banned tags: ',err)
-    end
-  end
-end
-
-
 
 function write:ConvertListToTable(list)
   local info = {}
@@ -78,6 +33,69 @@ function write:ConvertListToTable(list)
   end
   return info
 end
+
+function write:CreateFilter(filterInfo)
+  local requiredTags = filterInfo.requiredTags
+  local bannedTags = filterInfo.bannedTags
+  filterInfo.bannedTags = nil
+  filterInfo.requiredTags = nil
+
+  -- add id to name conversion table
+  local red = GetRedisConnection()
+  red:init_pipeline()
+  red:set('filterid:'..filterInfo.name,filterInfo.id)
+
+
+  -- add to list ranked by subs
+  red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
+
+  -- add to list of filters
+  red:zadd('filters',filterInfo.createdAt,filterInfo.id)
+
+  -- add all filter info
+  red:hmset('filter:'..filterInfo.id, filterInfo)
+
+  -- add list of required tags
+  for k, tagInfo in pairs(requiredTags) do
+    red:sadd('filter:requiredtags:'..filterInfo.id,tagInfo.id)
+  end
+
+  -- add list of banned tags
+  for k, tagInfo in pairs(bannedTags) do
+    red:sadd('filter:bannedtags:'..filterInfo.id,tagInfo.id)
+  end
+
+  -- add filter to required tag
+  for k, tagInfo in pairs(requiredTags) do
+    red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'required')
+  end
+  -- add filter to banned tag
+  for k, tagInfo in pairs(bannedTags) do
+    red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'banned')
+  end
+  local results, err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
+  end
+end
+
+function write:AddPostToFilters(filters,postInfo)
+  -- add post to the filters that want it
+  -- by post score, and by date
+  local red = GetRedisConnection()
+    red:init_pipeline()
+    for _, filterInfo in pairs(filters) do
+      red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
+      red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
+    end
+  local results, err = red:commit_pipeline()
+
+  if err then
+    ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
+  end
+  return
+end
+
 
 
 function write:SubscribeToFilter(username,filterID)
@@ -137,24 +155,25 @@ function write:CreatePost(postInfo)
   local red = GetRedisConnection()
   local tags = postInfo.tags
   postInfo.tags = nil
-  local tagNames = {}
+  local tagIDs = {}
 
-  for k,tag in pairs(tags) do
-    tinsert(tagNames,tag.name)
-    local ok, err = red:hmset('posttags:'..postInfo.id..':'..tag.name,tag)
-  end
+  red:init_pipeline()
+    for k,tag in pairs(tags) do
+      tinsert(tagIDs,tag.id)
+      red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
+    end
+    -- add to /f/all
+    red:zadd('allposts:score',postInfo.score,postInfo.id)
+    red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
 
-  local ok, err = red:sadd('post:tags:'..postInfo.id,unpack(tagNames))
-  local ok, err = red:hmset('post:'..postInfo.id,postInfo)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create post:',err)
-  end
-  local ok, err = red:zadd('posts',postInfo.createdAt,postInfo.id)
+    -- add post info
+    red:hmset('post:'..postInfo.id,postInfo)
 
-  -- find filters that want the tags
-  -- find filters that dont want the tags
-  -- subtract 2nd set from first
 
+    local results,err = red:commit_pipeline()
+    if err then
+      ngx.log(ngx.ERR, 'unable to create post:',err)
+    end
 
   SetKeepalive(red)
 end

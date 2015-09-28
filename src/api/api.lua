@@ -97,14 +97,17 @@ function api:CreatePost(postInfo)
   postInfo.parentID = postInfo.id
   postInfo.createdBy = postInfo.createdBy or 'default'
   postInfo.commentCount = 0
+  postInfo.score = 0
 
   if not postInfo or trim(postInfo.link) == '' then
     tinsert(postInfo.tags,'self')
   end
 
   for k,v in pairs(postInfo.tags) do
+
     v = trim(v:lower())
     postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
+
     if postInfo.tags[k] then
       postInfo.tags[k].up = 1
       postInfo.tags[k].down = 0
@@ -113,10 +116,57 @@ function api:CreatePost(postInfo)
     end
   end
 
+  local filterIDs = cache:GetFilterIDsByTags(postInfo.tags)
+  local chosenFilterIDs = {}
+  -- add all the filters that want these tags
+  for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+      if filterType == 'required' then
+        chosenFilterIDs[filterID] = true
+      end
+    end
+  end
+  -- remove all the filters that dont want one of the tags
+  for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+      if filterType == 'banned' then
+        chosenFilterIDs[filterID] = nil
+      end
+    end
+  end
+
+  for k,v in pairs(chosenFilterIDs) do
+    chosenFilterIDs[k] = k
+  end
+
+  --get the info from the filters to find out which tags they want
+  local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)
+  local finalFilters = {}
+  for k,filter in pairs(filtersWithInfo) do
+    if self:TagsMatch(filter.requiredTags, postInfo.tags) then
+      tinsert(finalFilters,filter)
+    end
+  end
+  print(to_json(finalFilters))
+  worker:AddPostToFilters(finalFilters,postInfo)
   worker:CreatePost(postInfo)
-
   return true
+end
 
+function api:TagsMatch(filterTags,postTags)
+  local found = false
+  for _,filterTagID in pairs(filterTags) do
+    found = false
+    for _,postTag in pairs(postTags) do
+      if filterTagID == postTag.id then
+        found = true
+      end
+    end
+    if not found then
+      return false
+    end
+  end
+  return true
 end
 
 function api:FilterIsValid(filterInfo)

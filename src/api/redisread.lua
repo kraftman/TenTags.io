@@ -32,6 +32,28 @@ function read:ConvertListToTable(list)
   return info
 end
 
+
+function read:GetFilterIDsByTags(tags)
+
+  local red = GetRedisConnection()
+  red:init_pipeline()
+  for k,v in pairs(tags) do
+    red:hgetall('tag:filters:'..v.id)
+  end
+  local results, err = red:commit_pipeline()
+  SetKeepalive(red)
+
+  for k,v in pairs(results) do
+    results[k] = self:ConvertListToTable(v)
+  end
+
+  if err then
+    ngx.log(ngx.ERR, 'error retrieving filters for tags:',err)
+  end
+  print(to_json())
+  return results
+end
+
 function read:GetAllTags()
   local red = GetRedisConnection()
   local ok, err = red:smembers('tags')
@@ -111,9 +133,9 @@ function read:GetUserFilterIDs(username)
   end
 end
 
-function read:GetFilter(filterName)
+function read:GetFilter(filterID)
   local red = GetRedisConnection()
-  local ok, err = red:hgetall('filter:'..filterName)
+  local ok, err = red:hgetall('filter:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load filter info: ',err)
   end
@@ -123,7 +145,7 @@ function read:GetFilter(filterName)
   local filter = self:ConvertListToTable(ok)
   --print(to_json(filter))
 
-  ok, err = red:smembers('filter:bannedtags:'..filterName)
+  ok, err = red:smembers('filter:bannedtags:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load banned tags: ',err)
   end
@@ -133,7 +155,7 @@ function read:GetFilter(filterName)
     filter.bannedTags = ok
   end
 
-  ok, err = red:smembers('filter:requiredtags:'..filterName)
+  ok, err = red:smembers('filter:requiredtags:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load required tags: ',err)
   end
@@ -185,32 +207,29 @@ end
 
 
 function read:LoadFrontPageList(username)
-  local filterList = self:GetUserFilterIDs(username)
+  local filterIDs = self:GetUserFilterIDs(username)
 
   local red = GetRedisConnection()
 
   startAt = startAt or 0
-  red:init_pipeline()
-  for k, v in pairs(filterList) do
-    red:zrange(v..':score',0,50)
-  end
-  local results, err = red:commit_pipeline()
+  local postsByFilter = {}
+  local ok, err
 
-  if not results then
-    ngx.log(ngx.ERR, 'error getting posts for filters:',err)
-    return {}
-  end
-  for k,v in pairs(results) do
-    if not next(v) then
-      results[k] = nil
+  for _, filterID in pairs(filterIDs) do
+    ok, err = red:zrange('filterposts:score:'..filterID,0,50)
+    postsByFilter[filterID] = postsByFilter[filterID] or {}
+    if not ok then
+      ngx.log(ngx.ERR,'unable to read filters posts: ',err)
+    else
+      if ok ~= ngx.null then
+        for k,postID in pairs(ok)do
+          tinsert(postsByFilter[filterID],postID)
+        end
+      end
     end
   end
 
-  if results == ngx.null then
-    return {}
-  else
-    return results
-  end
+  return postsByFilter
 
 end
 
