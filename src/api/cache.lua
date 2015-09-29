@@ -49,6 +49,7 @@ function cache:GetPost(postID)
   --]]
 
   local result = redisread:GetPost(postID)
+
   return result or {}
   --[[
   if result and result ~= ngx.null then
@@ -138,17 +139,18 @@ function cache:GetFiltersBySubs(startAt,endAt)
 end
 
 function cache:GetDefaultFrontPage(offset)
-  offset = 0
+  offset = offset or 0
 
   local frontPageList = self:LoadFrontPageList('default')
+  print(#frontPageList)
 
   local posts = {}
 
   local postID
   for i = offset+1,offset+10 do
-
+    print(i)
     postID = frontPageList[i]
-  
+
     if postID then
       posts[postID] = self:GetPost(postID)
     end
@@ -173,7 +175,7 @@ function cache:LoadFrontPageList(username)
   ]]
 
   local res = redisread:LoadFrontPageList(username)
-  print(to_json(res))
+  --print(to_json(res))
 
   --later on we need to add filters to post where there are multiple
   local posts = {}
@@ -182,7 +184,7 @@ function cache:LoadFrontPageList(username)
       tinsert(posts,postID)
     end
   end
-  print(to_json(posts))
+  --print(to_json(posts))
   return posts
   --[[
   if res then

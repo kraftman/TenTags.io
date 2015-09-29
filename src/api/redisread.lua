@@ -181,13 +181,15 @@ function read:GetPost(postID)
   end
 
   local post = self:ConvertListToTable(ok)
-  local postTags,err = red:smembers('post:tags:'..postID)
+
+  local postTags,err = red:smembers('post:tagIDs:'..postID)
   if not postTags then
     ngx.log(ngx.ERR, 'unable to get post tags:',err)
   end
   if postTags == ngx.null then
     postTags = {}
   end
+
 
   post.tags = {}
 

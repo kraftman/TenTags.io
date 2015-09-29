@@ -155,13 +155,19 @@ function write:CreatePost(postInfo)
   local red = GetRedisConnection()
   local tags = postInfo.tags
   postInfo.tags = nil
-  local tagIDs = {}
+  local filters = postInfo.filters
+  postInfo.filters = nil
 
   red:init_pipeline()
+    -- add all filters that the post has
+    red:sadd('postfilters:'..postInfo.id,filters)
+    -- collect tag ids and add taginfo to hash
     for k,tag in pairs(tags) do
-      tinsert(tagIDs,tag.id)
+
+      red:sadd('post:tagIDs:'..postInfo.id,tag.id)
       red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
     end
+  
     -- add to /f/all
     red:zadd('allposts:score',postInfo.score,postInfo.id)
     red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
@@ -170,10 +176,10 @@ function write:CreatePost(postInfo)
     red:hmset('post:'..postInfo.id,postInfo)
 
 
-    local results,err = red:commit_pipeline()
-    if err then
-      ngx.log(ngx.ERR, 'unable to create post:',err)
-    end
+  local results,err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to create post:',err)
+  end
 
   SetKeepalive(red)
 end
