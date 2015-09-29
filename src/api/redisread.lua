@@ -208,7 +208,7 @@ function read:GetPost(postID)
 end
 
 
-function read:LoadFrontPageList(username)
+function read:LoadFrontPageList(username,startTime, endTime)
   local filterIDs = self:GetUserFilterIDs(username)
 
   local red = GetRedisConnection()
@@ -218,7 +218,9 @@ function read:LoadFrontPageList(username)
   local ok, err
 
   for _, filterID in pairs(filterIDs) do
-    ok, err = red:zrange('filterposts:score:'..filterID,0,50)
+    
+    ok, err = red:zrangebyscore('filterposts:date:'..filterID,endTime,startTime)
+
     postsByFilter[filterID] = postsByFilter[filterID] or {}
     if not ok then
       ngx.log(ngx.ERR,'unable to read filters posts: ',err)

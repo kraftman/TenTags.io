@@ -138,29 +138,44 @@ function cache:GetFiltersBySubs(startAt,endAt)
   return self:GetFilterInfo(filterIDs)
 end
 
-function cache:GetDefaultFrontPage(offset)
+function cache:GetDefaultFrontPage(offset,sort)
   offset = offset or 0
 
-  local frontPageList = self:LoadFrontPageList('default')
-  print(#frontPageList)
+  local frontPageList = self:LoadFrontPageList('default',ngx.time(), ngx.time() -172800 )
 
   local posts = {}
+  for i,postID in pairs(frontPageList) do
+    posts[i] = self:GetPost(postID)
+  end
+
+  if sort == 'new' then
+    table.sort(posts, function(a,b)
+      return a.createdAt > b.createdAt
+    end)
+  elseif sort == 'best' then
+    table.sort(posts, function(a,b)
+      return a.score > b.score
+    end)
+  else
+    table.sort(posts, function(a,b)
+      return a.createdAt + a.score > b.createdAt + b.score
+    end)
+  end
 
   local postID
+  local filteredPosts = {}
   for i = offset+1,offset+10 do
-    print(i)
-    postID = frontPageList[i]
-
+    postID = posts[i]
     if postID then
-      posts[postID] = self:GetPost(postID)
+      tinsert(filteredPosts,posts[i])
     end
   end
 
-  return posts
+  return filteredPosts
 
 end
 
-function cache:LoadFrontPageList(username)
+function cache:LoadFrontPageList(username,startTime,endTime)
 
 
   --[[
@@ -174,7 +189,7 @@ function cache:LoadFrontPageList(username)
   end
   ]]
 
-  local res = redisread:LoadFrontPageList(username)
+  local res = redisread:LoadFrontPageList(username,startTime,endTime)
   --print(to_json(res))
 
   --later on we need to add filters to post where there are multiple

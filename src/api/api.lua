@@ -21,9 +21,10 @@ function api:GetUserFilters(username)
   return cache:GetFilterInfo(filterIDs)
 end
 
-function api:GetDefaultFrontPage(offset)
+function api:GetDefaultFrontPage(offset,sort)
   offset = offset or 0
-  return cache:GetDefaultFrontPage(offset)
+  sort = sort or 'fresh'
+  return cache:GetDefaultFrontPage(offset,sort)
 end
 
 function api:SubscribeToFilter(username,filterID)

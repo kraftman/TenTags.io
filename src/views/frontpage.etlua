@@ -1,6 +1,11 @@
 
 <div class = 'contents'>
   <input id='postID' type="hidden"value="Norway">
+  <div>
+    <a href="<%= url_for('home') %>">Fresh</a>
+    <a href="<%= url_for('new') %>">New</a>
+    <a href="<%= url_for('best') %>">Best</a>
+  </div>
 
   <a href="<%= url_for('newpost') %>">New Post</a>
   <a href="<%= url_for('newfilter') %>">New Filter</a>
