@@ -66,7 +66,7 @@ local function DisplayFilter(self)
     return CreateFilter(self)
   end
 
-  self.posts = api:LoadFilterPosts(filter)
+  self.posts = api:GetFilterPosts(filter)
 
 
   return {render = 'viewfilter'}

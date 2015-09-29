@@ -66,6 +66,17 @@ function cache:GetPost(postID)
 
 end
 
+function cache:GetFilterPosts(filter)
+
+  local filterIDs = redisread:GetFilterPosts(filter)
+  local posts = {}
+  for k,v in pairs(filterIDs) do
+    tinsert(posts, self:GetPost(v))
+  end
+  return posts
+
+end
+
 
 
 function cache:GetFilterID(filterName)

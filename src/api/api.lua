@@ -177,8 +177,8 @@ function api:FilterIsValid(filterInfo)
   -- check it doesnt already exist
 end
 
-function api:LoadFilterPosts(filter)
-  return {}
+function api:GetFilterPosts(filter)
+  return cache:GetFilterPosts(filter)
 end
 
 function api:GetFilterByName(filterName)
