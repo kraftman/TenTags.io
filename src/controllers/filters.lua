@@ -60,6 +60,7 @@ local function CreateFilter(self)
 end
 
 local function DisplayFilter(self)
+  
   -- does the filter exist? if not then lets make it
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then

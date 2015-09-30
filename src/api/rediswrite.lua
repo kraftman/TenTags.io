@@ -87,6 +87,8 @@ function write:AddPostToFilters(filters,postInfo)
     for _, filterInfo in pairs(filters) do
       red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
       red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
+      red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + postInfo.score,postInfo.id)
+      red:zadd('filterpostsall:datescore',postInfo.createdAt + postInfo.score,filterInfo.id..':'..postInfo.id)
     end
   local results, err = red:commit_pipeline()
 
@@ -167,9 +169,9 @@ function write:CreatePost(postInfo)
       red:sadd('post:tagIDs:'..postInfo.id,tag.id)
       red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
     end
-  
+
     -- add to /f/all
-    red:zadd('allposts:score',postInfo.score,postInfo.id)
+
     red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
 
     -- add post info
