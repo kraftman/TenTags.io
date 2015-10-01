@@ -3,7 +3,7 @@
 local M = {}
 
 local api = require 'api.api'
-local uuid = require 'lib.uuid'
+local uuid = require 'uuid'
 
 
 local util = require("lapis.util")
@@ -60,7 +60,7 @@ local function CreateFilter(self)
 end
 
 local function DisplayFilter(self)
-  
+
   -- does the filter exist? if not then lets make it
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
