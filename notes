@@ -93,6 +93,27 @@ Edge cases
  - user will end up seeing the post again.
 
 
+Front page strategy
+- posts are added to an 'allfilterposts:score:date' sorted set by score for each filter
+- split into filterID and postID
+- check if user wants to see the filter
+- check if the user has already seen it
+- add it to the list of posts to show the user
+- load more from sorted set if needed
+- cache list for X minutes
+
+Pagination
+- user requests first 10 posts
+- iterate through list
+- load post info
+- check if the user has seen it (using node ID)
+- add it to user seen
+
+Caching
+- Cache the unflitered list of posts for 30 seconds
+- Post info is cached anyway in LRU
+- Cache list of user posts for X minutes
+
 
 
 
