@@ -1,8 +1,8 @@
 <div>
 <a href="<%= url_for('home') %>">Home</a>
 <a href="<%= url_for('allfilters') %>">All</a>
-<% if session.current_user then %>
-  <a href="<%= url_for('viewuser',{username =session.current_user}) %>"><%= session.current_user %> </a> <a href="<%= url_for('logout') %>">logout</a>
+<% if session.username then %>
+  <a href="<%= url_for('viewuser',{username =session.username}) %>"><%= session.username %> </a> <a href="<%= url_for('logout') %>">logout</a>
   <a href="<%= url_for('settings') %>">Settings</a>
 <% else %>
   <form id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>

@@ -102,40 +102,7 @@ end
 
 
 
-function write:SubscribeToFilter(username,filterID)
-  local red = GetRedisConnection()
-  local ok, err = red:sadd('userfilters:'..username, filterID)
 
-  if not ok then
-    SetKeepalive(red)
-    ngx.log(ngx.ERR, 'unable to add filter to list: ',err)
-    return
-  end
-
-  ok, err = red:hincrby('filter:'..filterID,'subs',1)
-  SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
-  end
-
-end
-
-function write:UnsubscribeFromFilter(username, filterID)
-  local red = GetRedisConnection()
-  local ok, err = red:srem('userfilters:'..username,filterID)
-  if not ok then
-    SetKeepalive(red)
-    ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)
-    return
-  end
-
-  ok, err = red:hincrby('filter:'..filterID,'subs',-1)
-  SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
-  end
-
-end
 
 
 

@@ -235,42 +235,6 @@ function cache:GetDefaultFrontPage(range,filter)
   return postsWithInfo
 end
 
-function cache:LoadFrontPageList(username,startTime,endTime)
-
-
-  --[[
-  local result,err = frontpages:get(username)
-  if err then
-    ngx.log(ngx.ERR, 'error getting frontpage for user:',username,', err:', err)
-    return {}
-  end
-  if result then
-    return from_json(result)
-  end
-  ]]
-
-  local res = redisread:LoadFrontPageList(username,startTime,endTime)
-  --print(to_json(res))
-
-  --later on we need to add filters to post where there are multiple
-  local posts = {}
-  for filterID,filterPosts in pairs(res) do
-    for _,postID in pairs(filterPosts) do
-      tinsert(posts,postID)
-    end
-  end
-  --print(to_json(posts))
-  return posts
-  --[[
-  if res then
-    frontpages:set(username,to_json(res),FRONTPAGE_CACHE_TIME)
-    return res
-  else
-    ngx.log(ngx.ERR, 'error requesting from upstream: code: ',res.status,' body:',res.body)
-  end
-  --]]
-end
-
 function cache:GetTag(tagName)
   local tags = self:GetAllTags()
   for k,v in pairs(tags) do
@@ -282,8 +246,7 @@ function cache:GetTag(tagName)
 end
 
 
-function cache:GetUserFilterIDs(username)
-  username = username or 'default'
+function cache:GetUserFilterIDs(userID)
   --[[
 
   local filters = lru:GetUserFilterIDs(username)
@@ -304,7 +267,7 @@ function cache:GetUserFilterIDs(username)
   end
   ]]
 
-  local res = redisread:GetUserFilterIDs(username)
+  local res = userRead:GetUserFilterIDs(userID)
   return res or {}
   --[[
   if res then

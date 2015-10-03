@@ -6,7 +6,8 @@ config("development", {
     user = "root",
     password = "meep",
     database = "taggr"
-  }
+  },
+  secret = "this is my secrarstrstet string 123456"
 })
 
 config("production", {

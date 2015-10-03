@@ -19,6 +19,11 @@ local function ToggleDefault(self)
   elseif self.params.setdefault == 'false' then
     api:UnsubscribeFromFilter('default',self.params.filterID)
   end
+  if self.params.subscribe == 'true' then
+    api:SubscribeToFilter(self.session.userID,self.params.filterID)
+  elseif self.params.setdefault == 'false' then
+    api:UnsubscribeFromFilter(self.session.userID,self.params.filterID)
+  end
 end
 
 local function NewFilter(self)
@@ -26,6 +31,10 @@ local function NewFilter(self)
   if self.params.setdefault then
     return ToggleDefault(self)
   end
+  for k,v in pairs(self.req) do
+    print(k,to_json(v))
+  end
+  print(self.session.userID)
 
   local newID =  uuid.generate_random()
   local requiredTags = from_json(self.params.requiredTags)
@@ -36,8 +45,8 @@ local function NewFilter(self)
     name= self.params.label ,
     description = self.params.description,
     createdAt = ngx.time(),
-    createdBy = self.session.current_user_id,
-    ownerID = self.session.current_user_id
+    createdBy = self.session.userID,
+    ownerID = self.session.userID
   }
   local tags = {}
 
@@ -55,7 +64,11 @@ end
 
 local function CreateFilter(self)
   self.tags = api:GetAllTags()
-  print(to_json(self.tags))
+  for k,v in pairs(self.req) do
+    print(k,to_json(v))
+  end
+  print(self.session.userID, self.session.username)
+
   return {render = 'createfilter'}
 end
 

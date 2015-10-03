@@ -31,38 +31,6 @@ local function CreateNewUser(self)
 
 end
 
-local function LoginPost(self)
-
-
-
-  local userInfo = cache:LoadUserByUsername(self.params.username)
-  if not userInfo then
-    return 'login failed!'
-  end
-
-  if userInfo.active == false then
-    return 'you need to activate your account via email'
-  end
-  if scrypt.check(self.params.password,userInfo.passwordHash) then
-    self.session.current_user = userInfo.username
-    self.session.current_user_id = userInfo.id
-    return { redirect_to = self:url_for("home") }
-  else
-   return 'login failed'
-  end
-
-end
-
-
-
-
-local function DisplayConfirmation()
-  return 'registration complete!, please check your email for activation key'
-end
-
-
-
-
 local function ConfirmEmail(self)
   -- check for username and activateKey
 
@@ -87,8 +55,8 @@ local function ConfirmEmail(self)
 end
 
 local function LogOut(self)
-  self.session.current_user = nil
-  self.session.current_user_id = nil
+  self.session.username = nil
+  self.session.userID = nil
   return { redirect_to = self:url_for("home") }
 end
 
@@ -115,8 +83,9 @@ local function LoginUser(self)
 
   local userInfo, inactive = api:ValidateUser(userCredentials)
   if userInfo then
-    self.session.current_user = userInfo.username
-    self.session.curent_user = userInfo.id
+    print(to_json(userInfo))
+    self.session.username = userInfo.username
+    self.session.userID = userInfo.id
     return { redirect_to = self:url_for("home") }
   elseif inactive then
     return 'Your account has not been activated, please click the link in your email'

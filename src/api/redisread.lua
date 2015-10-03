@@ -111,27 +111,7 @@ function read:GetFilterID(filterName)
   end
 end
 
-function read:GetUserFilterIDs(username)
 
-  local red = GetRedisConnection()
-
-  local ok, err
-
-  ok, err = red:smembers('userfilters:'..username)
-
-  SetKeepalive(red)
-
-  if not ok then
-    ngx.log(ngx.ERR, 'error getting filter list for user "',username,'", error:',err)
-    return {}
-  end
-
-  if ok == ngx.null then
-    return {}
-  else
-    return ok
-  end
-end
 
 function read:GetFilter(filterID)
   local red = GetRedisConnection()
@@ -252,34 +232,6 @@ function read:GetAllBestPosts(rangeStart,rangeEnd)
   return ok ~= ngx.null and ok or {}
 end
 
-function read:LoadFrontPageList(username,startTime, endTime)
-  local filterIDs = self:GetUserFilterIDs(username)
-
-  local red = GetRedisConnection()
-
-  startAt = startAt or 0
-  local postsByFilter = {}
-  local ok, err
-
-  for _, filterID in pairs(filterIDs) do
-
-    ok, err = red:zrangebyscore('filterposts:date:'..filterID,endTime,startTime)
-
-    postsByFilter[filterID] = postsByFilter[filterID] or {}
-    if not ok then
-      ngx.log(ngx.ERR,'unable to read filters posts: ',err)
-    else
-      if ok ~= ngx.null then
-        for k,postID in pairs(ok)do
-          tinsert(postsByFilter[filterID],postID)
-        end
-      end
-    end
-  end
-
-  return postsByFilter
-
-end
 
 function read:BatchLoadPosts(posts)
   local red = GetRedisConnection()

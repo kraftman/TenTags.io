@@ -17,8 +17,11 @@ local salt = 'poopants'
 --self.session.current_user
 
 
-function api:GetUserFilters(username)
-  local filterIDs = cache:GetUserFilterIDs(username)
+function api:GetUserFilters(userID)
+  if not userID then
+    userID = 'default'
+  end
+  local filterIDs = cache:GetUserFilterIDs(userID)
 
   return cache:GetFilterInfo(filterIDs)
 end
@@ -84,7 +87,8 @@ function api:GetFilterPosts(filterName,username,offset,sort)
 
 end
 
-function api:SubscribeToFilter(username,filterID)
+function api:SubscribeToFilter(userID,filterID)
+  
   local filterIDs =  cache:GetUserFilterIDs(username)
 
   for k, v in pairs(filterIDs) do
@@ -94,7 +98,7 @@ function api:SubscribeToFilter(username,filterID)
     end
   end
 
-  worker:SubscribeToFilter(username,filterID)
+  worker:SubscribeToFilter(userID,filterID)
 
 end
 
@@ -358,6 +362,7 @@ function api:CreateFilter(filterInfo)
   filterInfo.tags = tags
 
   worker:CreateFilter(filterInfo)
+  worker:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
 
   return true
 end

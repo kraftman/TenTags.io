@@ -12,4 +12,9 @@
   <input type="hidden" name="filterID" value="<%= filter.id -%>">
   <button type="submit">Default</button>
 </form>
+<form action="/f/<%= filter.title -%>" method="post">
+  <input type="hidden" name="subscribe" value="true">
+  <input type="hidden" name="filterID" value="<%= filter.id -%>">
+  <button type="submit">Subscribe</button>
+</form>
 </li>

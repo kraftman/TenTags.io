@@ -61,5 +61,27 @@ function userread:GetUserByEmail(email)
   end
 end
 
+function userread:GetUserFilterIDs(userID)
+
+  local red = GetRedisConnection()
+
+  local ok, err
+
+  ok, err = red:smembers('userfilters:'..userID)
+
+  SetKeepalive(red)
+
+  if not ok then
+    ngx.log(ngx.ERR, 'error getting filter list for user "',userID,'", error:',err)
+    return {}
+  end
+
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
 
 return userread

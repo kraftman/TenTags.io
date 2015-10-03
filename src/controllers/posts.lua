@@ -26,7 +26,7 @@ local function CreatePost(self)
     link = self.params.link,
     text = self.params.text,
     createdAt = ngx.time(),
-    createdBy = self.session.current_user_id,
+    createdBy = self.session.userID,
     tags = selectedTags
   }
 
@@ -146,7 +146,7 @@ local function CreateComment(self)
     id = newCommentID,
     parentID = self.params.parentID,
     postID = self.params.postID,
-    createdBy = self.session.current_user_id,
+    createdBy = self.session.userID,
     text = self.params.commentText,
     createdAt = ngx.time(),
   }

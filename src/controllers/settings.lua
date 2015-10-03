@@ -10,7 +10,7 @@ local db = require("lapis.db")
 local from_json = util.from_json
 
 local function DisplaySettings(self)
-  if not self.session.current_user then
+  if not self.session.username then
     return "Y'aint logged in luv!"
   end
 
@@ -32,7 +32,7 @@ local function DisplaySettings(self)
   end
   self.usertags = usertags
 
-  res = db.select('* from user where username = ?',self.session.current_user)
+  res = db.select('* from user where username = ?',self.session.username)
   if not res then
     return 'user not found'
   end

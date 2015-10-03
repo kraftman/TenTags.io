@@ -39,7 +39,7 @@ local function CreateTag(self)
     id = uuid.generate_random(),
     name = self.params.tagname,
     createdAt = ngx.time(),
-    createdBy = self.session.current_user_id
+    createdBy = self.session.userID
   }
 
   local ok, err = api:CreateTag(info)
