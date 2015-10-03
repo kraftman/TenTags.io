@@ -4,40 +4,36 @@ local m = {}
 m.__index = m
 
 local uuid = require 'uuid'
-local salt = 'poopants'
 local respond_to = (require 'lapis.application').respond_to
-local cache = require 'cache'
+local api = require 'api.api'
+local trim = (require 'lapis.util').trim
 
 local function NewUserForm(self)
   return {render = 'newuser'}
 end
 
-local function GetActivationKey(hash)
-  return hash:match('.+(........)$')
-end
 
 local function CreateNewUser(self)
   local info = {}
-  info.id = uuid.generate_random()
-  info.passwordHash = scrypt.crypt(self.params.password)
   info.username = self.params.username
-  info.active = false
+  info.password = self.params.password
   info.email = self.params.email
 
-  local userInfo = {
-    id = info.id,
-    username = info.username,
-    email = info.email,
-    passwordHash = info.passwordHash,
-    active = info.active
-  }
+  local confirmURL = self:build_url()..self:url_for("confirmemail")
+  local ok,err  = api:CreateUser(confirmURL, info)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to activate:',err)
+    return {render = err, status = 400}
+  end
 
-  worker:CreateUser(userInfo)
 
-  return GetActivationKey(ngx.md5(info.username..info.email..salt))
+  return 'success, please activate your account via email'
+
 end
 
 local function LoginPost(self)
+
+
 
   local userInfo = cache:LoadUserByUsername(self.params.username)
   if not userInfo then
@@ -58,32 +54,24 @@ local function LoginPost(self)
 end
 
 
-local function SendEmail(self, activateKey)
-  local url = self:build_url()..self:url_for("confirmemail")..'?email='..self.params.email..'&activateKey='..activateKey
-  local subject = "Email confirmation"
-  local body = [[
-    Congrats for registering, you are the best!
-    Please click this link to confirm your email address
-  ]]
-  body = body..url
-  email:sendMessage(subject,body,self.params.email)
 
-end
 
 local function DisplayConfirmation()
   return 'registration complete!, please check your email for activation key'
 end
 
-local function RegisterUser(self)
-  local activateKey = CreateNewUser(self)
-  SendEmail(self, activateKey)
-  return DisplayConfirmation()
-end
+
 
 
 local function ConfirmEmail(self)
   -- check for username and activateKey
 
+  local ok, err = api:ActivateAccount(self.params.email,self.params.activateKey)
+  if ok then
+    return 'you have successfully activated your account, please login!'
+  else
+    return err
+  end
 
   local userInfo = cache:LoadUserCredentialsByEmail(self.params.email)
 
@@ -104,9 +92,7 @@ local function LogOut(self)
   return { redirect_to = self:url_for("home") }
 end
 
-local function LoginForm(self)
-  return {render = 'login'}
-end
+
 
 local function ViewUser(self)
   self.comments = cache:GetUserComments(self.params.username)
@@ -114,55 +100,41 @@ local function ViewUser(self)
   return {render = 'viewuser'}
 end
 
-local function ValidateUser(self)
+local function LoginUser(self)
+  -- check theyve provided the correct credentials
   local email = self.params.email
   local password = self.params.password
   if not email or not password then
     return { redirect_to = self:url_for("register") }
   end
 
-  local userInfo = cache:LoadUserByEmail(email)
+  local userCredentials = {
+    email = email,
+    password = password
+  }
 
-  if not userInfo then
+  local userInfo, inactive = api:ValidateUser(userCredentials)
+  if userInfo then
+    self.session.current_user = userInfo.username
+    self.session.curent_user = userInfo.id
+    return { redirect_to = self:url_for("home") }
+  elseif inactive then
+    return 'Your account has not been activated, please click the link in your email'
+  else
     return { render = 'newuser' }
   end
-
-  print(userInfo.active)
-  if userInfo.active ~= 1 then
-    return 'Your account has not been activated, please click the link in your email'
-  end
-
-  if scrypt.check(password,userInfo.passwordHash) then
-    self.session.current_user = userInfo.username
-    self.session.current_user_id = userInfo.id
-    return { redirect_to = self:url_for("home") }
-  else
-   return { render = 'newuser' }
-  end
-
-
 end
 
 function m:Register(app)
 
   app:match('newuser','/user/new', respond_to({
     GET = NewUserForm,
-    POST = RegisterUser
+    POST = CreateNewUser
   }))
 
-  app:post('validateuser','/user/validate',ValidateUser)
-
+  app:post('login','/login',LoginUser)
   app:get('viewuser','/user/:username',ViewUser)
-
-  app:match('login','/login', respond_to({
-    GET = LoginForm,
-    POST = LoginPost
-  }))
-
-
   app:get('logout','/logout',LogOut)
-
-  app:post('/login', LoginPost)
   app:get('confirmemail','/confirmemail',ConfirmEmail)
 
 end

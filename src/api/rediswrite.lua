@@ -104,7 +104,7 @@ end
 
 function write:SubscribeToFilter(username,filterID)
   local red = GetRedisConnection()
-  local ok, err = red:sadd('filterlist:'..username, filterID)
+  local ok, err = red:sadd('userfilters:'..username, filterID)
 
   if not ok then
     SetKeepalive(red)
@@ -122,7 +122,7 @@ end
 
 function write:UnsubscribeFromFilter(username, filterID)
   local red = GetRedisConnection()
-  local ok, err = red:srem('filterlist:'..username,filterID)
+  local ok, err = red:srem('userfilters:'..username,filterID)
   if not ok then
     SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)

@@ -7,12 +7,29 @@ local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = require 'api.redisread'
+local userRead = require 'api.userread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
 
 local FILTER_LIST_CACHE_TIME = 5
 local TAG_CACHE_TIME = 5
 local FRONTPAGE_CACHE_TIME = 5
+
+function cache:GetUserInfo(userID)
+  return userRead:GetUserInfo(userID)
+end
+
+function cache:GetUserByEmail(email)
+  email = email:lower()
+  local userID = userRead:GetUserByEmail(email)
+  if not userID then
+    return
+  end
+
+  local userInfo = self:GetUserInfo(userID)
+  return userInfo
+
+end
 
 
 function cache:AddPost(post)
@@ -177,7 +194,7 @@ function cache:GetDefaultFrontPage(range,filter)
   end
 
   local filterIDs = self:GetIndexedUserFilterIDs('default')
-  
+
 
   local unfilteredOffset = 0
   local unfilteredPosts = {}

@@ -50,7 +50,7 @@ function read:GetFilterIDsByTags(tags)
   if err then
     ngx.log(ngx.ERR, 'error retrieving filters for tags:',err)
   end
-  
+
   return results
 end
 
@@ -117,7 +117,7 @@ function read:GetUserFilterIDs(username)
 
   local ok, err
 
-  ok, err = red:smembers('filterlist:'..username)
+  ok, err = red:smembers('userfilters:'..username)
 
   SetKeepalive(red)
 

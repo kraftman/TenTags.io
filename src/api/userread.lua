@@ -31,5 +31,35 @@ function userread:ConvertListToTable(list)
   return info
 end
 
+function userread:GetUserInfo(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall('user:'..userID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user info:',err)
+  end
+
+  if ok == ngx.null then
+    return {}
+  else
+    return self:ConvertListToTable(ok)
+  end
+end
+
+function userread:GetUserByEmail(email)
+  local red = GetRedisConnection()
+  local ok, err = red:hget('useremails',email)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user info:',err)
+  end
+
+  if ok == ngx.null then
+    return
+  else
+    return ok
+  end
+end
+
 
 return userread

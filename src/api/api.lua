@@ -11,6 +11,8 @@ local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
 local tinsert = table.insert
 local trim = (require 'lapis.util').trim
+local scrypt = require 'lib.scrypt'
+local salt = 'poopants'
 
 --self.session.current_user
 
@@ -93,6 +95,76 @@ function api:SubscribeToFilter(username,filterID)
   end
 
   worker:SubscribeToFilter(username,filterID)
+
+end
+
+function api:ValidateUser(userCredentials)
+  local userInfo = cache:GetUserByEmail(userCredentials.email)
+  if not userInfo then
+    return
+  end
+  if userInfo.active == 0 then
+    return nil,true
+  end
+
+  local valid = scrypt.check(userCredentials.password,userInfo.passwordHash)
+  if valid then
+    userInfo.passwordHash = nil
+    return userInfo
+  end
+
+end
+
+function api:CreateActivationKey(userInfo)
+  local key = ngx.md5(userInfo.username..userInfo.email..salt)
+  return key:match('.+(........)$')
+end
+
+function api:ActivateAccount(email, key)
+  email = email and email:lower() or ''
+  if email == '' then
+    return nil, 'email is blank!'
+  end
+
+  local userInfo = cache:GetUserByEmail(email)
+  if not userInfo then
+    return nil, 'could not find account with this email'
+  end
+
+  local realKey = self:CreateActivationKey(userInfo)
+  if key == realKey then
+    --cache:UpdateUserInfo(userInfo)
+    worker:ActivateAccount(userInfo.id)
+    return true
+  else
+    return nil, 'activation key incorrect'
+  end
+end
+
+function api:CreateUser(confirmURL, userInfo)
+  userInfo.username = userInfo.username and userInfo.username:lower() or ''
+  userInfo.password = userInfo.password and userInfo.password:lower() or ''
+  userInfo.email = userInfo.email and userInfo.email:lower() or ''
+
+  if trim(userInfo.username) == '' then
+    return nil, 'no username provided!'
+  elseif trim(userInfo.email) == '' then
+    return nil, 'no email provided!'
+  elseif trim(userInfo.password) == '' then
+    return nil, 'no password provided!'
+  end
+
+  userInfo.id = uuid.generate_random()
+  userInfo.passwordHash = scrypt.crypt(userInfo.password)
+  userInfo.password = nil
+  userInfo.active = 0
+  userInfo.filters = cache:GetUserFilterIDs('default')
+
+  local activateKey = self:CreateActivationKey(userInfo)
+  local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
+  worker:SendActivationEmail(url, userInfo.email)
+  worker:CreateUser(userInfo)
+  return true
 
 end
 
