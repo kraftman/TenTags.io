@@ -89,7 +89,9 @@ function write:AddPostToFilters(filters,postInfo)
       red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
       red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + postInfo.score,postInfo.id)
       red:zadd('filterpostsall:datescore',postInfo.createdAt + postInfo.score,filterInfo.id..':'..postInfo.id)
-    end
+      red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
+      red:zadd('filterpostsall:score',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
+  end
   local results, err = red:commit_pipeline()
 
   if err then

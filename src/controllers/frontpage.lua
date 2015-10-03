@@ -9,29 +9,17 @@ local m = {}
 
 local function FrontPage(self)
   self.pageNum = self.params.page or 1
-  print(self.pageNum)
-  self.posts = api:GetDefaultFrontPage(10*(self.pageNum-1)) or {}
-  return {render = 'frontpage'}
-end
-
-local function FrontPageNew(self)
-  self.pageNum = self.params.page or 1
-  print(self.pageNum)
-  self.posts = api:GetDefaultFrontPage(10*(self.pageNum-1),'new') or {}
-  return {render = 'frontpage'}
-end
-
-local function FrontPageBest(self)
-  self.pageNum = self.params.page or 1
-  print(self.pageNum)
-  self.posts = api:GetDefaultFrontPage(10*(self.pageNum-1),'best') or {}
+  local range = 10*(self.pageNum-1)
+  local filter = self.req.parsed_url.path:match('/(%w+)$')
+  print(filter)
+  self.posts = api:GetDefaultFrontPage(range,filter) or {}
   return {render = 'frontpage'}
 end
 
 function m:Register(app)
   app:get('home','/',FrontPage)
-  app:get('new','/new',FrontPageNew)
-  app:get('best','/best',FrontPageBest)
+  app:get('new','/new',FrontPage)
+  app:get('best','/best',FrontPage)
 end
 
 return m

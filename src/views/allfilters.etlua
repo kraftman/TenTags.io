@@ -1,7 +1,8 @@
 
-
-<div id='filters'>
-  <% for i, filter in pairs(filters) do %>
-      <% render("views.st.filter",{filter = filter}) %>
-  <% end %>
+<div class = 'contents'>
+  <div id='filters'>
+    <% for i, filter in pairs(filters) do %>
+        <% render("views.st.filter",{filter = filter}) %>
+    <% end %>
+  </div>
 </div>

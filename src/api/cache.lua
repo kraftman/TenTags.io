@@ -149,41 +149,74 @@ function cache:GetFiltersBySubs(startAt,endAt)
   return self:GetFilterInfo(filterIDs)
 end
 
-function cache:GetDefaultFrontPage(offset,sort)
-  offset = offset or 0
-
-  local frontPageList = self:LoadFrontPageList('default',ngx.time(), ngx.time() -172800 )
-
-  local posts = {}
-  for i,postID in pairs(frontPageList) do
-    posts[i] = self:GetPost(postID)
+function cache:GetIndexedUserFilterIDs(username)
+  local indexed = {}
+  for k,v in pairs(self:GetUserFilterIDs(username)) do
+    indexed[v] = true
   end
+  return indexed
+end
 
-  if sort == 'new' then
-    table.sort(posts, function(a,b)
-      return a.createdAt > b.createdAt
-    end)
-  elseif sort == 'best' then
-    table.sort(posts, function(a,b)
-      return a.score > b.score
-    end)
+function cache:GetUserSeentPosts(username)
+  return {}
+end
+
+
+function cache:GetDefaultFrontPage(range,filter)
+
+  -- fresh, load from datescore
+  -- new, load from date,
+  -- best, load from date then sort by best
+  local postIDs = {}
+  local filterFunction
+  if filter == 'new' then
+    filterFunction = 'GetAllNewPosts'
+  elseif filter == 'best' then
+    filterFunction = 'GetAllBestPosts'
   else
-    table.sort(posts, function(a,b)
-      return a.createdAt + a.score > b.createdAt + b.score
-    end)
+    filterFunction = 'GetAllFreshPosts'
   end
 
-  local postID
+  local filterIDs = self:GetIndexedUserFilterIDs('default')
+  print(to_json(filterIDs))
+
+  local unfilteredOffset = 0
+  local unfilteredPosts = {}
   local filteredPosts = {}
-  for i = offset+1,offset+10 do
-    postID = posts[i]
+  local filterID, postID
+  local seenPosts = {}
+  local finalPostIDs = {}
+
+  while #filteredPosts < range+10 do
+    --load new posts from redis if needed
+
+    unfilteredPosts = redisread[filterFunction](redisread, unfilteredOffset, unfilteredOffset+1000)
+    unfilteredOffset = unfilteredOffset + 1000
+    if #unfilteredPosts == 0 then
+      break
+    end
+
+    for k, v in pairs(unfilteredPosts) do
+      print(v)
+      filterID,postID = v:match('(%w+):(%w+)')
+      print(filterID, postID)
+      if filterIDs[filterID] and not seenPosts[postID] then
+        seenPosts[postID] = true
+        tinsert(finalPostIDs,postID)
+      end
+    end
+
+  end
+
+  local postsWithInfo = {}
+  for i = range,range+10 do
+    local postID = finalPostIDs[i]
     if postID then
-      tinsert(filteredPosts,posts[i])
+      tinsert(postsWithInfo, self:GetPost(postID))
     end
   end
-
-  return filteredPosts
-
+  print(to_json(postsWithInfo))
+  return postsWithInfo
 end
 
 function cache:LoadFrontPageList(username,startTime,endTime)

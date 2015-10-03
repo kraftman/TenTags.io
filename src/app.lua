@@ -9,11 +9,9 @@ app.layout = require 'views.layout'
 -- DEV ONLY
 to_json = (require 'lapis.util').to_json
 
+
 app:before_filter(function(self)
-
   self.userFilters = api:GetUserFilters() or {}
-  --print(to_json(self.userFilters))
-
 end)
 
 require 'tags':Register(app)

@@ -7,7 +7,7 @@ local cache = require 'api.cache'
 local api = {}
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
 local tinsert = table.insert
 local trim = (require 'lapis.util').trim
@@ -21,10 +21,65 @@ function api:GetUserFilters(username)
   return cache:GetFilterInfo(filterIDs)
 end
 
-function api:GetDefaultFrontPage(offset,sort)
+function api:GetDefaultFrontPage(range,filter)
+  range = range or 0
+  filter = filter or 'fresh'
+  return cache:GetDefaultFrontPage(range,filter)
+end
+
+function api:GetFilterPosts(filterName,username,offset,sort)
+
+  -- get large list of posts that match the user filter
+  -- load the
+
+
   offset = offset or 0
   sort = sort or 'fresh'
-  return cache:GetDefaultFrontPage(offset,sort)
+
+  local filterPosts = cache:GetFilterPosts(filterName,username,offset,sort)
+
+  -- function used to get new postIDs
+  local getMorePosts
+  if sort == 'new' then
+
+  elseif sort == 'best' then
+
+  else
+
+  end
+
+  local userSeenPosts = cache:GetUserSeenPosts(username) or {}
+  local userFilters = cache:GetIndexedUserFilterIDs(username)
+
+  local finalPosts = {}
+  local unfilteredPosts
+  local unfilteredOffset = 0
+
+  local postID, filterID
+  local postInfo
+
+  while #finalPostIDs < offset + 10 do
+    unfilteredPosts = GetMorePosts(unfilteredOffset,unfilteredOffset+1000)
+
+    for k,v in pairs(unfilteredPosts) do
+      filterID,postID = v:match('(%w+):(%w+)')
+      if userFilters[filterID] then
+        postInfo = cache:GetPost(postID)
+        if not userSeenPosts[postInfo.nodeID] then
+          tinsert(finalPosts, postInfo)
+          userSeenPosts[postInfo.nodeID] = true
+        end
+      end
+    end
+  end
+
+  if username ~= 'default' then
+    cache:UpdateUserSeenPosts(username,userSeenPosts)
+    rediswrite:UpdateUserSeenPosts(username,userSeenPosts)
+  end
+
+  return finalPosts
+
 end
 
 function api:SubscribeToFilter(username,filterID)
@@ -94,7 +149,7 @@ function api:CreatePost(postInfo)
     return false
   end
 
-  postInfo.id = uuid.generate_random()
+  postInfo.id = uuid.generate()
   postInfo.parentID = postInfo.id
   postInfo.createdBy = postInfo.createdBy or 'default'
   postInfo.commentCount = 0

@@ -219,6 +219,39 @@ function read:GetFilterPosts(filter)
 end
 
 
+function read:GetAllNewPosts(rangeStart,rangeEnd)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('filterpostsall:date',rangeStart,rangeEnd)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get new posts: ',err)
+  end
+  print(to_json(ok))
+  return ok ~= ngx.null and ok or {}
+end
+
+function read:GetAllFreshPosts(rangeStart,rangeEnd)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('filterpostsall:datescore',rangeStart,rangeEnd)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get fresh posts: ',err)
+  end
+  print(to_json(ok))
+  return ok ~= ngx.null and ok or {}
+end
+
+function read:GetAllBestPosts(rangeStart,rangeEnd)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('filterpostsall:score',rangeStart,rangeEnd)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get best posts: ',err)
+  end
+  print(to_json(ok))
+  return ok ~= ngx.null and ok or {}
+end
+
 function read:LoadFrontPageList(username,startTime, endTime)
   local filterIDs = self:GetUserFilterIDs(username)
 

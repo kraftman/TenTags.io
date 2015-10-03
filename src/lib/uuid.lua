@@ -49,7 +49,7 @@ end
 
 function uuid.generate()
     lib.uuid_generate(uid)
-    return unparse(uid)
+    return stripdashes(unparse(uid))
 end
 
 function uuid.generate_random()
