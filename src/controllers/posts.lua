@@ -22,7 +22,6 @@ local function CreatePost(self)
   end
 
   local info ={
-    id = newID,
     title = self.params.title,
     link = self.params.link,
     text = self.params.text,

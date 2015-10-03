@@ -203,7 +203,6 @@ function api:CreatePost(postInfo)
       tinsert(finalFilters,filter)
     end
   end
-  print(to_json(finalFilters))
   worker:AddPostToFilters(finalFilters,postInfo)
   worker:CreatePost(postInfo)
   return true

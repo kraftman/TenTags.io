@@ -11,7 +11,7 @@ local function FrontPage(self)
   self.pageNum = self.params.page or 1
   local range = 10*(self.pageNum-1)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
-  print(filter)
+
   self.posts = api:GetDefaultFrontPage(range,filter) or {}
   return {render = 'frontpage'}
 end

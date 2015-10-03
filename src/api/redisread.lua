@@ -50,7 +50,7 @@ function read:GetFilterIDsByTags(tags)
   if err then
     ngx.log(ngx.ERR, 'error retrieving filters for tags:',err)
   end
-  print(to_json())
+  
   return results
 end
 
@@ -226,7 +226,7 @@ function read:GetAllNewPosts(rangeStart,rangeEnd)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get new posts: ',err)
   end
-  print(to_json(ok))
+
   return ok ~= ngx.null and ok or {}
 end
 
@@ -237,7 +237,7 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get fresh posts: ',err)
   end
-  print(to_json(ok))
+
   return ok ~= ngx.null and ok or {}
 end
 
@@ -248,7 +248,7 @@ function read:GetAllBestPosts(rangeStart,rangeEnd)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get best posts: ',err)
   end
-  print(to_json(ok))
+
   return ok ~= ngx.null and ok or {}
 end
 

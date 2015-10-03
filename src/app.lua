@@ -22,6 +22,9 @@ require 'settings':Register(app)
 require 'messages':Register(app)
 require 'filters':Register(app)
 
+-- TESTING
+require 'test.perftest':Register(app)
+
 
 
 return app

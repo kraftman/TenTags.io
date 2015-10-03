@@ -22,7 +22,6 @@ end
 function cache:GetAllTags()
   local tags = lru:GetAllTags()
   if tags then
-    print(to_json(tags))
     return tags
   end
 
@@ -178,7 +177,7 @@ function cache:GetDefaultFrontPage(range,filter)
   end
 
   local filterIDs = self:GetIndexedUserFilterIDs('default')
-  print(to_json(filterIDs))
+  
 
   local unfilteredOffset = 0
   local unfilteredPosts = {}
@@ -197,9 +196,9 @@ function cache:GetDefaultFrontPage(range,filter)
     end
 
     for k, v in pairs(unfilteredPosts) do
-      print(v)
+
       filterID,postID = v:match('(%w+):(%w+)')
-      print(filterID, postID)
+
       if filterIDs[filterID] and not seenPosts[postID] then
         seenPosts[postID] = true
         tinsert(finalPostIDs,postID)
@@ -215,7 +214,7 @@ function cache:GetDefaultFrontPage(range,filter)
       tinsert(postsWithInfo, self:GetPost(postID))
     end
   end
-  print(to_json(postsWithInfo))
+
   return postsWithInfo
 end
 

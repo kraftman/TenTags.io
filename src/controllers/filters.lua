@@ -3,7 +3,7 @@
 local M = {}
 
 local api = require 'api.api'
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 
 
 local util = require("lapis.util")

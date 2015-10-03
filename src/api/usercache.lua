@@ -1,0 +1,8 @@
+
+
+local usercache = {}
+
+
+
+
+return usercache
