@@ -88,7 +88,7 @@ function api:GetFilterPosts(filterName,username,offset,sort)
 end
 
 function api:SubscribeToFilter(userID,filterID)
-  
+
   local filterIDs =  cache:GetUserFilterIDs(username)
 
   for k, v in pairs(filterIDs) do
@@ -119,8 +119,8 @@ function api:ValidateUser(userCredentials)
 
 end
 
-function api:CreateActivationKey(userInfo)
-  local key = ngx.md5(userInfo.username..userInfo.email..salt)
+function api:CreateActivationKey(masterInfo)
+  local key = ngx.md5(masterInfo.kv.id..masterInfo.kv.email..salt)
   return key:match('.+(........)$')
 end
 
@@ -145,7 +145,7 @@ function api:ActivateAccount(email, key)
   end
 end
 
-function api:CreateUser(confirmURL, userInfo)
+function api:CreateMasterUser(confirmURL, userInfo)
   userInfo.username = userInfo.username and userInfo.username:lower() or ''
   userInfo.password = userInfo.password and userInfo.password:lower() or ''
   userInfo.email = userInfo.email and userInfo.email:lower() or ''
@@ -158,16 +158,30 @@ function api:CreateUser(confirmURL, userInfo)
     return nil, 'no password provided!'
   end
 
-  userInfo.id = uuid.generate_random()
-  userInfo.passwordHash = scrypt.crypt(userInfo.password)
-  userInfo.password = nil
-  userInfo.active = 0
-  userInfo.filters = cache:GetUserFilterIDs('default')
+  local masterInfo = {}
+  masterInfo.kv = {}
+  masterInfo.kv.email = userInfo.email
+  masterInfo.kv.passwordHash = scrypt.crypt(userInfo.password)
+  masterInfo.kv.id = uuid.generate_random()
+  masterInfo.kv.active = 0
+  masterInfo.kv.users = 1
 
-  local activateKey = self:CreateActivationKey(userInfo)
+
+  masterInfo.users = {}
+  local firstUser = {}
+  firstUser.kv = {}
+  firstUser.kv.id = uuid.generate_random()
+  firstUser.kv.username = userInfo
+  firstUser.filters = cache:GetUserFilterIDS('default')
+  firstUser.kv.parentID = masterInfo.id
+
+  tinsert(masterInfo.users,firstUser.id)
+
+  local activateKey = self:CreateActivationKey(masterInfo)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
   worker:SendActivationEmail(url, userInfo.email)
-  worker:CreateUser(userInfo)
+  worker:CreateMasterUser(masterInfo)
+  worker:CreateUser(firstUser)
   return true
 
 end

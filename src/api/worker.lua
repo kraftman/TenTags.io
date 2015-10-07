@@ -44,6 +44,10 @@ function worker:CreateUser(userInfo)
   return userWrite:CreateUser(userInfo)
 end
 
+function worker:CreateMasterUser(masterInfo)
+  return userWrite:CreateUser(masterInfo)
+end
+
 function worker:ActivateAccount(userID)
   return userWrite:ActivateAccount(userID)
 end

@@ -13,6 +13,7 @@ local function GetRedisConnection()
       ngx.say("failed to connect: ", err)
       return
   end
+
   return red
 end
 
@@ -33,13 +34,25 @@ function userwrite:ConvertListToTable(list)
   return info
 end
 
+function userwrite:CreateMasterUser(masterInfo)
+  local red = GetRedisConnection()
+  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo.kv)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create master info:',err)
+    return false
+  end
+  for k, v in pairs(masterInfo.users) do
+    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
+  end
+
+end
+
 function userwrite:CreateUser(userInfo)
   local red = GetRedisConnection()
-  local userFilters = userInfo.filters
-  userInfo.filters = nil
+
   red:init_pipeline()
-    red:hmset('user:'..userInfo.id,userInfo)
-    for _,filterID in pairs(userFilters) do
+    red:hmset('user:'..userInfo.id,userInfo.kv)
+    for _,filterID in pairs(userInfo.filters) do
       red:sadd('userfilters:'..userInfo.id,filterID)
     end
     red:hset('useremails',userInfo.email,userInfo.id)

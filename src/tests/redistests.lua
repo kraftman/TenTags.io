@@ -20,6 +20,19 @@ function string.fromhex(str)
     end))
 end
 
+function TestReadBit()
+  client:del('testkey')
+  for i = 1, 40 do
+    
+
+    client:setbit('testkey',i,1)
+    local value = client:get('testkey')
+
+    print(i,string.format('%q', value))
+  end
+end
+TestReadBit()
+
 function TestPost()
   --[[
     each post needs a sorted set by date,
@@ -140,7 +153,7 @@ function TestRedisKeys()
     end
   end)
 end
-TestRedisKeys()
+--TestRedisKeys()
 
 
 --TestComments()

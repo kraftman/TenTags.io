@@ -1,8 +1,0 @@
-
-
-local usercache = {}
-
-
-
-
-return usercache
