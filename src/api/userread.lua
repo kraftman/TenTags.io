@@ -80,6 +80,15 @@ function userread:GetMasterUserByEmail(email)
   end
 end
 
+function userread:GetUnseenPosts(userID, postIDs)
+
+  
+  -- for each postID
+  -- check if the post is in the bloom filter
+  -- return the whole list
+
+end
+
 function userread:GetUserFilterIDs(userID)
 
   local red = GetRedisConnection()

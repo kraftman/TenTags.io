@@ -169,16 +169,43 @@ function cache:GetFiltersBySubs(startAt,endAt)
   return self:GetFilterInfo(filterIDs)
 end
 
-function cache:GetIndexedUserFilterIDs(username)
+function cache:GetIndexedUserFilterIDs(userID)
   local indexed = {}
-  for k,v in pairs(self:GetUserFilterIDs(username)) do
+  for k,v in pairs(self:GetUserFilterIDs(userID)) do
     indexed[v] = true
   end
   return indexed
 end
 
-function cache:GetUserSeentPosts(username)
+function cache:GetUserSeentPosts(userID)
   return {}
+end
+
+function cache:GetUserFrontPage(userID)
+  -- check from the cache
+  -- get 1k top posts
+  -- get only the post that match the users filters
+  -- send all posts to userdb bloom filter
+  -- bloom filter returns all unseen posts
+  -- rinse and repeat
+  -- also need to add to local seen posts list
+
+  local allPostIDs = redisread:GetAllBestPosts()
+  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
+  local postID,filterID
+  local filteredPosts = {}
+  local postFilterIDs = {}
+  for k, v in pairs(allPostIDs)
+    filterID,postID = v:match('(%w+):(%w+)')
+    tinsert(filteredPosts,postID)
+  end
+
+  -- cant check and set at the same cos cant set on read server
+  -- need to check on read, queue for set, set on write db
+  local unseenPosts = userRead:GetUnseenPosts(userID,filteredPosts)
+  -- add these unseenPosts to seen which should also remove duplicates
+
+  return unseenPosts
 end
 
 

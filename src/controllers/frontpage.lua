@@ -12,7 +12,11 @@ local function FrontPage(self)
   local range = 10*(self.pageNum-1)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
 
-  self.posts = api:GetDefaultFrontPage(range,filter) or {}
+  if self.session.userID then
+    self.posts = api:GetUserFrontPage(self.sessiono.userID)
+  else
+    self.posts = api:GetDefaultFrontPage(range,filter) or {}
+  end
   return {render = 'frontpage'}
 end
 
