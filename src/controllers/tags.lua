@@ -1,6 +1,6 @@
 local db = require("lapis.db")
 
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 local util = require 'lapis.util'
 local api = require 'api.api'
 

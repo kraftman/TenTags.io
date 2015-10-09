@@ -36,26 +36,29 @@ end
 
 function userwrite:CreateMasterUser(masterInfo)
   local red = GetRedisConnection()
-  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo.kv)
+  local ok, err = red:hmset('master:'..masterInfo.kv.id,masterInfo.kv)
   if not ok then
     ngx.log(ngx.ERR, 'unable to create master info:',err)
     return false
   end
+
+  red:hset('useremails',masterInfo.kv.email,masterInfo.kv.id)
+
   for k, v in pairs(masterInfo.users) do
-    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
+    ok, err = red:sadd('masterusers:'..masterInfo.kv.id, v)
   end
 
 end
 
 function userwrite:CreateUser(userInfo)
   local red = GetRedisConnection()
-
+  ngx.log(ngx.ERR, to_json(userInfo.filters))
   red:init_pipeline()
-    red:hmset('user:'..userInfo.id,userInfo.kv)
+    red:hmset('user:'..userInfo.kv.id,userInfo.kv)
     for _,filterID in pairs(userInfo.filters) do
-      red:sadd('userfilters:'..userInfo.id,filterID)
+      red:sadd('userfilters:'..userInfo.kv.id,filterID)
     end
-    red:hset('useremails',userInfo.email,userInfo.id)
+
   local results, err = red:commit_pipeline()
   SetKeepalive(red)
   if err then
@@ -65,7 +68,7 @@ end
 
 function userwrite:ActivateAccount(userID)
   local red = GetRedisConnection()
-  local ok, err = red:hset('user:'..userID,'active',1)
+  local ok, err = red:hset('master:'..userID,'active',1)
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to activate account:',err)

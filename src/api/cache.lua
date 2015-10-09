@@ -15,18 +15,22 @@ local FILTER_LIST_CACHE_TIME = 5
 local TAG_CACHE_TIME = 5
 local FRONTPAGE_CACHE_TIME = 5
 
+function cache:GetMasterUserInfo(masterID)
+  return userRead:GetMasterUserInfo(masterID)
+end
+
 function cache:GetUserInfo(userID)
   return userRead:GetUserInfo(userID)
 end
 
-function cache:GetUserByEmail(email)
+function cache:GetMasterUserByEmail(email)
   email = email:lower()
-  local userID = userRead:GetUserByEmail(email)
+  local userID = userRead:GetMasterUserByEmail(email)
   if not userID then
     return
   end
 
-  local userInfo = self:GetUserInfo(userID)
+  local userInfo = self:GetMasterUserInfo(userID)
   return userInfo
 
 end

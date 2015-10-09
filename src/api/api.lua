@@ -102,19 +102,25 @@ function api:SubscribeToFilter(userID,filterID)
 
 end
 
-function api:ValidateUser(userCredentials)
-  local userInfo = cache:GetUserByEmail(userCredentials.email)
-  if not userInfo then
+function api:GetUserInfo(userID)
+  return cache:GetUserInfo(userID)
+end
+
+function api:ValidateMaster(userCredentials)
+  local masterInfo = cache:GetMasterUserByEmail(userCredentials.email)
+
+  if not masterInfo then
     return
   end
-  if userInfo.active == 0 then
+
+  if masterInfo.kv.active == 0 then
     return nil,true
   end
 
-  local valid = scrypt.check(userCredentials.password,userInfo.passwordHash)
+  local valid = scrypt.check(userCredentials.password,masterInfo.kv.passwordHash)
   if valid then
-    userInfo.passwordHash = nil
-    return userInfo
+    masterInfo.kv.passwordHash = nil
+    return masterInfo
   end
 
 end
@@ -130,7 +136,7 @@ function api:ActivateAccount(email, key)
     return nil, 'email is blank!'
   end
 
-  local userInfo = cache:GetUserByEmail(email)
+  local userInfo = cache:GetMasterUserByEmail(email)
   if not userInfo then
     return nil, 'could not find account with this email'
   end
@@ -138,7 +144,7 @@ function api:ActivateAccount(email, key)
   local realKey = self:CreateActivationKey(userInfo)
   if key == realKey then
     --cache:UpdateUserInfo(userInfo)
-    worker:ActivateAccount(userInfo.id)
+    worker:ActivateAccount(userInfo.kv.id)
     return true
   else
     return nil, 'activation key incorrect'
@@ -171,11 +177,13 @@ function api:CreateMasterUser(confirmURL, userInfo)
   local firstUser = {}
   firstUser.kv = {}
   firstUser.kv.id = uuid.generate_random()
-  firstUser.kv.username = userInfo
-  firstUser.filters = cache:GetUserFilterIDS('default')
-  firstUser.kv.parentID = masterInfo.id
+  firstUser.kv.username = userInfo.username
+  firstUser.filters = cache:GetUserFilterIDs('default')
+  ngx.log(ngx.ERR, to_json(firstUser.filters))
+  firstUser.kv.parentID = masterInfo.kv.id
 
-  tinsert(masterInfo.users,firstUser.id)
+  tinsert(masterInfo.users,firstUser.kv.id)
+  masterInfo.kv.currentUserID = firstUser.kv.id
 
   local activateKey = self:CreateActivationKey(masterInfo)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey

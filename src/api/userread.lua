@@ -36,17 +36,36 @@ function userread:GetUserInfo(userID)
   local ok, err = red:hgetall('user:'..userID)
   SetKeepalive(red)
   if not ok then
+    ngx.log(ngx.ERR,'unable to get user: ',err)
+  end
+  if not ok or ok == ngx.null then
+    return nil
+  end
+  local userInfo = {}
+  userInfo.kv = self:ConvertListToTable(ok)
+  ngx.log(ngx.ERR, to_json(userInfo))
+  return userInfo
+end
+
+function userread:GetMasterUserInfo(masterID)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall('master:'..masterID)
+  local masterInfo = {}
+  masterInfo.kv = {}
+  SetKeepalive(red)
+  if not ok then
     ngx.log(ngx.ERR, 'unable to get user info:',err)
   end
 
   if ok == ngx.null then
     return {}
   else
-    return self:ConvertListToTable(ok)
+    masterInfo.kv = self:ConvertListToTable(ok)
   end
+  return masterInfo
 end
 
-function userread:GetUserByEmail(email)
+function userread:GetMasterUserByEmail(email)
   local red = GetRedisConnection()
   local ok, err = red:hget('useremails',email)
   SetKeepalive(red)

@@ -3,7 +3,7 @@
 local m = {}
 m.__index = m
 
-local uuid = require 'uuid'
+local uuid = require 'lib.uuid'
 local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
 local trim = (require 'lapis.util').trim
@@ -81,11 +81,12 @@ local function LoginUser(self)
     password = password
   }
 
-  local userInfo, inactive = api:ValidateUser(userCredentials)
-  if userInfo then
-    print(to_json(userInfo))
-    self.session.username = userInfo.username
-    self.session.userID = userInfo.id
+  local masterInfo, inactive = api:ValidateMaster(userCredentials)
+  if masterInfo then
+    print(to_json(masterInfo))
+    self.session.userID = masterInfo.kv.currentUserID
+    local userInfo = api:GetUserInfo(self.session.userID)
+    self.session.username = userInfo.kv.username
     return { redirect_to = self:url_for("home") }
   elseif inactive then
     return 'Your account has not been activated, please click the link in your email'
