@@ -202,6 +202,9 @@ function cache:GetUserFrontPage(userID)
 
   -- cant check and set at the same cos cant set on read server
   -- need to check on read, queue for set, set on write db
+  -- check that the script exists, ideally need to add it to master on startup
+  -- if it doesnt then we'll need to add it to the master db,
+  -- AND query from the master db since it's then gauranteed to exist there
   local unseenPosts = userRead:GetUnseenPosts(userID,filteredPosts)
   -- add these unseenPosts to seen which should also remove duplicates
 

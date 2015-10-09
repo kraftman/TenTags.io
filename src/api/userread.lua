@@ -69,6 +69,7 @@ function userread:GetMasterUserByEmail(email)
   local red = GetRedisConnection()
   local ok, err = red:hget('useremails',email)
   SetKeepalive(red)
+
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user info:',err)
   end
@@ -82,10 +83,13 @@ end
 
 function userread:GetUnseenPosts(userID, postIDs)
 
+  local red = GetRedisConnection()
+  red:init_pipeline()
+    for k,postID in pairs(postIDs) do
+      --eval command that returns nil or the postID
+    end
+  local res, err = red:commit_pipeline()
   
-  -- for each postID
-  -- check if the post is in the bloom filter
-  -- return the whole list
 
 end
 
