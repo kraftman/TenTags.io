@@ -50,9 +50,12 @@ local function RenderComment(self,comments,commentTree,text)
   for k,v in pairs(commentTree) do
     --print(k,type(v),to_json(v))
     t = t..'<div class="comment">\n'
-    t = t..'  <div class="commentinfo" >\n'..'<a href="'..
-              self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>'..'\n  </div>\n'
+    t = t..'  <div class="commentinfo" >\n'..
+    '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
+    '<a href="'..self:url_for('viewcomment',{commentID = comments[k].id})..'">link</a>'..
+              '\n  </div>\n'
     t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
+
     if next(v) then
       t = t..'<div id="commentchildren">'
       t = t..RenderComment(self,comments,v)
@@ -79,7 +82,7 @@ local function GetPost(self)
   self.RenderComments = RenderComments
 
   local post = api:GetPost(self.params.postID)
-  
+
   self.post = post
 
   return {render = true}
@@ -93,20 +96,24 @@ local function CreatePostForm(self)
   return { render = 'createpost' }
 end
 
+-- needs moving to comments controller
 local function CreateComment(self)
 
-  local newCommentID = uuid.generate_random()
+  --local newCommentID = uuid.generate_random()
 
   local commentInfo = {
-    id = newCommentID,
+    --id = newCommentID,
     parentID = self.params.parentID,
     postID = self.params.postID,
     createdBy = self.session.userID,
     text = self.params.commentText,
-    createdAt = ngx.time(),
   }
-  worker:CreateComment(commentInfo,self.params.postID)
-  return 'created!'
+  local ok = api:CreateComment(commentInfo)
+  if ok then
+    return 'created!'
+  else
+    retuurn 'failed!'
+  end
 
 end
 

@@ -30,6 +30,35 @@ function api:GetPostComments(postID)
   return cache:GetPostComments(postID)
 end
 
+function api:GetComment(commentID)
+  return cache:GetComment(commentID)
+end
+
+function api:GetUserComments(username)
+  
+  local userID = cache:GetUserID(username)
+  if not userID then
+    ngx.log(ngx.ERR, 'couldnt find user!')
+    return {}
+  end
+
+  ngx.log(ngx.ERR, 'userID:',to_json(userID))
+  local comments = cache:GetUserComments(userID)
+  return comments
+end
+
+function api:CreateComment(commentInfo)
+
+  commentInfo.id = uuid.generate_random()
+  commentInfo.createdAt = ngx.time()
+  commentInfo.up = 1
+  commentInfo.down = 0
+  commentInfo.score = 0
+  -- also add this to comments user has voted on
+  return worker:CreateComment(commentInfo)
+  -- also increment post comment count
+end
+
 function api:GetPost(postID)
   return cache:GetPost(postID)
 end

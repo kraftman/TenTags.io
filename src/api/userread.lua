@@ -58,6 +58,27 @@ function userread:GetUserInfo(userID)
   return userInfo
 end
 
+
+function userread:GetUserID(username)
+  local red = GetRedisConnection()
+  local ok,err = red:hget('userToID',username)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get userID from username:',err)
+    return nil
+  end
+
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
+
+
+
+
 function userread:GetMasterUserInfo(masterID)
   local red = GetRedisConnection()
   local ok, err = red:hgetall('master:'..masterID)

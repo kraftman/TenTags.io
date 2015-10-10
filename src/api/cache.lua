@@ -59,13 +59,34 @@ function cache:GetAllTags()
   end
 end
 
+function cache:GetUserID(username)
+  return userRead:GetUserID(username)
+end
+
+function cache:GetComment(commentID)
+  return commentRead:GetComment(commentID)
+end
+
+function cache:GetUserComments(userID)
+  local commentIDs = commentRead:GetUserComments(userID)
+  local commentInfo = commentRead:GetCommentInfos(commentIDs)
+  return commentInfo
+end
+
 function cache:AddChildren(parentID,flat)
   local t = {}
   for k,v in pairs(flat[parentID]) do
-    t[v.id] = AddChildren(v.id,flat)
+    t[v.id] = self:AddChildren(v.id,flat)
   end
 
   return t
+end
+
+function cache:GetUsername(userID)
+  local user = self:GetUserInfo(userID)
+  if user then
+    return user.kv.username
+  end
 end
 
 function cache:GetPostComments(postID)
@@ -74,6 +95,11 @@ function cache:GetPostComments(postID)
   local flat = {}
   flat[postID] = {}
   local indexedComments = {}
+
+  for k,v in pairs(flatComments) do
+    flatComments[k].username = self:GetUsername(v.createdBy)
+    ngx.log(ngx.ERR,flatComments[k].username)
+  end
 
   for k,comment in pairs(flatComments) do
     if not flat[comment.parentID] then
@@ -89,7 +115,7 @@ function cache:GetPostComments(postID)
   for k,v in pairs(flat) do
     table.sort(v,function(a,b)
       if a.up+a.down == b.up+b.down then
-        return a.date > b.date
+        return a.createdAt > b.createdAt
       end
       return (a.up+a.down > b.up+b.down)
     end)
@@ -332,7 +358,7 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   -- this will be cached for say 5 minutes
   local freshPosts = cache:GetFreshUserPosts(userID,filter)
-  ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
+  --ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
   local newPostIDs = {}
 

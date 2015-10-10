@@ -72,13 +72,15 @@ end
 function userwrite:CreateUser(userInfo)
   local red = GetRedisConnection()
   ngx.log(ngx.ERR, to_json(userInfo.filters))
+
   red:init_pipeline()
     red:hmset('user:'..userInfo.kv.id,userInfo.kv)
     for _,filterID in pairs(userInfo.filters) do
       red:sadd('userfilters:'..userInfo.kv.id,filterID)
     end
-
+    red:hset('userToID',userInfo.kv.username,userInfo.kv.id)
   local results, err = red:commit_pipeline()
+
   SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)

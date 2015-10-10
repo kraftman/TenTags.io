@@ -3,6 +3,7 @@ local worker = {}
 local rediswrite = require 'api.rediswrite'
 local userWrite = require 'api.userwrite'
 local email = require 'lib.testemail'
+local commentWrite = require 'api.commentwrite'
 
 function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
@@ -10,6 +11,10 @@ end
 
 function worker:CreatePost(postInfo)
   rediswrite:CreatePost(postInfo)
+end
+
+function worker:CreateComment(commentInfo)
+  return commentWrite:CreateComment(commentInfo)
 end
 
 function worker:CreateFilter(filterInfo)
