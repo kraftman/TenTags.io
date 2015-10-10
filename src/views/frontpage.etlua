@@ -5,10 +5,10 @@
     <a href="<%= url_for('home') %>">Fresh</a>
     <a href="<%= url_for('new') %>">New</a>
     <a href="<%= url_for('best') %>">Best</a>
+    <a href="<%= url_for('seen') %>">Seen</a>
   </div>
 
-  <a href="<%= url_for('newpost') %>">New Post</a>
-  <a href="<%= url_for('newfilter') %>">New Filter</a>
+  
 
   <div id='posts'>
     <% for i, post in pairs(posts) do %>

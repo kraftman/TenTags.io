@@ -28,7 +28,7 @@ end
 
 local function NewFilter(self)
 
-  if self.params.setdefault then
+  if self.params.setdefault or self.params.subscribe then
     return ToggleDefault(self)
   end
   for k,v in pairs(self.req) do

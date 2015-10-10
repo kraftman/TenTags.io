@@ -210,71 +210,111 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
 
 end
 
-function cache:GetFreshUserPosts(userID,userFilterIDs,unseenPosts,startRange,endRange) -- needs caching
+function cache:GetFreshUserPosts(userID,filter) -- needs caching
   -- the results of this need to be cached for a shorter duration than the
   -- frequency that session seen posts are flushed to user seen
   -- so that we can ignore session seen posts here
 
-  startRange = startRange or 0
-  endRange = endRange or 100
-  unseenPosts = unseenPosts or {}
-  ngx.log(ngx.ERR,'startrange: ',startRange)
-
-  local allPostIDs = redisread:GetAllBestPosts(startRange,endRange)
-  -- if weve hit the end then return regardless
-  if #allPostIDs == 0 then
-    ngx.log(ngx.ERR,'list empty, running found')
-    return unseenPosts
-  end
-  startRange = startRange+1000
-  endRange = endRange+1000
-
-  -- get the filters the user wants to see
-
+  local startRange,endRange = 0,1000
+  local freshPosts,filteredPosts = {},{}
   local postID,filterID
-  local filteredPosts = {}
-  local postFilterIDs = {}
+  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
 
-  for k, v in pairs(allPostIDs) do
-    filterID,postID = v:match('(%w+):(%w+)')
-    if userFilterIDs[filterID] then
-      tinsert(filteredPosts,postID)
+  local filterFunction
+  if filter == 'new' then
+    filterFunction = 'GetAllNewPosts'
+  elseif filter == 'best' then
+    filterFunction = 'GetAllBestPosts'
+  elseif filter == 'seen' then
+    filterFunction = 'GetAllUserSeenPosts'
+  else
+    filterFunction = 'GetAllFreshPosts'
+  end
+  --ngx.log(ngx.ERR,'filter:',filter,filterFunction)
+
+  while #freshPosts < 100 do
+
+    local allPostIDs
+    if filter == 'seen' then
+      allPostIDs = userRead[filterFunction](userRead,userID,startRange,endRange)
+      ngx.log(ngx.ERR,'posts:',#allPostIDs)
+    else
+      allPostIDs = redisread[filterFunction](redisread,startRange,endRange)
+    end
+    -- if weve hit the end then return regardless
+    if #allPostIDs == 0 then
+      break
+    end
+
+
+    startRange = startRange+1000
+    endRange = endRange+1000
+    filteredPosts = {}
+
+    if filter == 'seen' then
+      for k,v in pairs(allPostIDs) do
+        tinsert(freshPosts,v)
+      end
+    else
+
+      for k, v in pairs(allPostIDs) do
+        filterID,postID = v:match('(%w+):(%w+)')
+        if userFilterIDs[filterID] then
+          tinsert(filteredPosts,postID)
+        end
+      end
+
+      -- check the user hasnt seen the posts
+      local newUnseen
+      if userID == 'default' then
+        newUnseen = filteredPosts
+      else
+        newUnseen = userRead:GetUnseenPosts(userID,filteredPosts)
+      end
+
+      for k,v in pairs(newUnseen) do
+        tinsert(freshPosts,v)
+      end
+
     end
   end
 
-  -- check the user hasnt seen the posts
-  local newUnseen = userRead:GetUnseenPosts(userID,filteredPosts)
-  for k,v in pairs(newUnseen) do
-    tinsert(unseenPosts,v)
-  end
-  ngx.log(ngx.ERR,'found ',#unseenPosts,' posts')
-  if #unseenPosts < 100 then
-    return self:GetFreshUserPosts(userID,userFilterIDs,unseenPosts,startRange,endRange)
-  end
-
-  return unseenPosts
+  return freshPosts
 end
 
-function cache:GetUserFrontPage(userID)
-  local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
-  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
-  local freshPosts = cache:GetFreshUserPosts(userID,userFilterIDs)
+function cache:GetUserFrontPage(userID,filter,range)
+  range = range or 0
 
+  --also need to check the posts nodeID
+
+  local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
+
+  -- this will be cached for say 5 minutes
+  local freshPosts = cache:GetFreshUserPosts(userID,filter)
+  ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
   local newPostIDs = {}
 
-  for k,postID in pairs(freshPosts) do
-    if not sessionSeenPosts[postID] then
-      sessionSeenPosts[postID] = true
-      tinsert(newPostIDs,postID)
+  if filter ~= 'seen' and userID ~= 'default' then
+    for k,postID in pairs(freshPosts) do
+      if not sessionSeenPosts[postID] then
+        sessionSeenPosts[postID] = true
+        tinsert(newPostIDs,postID)
+      end
+      -- stop when we have a page worth
+      if #newPostIDs > 10 then
+        break
+      end
     end
-    -- stop when we have a page worth
-    if #newPostIDs > 10 then
-      break
+    self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
+  else
+    for i = range, range+10 do
+      if freshPosts[i] then
+        tinsert(newPostIDs,freshPosts[i])
+      end
     end
   end
 
-  self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
 
 
   local postsWithInfo = {}
@@ -286,63 +326,6 @@ function cache:GetUserFrontPage(userID)
   return postsWithInfo
 end
 
-
-function cache:GetDefaultFrontPage(range,filter)
-
-  -- fresh, load from datescore
-  -- new, load from date,
-  -- best, load from date then sort by best
-  local postIDs = {}
-  local filterFunction
-  if filter == 'new' then
-    filterFunction = 'GetAllNewPosts'
-  elseif filter == 'best' then
-    filterFunction = 'GetAllBestPosts'
-  else
-    filterFunction = 'GetAllFreshPosts'
-  end
-
-  local filterIDs = self:GetIndexedUserFilterIDs('default')
-
-
-  local unfilteredOffset = 0
-  local unfilteredPosts = {}
-  local filteredPosts = {}
-  local filterID, postID
-  local seenPosts = {}
-  local finalPostIDs = {}
-
-  while #filteredPosts < range+10 do
-    --load new posts from redis if needed
-
-    unfilteredPosts = redisread[filterFunction](redisread, unfilteredOffset, unfilteredOffset+1000)
-    unfilteredOffset = unfilteredOffset + 1000
-    if #unfilteredPosts == 0 then
-      break
-    end
-
-    for k, v in pairs(unfilteredPosts) do
-
-      filterID,postID = v:match('(%w+):(%w+)')
-
-      if filterIDs[filterID] and not seenPosts[postID] then
-        seenPosts[postID] = true
-        tinsert(finalPostIDs,postID)
-      end
-    end
-
-  end
-
-  local postsWithInfo = {}
-  for i = range,range+10 do
-    local postID = finalPostIDs[i]
-    if postID then
-      tinsert(postsWithInfo, self:GetPost(postID))
-    end
-  end
-
-  return postsWithInfo
-end
 
 function cache:GetTag(tagName)
   local tags = self:GetAllTags()

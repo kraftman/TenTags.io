@@ -12,12 +12,9 @@ local function FrontPage(self)
   local range = 10*(self.pageNum-1)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
 
-  if self.session.userID then
-    self.posts = api:GetUserFrontPage(self.session.userID)
-    --self.posts = api:GetDefaultFrontPage(range,filter) or {}
-  else
-    self.posts = api:GetDefaultFrontPage(range,filter) or {}
-  end
+  self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
+  -- if empty and logged in then redirect to seen posts
+
   return {render = 'frontpage'}
 end
 
@@ -25,6 +22,7 @@ function m:Register(app)
   app:get('home','/',FrontPage)
   app:get('new','/new',FrontPage)
   app:get('best','/best',FrontPage)
+  app:get('seen','/seen',FrontPage)
 end
 
 return m

@@ -58,10 +58,10 @@ function userwrite:AddSeenPosts(userID,seenPosts)
   red:init_pipeline()
     for k,postID in pairs(seenPosts) do
       red:evalsha(addKeySHA1,0,userID,10000,0.01,postID)
-      red:sadd('userSeen:'..userID,postID)
+      red:zadd('userSeen:'..userID,ngx.time(),postID)
     end
   local res,err = red:commit_pipeline()
-  SetKeepalive(red)
+  SetKeepSetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to add seen post: ',err)
     return nil
@@ -79,7 +79,7 @@ function userwrite:CreateUser(userInfo)
     end
 
   local results, err = red:commit_pipeline()
-  alive(red)
+  SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)
   end
@@ -88,24 +88,25 @@ end
 function userwrite:ActivateAccount(userID)
   local red = GetRedisConnection()
   local ok, err = red:hset('master:'..userID,'active',1)
-  alive(red)
+  SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to activate account:',err)
   end
 end
 
 function userwrite:SubscribeToFilter(userID,filterID)
+  local userID = userID or 'default'
   local red = GetRedisConnection()
   local ok, err = red:sadd('userfilters:'..userID, filterID)
 
   if not ok then
-    alive(red)
+    SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to add filter to list: ',err)
     return
   end
 
   ok, err = red:hincrby('filter:'..filterID,'subs',1)
-  alive(red)
+  SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)
   end
@@ -116,13 +117,13 @@ function userwrite:UnsubscribeFromFilter(userID, filterID)
   local red = GetRedisConnection()
   local ok, err = red:srem('userfilters:'..userID,filterID)
   if not ok then
-    alive(red)
+    SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)
     return
   end
 
   ok, err = red:hincrby('filter:'..filterID,'subs',-1)
-  alive(red)
+  SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)
   end

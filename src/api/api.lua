@@ -151,8 +151,12 @@ function api:ActivateAccount(email, key)
   end
 end
 
-function api:GetUserFrontPage(userID)
-  return cache:GetUserFrontPage(userID)
+function api:GetUserFrontPage(userID,filter,range)
+  return cache:GetUserFrontPage(userID,filter,range)
+end
+
+function api:FlushAllPosts()
+  return worker:FlushAllPosts()
 end
 
 
@@ -363,8 +367,8 @@ function api:CreateFilter(filterInfo)
 
   local tags = {}
 
-  for k,v in pairs(filterInfo.requiredTags) do
-    local tag = self:CreateTag(v, filterInfo.createdBy)
+  for k,tagName in pairs(filterInfo.requiredTags) do
+    local tag = self:CreateTag(tagName, filterInfo.createdBy)
     if tag then
       tag.filterID = filterInfo.id
       tag.filterType = 'required'
@@ -372,11 +376,13 @@ function api:CreateFilter(filterInfo)
       tag.createdAt = filterInfo.createdAt
       tinsert(tags,tag)
       filterInfo.requiredTags[k] = tag
+    else
+      filterInfo.requiredTags[k] = nil
     end
   end
 
-  for k,v in pairs(filterInfo.bannedTags) do
-    local tag = self:CreateTag(v, filterInfo.createdBy)
+  for k,tagName in pairs(filterInfo.bannedTags) do
+    local tag = self:CreateTag(tagName, filterInfo.createdBy)
     if tag then
       tag.filterID = filterInfo.id
       tag.filterType = 'banned'
@@ -384,6 +390,9 @@ function api:CreateFilter(filterInfo)
       tag.createdAt = filterInfo.createdAt
       tinsert(tags,tag)
       filterInfo.bannedTags[k] = tag
+    else
+      --if its blank
+      filterInfo.bannedTags[k] = nil
     end
   end
   filterInfo.tags = tags

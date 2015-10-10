@@ -26,6 +26,7 @@ require 'user':Register(app)
 require 'settings':Register(app)
 require 'messages':Register(app)
 require 'filters':Register(app)
+require 'admin':Register(app)
 
 -- TESTING
 require 'test.perftest':Register(app)

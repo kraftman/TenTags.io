@@ -28,6 +28,10 @@ function worker:AddPostToFilters(finalFilters,postInfo)
   rediswrite:AddPostToFilters(finalFilters,postInfo)
 end
 
+function worker:FlushAllPosts()
+  return rediswrite:FlushAllPosts()
+end
+
 function worker:SendActivationEmail(url,emailAddr)
 
   local subject = "Email confirmation"

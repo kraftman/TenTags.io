@@ -107,6 +107,23 @@ function userread:GetUnseenPosts(baseKey, elements)
   return res
 end
 
+function userread:GetAllUserSeenPosts(userID,startRange,endRange)
+
+  --ngx.log(ngx.ERR,startRange,' ',endRange,' ',userID)
+  startRange = startRange or 0
+  endRange = endRange or 1000
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('userSeen:'..userID, startRange, endRange)
+  SetKeepalive(red)
+
+  if not ok then
+    ngx.log(ngx.ERR,'unable to get user seen posts:',err)
+    return {}
+  end
+  --ngx.log(ngx.ERR,to_json(ok))
+  return ok ~= ngx.null and ok or {}
+end
+
 function userread:GetUserFilterIDs(userID)
 
   local red = GetRedisConnection()

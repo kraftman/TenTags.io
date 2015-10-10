@@ -43,6 +43,20 @@ function write:AddKey(addSHA,baseKey,newElement)
     ngx.log(ngx.ERR, 'unable to add key: ',err)
   end
   return ok
+end
+
+function write:FlushAllPosts()
+  local red = GetRedisConnection()
+
+  --get all post ids
+  --for each post
+  -- remove the post from each of the subs it belongs to
+  -- remove the post from the global list
+
+  red:init_pipeline()
+
+  local res, err = red:commit_pipeline()
+
 
 end
 
@@ -88,6 +102,7 @@ function write:CreateFilter(filterInfo)
 
   -- add filter to required tag
   for k, tagInfo in pairs(requiredTags) do
+    ngx.log(ngx.ERR,to_json(tagInfo))
     red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'required')
   end
   -- add filter to banned tag
