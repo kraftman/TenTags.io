@@ -206,34 +206,59 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
     ngx.log(ngx.ERR, 'forced write to user seen posts, increase dict size!')
   end
 
+  ok, err = userUpdateDict:set(userID,1)
+
 end
 
-function cache:GetFreshUserPosts(userID) -- needs caching
-  -- get a list of all potential posts, add filters later
-  local allPostIDs = redisread:GetAllBestPosts(0,100)
+function cache:GetFreshUserPosts(userID,userFilterIDs,unseenPosts,startRange,endRange) -- needs caching
+  -- the results of this need to be cached for a shorter duration than the
+  -- frequency that session seen posts are flushed to user seen
+  -- so that we can ignore session seen posts here
+
+  startRange = startRange or 0
+  endRange = endRange or 100
+  unseenPosts = unseenPosts or {}
+  ngx.log(ngx.ERR,'startrange: ',startRange)
+
+  local allPostIDs = redisread:GetAllBestPosts(startRange,endRange)
+  -- if weve hit the end then return regardless
+  if #allPostIDs == 0 then
+    ngx.log(ngx.ERR,'list empty, running found')
+    return unseenPosts
+  end
+  startRange = startRange+1000
+  endRange = endRange+1000
 
   -- get the filters the user wants to see
-  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
+
   local postID,filterID
   local filteredPosts = {}
   local postFilterIDs = {}
 
   for k, v in pairs(allPostIDs) do
     filterID,postID = v:match('(%w+):(%w+)')
-    tinsert(filteredPosts,postID)
+    if userFilterIDs[filterID] then
+      tinsert(filteredPosts,postID)
+    end
   end
 
-
-  local unseenPosts = userRead:GetUnseenPosts(userID,filteredPosts)
-
-  -- add these unseenPosts to seen which should also remove duplicates
+  -- check the user hasnt seen the posts
+  local newUnseen = userRead:GetUnseenPosts(userID,filteredPosts)
+  for k,v in pairs(newUnseen) do
+    tinsert(unseenPosts,v)
+  end
+  ngx.log(ngx.ERR,'found ',#unseenPosts,' posts')
+  if #unseenPosts < 100 then
+    return self:GetFreshUserPosts(userID,userFilterIDs,unseenPosts,startRange,endRange)
+  end
 
   return unseenPosts
 end
 
 function cache:GetUserFrontPage(userID)
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
-  local freshPosts = cache:GetFreshUserPosts(userID)
+  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
+  local freshPosts = cache:GetFreshUserPosts(userID,userFilterIDs)
 
 
   local newPostIDs = {}

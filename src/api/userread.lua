@@ -86,7 +86,7 @@ function userread:GetUnseenPosts(baseKey, elements)
   local red = GetRedisConnection()
   red:init_pipeline()
     local sha1Key = checkKey:GetSHA1()
-    
+
     for k,v in pairs(elements) do
       red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
     end
@@ -100,7 +100,7 @@ function userread:GetUnseenPosts(baseKey, elements)
 
   for k,v in pairs(res) do
     if v == ngx.null then
-      k[v] = nil
+      res[k] = nil
     end
   end
 

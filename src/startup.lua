@@ -9,10 +9,13 @@ function worker:New()
   w.rediswrite = require 'api.rediswrite'
   w.redisread = require 'api.redisread'
   w.cjson = require 'cjson'
+  w.userWrite = require 'api.userwrite'
 
   -- shared dicts
   w.locks = ngx.shared.locks
   w.scripts = ngx.shared.scripts
+  w.userUpdateDict = ngx.shared.userupdates
+  w.userSessionSeenDict = ngx.shared.usersessionseen
 
   return w
 end
@@ -42,7 +45,7 @@ end
 function worker.ProcessRecurring(_,self)
   self:ScheduleTimer()
 
-  -- do recurring stuff here
+  self:FlushUserSeen()
 
 end
 
@@ -65,6 +68,26 @@ function worker:GetLock(key, lockTime)
     return nil
   end
   return true
+end
+
+function worker:FlushUserSeen()
+  if not self:GetLock('l:FlushUsers',10) then
+    return
+  end
+  ngx.log(ngx.ERR, 'flushing user scripts')
+
+  local userIDs = self.userUpdateDict:get_keys(1000)
+  local sessionSeenPosts
+  for k,userID in pairs(userIDs) do
+    sessionSeenPosts = self.userSessionSeenDict:get(userID)
+    sessionSeenPosts = self.cjson.decode(sessionSeenPosts)
+
+    local ok = self.userWrite:AddSeenPosts(userID,sessionSeenPosts)
+    if ok then
+      self.userSessionSeenDict:delete(userID)
+      self.userUpdateDict:delete(userID)
+    end
+  end
 end
 
 function worker:AddRedisScripts()
