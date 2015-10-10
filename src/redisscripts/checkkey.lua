@@ -5,7 +5,7 @@ local inputElement = ARGV[4]
 local count     = redis.call('GET', ARGV[1] .. ':count')
 
 if not count then
-  return 0
+  return inputElement
 end
 local ceil = math.ceil
 local tonumber= tonumber

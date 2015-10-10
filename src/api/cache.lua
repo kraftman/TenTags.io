@@ -2,6 +2,8 @@ local cache = {}
 local userFilterIDs = ngx.shared.userFilterIDs
 local filterDict = ngx.shared.filters
 local frontpages = ngx.shared.frontpages
+local userUpdateDict = ngx.shared.userupdates
+local userSessionSeenDict = ngx.shared.usersessionseen
 local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
@@ -177,39 +179,86 @@ function cache:GetIndexedUserFilterIDs(userID)
   return indexed
 end
 
-function cache:GetUserSeentPosts(userID)
-  return {}
+function cache:GetUserSessionSeenPosts(userID)
+  local result = userSessionSeenDict:get(userID)
+  if not result then
+    return {}
+  end
+
+  local indexedSeen = {}
+  for k,v in pairs(from_json(result)) do
+    indexedSeen[v] = true
+  end
+
+  return indexedSeen
 end
 
-function cache:GetUserFrontPage(userID)
-  -- check from the cache
-  -- get 1k top posts
-  -- get only the post that match the users filters
-  -- send all posts to userdb bloom filter
-  -- bloom filter returns all unseen posts
-  -- rinse and repeat
-  -- also need to add to local seen posts list
+function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
+  local flatSeen = {}
+  for k,v in pairs(indexedSeenPosts) do
+    tinsert(flatSeen,k)
+  end
+  local ok,err,forced = userSessionSeenDict:set(userID,to_json(flatSeen))
+  if err then
+    ngx.log(ngx.ERR, 'unable to write user seen:',err)
+  end
+  if forced then
+    ngx.log(ngx.ERR, 'forced write to user seen posts, increase dict size!')
+  end
 
-  local allPostIDs = redisread:GetAllBestPosts()
+end
+
+function cache:GetFreshUserPosts(userID) -- needs caching
+  -- get a list of all potential posts, add filters later
+  local allPostIDs = redisread:GetAllBestPosts(0,100)
+
+  -- get the filters the user wants to see
   local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
   local postID,filterID
   local filteredPosts = {}
   local postFilterIDs = {}
-  
+
   for k, v in pairs(allPostIDs) do
     filterID,postID = v:match('(%w+):(%w+)')
     tinsert(filteredPosts,postID)
   end
 
-  -- cant check and set at the same cos cant set on read server
-  -- need to check on read, queue for set, set on write db
-  -- check that the script exists, ideally need to add it to master on startup
-  -- if it doesnt then we'll need to add it to the master db,
-  -- AND query from the master db since it's then gauranteed to exist there
+
   local unseenPosts = userRead:GetUnseenPosts(userID,filteredPosts)
+
   -- add these unseenPosts to seen which should also remove duplicates
 
   return unseenPosts
+end
+
+function cache:GetUserFrontPage(userID)
+  local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
+  local freshPosts = cache:GetFreshUserPosts(userID)
+
+
+  local newPostIDs = {}
+
+  for k,postID in pairs(freshPosts) do
+    if not sessionSeenPosts[postID] then
+      sessionSeenPosts[postID] = true
+      tinsert(newPostIDs,postID)
+    end
+    -- stop when we have a page worth
+    if #newPostIDs > 10 then
+      break
+    end
+  end
+
+  self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
+
+
+  local postsWithInfo = {}
+
+  for k,postID in pairs(newPostIDs) do
+    tinsert(postsWithInfo, self:GetPost(postID))
+  end
+
+  return postsWithInfo
 end
 
 

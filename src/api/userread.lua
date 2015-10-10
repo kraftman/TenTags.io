@@ -1,5 +1,6 @@
 
 local redis = require "resty.redis"
+local checkKey = require 'redisscripts.checkkey'
 local tinsert = table.insert
 
 local userread = {}
@@ -81,16 +82,29 @@ function userread:GetMasterUserByEmail(email)
   end
 end
 
-function userread:GetUnseenPosts(userID, postIDs)
-
+function userread:GetUnseenPosts(baseKey, elements)
   local red = GetRedisConnection()
   red:init_pipeline()
-    for k,postID in pairs(postIDs) do
-      --eval command that returns nil or the postID
+    local sha1Key = checkKey:GetSHA1()
+    
+    for k,v in pairs(elements) do
+      red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
     end
   local res, err = red:commit_pipeline()
-  
+  SetKeepalive(red)
 
+  if err then
+    ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
+    return {}
+  end
+
+  for k,v in pairs(res) do
+    if v == ngx.null then
+      k[v] = nil
+    end
+  end
+
+  return res
 end
 
 function userread:GetUserFilterIDs(userID)

@@ -73,22 +73,15 @@ function worker:AddRedisScripts()
   local addKey = require 'redisscripts.addkey'
 
   local addSHA = self.rediswrite:LoadScript(addKey:GetScript())
-  ngx.log(ngx.ERR, addSHA, ' ',addKey:GetSHA1())
-  local ok, err = self.scripts:set('addkey',addSHA)
 
   local checkKey = require 'redisscripts.checkkey'
 
   local checkSHA = self.rediswrite:LoadScript(checkKey:GetScript())
 
-  ok, err = self.scripts:set('checkKey',checkSHA)
-
-  self.rediswrite:AddKey(addSHA,'baseKey','element')
-
-  local elements = {'test','element','othertest'}
-
-  local result = self.redisread:GetUnseenElements(checkSHA,'baseKey',elements)
-  ngx.log(ngx.ERR, self.cjson.encode(result))
-
+  ngx.log(ngx.ERR, 'set script with sha1:',checkSHA)
+  --[[
+  local res = self.redisread:CheckKey(checkSHA,addSHA)
+  --]]
 
 end
 

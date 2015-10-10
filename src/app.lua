@@ -12,7 +12,7 @@ to_json = (require 'lapis.util').to_json
 
 
 app:before_filter(function(self)
-  ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
+  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
   --local user = api:GetUserInfo(self.session.userID)
   --ngx.log(ngx.ERR, to_json(user))
   self.csrf_token = csrf.generate_token(self,self.session.userID)

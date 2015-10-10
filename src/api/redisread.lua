@@ -47,6 +47,29 @@ function read:GetUnseenElements(checkSHA,baseKey, elements)
 
 end
 
+--[[function read:CheckKey(checkSHA,addSHA)
+  local keys = {'testr','rsitenrsi','rsiteunrsit'}
+  local red = GetRedisConnection()
+
+  local ok, err = red:evalsha(addSHA,0,'basekey',10000,0.01,'testr')
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add key: ',err)
+  end
+
+  red:init_pipeline()
+    for k,v in pairs(keys) do
+      red:evalsha(checkSHA,0,'basekey',10000,0.01,v)
+    end
+  local res, err = red:commit_pipeline()
+  SetKeepalive(red)
+  for k,v in pairs(res) do
+    ngx.log(ngx.ERR,'k:',k,' v: ',v)
+  end
+
+
+end
+--]]
+
 
 function read:GetFilterIDsByTags(tags)
 

@@ -89,7 +89,7 @@ end
 
 function api:SubscribeToFilter(userID,filterID)
 
-  local filterIDs =  cache:GetUserFilterIDs(username)
+  local filterIDs = cache:GetUserFilterIDs(userID)
 
   for k, v in pairs(filterIDs) do
     if v == filterID then
@@ -149,6 +149,10 @@ function api:ActivateAccount(email, key)
   else
     return nil, 'activation key incorrect'
   end
+end
+
+function api:GetUserFrontPage(userID)
+  return cache:GetUserFrontPage(userID)
 end
 
 
