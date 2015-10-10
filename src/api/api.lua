@@ -26,6 +26,14 @@ function api:GetUserFilters(userID)
   return cache:GetFilterInfo(filterIDs)
 end
 
+function api:GetPostComments(postID)
+  return cache:GetPostComments(postID)
+end
+
+function api:GetPost(postID)
+  return cache:GetPost(postID)
+end
+
 function api:GetDefaultFrontPage(range,filter)
   range = range or 0
   filter = filter or 'fresh'

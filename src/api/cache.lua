@@ -10,6 +10,7 @@ local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = require 'api.redisread'
 local userRead = require 'api.userread'
+local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
 
@@ -58,6 +59,46 @@ function cache:GetAllTags()
   end
 end
 
+function cache:AddChildren(parentID,flat)
+  local t = {}
+  for k,v in pairs(flat[parentID]) do
+    t[v.id] = AddChildren(v.id,flat)
+  end
+
+  return t
+end
+
+function cache:GetPostComments(postID)
+  local flatComments = commentRead:GetPostComments(postID)
+
+  local flat = {}
+  flat[postID] = {}
+  local indexedComments = {}
+
+  for k,comment in pairs(flatComments) do
+    if not flat[comment.parentID] then
+      flat[comment.parentID] = {}
+    end
+    if not flat[comment.id] then
+      flat[comment.id] = {}
+    end
+    tinsert(flat[comment.parentID],comment)
+    indexedComments[comment.id] = comment
+  end
+
+  for k,v in pairs(flat) do
+    table.sort(v,function(a,b)
+      if a.up+a.down == b.up+b.down then
+        return a.date > b.date
+      end
+      return (a.up+a.down > b.up+b.down)
+    end)
+  end
+
+  local tree = self:AddChildren(postID,flat)
+  print(to_json(tree))
+  return tree,indexedComments
+end
 
 function cache:GetPost(postID)
   --[[

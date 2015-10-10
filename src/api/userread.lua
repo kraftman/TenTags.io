@@ -1,4 +1,14 @@
 
+--[[
+user settings ands
+seen posts
+sent messages
+recieved messages
+
+]]
+
+
+
 local redis = require "resty.redis"
 local checkKey = require 'redisscripts.checkkey'
 local tinsert = table.insert

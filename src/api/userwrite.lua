@@ -61,7 +61,7 @@ function userwrite:AddSeenPosts(userID,seenPosts)
       red:zadd('userSeen:'..userID,ngx.time(),postID)
     end
   local res,err = red:commit_pipeline()
-  SetKeepSetKeepalive(red)
+  SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to add seen post: ',err)
     return nil
