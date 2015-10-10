@@ -151,6 +151,7 @@ function api:ActivateAccount(email, key)
   end
 end
 
+
 function api:CreateMasterUser(confirmURL, userInfo)
   userInfo.username = userInfo.username and userInfo.username:lower() or ''
   userInfo.password = userInfo.password and userInfo.password:lower() or ''

@@ -32,6 +32,21 @@ function read:ConvertListToTable(list)
   return info
 end
 
+function read:GetUnseenElements(checkSHA,baseKey, elements)
+  local red = GetRedisConnection()
+  red:init_pipeline()
+  for k,v in pairs(elements) do
+    red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
+  end
+  local res, err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
+    return {}
+  end
+  return res
+
+end
+
 
 function read:GetFilterIDsByTags(tags)
 

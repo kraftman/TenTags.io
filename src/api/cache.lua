@@ -195,7 +195,8 @@ function cache:GetUserFrontPage(userID)
   local postID,filterID
   local filteredPosts = {}
   local postFilterIDs = {}
-  for k, v in pairs(allPostIDs)
+  
+  for k, v in pairs(allPostIDs) do
     filterID,postID = v:match('(%w+):(%w+)')
     tinsert(filteredPosts,postID)
   end

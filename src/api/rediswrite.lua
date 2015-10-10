@@ -25,6 +25,27 @@ local function SetKeepalive(red)
   end
 end
 
+function write:LoadScript(script)
+  local red = GetRedisConnection()
+  local ok, err = red:script('load',script)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add script to redis:',err)
+    return nil
+  end
+
+  return ok
+end
+
+function write:AddKey(addSHA,baseKey,newElement)
+  local red = GetRedisConnection()
+  local ok, err = red:evalsha(addSHA,0,baseKey,10000,0.01,newElement)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add key: ',err)
+  end
+  return ok
+
+end
+
 
 function write:ConvertListToTable(list)
   local info = {}

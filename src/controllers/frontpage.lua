@@ -13,7 +13,8 @@ local function FrontPage(self)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
 
   if self.session.userID then
-    self.posts = api:GetUserFrontPage(self.sessiono.userID)
+    --self.posts = api:GetUserFrontPage(self.session.userID)
+    self.posts = api:GetDefaultFrontPage(range,filter) or {}
   else
     self.posts = api:GetDefaultFrontPage(range,filter) or {}
   end
