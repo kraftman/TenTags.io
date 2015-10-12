@@ -25,6 +25,15 @@ local function SetKeepalive(red)
   end
 end
 
+
+function write:ConvertListToTable(list)
+  local info = {}
+  for i = 1,#list, 2 do
+    info[list[i]] = list[i+1]
+  end
+  return info
+end
+
 function write:LoadScript(script)
   local red = GetRedisConnection()
   local ok, err = red:script('load',script)
@@ -58,6 +67,22 @@ function write:FlushAllPosts()
   local res, err = red:commit_pipeline()
 
 
+end
+
+function write:CreateComment(postID,commentID, comment)
+  local red = GetRedisConnection()
+  local ok , err = red:hmset(postID,commentID,comment)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to write comment',err)
+  end
+end
+
+function write:GetComments(postID)
+  local red = GetRedisConnection()
+  local ok, err = red:hgetall(postID)
+  SetKeepalive(red)
+  return self:ConvertListToTable(ok)
 end
 
 

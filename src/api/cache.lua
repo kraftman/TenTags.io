@@ -97,7 +97,9 @@ function cache:GetPostComments(postID)
   local indexedComments = {}
 
   for k,v in pairs(flatComments) do
-    flatComments[k].username = self:GetUsername(v.createdBy)
+    ngx.log(ngx.ERR, k,' userID: ',to_json(v))
+    flatComments[k] = from_json(v)
+    flatComments[k].username = self:GetUsername(flatComments[k].createdBy)
     ngx.log(ngx.ERR,flatComments[k].username)
   end
 

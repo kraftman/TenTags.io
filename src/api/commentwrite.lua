@@ -35,14 +35,10 @@ end
 function commentwrite:CreateComment(commentInfo)
 
   local red = GetRedisConnection()
-    red:init_pipeline()
-    red:hmset('comments:'..commentInfo.id,commentInfo)
-    red:zadd('postComment:time:'..commentInfo.postID,commentInfo.createdAt,commentInfo.id)
-    red:zadd('postComment:score:'..commentInfo.postID, commentInfo.score,commentInfo.id)
-    red:zadd('userComments:'..commentInfo.createdBy,commentInfo.createdAt,commentInfo.id)
+  local serialComment = to_json(commentInfo)
+  local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
 
-  local res, err = red:commit_pipeline()
-  if err then
+  if not ok then
     ngx.log(ngx.ERR, 'unable to write comment info: ',err)
     return false
   end

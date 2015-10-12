@@ -34,7 +34,7 @@ end
 function commentread:GetPostComments(postID)
   local red = GetRedisConnection()
 
-  local ok, err = red:zrange('postComment:time:'..postID,0,-1)
+  local ok, err = red:hgetall('postComment:'..postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post comments: ',err)
     return {}
@@ -44,21 +44,7 @@ function commentread:GetPostComments(postID)
     return {}
   end
 
-  local commentsWithInfo = {}
-  red:init_pipeline()
-  for k, v in pairs(ok) do
-    red:hgetall('comments:'..v)
-  end
-  local res, err = red:commit_pipeline()
-  if err then
-    ngx.log(ngx.ERR, 'unable to get comment info: ',err)
-    return {}
-  end
-  for k,v in pairs(res) do
-    tinsert(commentsWithInfo,self:ConvertListToTable(v))
-  end
-
-  return commentsWithInfo
+  return self:ConvertListToTable(ok)
 end
 
 function commentread:GetUserComments(userID)

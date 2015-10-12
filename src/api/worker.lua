@@ -14,6 +14,7 @@ function worker:CreatePost(postInfo)
 end
 
 function worker:CreateComment(commentInfo)
+  userWrite:AddComment(commentInfo)
   return commentWrite:CreateComment(commentInfo)
 end
 

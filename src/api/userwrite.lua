@@ -35,6 +35,14 @@ function userwrite:ConvertListToTable(list)
   return info
 end
 
+function userwrite:AddComment(commentInfo)
+  local red = GetRedisConnection()
+  local ok, err = red:zadd('userComments:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.id)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add comment: ', err)
+  end
+end
+
 function userwrite:CreateMasterUser(masterInfo)
   local red = GetRedisConnection()
   local ok, err = red:hmset('master:'..masterInfo.kv.id,masterInfo.kv)

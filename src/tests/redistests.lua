@@ -5,7 +5,35 @@
 
       can probably store all post ids in redis
       will either need to LRU post data and comment data or archive
+
+	100k comments in cjson and hashes: 50mb
+
+	100k comments as objects in hashes: 138mb
+
+	1.7billion reddit comments to date
+	= 850 gb ram
+
+
 --]]
+
+local ffi = require("ffi")
+ffi.cdef[[
+	typedef long time_t;
+
+ 	typedef struct timeval {
+		time_t tv_sec;
+		time_t tv_usec;
+	} timeval;
+
+	int gettimeofday(struct timeval* t, void* tzp);
+]]
+
+local gettimeofday_struct = ffi.new("timeval")
+
+local function gettimeofday()
+ 	ffi.C.gettimeofday(gettimeofday_struct, nil)
+ 	return tonumber(gettimeofday_struct.tv_sec) * 1000000 + tonumber(gettimeofday_struct.tv_usec)
+end
 
 
 local redis = require 'redis'
@@ -13,6 +41,7 @@ local client = redis.connect('127.0.0.1', 6379)
 local random = math.random
 local tinsert = table.insert
 local uuid = require 'uuid'
+local cjson = require 'cjson'
 
 function string.fromhex(str)
     return (str:gsub('..', function (cc)
@@ -23,7 +52,7 @@ end
 function TestReadBit()
   client:del('testkey')
   for i = 1, 40 do
-    
+
 
     client:setbit('testkey',i,1)
     local value = client:get('testkey')
@@ -31,7 +60,7 @@ function TestReadBit()
     print(i,string.format('%q', value))
   end
 end
-TestReadBit()
+--TestReadBit()
 
 function TestPost()
   --[[
@@ -113,7 +142,8 @@ function TestPostNoComments()
   print(count)
 end
 
-function TestComments()
+local function TestComments()
+  --138meg
   local comment = {}
   for i = 1, 100000 do
     if i % 10000 == 0 then
@@ -138,8 +168,79 @@ function TestComments()
       p:zadd('post'..(i/10)..'comment:score',i,comment.id)
     end)
   end
+end
+--TestComments()
+
+local function TestSerialComments()
+  --49.29 meg
+  -- 14 seconds raw
+  -- 2.75 pipelined 1000 at a time
+
+
+  local comment = {}
+  local start = gettimeofday()
+
+  for i = 1, 100000 do
+    if i % 1000 == 0 then
+      print(i)
+    end
+    client:pipeline(function(p)
+
+        comment = {}
+        comment.id = 'ariosetnoairsenoiarestaiorseooia'..i
+        comment.text = 'aernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatr'
+        comment.up = random(1000)
+        comment.down =  random(1000)
+        comment.userid = 'oairestoiarsetoairoseniarestn'..i
+        comment.postID = 'oairestoiarsetoairoeniarestn'..i
+        local serialComment = cjson.encode(comment)
+
+        p:hmset('winweofinweofinwefwefe',comment.id,serialComment)
+
+    end)
+  end
+  start = gettimeofday()
+  local res = client:hgetall('winweofinweofinwefwefe')
+  local i = 1
+  for k,v in pairs(res) do
+    local comment = cjson.decode(v)
+    i = i+1
+  end
+  print(i)
+
+
+  local endTime = gettimeofday()
+  print(endTime - start)
+end
+--TestSerialComments()
+
+local function TestInMemory()
+	local comment
+	local allPosts = {}
+	for i = 1, 100000 do
+		if i % 10000 == 0 then
+      print(i)
+			print(string.format(" GC size: %.3f KB", collectgarbage("count")))
+    end
+		comment = {}
+		comment.id = 'ariosetnoairsenoiarestaiorseooia'..i
+		comment.text = 'aernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatr'
+		comment.up = random(1000)
+		comment.down =  random(1000)
+		comment.userid = 'oairestoiarsetoairoseniarestn'..i
+		comment.postID = 'oairestoiarsetoairoeniarestn'..i
+		table.insert(allPosts,comment)
+	end
 
 end
+TestInMemory()
+
+local function TestSpeed()
+
+
+end
+
+
 
 function TestRedisKeys()
   local new = uuid.new

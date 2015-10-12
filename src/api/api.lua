@@ -35,7 +35,7 @@ function api:GetComment(commentID)
 end
 
 function api:GetUserComments(username)
-  
+
   local userID = cache:GetUserID(username)
   if not userID then
     ngx.log(ngx.ERR, 'couldnt find user!')
@@ -54,9 +54,11 @@ function api:CreateComment(commentInfo)
   commentInfo.up = 1
   commentInfo.down = 0
   commentInfo.score = 0
-  -- also add this to comments user has voted on
+
   return worker:CreateComment(commentInfo)
-  -- also increment post comment count
+ --need to add comment to comments, commentid to user
+
+ -- also increment post comment count
 end
 
 function api:GetPost(postID)
