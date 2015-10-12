@@ -68,8 +68,11 @@ function cache:GetComment(commentID)
 end
 
 function cache:GetUserComments(userID)
-  local commentIDs = commentRead:GetUserComments(userID)
-  local commentInfo = commentRead:GetCommentInfos(commentIDs)
+  local postIDcommentID = userRead:GetUserComments(userID)
+  local commentInfo = commentRead:GetUserComments(postIDcommentID)
+  for k,v in pairs(commentInfo) do
+    commentInfo[k] = from_json(v)
+  end
   return commentInfo
 end
 

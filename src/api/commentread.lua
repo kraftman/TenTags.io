@@ -47,20 +47,28 @@ function commentread:GetPostComments(postID)
   return self:ConvertListToTable(ok)
 end
 
-function commentread:GetUserComments(userID)
+function commentread:GetUserComments(IDs)
+  -- split the postID and commentID apart
+  -- pipelined the requsts
+
   local red = GetRedisConnection()
-  local ok, err = red:zrange('userComments:'..userID,0,-1)
+  local postID, commentID
+  red:init_pipeline()
+    for k,v in pairs(IDs) do
+      ngx.log(ngx.ERR,v)
+      postID, commentID = v:match('(%w+):(%w+)')
+      red:hget('postComment:'..postID,commentID)
+    end
+  local res, err = red:commit_pipeline()
   SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get user comments, ',err)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get comments: ',err)
     return {}
   end
-  if ok == ngx.null then
-    return nil
-  else
-    return ok
-  end
+  
+  return res
 end
+
 
 function commentread:GetComment(commentID)
   local red = GetRedisConnection()

@@ -76,6 +76,20 @@ function userread:GetUserID(username)
 end
 
 
+function userread:GetUserComments(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('userComments:'..userID,0,-1)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user comments, ',err)
+    return {}
+  end
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
 
 
 
