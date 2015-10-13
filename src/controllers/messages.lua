@@ -1,4 +1,15 @@
 
+--[[
+need to handle
+inbox
+sent
+alert that there are new messages
+show conversation threads between people
+
+
+
+]]
+
 
 local m = {}
 
