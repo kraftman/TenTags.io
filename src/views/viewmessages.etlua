@@ -1,0 +1,8 @@
+
+<div class = 'contents'>
+  <% for i, thread in pairs(threads) do %>
+  Test
+    <% render("views.st.threadelement",{thread = thread}) %>
+   
+  <% end %>
+</div>

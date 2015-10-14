@@ -3,10 +3,9 @@
   rate limitting
   business logic
 ]]
+
 local cache = require 'api.cache'
 local api = {}
-local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
 local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
 local tinsert = table.insert
@@ -15,6 +14,7 @@ local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
 
 --self.session.current_user
+
 
 
 function api:GetUserFilters(userID)
@@ -33,6 +33,37 @@ end
 function api:GetComment(commentID)
   return cache:GetComment(commentID)
 end
+
+function api:CreateThread(messageInfo)
+  local recipientID = cache:GetUserID(messageInfo.recipient)
+
+  local thread = {
+    id = uuid.generate_random(),
+    createdBy = messageInfo.createdBy,
+    createdAt = ngx.time(),
+    title = messageInfo.title,
+    viewers = {messageInfo.createdAt,recipientID},
+    lastUpdated = ngx.time()
+
+  }
+
+  local msg = {
+    id = uuid.generate_random(),
+    createdBy = messageInfo.createdBy,
+    body = messageInfo.body,
+    createdAt = ngx.time(),
+    threadID = thread.id
+  }
+
+  worker:CreateThread(thread)
+  worker:CreateMessage(msg)
+
+end
+
+function api:GetThreads(userID)
+  return cache:GetThreads(userID)
+end
+
 
 function api:GetUserComments(username)
 
@@ -78,19 +109,14 @@ function api:GetFilterPosts(filterName,username,offset,sort)
 
 
   offset = offset or 0
-  sort = sort or 'fresh'
-
-  local filterPosts = cache:GetFilterPosts(filterName,username,offset,sort)
-
-  -- function used to get new postIDs
-  local getMorePosts
-  if sort == 'new' then
-
-  elseif sort == 'best' then
-
-  else
-
+  --sort = sort or 'fresh'
+  if not sort or filterName then
+    print('no sort')
   end
+
+  --local filterPosts = cache:GetFilterPosts(filterName,username,offset,sort)
+
+
 
   local userSeenPosts = cache:GetUserSeenPosts(username) or {}
   local userFilters = cache:GetIndexedUserFilterIDs(username)
@@ -102,10 +128,12 @@ function api:GetFilterPosts(filterName,username,offset,sort)
   local postID, filterID
   local postInfo
 
-  while #finalPostIDs < offset + 10 do
-    unfilteredPosts = GetMorePosts(unfilteredOffset,unfilteredOffset+1000)
+  local finalPostIDs = {}
 
-    for k,v in pairs(unfilteredPosts) do
+  while #finalPostIDs < offset + 10 do
+    unfilteredPosts = cache:GetMorePosts(unfilteredOffset,unfilteredOffset+1000)
+
+    for _,v in pairs(unfilteredPosts) do
       filterID,postID = v:match('(%w+):(%w+)')
       if userFilters[filterID] then
         postInfo = cache:GetPost(postID)
@@ -119,7 +147,7 @@ function api:GetFilterPosts(filterName,username,offset,sort)
 
   if username ~= 'default' then
     cache:UpdateUserSeenPosts(username,userSeenPosts)
-    rediswrite:UpdateUserSeenPosts(username,userSeenPosts)
+    worker:UpdateUserSeenPosts(username,userSeenPosts)
   end
 
   return finalPosts
@@ -130,7 +158,7 @@ function api:SubscribeToFilter(userID,filterID)
 
   local filterIDs = cache:GetUserFilterIDs(userID)
 
-  for k, v in pairs(filterIDs) do
+  for _, v in pairs(filterIDs) do
     if v == filterID then
       -- they are already subbed
       return
@@ -245,7 +273,7 @@ end
 function api:UnsubscribeFromFilter(username,filterID)
   local filterIDs = cache:GetUserFilterIDs(username)
   local found = false
-  for k,v in pairs(filterIDs) do
+  for _,v in pairs(filterIDs) do
     if v == filterID then
       found = true
     end
@@ -284,7 +312,7 @@ end
 
 function api:PostIsValid(postInfo)
 
-  return true
+  return postInfo
 end
 
 function api:CreatePost(postInfo)
@@ -337,14 +365,14 @@ function api:CreatePost(postInfo)
     end
   end
 
-  for k,v in pairs(chosenFilterIDs) do
+  for k,_ in pairs(chosenFilterIDs) do
     chosenFilterIDs[k] = k
   end
   postInfo.filters = chosenFilterIDs
   --get the info from the filters to find out which tags they want
   local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)
   local finalFilters = {}
-  for k,filter in pairs(filtersWithInfo) do
+  for _,filter in pairs(filtersWithInfo) do
     if self:TagsMatch(filter.requiredTags, postInfo.tags) then
       tinsert(finalFilters,filter)
     end
@@ -355,7 +383,7 @@ function api:CreatePost(postInfo)
 end
 
 function api:TagsMatch(filterTags,postTags)
-  local found = false
+  local found
   for _,filterTagID in pairs(filterTags) do
     found = false
     for _,postTag in pairs(postTags) do
@@ -371,7 +399,7 @@ function api:TagsMatch(filterTags,postTags)
 end
 
 function api:FilterIsValid(filterInfo)
-  return true
+  return filterInfo
   -- lower case it
   -- check for invalid chars
   -- check it doesnt already exist

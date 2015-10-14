@@ -38,6 +38,15 @@ function worker:FlushAllPosts()
   return rediswrite:FlushAllPosts()
 end
 
+function worker:CreateThread(thread)
+  return rediswrite:CreateThread(thread)
+end
+
+
+function worker:CreateMessage(message)
+  return rediswrite:CreateMessage(message)
+end
+
 function worker:SendActivationEmail(url,emailAddr)
 
   local subject = "Email confirmation"

@@ -22,6 +22,13 @@ function cache:GetMasterUserInfo(masterID)
   return userRead:GetMasterUserInfo(masterID)
 end
 
+function cache:GetThreads(userID)
+  local threadIDs = redisread:GetUserThreads(userID)
+  local threads = redisread:GetThreadInfos(threadIDs)
+
+  return threads
+end
+
 function cache:GetUserInfo(userID)
   return userRead:GetUserInfo(userID)
 end

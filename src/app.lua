@@ -9,7 +9,7 @@ local csrf = require("lapis.csrf")
 
 -- DEV ONLY
 to_json = (require 'lapis.util').to_json
-from_jon = (require 'lapis.util').from_json
+from_json = (require 'lapis.util').from_json
 
 
 app:before_filter(function(self)

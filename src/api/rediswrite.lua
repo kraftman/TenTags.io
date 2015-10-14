@@ -4,7 +4,7 @@ local write = {}
 
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
-local tinsert = table.insert
+
 
 local function GetRedisConnection()
   local red = redis:new()
@@ -54,20 +54,6 @@ function write:AddKey(addSHA,baseKey,newElement)
   return ok
 end
 
-function write:FlushAllPosts()
-  local red = GetRedisConnection()
-
-  --get all post ids
-  --for each post
-  -- remove the post from each of the subs it belongs to
-  -- remove the post from the global list
-
-  red:init_pipeline()
-
-  local res, err = red:commit_pipeline()
-
-
-end
 
 function write:CreateComment(postID,commentID, comment)
   local red = GetRedisConnection()
@@ -81,6 +67,9 @@ end
 function write:GetComments(postID)
   local red = GetRedisConnection()
   local ok, err = red:hgetall(postID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get comments:',err)
+  end
   SetKeepalive(red)
   return self:ConvertListToTable(ok)
 end
@@ -116,28 +105,29 @@ function write:CreateFilter(filterInfo)
   red:hmset('filter:'..filterInfo.id, filterInfo)
 
   -- add list of required tags
-  for k, tagInfo in pairs(requiredTags) do
+  for _, tagInfo in pairs(requiredTags) do
     red:sadd('filter:requiredtags:'..filterInfo.id,tagInfo.id)
   end
 
   -- add list of banned tags
-  for k, tagInfo in pairs(bannedTags) do
+  for _, tagInfo in pairs(bannedTags) do
     red:sadd('filter:bannedtags:'..filterInfo.id,tagInfo.id)
   end
 
   -- add filter to required tag
-  for k, tagInfo in pairs(requiredTags) do
+  for _, tagInfo in pairs(requiredTags) do
     ngx.log(ngx.ERR,to_json(tagInfo))
     red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'required')
   end
   -- add filter to banned tag
-  for k, tagInfo in pairs(bannedTags) do
+  for _, tagInfo in pairs(bannedTags) do
     red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'banned')
   end
   local results, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
   end
+  return results
 end
 
 function write:AddPostToFilters(filters,postInfo)
@@ -158,7 +148,7 @@ function write:AddPostToFilters(filters,postInfo)
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
   end
-  return
+  return results
 end
 
 
@@ -194,7 +184,7 @@ function write:CreatePost(postInfo)
     -- add all filters that the post has
     red:sadd('postfilters:'..postInfo.id,filters)
     -- collect tag ids and add taginfo to hash
-    for k,tag in pairs(tags) do
+    for _,tag in pairs(tags) do
 
       red:sadd('post:tagIDs:'..postInfo.id,tag.id)
       red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
@@ -214,6 +204,47 @@ function write:CreatePost(postInfo)
   end
 
   SetKeepalive(red)
+  return results
+end
+
+function write:CreateThread(thread)
+  local red = GetRedisConnection()
+  local viewers = thread.viewers
+  thread.viewers = nil
+
+  -- there wont be many viewers ever so lets not waste a set
+  for _,userID in pairs(viewers) do
+    thread['viewer:'..userID] = 1
+  end
+
+  red:init_pipeline()
+    red:hmset('Thread:'..thread.id,thread)
+    for _,userID in pairs(viewers) do
+      red:zadd('UserThreads:'..userID,thread.lastUpdated,thread.id)
+    end
+  local res, err = red:commit_pipeline()
+  if err then
+    ngx.log('unable to write thread:',err)
+  end
+  return res
+end
+
+function write:CreateMessage(msg)
+  -- also need to update theread last userUpdate
+  local red = GetRedisConnection()
+
+  -- TODO: need to load the thread and then update each viewer where the viewer
+  -- isnt the author to tell them the thread is updated
+
+  red:init_pipeline()
+    red:hset('ThreadMessages:'..msg.threadID,msg.id,to_json(msg))
+    red:hset('Thread:'..msg.threadID,'lastUpdated',msg.createdAt)
+
+  local res, err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to create message: ',err)
+  end
+  return res
 end
 
 
