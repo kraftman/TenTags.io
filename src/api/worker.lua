@@ -72,6 +72,14 @@ function worker:ActivateAccount(userID)
   return userWrite:ActivateAccount(userID)
 end
 
+function worker:AddUserAlert(userID, alert)
+  return userWrite:AddUserAlert(ngx.time(),userID, alert)
+end
+
+function worker:UpdateLastUserAlertCheck(userID)
+  return userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+end
+
 
 
 return worker

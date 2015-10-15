@@ -35,6 +35,26 @@ function userwrite:ConvertListToTable(list)
   return info
 end
 
+function userwrite:AddUserAlert(createdAt,userID, alert)
+  local red = GetRedisConnection()
+  local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create alert: ',err)
+  end
+  SetKeepalive(red)
+  return ok
+end
+
+function userwrite:UpdateLastUserAlertCheck(userID, checkedAt)
+  local red = GetRedisConnection()
+  local ok, err = red:hmset('user:'..userID,'alertCheck',checkedAt)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set user alert check:',err)
+  end
+  return ok
+end
+
 function userwrite:AddComment(commentInfo)
   local red = GetRedisConnection()
   local ok, err = red:zadd('userComments:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)

@@ -38,6 +38,24 @@ function api:GetThread(threadID)
   return cache:GetThread(threadID)
 end
 
+function api:UserHasAlerts(userID)
+  local alerts = cache:GetUserAlerts(userID)
+  ngx.log(ngx.ERR, #alerts)
+  return #alerts > 0
+end
+
+function api:GetUserAlerts(userID)
+  local alerts = cache:GetUserAlerts(userID)
+  -- need to also update the users lastcheckedAt
+  -- both in redis and the cache (when it caches)
+
+  return alerts
+end
+
+function api:UpdateLastUserAlertCheck(userID)
+  return worker:UpdateLastUserAlertCheck(userID)
+end
+
 function api:CreateMessageReply(messageInfo)
   -- TODO: validate message info
   messageInfo.id = uuid.generate_random()
@@ -46,9 +64,9 @@ function api:CreateMessageReply(messageInfo)
 
   local thread = cache:GetThread(messageInfo.threadID)
   for _,userID in pairs(thread.viewers) do
-    if userID ~=messageInfo.createdBy then
+    --if userID ~=messageInfo.createdBy then
       worker:AddUserAlert(userID, 'thread:'..thread.id..':'..messageInfo.id)
-    end
+    --end
   end
 
 end
@@ -76,6 +94,7 @@ function api:CreateThread(messageInfo)
 
   worker:CreateThread(thread)
   worker:CreateMessage(msg)
+  worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
 
 end
 

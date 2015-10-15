@@ -38,6 +38,17 @@ function cache:GetUserInfo(userID)
   return userRead:GetUserInfo(userID)
 end
 
+
+function cache:GetUserAlerts(userID)
+  local user = self:GetUserInfo(userID)
+  if not user.kv.alertCheck then
+    user.kv.alertCheck = 0
+  end
+  local alerts = userRead:GetUserAlerts(userID,user.kv.alertCheck, ngx.time())
+  ngx.log(ngx.ERR, to_json(alerts))
+  return alerts
+end
+
 function cache:GetMasterUserByEmail(email)
   email = email:lower()
   local userID = userRead:GetMasterUserByEmail(email)
