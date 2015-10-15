@@ -44,6 +44,7 @@ end
 
 
 function worker:CreateMessage(message)
+
   return rediswrite:CreateMessage(message)
 end
 

@@ -34,6 +34,21 @@ function api:GetComment(commentID)
   return cache:GetComment(commentID)
 end
 
+function api:CreateMessageReply(messageInfo)
+  -- validate message info
+  messageInfo.id = uuid.generate_random()
+  messageInfo.createdAt = ngx.time()
+  worker:CreateMessage(messageInfo)
+
+  local thread = cache:GetThread(messageInfo.threadID)
+  for _,userID in pairs(thread.viewers) do
+    if userID ~=messageInfo.createdBy then
+      worker:AddUserAlert(userID, 'thread:'..thread.id..':'..messageInfo.id)
+    end
+  end
+
+end
+
 function api:CreateThread(messageInfo)
   local recipientID = cache:GetUserID(messageInfo.recipient)
 

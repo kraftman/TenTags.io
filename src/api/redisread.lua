@@ -149,6 +149,19 @@ function read:GetUserThreads(userID)
   end
 end
 
+function read:GetThreadInfo(threadID)
+  local threadInfo = self:ConvertListToTable(ok)
+
+  for _, v in pairs(threadInfo) do
+    if v:find('viewer') then
+      local viewerID = v:match('viewer:(%w+)')
+      if viewerID then
+        tinsert(viewerIDs,viewerID)
+      end
+    end
+  end
+end
+
 function read:GetThreadInfos(threadIDs)
   local red = GetRedisConnection()
   red:init_pipeline()

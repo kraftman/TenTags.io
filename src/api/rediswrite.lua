@@ -4,6 +4,7 @@ local write = {}
 
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
+local tinsert = table.insert()
 
 
 local function GetRedisConnection()
@@ -230,13 +231,10 @@ function write:CreateThread(thread)
 end
 
 function write:CreateMessage(msg)
-  -- also need to update theread last userUpdate
+  -- also need to update theead last userUpdate
   local red = GetRedisConnection()
-
-  -- TODO: need to load the thread and then update each viewer where the viewer
-  -- isnt the author to tell them the thread is updated
-
   red:init_pipeline()
+
     red:hset('ThreadMessages:'..msg.threadID,msg.id,to_json(msg))
     red:hset('Thread:'..msg.threadID,'lastUpdated',msg.createdAt)
 
