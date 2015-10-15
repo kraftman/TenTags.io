@@ -55,9 +55,9 @@ local function MessageReply(self)
 end
 
 function m:Register(app)
-  app:match('viewmessages','/message/view',respond_to({GET = ViewMessages}))
-  app:match('newmessage','/message/new',respond_to({GET = NewMessage, POST = CreateThread}))
-  app:match('replymessage','/message/reply/:threadID',respond_to({GET = MessageReply,POST = CreateMessageReply}))
+  app:match('viewmessages','/messages/view',respond_to({GET = ViewMessages}))
+  app:match('newmessage','/messages/new',respond_to({GET = NewMessage, POST = CreateThread}))
+  app:match('replymessage','/messages/reply/:threadID',respond_to({GET = MessageReply,POST = CreateMessageReply}))
 end
 
 return m
