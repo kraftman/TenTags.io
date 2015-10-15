@@ -40,7 +40,7 @@ local function CreateThread(self)
 
 end
 
-local function MessageReply(self)
+local function CreateMessageReply(self)
   -- need the threadID
   local msgInfo = {}
   msgInfo.threadID = self.params.threadID
@@ -49,10 +49,15 @@ local function MessageReply(self)
   api:CreateMessageReply(msgInfo)
 end
 
+local function MessageReply(self)
+  self.thread = api:GetThread(self.params.threadID)
+  return {render = 'replymessage'}
+end
+
 function m:Register(app)
   app:match('viewmessages','/message/view',respond_to({GET = ViewMessages}))
   app:match('newmessage','/message/new',respond_to({GET = NewMessage, POST = CreateThread}))
-  app:match('replymessage','/message/reply/:threadID',respond_to(POST = MessageReply))
+  app:match('replymessage','/message/reply/:threadID',respond_to({GET = MessageReply,POST = CreateMessageReply}))
 end
 
 return m

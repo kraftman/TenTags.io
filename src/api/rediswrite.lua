@@ -4,7 +4,7 @@ local write = {}
 
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
-local tinsert = table.insert()
+local tinsert = table.insert
 
 
 local function GetRedisConnection()

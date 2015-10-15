@@ -149,17 +149,50 @@ function read:GetUserThreads(userID)
   end
 end
 
-function read:GetThreadInfo(threadID)
-  local threadInfo = self:ConvertListToTable(ok)
+function read:ConvertThreadFromRedis(thread)
 
-  for _, v in pairs(threadInfo) do
-    if v:find('viewer') then
-      local viewerID = v:match('viewer:(%w+)')
+  thread  = self:ConvertListToTable(thread)
+  local viewers = {}
+
+
+  for k,_ in pairs(thread) do
+    if k:find('viewer') then
+      local viewerID = k:match('viewer:(%w+)')
       if viewerID then
-        tinsert(viewerIDs,viewerID)
+        thread[k] = nil
+        tinsert(viewers,viewerID)
       end
     end
   end
+
+  thread.viewers = viewers
+
+  return thread
+end
+
+function read:GetThreadInfo(threadID)
+  local red = GetRedisConnection()
+
+  local ok, err = red:hgetall('Thread:'..threadID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get thread info:',err)
+    return {}
+  end
+
+  local thread = read:ConvertThreadFromRedis(ok)
+
+  ok,err = red:hgetall('ThreadMessages:'..threadID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load thread messages: ',err)
+    return thread
+  end
+
+  thread.messages = self:ConvertListToTable(ok)
+  for k,v in pairs(thread.messages) do
+    thread.messages[k] = from_json(v)
+  end
+
+  return thread
 end
 
 function read:GetThreadInfos(threadIDs)
@@ -174,20 +207,10 @@ function read:GetThreadInfos(threadIDs)
     return {}
   end
   for k,v in pairs(res) do
-    res[k] = self:ConvertListToTable(v)
-    local viewers = {}
-    for m,_ in pairs(res[k]) do
-      if m:find('viewer') then
-        local viewerID = m:match('viewer:(%w+)')
-        if viewerID then
-          res[k][m] = nil
-          tinsert(viewers,viewerID)
-        end
-      end
-    end
-    res[k].viewers = viewers
+    res[k] = self:ConvertThreadFromRedis(v)
   end
 
+  -- TODO: work out if this can be combined with the above
   red:init_pipeline()
     for k,thread in pairs(res) do
       red:hgetall('ThreadMessages:'..thread.id)

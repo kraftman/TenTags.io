@@ -1,8 +1,10 @@
 
 <div class = 'contents'>
   <% for i, thread in pairs(threads) do %>
-  Test
+  
     <% render("views.st.threadelement",{thread = thread}) %>
-   
+    <a href="<%= url_for('replymessage',{threadID = thread.id}) %>">reply</a>
+
+
   <% end %>
 </div>

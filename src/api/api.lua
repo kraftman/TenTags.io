@@ -34,8 +34,12 @@ function api:GetComment(commentID)
   return cache:GetComment(commentID)
 end
 
+function api:GetThread(threadID)
+  return cache:GetThread(threadID)
+end
+
 function api:CreateMessageReply(messageInfo)
-  -- validate message info
+  -- TODO: validate message info
   messageInfo.id = uuid.generate_random()
   messageInfo.createdAt = ngx.time()
   worker:CreateMessage(messageInfo)
