@@ -30,8 +30,8 @@ function api:GetPostComments(postID)
   return cache:GetPostComments(postID)
 end
 
-function api:GetComment(commentID)
-  return cache:GetComment(commentID)
+function api:GetComment(postID, commentID)
+  return cache:GetComment(postID, commentID)
 end
 
 function api:GetThread(threadID)
@@ -105,6 +105,18 @@ function api:GetThreads(userID)
   return cache:GetThreads(userID)
 end
 
+function api:SubscribeComment(userID, postID, commentID)
+  local comment = cache:GetComment(postID, commentID)
+  -- check they dont exist
+  for k, v in pairs(comment.viewers) do
+    if v == userID then
+      return
+    end
+  end
+  tinsert(comment.viewers, userID)
+  worker:CreateComment(comment)
+end
+
 
 function api:GetUserComments(username)
 
@@ -126,8 +138,20 @@ function api:CreateComment(commentInfo)
   commentInfo.up = 1
   commentInfo.down = 0
   commentInfo.score = 0
+  commentInfo.viewers = {commentInfo.createdBy}
 
-  return worker:CreateComment(commentInfo)
+   worker:CreateComment(commentInfo)
+  -- need to add alert to all parent comment viewers
+  if commentInfo.parentID == commentInfo.postID then
+    -- whole other kettle of fish
+  else
+    local parentComment = self:GetComment(commentInfo.postID, commentInfo.parentID)
+    for _,userID in pairs(parentComment.viewers) do
+      worker:AddUserAlert(userID, 'postComment:'..commentInfo.postID..':'..commentInfo.id)
+    end
+  end
+
+
  --need to add comment to comments, commentid to user
 
  -- also increment post comment count

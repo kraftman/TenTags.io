@@ -118,7 +118,9 @@ local function SwitchUser(self)
   if user.parentID == self.session.masterID then
     self.session.userID = user.id
     self.session.username = user.username
+    return { redirect_to = self:url_for("home") }
   end
+
 end
 
 function m:Register(app)

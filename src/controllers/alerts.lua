@@ -13,11 +13,18 @@ local function ViewAlerts(self)
   self.alerts = {}
 
   local html = ''
-  for k, v in pairs(alerts) do
+  for _, v in pairs(alerts) do
+
     if v:find('thread:') then
       local threadID = v:match('thread:(%w+)')
       local thread = api:GetThread(threadID)
       tinsert(self.alerts, {alertType = 'thread', data = thread})
+    elseif v:find('postComment:') then
+      local postID, commentID = v:match('postComment:(%w+):(%w+)')
+      local comment = api:GetComment(postID, commentID)
+      comment.username = api:GetUserInfo(comment.createdBy).username
+      ngx.log(ngx.ERR, to_json(comment))
+      tinsert(self.alerts,{alertType = 'comment', data = comment})
     end
   end
   return { render = 'alerts'}

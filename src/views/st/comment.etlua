@@ -1,5 +1,13 @@
-<div>
-  <p> <%= comment.text -%></p>
-  <p> <%= params.username -%></p>
+<div class = 'contents'>
+    <p> <%= commentInfo.text -%></p>
+  <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
 
+  <form id="commentform" method="post" action="<%= url_for('newcomment') %>" >
+    <input id="parentID" name='parentID' type="hidden" value="<%= commentInfo.id%>" name="name">
+    <input id="postID" name='postID' type="hidden" value="<%= commentInfo.postID%>" name="name">
+
+    <textarea name='commentText' id='commentText' rows="4" cols="50"></textarea>
+    </br>
+    <input type='submit'></input>
+  </form>
 </div>

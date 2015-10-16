@@ -70,9 +70,10 @@ function commentread:GetUserComments(postIDcommentIDs)
 end
 
 
-function commentread:GetComment(commentID)
+
+function commentread:GetComment(postID, commentID)
   local red = GetRedisConnection()
-  local ok, err = red:hgetall('comments:'..commentID)
+  local ok, err = red:hget('postComment:'..postID,commentID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get comment info: ',err)
     return nil
@@ -81,7 +82,7 @@ function commentread:GetComment(commentID)
   if ok == ngx.null then
     return nil
   else
-    return self:ConvertListToTable(ok)
+    return from_json(ok)
   end
 
 end

@@ -52,7 +52,8 @@ local function RenderComment(self,comments,commentTree,text)
     t = t..'<div class="comment">\n'
     t = t..'  <div class="commentinfo" >\n'..
     '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
-    '<a href="'..self:url_for('viewcomment',{commentID = comments[k].id})..'">link</a>'..
+    '<a href="'..self:url_for('subscribecomment',{postID = self.params.postID, commentID = comments[k].id})..'">subscribe</a>   '..
+    '<a href="'..self:url_for('viewcomment',{postID = self.params.postID, commentID = comments[k].id})..'">reply</a>'..
               '\n  </div>\n'
     t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
 
@@ -108,11 +109,12 @@ local function CreateComment(self)
     createdBy = self.session.userID,
     text = self.params.commentText,
   }
+  ngx.log(ngx.ERR, to_json(self.params))
   local ok = api:CreateComment(commentInfo)
   if ok then
     return 'created!'
   else
-    retuurn 'failed!'
+    --return 'failed!'
   end
 
 end

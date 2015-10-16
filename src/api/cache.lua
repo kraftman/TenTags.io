@@ -83,11 +83,13 @@ function cache:GetUserID(username)
   return userRead:GetUserID(username)
 end
 
-function cache:GetComment(commentID)
-  return commentRead:GetComment(commentID)
+function cache:GetComment(postID, commentID)
+  return commentRead:GetComment(postID,commentID)
 end
 
 function cache:GetUserComments(userID)
+  -- why is this split in two parts?
+  -- why not just get all with hgetall
   local postIDcommentIDs = userRead:GetUserComments(userID)
   if not postIDcommentIDs then
     return {}

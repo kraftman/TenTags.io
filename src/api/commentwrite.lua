@@ -33,7 +33,7 @@ function commentwrite:ConvertListToTable(list)
 end
 
 function commentwrite:CreateComment(commentInfo)
-
+  
   local red = GetRedisConnection()
   local serialComment = to_json(commentInfo)
   local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
