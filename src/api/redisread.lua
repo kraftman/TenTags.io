@@ -135,6 +135,116 @@ function read:GetFiltersBySubs(startAt,endAt)
   end
 end
 
+function read:GetUserThreads(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('UserThreads:'..userID,0,10)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user threads: ',err)
+    return {}
+  end
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
+function read:ConvertThreadFromRedis(thread)
+
+  thread  = self:ConvertListToTable(thread)
+  local viewers = {}
+
+
+  for k,_ in pairs(thread) do
+    if k:find('viewer') then
+      local viewerID = k:match('viewer:(%w+)')
+      if viewerID then
+        thread[k] = nil
+        tinsert(viewers,viewerID)
+      end
+    end
+  end
+
+  thread.viewers = viewers
+
+  return thread
+end
+
+function read:GetThreadInfo(threadID)
+  local red = GetRedisConnection()
+
+  local ok, err = red:hgetall('Thread:'..threadID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get thread info:',err)
+    return {}
+  end
+
+  local thread = read:ConvertThreadFromRedis(ok)
+
+  ok,err = red:hgetall('ThreadMessages:'..threadID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to load thread messages: ',err)
+    return thread
+  end
+
+  thread.messages = self:ConvertListToTable(ok)
+  for k,v in pairs(thread.messages) do
+    thread.messages[k] = from_json(v)
+  end
+
+  return thread
+end
+
+function read:GetThreadInfos(threadIDs)
+  local red = GetRedisConnection()
+  red:init_pipeline()
+    for _,threadID in pairs(threadIDs) do
+      red:hgetall('Thread:'..threadID)
+    end
+  local res, err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to load thread: ',err)
+    return {}
+  end
+  for k,v in pairs(res) do
+    res[k] = self:ConvertThreadFromRedis(v)
+  end
+
+  -- TODO: work out if this can be combined with the above
+  red:init_pipeline()
+    for k,thread in pairs(res) do
+      red:hgetall('ThreadMessages:'..thread.id)
+    end
+  local msgs, err = red:commit_pipeline()
+  if err then
+    ngx.log(ngx.ERR, 'unable to get thread messages: ',err)
+    return {}
+  end
+
+  --convert from json
+  for k,message in pairs(msgs) do
+    msgs[k] = self:ConvertListToTable(message)
+    local threadID
+    for m,n in pairs(msgs[k]) do
+
+      msgs[k][m] = from_json(n)
+      if not threadID then
+      threadID = msgs[k][m].threadID
+      end
+    end
+    for m,thread in pairs(res) do
+      if thread.id == threadID then
+        thread.messages = msgs[k]
+      end
+    end
+    -- TODO sort the messages
+
+  end
+
+
+  return res
+end
+
 function read:GetFilterID(filterName)
   local red = GetRedisConnection()
   local ok, err = red:get('filterid:'..filterName)
@@ -186,6 +296,7 @@ function read:GetFilter(filterID)
 
 
 end
+
 
 function read:GetPost(postID)
   local red = GetRedisConnection()

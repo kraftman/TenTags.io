@@ -3,6 +3,7 @@ local worker = {}
 local rediswrite = require 'api.rediswrite'
 local userWrite = require 'api.userwrite'
 local email = require 'lib.testemail'
+local commentWrite = require 'api.commentwrite'
 
 function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
@@ -10,6 +11,11 @@ end
 
 function worker:CreatePost(postInfo)
   rediswrite:CreatePost(postInfo)
+end
+
+function worker:CreateComment(commentInfo)
+  userWrite:AddComment(commentInfo)
+  return commentWrite:CreateComment(commentInfo)
 end
 
 function worker:CreateFilter(filterInfo)
@@ -30,6 +36,16 @@ end
 
 function worker:FlushAllPosts()
   return rediswrite:FlushAllPosts()
+end
+
+function worker:CreateThread(thread)
+  return rediswrite:CreateThread(thread)
+end
+
+
+function worker:CreateMessage(message)
+
+  return rediswrite:CreateMessage(message)
 end
 
 function worker:SendActivationEmail(url,emailAddr)
@@ -54,6 +70,14 @@ end
 
 function worker:ActivateAccount(userID)
   return userWrite:ActivateAccount(userID)
+end
+
+function worker:AddUserAlert(userID, alert)
+  return userWrite:AddUserAlert(ngx.time(),userID, alert)
+end
+
+function worker:UpdateLastUserAlertCheck(userID)
+  return userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
 end
 
 

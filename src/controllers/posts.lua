@@ -41,51 +41,7 @@ local function CreatePost(self)
 
 end
 
-local function AddChildren(parentID,flat)
-  local t = {}
-  for k,v in pairs(flat[parentID]) do
-    t[v.id] = AddChildren(v.id,flat)
-  end
 
-  return t
-end
-
-local function GetComments(postID)
-
-  local comments = cache:GetCommentsForPost(postID)
-  print('getting comments for post ',postID,' found: ',#comments)
-
-  for k,v in pairs(comments) do
-    print(v.text)
-  end
-  local flat = {}
-  flat[postID] = {}
-  local indexedComments = {}
-
-  for k,v in pairs(comments) do
-    if not flat[v.parentID] then
-      flat[v.parentID] = {}
-    end
-    if not flat[v.id] then
-      flat[v.id] = {}
-    end
-    tinsert(flat[v.parentID],v)
-    indexedComments[v.id] = v
-  end
-
-  for k,v in pairs(flat) do
-    table.sort(v,function(a,b)
-      if a.up+a.down == b.up+b.down then
-        return a.date > b.date
-      end
-      return (a.up+a.down > b.up+b.down)
-    end)
-  end
-
-  local tree = AddChildren(postID,flat)
-  print(to_json(tree))
-  return tree,indexedComments
-end
 
 local function RenderComment(self,comments,commentTree,text)
   local t = text or ''
@@ -94,9 +50,12 @@ local function RenderComment(self,comments,commentTree,text)
   for k,v in pairs(commentTree) do
     --print(k,type(v),to_json(v))
     t = t..'<div class="comment">\n'
-    t = t..'  <div class="commentinfo" >\n'..'<a href="'..
-              self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>'..'\n  </div>\n'
+    t = t..'  <div class="commentinfo" >\n'..
+    '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
+    '<a href="'..self:url_for('viewcomment',{commentID = comments[k].id})..'">link</a>'..
+              '\n  </div>\n'
     t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
+
     if next(v) then
       t = t..'<div id="commentchildren">'
       t = t..RenderComment(self,comments,v)
@@ -114,7 +73,7 @@ end
 
 local function GetPost(self)
 
-  local tree,comments = GetComments(self.params.postID)
+  local tree,comments = api:GetPostComments(self.params.postID)
   if tree then
     print('tree found')
   end
@@ -122,11 +81,10 @@ local function GetPost(self)
   self.comments = comments
   self.RenderComments = RenderComments
 
-  local post = cache:GetPost(self.params.postID)
-  post = post[1]
+  local post = api:GetPost(self.params.postID)
+
   self.post = post
-  self.tags = cache:GetPostTags(post.id)
-  print(to_json(self.tags))
+
   return {render = true}
 end
 
@@ -138,20 +96,24 @@ local function CreatePostForm(self)
   return { render = 'createpost' }
 end
 
+-- needs moving to comments controller
 local function CreateComment(self)
 
-  local newCommentID = uuid.generate_random()
+  --local newCommentID = uuid.generate_random()
 
   local commentInfo = {
-    id = newCommentID,
+    --id = newCommentID,
     parentID = self.params.parentID,
     postID = self.params.postID,
     createdBy = self.session.userID,
     text = self.params.commentText,
-    createdAt = ngx.time(),
   }
-  worker:CreateComment(commentInfo,self.params.postID)
-  return 'created!'
+  local ok = api:CreateComment(commentInfo)
+  if ok then
+    return 'created!'
+  else
+    retuurn 'failed!'
+  end
 
 end
 

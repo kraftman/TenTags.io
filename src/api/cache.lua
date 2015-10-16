@@ -10,6 +10,7 @@ local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = require 'api.redisread'
 local userRead = require 'api.userread'
+local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
 
@@ -21,8 +22,31 @@ function cache:GetMasterUserInfo(masterID)
   return userRead:GetMasterUserInfo(masterID)
 end
 
+
+function cache:GetThread(threadID)
+  return redisread:GetThreadInfo(threadID)
+end
+
+function cache:GetThreads(userID)
+  local threadIDs = redisread:GetUserThreads(userID)
+  local threads = redisread:GetThreadInfos(threadIDs)
+
+  return threads
+end
+
 function cache:GetUserInfo(userID)
   return userRead:GetUserInfo(userID)
+end
+
+
+function cache:GetUserAlerts(userID)
+  local user = self:GetUserInfo(userID)
+  if not user.kv.alertCheck then
+    user.kv.alertCheck = 0
+  end
+  local alerts = userRead:GetUserAlerts(userID,user.kv.alertCheck, ngx.time())
+  ngx.log(ngx.ERR, to_json(alerts))
+  return alerts
 end
 
 function cache:GetMasterUserByEmail(email)
@@ -58,6 +82,77 @@ function cache:GetAllTags()
   end
 end
 
+function cache:GetUserID(username)
+  return userRead:GetUserID(username)
+end
+
+function cache:GetComment(commentID)
+  return commentRead:GetComment(commentID)
+end
+
+function cache:GetUserComments(userID)
+  local postIDcommentID = userRead:GetUserComments(userID)
+  local commentInfo = commentRead:GetUserComments(postIDcommentID)
+  for k,v in pairs(commentInfo) do
+    commentInfo[k] = from_json(v)
+  end
+  return commentInfo
+end
+
+function cache:AddChildren(parentID,flat)
+  local t = {}
+  for k,v in pairs(flat[parentID]) do
+    t[v.id] = self:AddChildren(v.id,flat)
+  end
+
+  return t
+end
+
+function cache:GetUsername(userID)
+  local user = self:GetUserInfo(userID)
+  if user then
+    return user.kv.username
+  end
+end
+
+function cache:GetPostComments(postID)
+  local flatComments = commentRead:GetPostComments(postID)
+
+  local flat = {}
+  flat[postID] = {}
+  local indexedComments = {}
+
+  for k,v in pairs(flatComments) do
+    ngx.log(ngx.ERR, k,' userID: ',to_json(v))
+    flatComments[k] = from_json(v)
+    flatComments[k].username = self:GetUsername(flatComments[k].createdBy)
+    ngx.log(ngx.ERR,flatComments[k].username)
+  end
+
+  for k,comment in pairs(flatComments) do
+    if not flat[comment.parentID] then
+      flat[comment.parentID] = {}
+    end
+    if not flat[comment.id] then
+      flat[comment.id] = {}
+    end
+    tinsert(flat[comment.parentID],comment)
+    indexedComments[comment.id] = comment
+  end
+
+  for k,v in pairs(flat) do
+    table.sort(v,function(a,b)
+      if a.up+a.down == b.up+b.down then
+        return a.createdAt > b.createdAt
+      end
+      return (a.up+a.down > b.up+b.down)
+    end)
+  end
+
+  local tree = self:AddChildren(postID,flat)
+  print(to_json(tree))
+  return tree,indexedComments
+end
 
 function cache:GetPost(postID)
   --[[
@@ -291,7 +386,7 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   -- this will be cached for say 5 minutes
   local freshPosts = cache:GetFreshUserPosts(userID,filter)
-  ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
+  --ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
   local newPostIDs = {}
 

@@ -63,8 +63,8 @@ end
 
 
 local function ViewUser(self)
-  self.comments = cache:GetUserComments(self.params.username)
-
+  self.comments = api:GetUserComments(self.params.username)
+  ngx.log(ngx.ERR, to_json(self.comments))
   return {render = 'viewuser'}
 end
 

@@ -1,7 +1,8 @@
 local _M = {}
 local lrucache = require "resty.lrucache"
 
-local userFilterIDs = lrucache.new(1000)  -- allow up to 200 items in the cache
+local userFilterIDs = lrucache.new(100)  -- allow up to 200 items in the cache
+local postComments = lrucache.new(1000)
 if not userFilterIDs then
   ngx.log(ngx.ERR, 'unable to create userFilterIDs  cache: ',err or 'unkown')
 end
@@ -37,6 +38,18 @@ end
 
 function _M:SetFilter(filterName,filterInfo)
   return filters:set(filterName,filterInfo,600)
+end
+
+function _M:SetComments(postID,comments)
+  ngx.say('adding ',#comments,' comments, key: ', postID)
+  postComments:set(postID,comments)
+  ngx.say(string.format("</br>Worker %d: GC size: %.3f KB", ngx.var.pid, collectgarbage("count")))
+end
+
+function _M:GetComments(key)
+  --ngx.say('</br> getting comments for key:',key)
+
+  return postComments:get(key)
 end
 
 

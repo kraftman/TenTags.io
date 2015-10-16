@@ -1,5 +1,5 @@
 <div>
   <p> <%= comment.text -%></p>
-  <p> <%= comment.username -%></p>
+  <p> <%= params.username -%></p>
 
 </div>

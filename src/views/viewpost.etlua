@@ -6,17 +6,18 @@
 <script src="/static/js/jquery.form.js"></script>
 <script src="/static/js/comment.js"></script>
 
+<div class = 'contents'>
+  <input type="hidden" id='postID' value="<%= post.id -%>">
 
-<input type="hidden" id='postID' value="<%= post.id -%>">
+  <div>
+  <a href="<%= post.link -%>"> <%= post.title -%></a>
+  <p><%= post.text -%></p>
+  <% for _,tag in pairs(post.tags) do %>
+    <% render("views.st.tag",{tag = tag}) %>
+  <% end %>
 
-<div>
-<a href="<%= post.link -%>"> <%= post.title -%></a>
-<p><%= post.text -%></p>
-<% for _,tag in pairs(tags) do %>
-  <% render("views.st.tag",{tag = tag}) %>
-<% end %>
+  <%- RenderComments() %>
 
-<%- RenderComments() %>
-
-<% render("views.st.newcomment") %>
+  <% render("views.st.newcomment") %>
+  </div>
 </div>

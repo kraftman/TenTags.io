@@ -74,7 +74,7 @@ function worker:FlushUserSeen()
   if not self:GetLock('l:FlushUsers',10) then
     return
   end
-  ngx.log(ngx.ERR, 'flushing user scripts')
+  --ngx.log(ngx.ERR, 'flushing user scripts')
 
   local userIDs = self.userUpdateDict:get_keys(1000)
   local sessionSeenPosts

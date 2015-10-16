@@ -9,12 +9,19 @@ local csrf = require("lapis.csrf")
 
 -- DEV ONLY
 to_json = (require 'lapis.util').to_json
+from_json = (require 'lapis.util').from_json
 
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
-  --local user = api:GetUserInfo(self.session.userID)
+  if self.session.userID then
+    if api:UserHasAlerts(self.session.userID) then
+      ngx.log(ngx.ERR, 'user has alerts!')
+      self.userHasAlerts = true
+    end
+  end
   --ngx.log(ngx.ERR, to_json(user))
+
   self.csrf_token = csrf.generate_token(self,self.session.userID)
   self.userFilters = api:GetUserFilters(self.session.userID) or {}
 end)
@@ -26,6 +33,8 @@ require 'user':Register(app)
 require 'settings':Register(app)
 require 'messages':Register(app)
 require 'filters':Register(app)
+require 'comments':Register(app)
+require 'alerts':Register(app)
 require 'admin':Register(app)
 
 -- TESTING

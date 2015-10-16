@@ -1,0 +1,11 @@
+<form method="POST">
+  Recipient:<br>
+  <input type="text" name="recipient">
+  <br>
+  Subject:<br>
+  <input type="text" name="subject">
+  <br>
+  Message:<br>
+  <input type="text" name="body">
+  <button type="submit" >Send</button>
+</form>

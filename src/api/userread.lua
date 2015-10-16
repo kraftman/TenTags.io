@@ -1,4 +1,14 @@
 
+--[[
+user settings ands
+seen posts
+sent messages
+recieved messages
+
+]]
+
+
+
 local redis = require "resty.redis"
 local checkKey = require 'redisscripts.checkkey'
 local tinsert = table.insert
@@ -32,6 +42,19 @@ function userread:ConvertListToTable(list)
   return info
 end
 
+function userread:GetUserAlerts(userID, startAt, endAt)
+  local red = GetRedisConnection()
+  local ok, err = red:zrangebyscore('UserAlerts:'..userID,startAt,endAt)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user alerts: ',err)
+  end
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
 function userread:GetUserInfo(userID)
   local red = GetRedisConnection()
   local ok, err = red:hgetall('user:'..userID)
@@ -44,9 +67,43 @@ function userread:GetUserInfo(userID)
   end
   local userInfo = {}
   userInfo.kv = self:ConvertListToTable(ok)
-  ngx.log(ngx.ERR, to_json(userInfo))
   return userInfo
 end
+
+
+function userread:GetUserID(username)
+  local red = GetRedisConnection()
+  local ok,err = red:hget('userToID',username)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get userID from username:',err)
+    return nil
+  end
+
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
+
+function userread:GetUserComments(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:zrange('userComments:'..userID,0,-1)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user comments, ',err)
+    return {}
+  end
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
+
 
 function userread:GetMasterUserInfo(masterID)
   local red = GetRedisConnection()

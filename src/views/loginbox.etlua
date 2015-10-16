@@ -11,6 +11,12 @@
     <input type='submit' name='Submit' value='Sign Up/In' />
   </form>
 <% end %>
+<a href="<%= url_for('newmessage') %>">New Message</a>
 <a href="<%= url_for('newpost') %>">New Post</a>
 <a href="<%= url_for('newfilter') %>">New Filter</a>
+
+<% if userHasAlerts then %>
+  <a href="<%= url_for('viewalerts') %>">New Alert!</a>
+<% end %>
+
 </div>
