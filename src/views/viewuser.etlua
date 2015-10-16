@@ -4,5 +4,5 @@
 </div>
 
 <% for i, comment in pairs(comments) do %>
-  <% render("views.st.comment",{comment = comment}) %>
+  <% render("views.st.comment",{commentInfo = comment}) %>
 <% end %>

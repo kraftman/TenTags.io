@@ -14,7 +14,7 @@ from_json = (require 'lapis.util').from_json
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
-  if self.session.userID then
+  if self.session.userID and self.session.masterID then
     if api:UserHasAlerts(self.session.userID) then
       ngx.log(ngx.ERR, 'user has alerts!')
       self.userHasAlerts = true

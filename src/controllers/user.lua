@@ -57,6 +57,7 @@ end
 local function LogOut(self)
   self.session.username = nil
   self.session.userID = nil
+  self.session.masterID = nil
   return { redirect_to = self:url_for("home") }
 end
 
@@ -64,6 +65,9 @@ end
 
 local function ViewUser(self)
   self.comments = api:GetUserComments(self.params.username)
+  for k,v in pairs(self.comments) do
+    v.username = api:GetUserInfo(v.createdBy).username
+  end
   ngx.log(ngx.ERR, to_json(self.comments))
   return {render = 'viewuser'}
 end
