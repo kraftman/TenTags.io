@@ -1,0 +1,9 @@
+
+<div class = 'contents'>
+  <% for i, alert in pairs(alerts) do %>
+    <% if alert.alertType == 'thread' then %>
+      <% render("views.st.threadelement",{thread = alert.data}) %>
+      <a href="<%= url_for('replymessage',{threadID = alert.data.id}) %>">reply</a>
+    <% end %>
+  <% end %>
+</div>
