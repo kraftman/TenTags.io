@@ -334,6 +334,14 @@ function read:GetPost(postID)
     end
   end
 
+
+  ok,err =red:smembers('postfilters:'..postID)
+  if not ok then
+    ngx.log(ngx.ERR, 'could not load filters: ',err)
+  end
+  --ngx.log(ngx.ERR, to_json(ok))
+  post.filters = ok
+
   return post
 end
 

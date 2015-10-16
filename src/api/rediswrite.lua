@@ -183,7 +183,9 @@ function write:CreatePost(postInfo)
 
   red:init_pipeline()
     -- add all filters that the post has
-    red:sadd('postfilters:'..postInfo.id,filters)
+    for k,v in pairs(filters) do
+      red:sadd('postfilters:'..postInfo.id,v)
+    end
     -- collect tag ids and add taginfo to hash
     for _,tag in pairs(tags) do
 

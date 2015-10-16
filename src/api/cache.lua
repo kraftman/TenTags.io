@@ -125,10 +125,10 @@ function cache:GetPostComments(postID)
   local indexedComments = {}
 
   for k,v in pairs(flatComments) do
-    ngx.log(ngx.ERR, k,' userID: ',to_json(v))
+    --ngx.log(ngx.ERR, k,' userID: ',to_json(v))
     flatComments[k] = from_json(v)
     flatComments[k].username = self:GetUsername(flatComments[k].createdBy)
-    ngx.log(ngx.ERR,flatComments[k].username)
+    --ngx.log(ngx.ERR,flatComments[k].username)
   end
 
   for k,comment in pairs(flatComments) do
@@ -152,7 +152,7 @@ function cache:GetPostComments(postID)
   end
 
   local tree = self:AddChildren(postID,flat)
-  print(to_json(tree))
+  --print(to_json(tree))
   return tree,indexedComments
 end
 

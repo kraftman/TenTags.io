@@ -56,6 +56,11 @@ local function RenderComment(self,comments,commentTree,text)
     '<a href="'..self:url_for('viewcomment',{postID = self.params.postID, commentID = comments[k].id})..'">reply</a>'..
               '\n  </div>\n'
     t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
+    if comments[k].filters then
+      for _,filter in pairs(comments[k].filters) do
+        t = t..' filter: '..(filter.title or '')
+      end
+    end
 
     if next(v) then
       t = t..'<div id="commentchildren">'
@@ -76,7 +81,7 @@ local function GetPost(self)
 
   local tree,comments = api:GetPostComments(self.params.postID)
   if tree then
-    print('tree found')
+    --print('tree found')
   end
   self.commentTree = tree
   self.comments = comments

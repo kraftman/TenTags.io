@@ -114,7 +114,7 @@ function api:SubscribeComment(userID, postID, commentID)
     end
   end
   tinsert(comment.viewers, userID)
-  worker:CreateComment(comment)
+  worker:ent(comment)
 end
 
 
@@ -139,6 +139,22 @@ function api:CreateComment(commentInfo)
   commentInfo.down = 0
   commentInfo.score = 0
   commentInfo.viewers = {commentInfo.createdBy}
+
+  local filters = {}
+  local postFilters = self:GetPost(commentInfo.postID).filters
+  ngx.log(ngx.ERR, to_json(postFilters))
+  local userFilters = self:GetUserFilters(commentInfo.createdBy)
+
+  for _,userFilter in pairs(userFilters) do
+    for _,postFilterID in pairs(postFilters) do
+      print(to_json(userFilter.id), to_json(postFilterID))
+      if userFilter.id == postFilterID then
+        print('test', to_json(userFilter))
+        tinsert(filters, userFilter)
+      end
+    end
+  end
+  commentInfo.filters = filters
 
    worker:CreateComment(commentInfo)
   -- need to add alert to all parent comment viewers
@@ -474,6 +490,7 @@ function api:CreatePost(postInfo)
       tinsert(finalFilters,filter)
     end
   end
+
   worker:AddPostToFilters(finalFilters,postInfo)
   worker:CreatePost(postInfo)
   return true
