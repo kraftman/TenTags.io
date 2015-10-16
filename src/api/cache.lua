@@ -14,9 +14,6 @@ local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
 
-local FILTER_LIST_CACHE_TIME = 5
-local TAG_CACHE_TIME = 5
-local FRONTPAGE_CACHE_TIME = 5
 
 function cache:GetMasterUserInfo(masterID)
   return userRead:GetMasterUserInfo(masterID)
@@ -41,10 +38,10 @@ end
 
 function cache:GetUserAlerts(userID)
   local user = self:GetUserInfo(userID)
-  if not user.kv.alertCheck then
-    user.kv.alertCheck = 0
+  if not user.alertCheck then
+    user.alertCheck = 0
   end
-  local alerts = userRead:GetUserAlerts(userID,user.kv.alertCheck, ngx.time())
+  local alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
   ngx.log(ngx.ERR, to_json(alerts))
   return alerts
 end
@@ -91,8 +88,11 @@ function cache:GetComment(commentID)
 end
 
 function cache:GetUserComments(userID)
-  local postIDcommentID = userRead:GetUserComments(userID)
-  local commentInfo = commentRead:GetUserComments(postIDcommentID)
+  local postIDcommentIDs = userRead:GetUserComments(userID)
+  if not postIDcommentIDs then
+    return {}
+  end
+  local commentInfo = commentRead:GetUserComments(postIDcommentIDs)
   for k,v in pairs(commentInfo) do
     commentInfo[k] = from_json(v)
   end
@@ -111,7 +111,7 @@ end
 function cache:GetUsername(userID)
   local user = self:GetUserInfo(userID)
   if user then
-    return user.kv.username
+    return user.username
   end
 end
 

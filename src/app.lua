@@ -19,6 +19,7 @@ app:before_filter(function(self)
       ngx.log(ngx.ERR, 'user has alerts!')
       self.userHasAlerts = true
     end
+    self.otherUsers = api:GetMasterUsers(self.session.masterID)
   end
   --ngx.log(ngx.ERR, to_json(user))
 

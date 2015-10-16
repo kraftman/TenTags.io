@@ -3,7 +3,16 @@
 <a href="<%= url_for('allfilters') %>">All</a>
 <% if session.username then %>
   <a href="<%= url_for('viewuser',{username = session.username}) %>"><%= session.username %> </a> <a href="<%= url_for('logout') %>">logout</a>
-  <a href="<%= url_for('settings') %>">Settings</a>
+  <select onchange="location = this.options[this.selectedIndex].value;" >
+    <% for _,user in pairs(otherUsers) do %>
+      <option value="<%= url_for('switchuser',{userID = user.id}) %>"
+      <% if user.id == session.userID then %>
+        selected = 'selected'
+      <% end %>
+      ><%= user.username %></option>
+    <% end %>
+  </select>
+  <a href="<%= url_for('viewsettings') %>">Settings</a>
 <% else %>
   <form id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
     <input type='text' name='email' id='email' maxlength="50" placeholder="email"/>

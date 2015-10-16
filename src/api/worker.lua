@@ -60,8 +60,8 @@ function worker:SendActivationEmail(url,emailAddr)
 
 end
 
-function worker:CreateUser(userInfo)
-  return userWrite:CreateUser(userInfo)
+function worker:CreateSubUser(userInfo)
+  return userWrite:CreateSubUser(userInfo)
 end
 
 function worker:CreateMasterUser(masterInfo)

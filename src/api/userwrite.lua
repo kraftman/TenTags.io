@@ -64,17 +64,23 @@ function userwrite:AddComment(commentInfo)
 end
 
 function userwrite:CreateMasterUser(masterInfo)
+  -- pipeline
   local red = GetRedisConnection()
-  local ok, err = red:hmset('master:'..masterInfo.kv.id,masterInfo.kv)
+  local users = masterInfo.users
+  masterInfo.users = nil
+  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to create master info:',err)
     return false
   end
 
-  red:hset('useremails',masterInfo.kv.email,masterInfo.kv.id)
+  red:hset('useremails',masterInfo.email,masterInfo.id)
 
-  for k, v in pairs(masterInfo.users) do
-    ok, err = red:sadd('masterusers:'..masterInfo.kv.id, v)
+  for k, v in pairs(users) do
+    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
+  end
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create master user: ',err)
   end
 
 end
@@ -97,22 +103,26 @@ function userwrite:AddSeenPosts(userID,seenPosts)
   return true
 end
 
-function userwrite:CreateUser(userInfo)
+function userwrite:CreateSubUser(userInfo)
   local red = GetRedisConnection()
-  ngx.log(ngx.ERR, to_json(userInfo.filters))
+  local filters = userInfo.filters
+  userInfo.filters = nil
 
   red:init_pipeline()
-    red:hmset('user:'..userInfo.kv.id,userInfo.kv)
-    for _,filterID in pairs(userInfo.filters) do
-      red:sadd('userfilters:'..userInfo.kv.id,filterID)
+    red:hmset('user:'..userInfo.id,userInfo)
+    for _,filterID in pairs(filters) do
+      red:sadd('userfilters:'..userInfo.id,filterID)
     end
-    red:hset('userToID',userInfo.kv.username,userInfo.kv.id)
+    red:hset('userToID',userInfo.username,userInfo.id)
   local results, err = red:commit_pipeline()
 
   SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)
+    return nil
   end
+  return true
+
 end
 
 function userwrite:ActivateAccount(userID)

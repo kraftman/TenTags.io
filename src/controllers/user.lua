@@ -84,14 +84,40 @@ local function LoginUser(self)
   local masterInfo, inactive = api:ValidateMaster(userCredentials)
   if masterInfo then
     print(to_json(masterInfo))
-    self.session.userID = masterInfo.kv.currentUserID
+    self.session.userID = masterInfo.currentUserID
     local userInfo = api:GetUserInfo(self.session.userID)
-    self.session.username = userInfo.kv.username
+    self.session.username = userInfo.username
+    self.session.masterID = masterInfo.id
     return { redirect_to = self:url_for("home") }
   elseif inactive then
     return 'Your account has not been activated, please click the link in your email'
   else
     return { render = 'newuser' }
+  end
+end
+
+local function NewSubUser(self)
+  return {render = 'newsubuser'}
+end
+
+local function CreateSubUser(self)
+  if not self.params.username or trim(self.params.username) == '' then
+    return 'no username!'
+  end
+  local succ = api:CreateSubUser(self.session.masterID,self.params.username)
+  if succ then
+    return 'win!'
+  else
+    return 'fail'
+  end
+end
+
+
+local function SwitchUser(self)
+  local user = api:GetUserInfo(self.params.userID)
+  if user.parentID == self.session.masterID then
+    self.session.userID = user.id
+    self.session.username = user.username
   end
 end
 
@@ -101,11 +127,17 @@ function m:Register(app)
     GET = NewUserForm,
     POST = CreateNewUser
   }))
+  app:match('newsubuser','/sub/new', respond_to({
+    GET = NewSubUser,
+    POST = CreateSubUser
+  }))
+
 
   app:post('login','/login',LoginUser)
   app:get('viewuser','/user/:username',ViewUser)
   app:get('logout','/logout',LogOut)
   app:get('confirmemail','/confirmemail',ConfirmEmail)
+  app:get('switchuser','/user/switch/:userID',SwitchUser)
 
 end
 

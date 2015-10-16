@@ -44,6 +44,7 @@ function api:UserHasAlerts(userID)
   return #alerts > 0
 end
 
+
 function api:GetUserAlerts(userID)
   local alerts = cache:GetUserAlerts(userID)
   -- need to also update the users lastcheckedAt
@@ -218,20 +219,20 @@ function api:ValidateMaster(userCredentials)
     return
   end
 
-  if masterInfo.kv.active == 0 then
+  if masterInfo.active == 0 then
     return nil,true
   end
 
-  local valid = scrypt.check(userCredentials.password,masterInfo.kv.passwordHash)
+  local valid = scrypt.check(userCredentials.password,masterInfo.passwordHash)
   if valid then
-    masterInfo.kv.passwordHash = nil
+    masterInfo.passwordHash = nil
     return masterInfo
   end
 
 end
 
 function api:CreateActivationKey(masterInfo)
-  local key = ngx.md5(masterInfo.kv.id..masterInfo.kv.email..salt)
+  local key = ngx.md5(masterInfo.id..masterInfo.email..salt)
   return key:match('.+(........)$')
 end
 
@@ -249,7 +250,7 @@ function api:ActivateAccount(email, key)
   local realKey = self:CreateActivationKey(userInfo)
   if key == realKey then
     --cache:UpdateUserInfo(userInfo)
-    worker:ActivateAccount(userInfo.kv.id)
+    worker:ActivateAccount(userInfo.id)
     return true
   else
     return nil, 'activation key incorrect'
@@ -262,6 +263,40 @@ end
 
 function api:FlushAllPosts()
   return worker:FlushAllPosts()
+end
+
+
+function api:CreateSubUser(masterID, username)
+
+  local subUser = {
+    id = uuid.generate(),
+    username = username,
+    filters = cache:GetUserFilterIDs('default'),
+    parentID = masterID
+  }
+  local master = cache:GetMasterUserInfo(masterID)
+  tinsert(master.users,subUser.id)
+
+  worker:CreateMasterUser(master)
+
+  return worker:CreateSubUser(subUser)
+
+
+  -- need to update master info with list of sub users
+
+end
+
+function api:GetMasterUsers(masterID)
+  local master = cache:GetMasterUserInfo(masterID)
+  local users = {}
+  local user
+  for _, userID in pairs(master.users) do
+      user = cache:GetUserInfo(userID)
+      if user then
+        tinsert(users, user)
+      end
+  end
+  return users
 end
 
 
@@ -278,32 +313,30 @@ function api:CreateMasterUser(confirmURL, userInfo)
     return nil, 'no password provided!'
   end
 
-  local masterInfo = {}
-  masterInfo.kv = {}
-  masterInfo.kv.email = userInfo.email
-  masterInfo.kv.passwordHash = scrypt.crypt(userInfo.password)
-  masterInfo.kv.id = uuid.generate_random()
-  masterInfo.kv.active = 0
-  masterInfo.kv.users = 1
+  local masterInfo = {
+    email = userInfo.email,
+    passwordHash = scrypt.crypt(userInfo.password),
+    id = uuid.generate_random(),
+    active = 0,
+    userCount = 1,
+    users = {}
+  }
 
+  local firstUser = {
+    id = uuid.generate_random(),
+    username = userInfo.username,
+    filters = cache:GetUserFilterIDs('default'),
+    parentID = masterInfo.id
+  }
 
-  masterInfo.users = {}
-  local firstUser = {}
-  firstUser.kv = {}
-  firstUser.kv.id = uuid.generate_random()
-  firstUser.kv.username = userInfo.username
-  firstUser.filters = cache:GetUserFilterIDs('default')
-  ngx.log(ngx.ERR, to_json(firstUser.filters))
-  firstUser.kv.parentID = masterInfo.kv.id
-
-  tinsert(masterInfo.users,firstUser.kv.id)
-  masterInfo.kv.currentUserID = firstUser.kv.id
+  tinsert(masterInfo.users,firstUser.id)
+  masterInfo.currentUserID = firstUser.id
 
   local activateKey = self:CreateActivationKey(masterInfo)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
   worker:SendActivationEmail(url, userInfo.email)
   worker:CreateMasterUser(masterInfo)
-  worker:CreateUser(firstUser)
+  worker:CreateSubUser(firstUser)
   return true
 
 end

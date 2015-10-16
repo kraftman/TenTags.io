@@ -66,7 +66,7 @@ function userread:GetUserInfo(userID)
     return nil
   end
   local userInfo = {}
-  userInfo.kv = self:ConvertListToTable(ok)
+  userInfo = self:ConvertListToTable(ok)
   return userInfo
 end
 
@@ -106,21 +106,30 @@ end
 
 
 function userread:GetMasterUserInfo(masterID)
+  -- TODO: get subusers too
   local red = GetRedisConnection()
   local ok, err = red:hgetall('master:'..masterID)
-  local masterInfo = {}
-  masterInfo.kv = {}
-  SetKeepalive(red)
+
+
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user info:',err)
   end
-
+  local master
   if ok == ngx.null then
-    return {}
+    return nil
   else
-    masterInfo.kv = self:ConvertListToTable(ok)
+    master = self:ConvertListToTable(ok)
   end
-  return masterInfo
+
+  ok, err = red:smembers('masterusers:'..masterID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get master users:',err)
+  end
+  master.users = ok
+  SetKeepalive(red)
+  return master
+
+
 end
 
 function userread:GetMasterUserByEmail(email)
