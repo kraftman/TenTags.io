@@ -1,0 +1,4 @@
+
+<div class = 'contents'>
+  <a href="<%= url_for('newsubuser') %>">Add User</a>
+</div>
