@@ -40,7 +40,7 @@ end
 
 function api:UserHasAlerts(userID)
   local alerts = cache:GetUserAlerts(userID)
-  ngx.log(ngx.ERR, #alerts)
+  --ngx.log(ngx.ERR, #alerts)
   return #alerts > 0
 end
 
@@ -65,22 +65,24 @@ function api:CreateMessageReply(messageInfo)
 
   local thread = cache:GetThread(messageInfo.threadID)
   for _,userID in pairs(thread.viewers) do
-    --if userID ~=messageInfo.createdBy then
+    if userID ~= messageInfo.createdBy then
+      ngx.log(ngx.ERR,'adding alert for user: ',userID)
       worker:AddUserAlert(userID, 'thread:'..thread.id..':'..messageInfo.id)
-    --end
+    end
   end
 
 end
 
 function api:CreateThread(messageInfo)
   local recipientID = cache:GetUserID(messageInfo.recipient)
+  ngx.log(ngx.ERR,'recipientID ',recipientID)
 
   local thread = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
     createdAt = ngx.time(),
     title = messageInfo.title,
-    viewers = {messageInfo.createdAt,recipientID},
+    viewers = {messageInfo.createdBy,recipientID},
     lastUpdated = ngx.time()
 
   }

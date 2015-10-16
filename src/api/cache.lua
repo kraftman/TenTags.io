@@ -42,7 +42,7 @@ function cache:GetUserAlerts(userID)
     user.alertCheck = 0
   end
   local alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
-  ngx.log(ngx.ERR, to_json(alerts))
+  --ngx.log(ngx.ERR, to_json(alerts))
   return alerts
 end
 

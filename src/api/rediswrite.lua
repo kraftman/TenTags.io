@@ -215,6 +215,7 @@ function write:CreateThread(thread)
 
   -- there wont be many viewers ever so lets not waste a set
   for _,userID in pairs(viewers) do
+    ngx.log(ngx.ERR, 'adding user: ',userID)
     thread['viewer:'..userID] = 1
   end
 

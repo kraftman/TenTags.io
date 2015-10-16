@@ -35,6 +35,7 @@ local function CreateMessageReply(self)
   msgInfo.threadID = self.params.threadID
   msgInfo.body = self.params.body
   msgInfo.createdBy = self.session.userID
+  ngx.log(ngx.ERR, 'creating reply')
   api:CreateMessageReply(msgInfo)
 end
 
