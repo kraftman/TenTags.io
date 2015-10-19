@@ -1,4 +1,8 @@
 
 <div class = 'contents'>
   <a href="<%= url_for('newsubuser') %>">Add User</a>
+  <form action="<%= url_for('viewsettings') %>" method = 'POST'>
+    <input type="checkbox" name="EnablePM" value="True">Disable PM's<br>
+    <input type="submit" value="Submit">
+  </form>
 </div>
