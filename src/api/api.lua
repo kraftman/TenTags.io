@@ -16,6 +16,16 @@ local salt = 'poopants'
 --self.session.current_user
 
 
+function api:SanitiseHTML(str)
+	local html = {
+		["<"] = "&lt;",
+		[">"] = "&gt;",
+		["&"] = "&amp;",
+	}
+	return string.gsub(tostring(str), "[<>&]", function(char)
+		return html[char] or char
+	end)
+end
 
 function api:GetUserFilters(userID)
   if not userID then
@@ -139,6 +149,7 @@ function api:CreateComment(commentInfo)
   commentInfo.down = 0
   commentInfo.score = 0
   commentInfo.viewers = {commentInfo.createdBy}
+  commentInfo.text = self:SanitiseHTML(commentInfo.text)
 
   local filters = {}
   local postFilters = self:GetPost(commentInfo.postID).filters

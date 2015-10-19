@@ -2,6 +2,7 @@
 
 local api = require 'api.api'
 local util = require("lapis.util")
+local markdown = require 'lib.markdown'
 
 local from_json = util.from_json
 local to_json = util.to_json
@@ -48,14 +49,16 @@ local function RenderComment(self,comments,commentTree,text)
 
 
   for k,v in pairs(commentTree) do
-    --print(k,type(v),to_json(v))
+
+    local newText = markdown(comments[k].text)
+
     t = t..'<div class="comment">\n'
     t = t..'  <div class="commentinfo" >\n'..
     '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
     '<a href="'..self:url_for('subscribecomment',{postID = self.params.postID, commentID = comments[k].id})..'">subscribe</a>   '..
     '<a href="'..self:url_for('viewcomment',{postID = self.params.postID, commentID = comments[k].id})..'">reply</a>'..
               '\n  </div>\n'
-    t = t..'  <div id="commentinfo" >\n'..(comments[k].text )..'\n  </div>\n'
+    t = t..'  <div id="commentinfo" >\n'..(newText )..'\n  </div>\n'
     if comments[k].filters then
       for _,filter in pairs(comments[k].filters) do
         t = t..' filter: '..(filter.title or '')
