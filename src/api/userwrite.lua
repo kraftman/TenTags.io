@@ -105,7 +105,7 @@ end
 
 function userwrite:CreateSubUser(userInfo)
   local red = GetRedisConnection()
-  local filters = userInfo.filters
+  local filters = userInfo.filters or {}
   userInfo.filters = nil
 
   red:init_pipeline()

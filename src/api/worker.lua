@@ -18,6 +18,10 @@ function worker:CreateComment(commentInfo)
   return commentWrite:CreateComment(commentInfo)
 end
 
+function worker:UpdateUser(user)
+  userWrite:CreateSubUser(user)
+end
+
 function worker:CreateFilter(filterInfo)
   rediswrite:CreateFilter(filterInfo)
 end

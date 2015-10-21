@@ -15,6 +15,10 @@ local salt = 'poopants'
 
 --self.session.current_user
 
+function api:UpdateUser(user)
+	-- update cache later
+	worker:UpdateUser(user)
+end
 
 function api:SanitiseHTML(str)
 	local html = {
