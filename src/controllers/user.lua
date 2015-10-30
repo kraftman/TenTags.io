@@ -64,7 +64,9 @@ end
 
 
 local function ViewUser(self)
-  self.comments = api:GetUserComments(self.params.username)
+  local userID = api:GetUserID(self.params.username)
+  self.userInfo = api:GetUserInfo(userID)
+  self.comments = api:GetUserComments(userID)
   for k,v in pairs(self.comments) do
     v.username = api:GetUserInfo(v.createdBy).username
   end

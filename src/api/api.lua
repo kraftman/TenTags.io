@@ -115,6 +115,10 @@ function api:CreateThread(messageInfo)
 
 end
 
+function api:GetUserID(username)
+	return cache:GetUserID(username)
+end
+
 function api:GetThreads(userID)
   return cache:GetThreads(userID)
 end
@@ -132,13 +136,7 @@ function api:SubscribeComment(userID, postID, commentID)
 end
 
 
-function api:GetUserComments(username)
-
-  local userID = cache:GetUserID(username)
-  if not userID then
-    ngx.log(ngx.ERR, 'couldnt find user!')
-    return {}
-  end
+function api:GetUserComments(userID)
 
   ngx.log(ngx.ERR, 'userID:',to_json(userID))
   local comments = cache:GetUserComments(userID)
@@ -266,7 +264,9 @@ function api:SubscribeToFilter(userID,filterID)
 end
 
 function api:GetUserInfo(userID)
-  return cache:GetUserInfo(userID)
+	local userInfo  = cache:GetUserInfo(userID)
+	print(to_json(userInfo))
+	return userInfo
 end
 
 function api:ValidateMaster(userCredentials)

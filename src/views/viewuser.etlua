@@ -1,7 +1,9 @@
 
-<div>
-  <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
-</div>
+<% if userInfo.enablePM then %>
+  <div>
+    <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
+  </div>
+<% end %>
 
 <% for i, comment in pairs(comments) do %>
   <% render("views.st.comment",{commentInfo = comment}) %>
