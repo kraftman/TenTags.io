@@ -442,6 +442,11 @@ function api:PostIsValid(postInfo)
   return postInfo
 end
 
+function api:GetDomain(url)
+  return url:match('^%w+://([^/]+)')
+
+end
+
 function api:CreatePost(postInfo)
   -- rate limit
   -- basic sanity check
@@ -457,7 +462,20 @@ function api:CreatePost(postInfo)
   postInfo.score = 0
 
   if not postInfo or trim(postInfo.link) == '' then
-    tinsert(postInfo.tags,'self')
+    tinsert(postInfo.tags,'meta:type:self')
+  end
+
+
+  tinsert(postInfo.tags,'meta:user:'..postInfo.createdBy)
+  if postInfo.link then
+    local domain  = self:GetDomain(postInfo.link)
+    if not domain then
+      ngx.log(ngx.ERR, 'invalid url: ',postInfo.link)
+      return nil
+    end
+    postInfo.domain = domain
+    tinsert(postInfo.tags,'meta:type:link')
+    tinsert(postInfo.tags,'meta:link:'..domain)
   end
 
   for k,v in pairs(postInfo.tags) do
@@ -593,7 +611,7 @@ function api:CreateFilter(filterInfo)
   filterInfo.tags = tags
 
   worker:CreateFilter(filterInfo)
-  
+
 
   return true
 end

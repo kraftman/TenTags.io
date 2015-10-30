@@ -79,8 +79,12 @@ local function DisplayFilter(self)
   if not filter then
     return CreateFilter(self)
   end
+  self.thisfilter = filter
 
   self.posts = api:GetFilterPosts(filter)
+  -- also load the list of mods
+  -- check if the current user is on the list of mods
+  -- display settings if they are
 
 
   return {render = 'viewfilter'}
@@ -99,9 +103,14 @@ local function UpdateFilter(self)
 
 end
 
+local function ViewFilterSettings(self)
+
+end
+
 function M:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = DisplayFilter,POST = NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
+  app:match('updatefilter','/filters/:filterlabel',respond_to({GET = ViewFilterSettings,POST = UpdateFilter}))
   app:get('allfilters','/f',LoadAllFilters)
 
 
