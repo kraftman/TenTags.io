@@ -108,6 +108,10 @@ function userwrite:CreateSubUser(userInfo)
   local filters = userInfo.filters or {}
   userInfo.filters = nil
 
+  for k,v in pairs(userInfo) do
+    ngx.log(ngx.ERR, k, to_json(v))
+  end
+
   red:init_pipeline()
     red:hmset('user:'..userInfo.id,userInfo)
     for _,filterID in pairs(filters) do

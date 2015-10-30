@@ -9,8 +9,11 @@ local trim = require ('lapis.util').trim
 
 local function DisplaySettings(self)
   local user = api:GetUserInfo(self.session.userID)
+  for k,v in pairs(user) do
+    ngx.log(ngx.ERR, k,to_json(v))
+  end
 
-  self.enablePM = user.enablePM == 1 and 'checked' or ''
+  self.enablePM = user.enablePM == '1' and 'checked' or ''
 
   ngx.log(ngx.ERR, user.enablePM)
   return {render = 'ViewSettings'}

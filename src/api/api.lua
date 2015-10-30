@@ -329,7 +329,8 @@ function api:CreateSubUser(masterID, username)
     id = uuid.generate(),
     username = username,
     filters = cache:GetUserFilterIDs('default'),
-    parentID = masterID
+    parentID = masterID,
+    enablePM = 1
   }
   local master = cache:GetMasterUserInfo(masterID)
   tinsert(master.users,subUser.id)
@@ -338,9 +339,7 @@ function api:CreateSubUser(masterID, username)
 
   return worker:CreateSubUser(subUser)
 
-
   -- need to update master info with list of sub users
-
 end
 
 function api:GetMasterUsers(masterID)
