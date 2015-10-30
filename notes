@@ -148,3 +148,12 @@ redis test
   - int: 27.42
 
 so 10% diff, not entirely worth it for the sake of having to constantly ask the reddit master for new ints, or for having ugly binary keys
+
+
+
+populating new filters with existing posts.
+- we dont want to iterate over every post thats ever been made to see if we want to add it
+- for each post tag we add the post ID in a settings
+- sinterstore every filter tag into a new settings
+- diff the new set against the unwanted filter tags
+- the result should be a list of applicable posts

@@ -131,19 +131,23 @@ function write:CreateFilter(filterInfo)
   return results
 end
 
+function write:CreateFilterPostInfo(red, filterInfo,postInfo)
+  red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
+  red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
+  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + postInfo.score,postInfo.id)
+  red:zadd('filterpostsall:datescore',postInfo.createdAt + postInfo.score,filterInfo.id..':'..postInfo.id)
+  red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
+  red:zadd('filterpostsall:score',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
+end
+
 function write:AddPostToFilters(filters,postInfo)
   -- add post to the filters that want it
   -- by post score, and by date
   local red = GetRedisConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
-      red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
-      red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
-      red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + postInfo.score,postInfo.id)
-      red:zadd('filterpostsall:datescore',postInfo.createdAt + postInfo.score,filterInfo.id..':'..postInfo.id)
-      red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
-      red:zadd('filterpostsall:score',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
-  end
+      self:CreateFilterPostInfo(red,filterInfo,postInfo)
+    end
   local results, err = red:commit_pipeline()
 
   if err then
@@ -152,7 +156,65 @@ function write:AddPostToFilters(filters,postInfo)
   return results
 end
 
+function write:AddPostsToFilter(filterInfo,posts)
 
+  local red = GetRedisConnection()
+    red:init_pipeline()
+    for _, postInfo in pairs(posts) do
+      self:CreateFilterPostInfo(red,filterInfo,postInfo)
+    end
+  local results, err = red:commit_pipeline()
+
+  if err then
+    ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
+  end
+  return results
+end
+
+function write:FindPostsForFilter(filter)
+  for k,v in pairs(filter) do
+    ngx.log(ngx.ERR, k, ' ',to_json(v))
+  end
+  local red = GetRedisConnection()
+  local matchingPostIDs
+  local requiredTags = {}
+  local bannedTags = {}
+  for _,v in pairs(filter.requiredTags) do
+    tinsert(requiredTags,'tagPosts:'..v.id)
+  end
+  for _,v in pairs(filter.bannedTags) do
+    tinsert(bannedTags,'tagPosts:'..v.id)
+  end
+
+  local tempKey = filter.id..':tempPosts'
+
+  local ok, err = red:sinterstore(tempKey, unpack(requiredTags))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
+    red:del(tempKey)
+    SetKeepalive(red)
+    return nil
+  end
+  matchingPostIDs, err = red:sdiff(tempKey, unpack(bannedTags))
+  if not matchingPostIDs then
+    ngx.log(ngx.ERR, 'unable to diff tags: ',err)
+    SetKeepalive(red)
+    return nil
+  end
+
+  ok, err = red:del(tempKey)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to del temp posts set "',tempKey,'": ',err)
+  end
+  SetKeepalive(red)
+
+  if matchingPostIDs == ngx.null then
+    return {}
+  else
+    return matchingPostIDs
+  end
+
+end
 
 
 
@@ -188,7 +250,7 @@ function write:CreatePost(postInfo)
     end
     -- collect tag ids and add taginfo to hash
     for _,tag in pairs(tags) do
-
+      red:sadd('tagPosts:'..tag.id, postInfo.id)
       red:sadd('post:tagIDs:'..postInfo.id,tag.id)
       red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
     end

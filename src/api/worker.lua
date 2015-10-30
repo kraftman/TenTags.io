@@ -4,6 +4,7 @@ local rediswrite = require 'api.rediswrite'
 local userWrite = require 'api.userwrite'
 local email = require 'lib.testemail'
 local commentWrite = require 'api.commentwrite'
+local cache = require 'api.cache'
 
 function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
@@ -22,8 +23,21 @@ function worker:UpdateUser(user)
   userWrite:CreateSubUser(user)
 end
 
+function worker:AddPostsToFilter(filter, posts)
+  rediswrite:AddPostsToFilter(filter, posts)
+end
+
+function worker:FindPostsForFilter(filterInfo)
+  return rediswrite:FindPostsForFilter(filterInfo)
+end
+
 function worker:CreateFilter(filterInfo)
+
+  local postIDs = self:FindPostsForFilter(filterInfo)
+  local posts = cache:GetPosts(postIDs)
   rediswrite:CreateFilter(filterInfo)
+  self:AddPostsToFilter(filterInfo, posts)
+  self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
 end
 
 function worker:SubscribeToFilter(userID,filterID)

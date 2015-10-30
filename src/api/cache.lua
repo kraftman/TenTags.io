@@ -19,7 +19,6 @@ function cache:GetMasterUserInfo(masterID)
   return userRead:GetMasterUserInfo(masterID)
 end
 
-
 function cache:GetThread(threadID)
   return redisread:GetThreadInfo(threadID)
 end
@@ -34,7 +33,6 @@ end
 function cache:GetUserInfo(userID)
   return userRead:GetUserInfo(userID)
 end
-
 
 function cache:GetUserAlerts(userID)
   local user = self:GetUserInfo(userID)
@@ -154,6 +152,15 @@ function cache:GetPostComments(postID)
   local tree = self:AddChildren(postID,flat)
   --print(to_json(tree))
   return tree,indexedComments
+end
+
+function cache:GetPosts(postIDs)
+  local posts = {}
+  for k,v in pairs(postIDs) do
+    tinsert(posts, self:GetPost(v))
+  end
+  return posts
+
 end
 
 function cache:GetPost(postID)

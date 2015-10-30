@@ -593,10 +593,11 @@ function api:CreateFilter(filterInfo)
   filterInfo.tags = tags
 
   worker:CreateFilter(filterInfo)
-  worker:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
+  
 
   return true
 end
+
 
 function api.GetAllTags()
   return cache:GetAllTags()
