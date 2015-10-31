@@ -12,9 +12,18 @@
   <div>
   <a href="<%= post.link -%>"> <%= post.title -%></a>
   <p><%= post.text -%></p>
+
+  Filters:</br>
+  <% for _,filter in pairs(filters) do %>
+    <% render("views.st.postfilterelement",{filter = filter}) %>
+  <% end %>
+  </br></br>
+  Tags:</br>
   <% for _,tag in pairs(post.tags) do %>
     <% render("views.st.tag",{tag = tag}) %>
   <% end %>
+
+
   </br>
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >

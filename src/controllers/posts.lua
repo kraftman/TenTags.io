@@ -59,6 +59,8 @@ local function GetPost(self)
   self.comments = comments
 
   local post = api:GetPost(self.params.postID)
+  print(to_json(post))
+  self.filters = api:GetFilterInfo(post.filters)
 
   self.post = post
 

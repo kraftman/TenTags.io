@@ -40,6 +40,10 @@ function api:GetUserFilters(userID)
   return cache:GetFilterInfo(filterIDs)
 end
 
+function api:GetFilterInfo(filterIDs)
+	return cache:GetFilterInfo(filterIDs)
+end
+
 function api:GetPostComments(postID,sortBy)
   return cache:GetPostComments(postID,sortBy)
 end

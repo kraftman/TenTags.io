@@ -1,0 +1,3 @@
+<div class='tag' >
+  <span class='filtername'><%= filter.name %></span>
+</div>
