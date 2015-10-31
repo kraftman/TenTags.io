@@ -10,6 +10,10 @@ function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
 end
 
+function worker:UpdatePostField(postID, field, newValue)
+  return rediswrite:UpdatePostField(postID, field, newValue)
+end
+
 function worker:CreatePost(postInfo)
   return rediswrite:CreatePost(postInfo)
 end

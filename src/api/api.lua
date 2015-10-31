@@ -189,6 +189,10 @@ function api:CreateComment(commentInfo)
     end
   end
 
+	local post = self:GetPost(commentInfo.postID)
+
+	worker:UpdatePostField(commentInfo.postID, 'commentCount',post.commentCount+1)
+
 
  --need to add comment to comments, commentid to user
 
@@ -533,7 +537,7 @@ function api:CreatePost(postInfo)
   for k,_ in pairs(chosenFilterIDs) do
     chosenFilterIDs[k] = k
   end
-	
+
   postInfo.filters = chosenFilterIDs
   --get the info from the filters to find out which tags they want
   local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)

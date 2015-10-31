@@ -106,6 +106,12 @@ function write:FilterBanDomain(filterID, banInfo)
   return ok
 end
 
+function write:UpdatePostField(postID, field, newValue)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('post:'..postID,field,newValue)
+  SetKeepalive(red)
+end
+
 function write:FilterUnbanDomain(filterID, domainName)
   local red = GetRedisConnection()
   local ok, err = red:hdel('filter:'..filterID, 'bannedDomain:'..domainName)
