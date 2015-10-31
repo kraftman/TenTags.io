@@ -530,11 +530,10 @@ function api:CreatePost(postInfo)
     end
   end
 
-
-
   for k,_ in pairs(chosenFilterIDs) do
     chosenFilterIDs[k] = k
   end
+	
   postInfo.filters = chosenFilterIDs
   --get the info from the filters to find out which tags they want
   local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)

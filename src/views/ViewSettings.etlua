@@ -3,6 +3,7 @@
   <a href="<%= url_for('newsubuser') %>">Add User</a>
   <form action="<%= url_for('viewsettings') %>" method = 'POST'>
     <input type="checkbox" name="EnablePM" <%= enablePM -%>>Enable PM's<br>
+    <input type="checkbox" name="hideSeenPosts" <%= hideSeenPosts -%>>Hide Seen Posts<br>
     <input type="submit" value="Submit">
   </form>
 </div>

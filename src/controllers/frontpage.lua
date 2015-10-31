@@ -14,6 +14,11 @@ local function FrontPage(self)
 
   self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
   -- if empty and logged in then redirect to seen posts
+  if not posts or #posts == 0 then
+    if filter ~= 'seen' then
+      --return { redirect_to = self:url_for("seen") }
+    end
+  end
 
   return {render = 'frontpage'}
 end

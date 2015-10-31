@@ -390,6 +390,7 @@ function cache:GetUserFrontPage(userID,filter,range)
   range = range or 0
 
   --also need to check the posts nodeID
+  local user = self:GetUserInfo(userID)
 
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
@@ -410,7 +411,10 @@ function cache:GetUserFrontPage(userID,filter,range)
         break
       end
     end
-    self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
+    print(to_json(user))
+    if user.hideSeenPosts == '1' then
+      self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
+    end
   else
     for i = range, range+10 do
       if freshPosts[i] then
