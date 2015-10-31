@@ -13,6 +13,7 @@ local userRead = require 'api.userread'
 local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
+local markdown = require 'lib.markdown'
 
 
 function cache:GetMasterUserInfo(masterID)
@@ -117,43 +118,31 @@ end
 
 function cache:GetPostComments(postID)
   local flatComments = commentRead:GetPostComments(postID)
-
-  local flat = {}
-  flat[postID] = {}
   local indexedComments = {}
-
-  for k,v in pairs(flatComments) do
-    --ngx.log(ngx.ERR, k,' userID: ',to_json(v))
-    flatComments[k] = from_json(v)
-    flatComments[k].username = self:GetUsername(flatComments[k].createdBy)
-    --ngx.log(ngx.ERR,flatComments[k].username)
+  -- format flatcomments
+  local tempComment
+  for _,v in pairs(flatComments) do
+    tempComment =  from_json(v)
+    tempComment.username = self:GetUsername(tempComment.createdBy)
+    tinsert(indexedComments, tempComment)
   end
 
-  for k,comment in pairs(flatComments) do
-    if not flat[comment.parentID] then
-      flat[comment.parentID] = {}
-    end
-    if not flat[comment.id] then
-      flat[comment.id] = {}
-    end
-    tinsert(flat[comment.parentID],comment)
-    indexedComments[comment.id] = comment
+  table.sort(indexedComments, function(a,b) return a.score > b.score end)
+
+  local keyedComments = {}
+
+  for _,v in pairs(indexedComments) do
+    keyedComments[v.id] = v
+    v.children = {}
   end
 
-  
+  keyedComments[postID] = {children = {}}
 
-  for k,v in pairs(flat) do
-    table.sort(v,function(a,b)
-      if a.up+a.down == b.up+b.down then
-        return a.createdAt > b.createdAt
-      end
-      return (a.up+a.down > b.up+b.down)
-    end)
+  for _,comment in pairs(indexedComments) do
+    tinsert(keyedComments[comment.parentID].children,comment)
   end
+  return keyedComments
 
-  local tree = self:AddChildren(postID,flat)
-  --print(to_json(tree))
-  return tree,indexedComments
 end
 
 function cache:GetPosts(postIDs)

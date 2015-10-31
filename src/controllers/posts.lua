@@ -42,57 +42,19 @@ local function CreatePost(self)
 
 end
 
-
-
-local function RenderComment(self,comments,commentTree,text)
-  local t = text or ''
-
-  local postID
-  for k,v in pairs(commentTree) do
-    postID = postID or comments[k].postID
-    local newText = markdown(comments[k].text)
-    local commentHash = ngx.md5(comments[k].id..self.session.userID)
-    print('hash: ',commentHash)
-    t = t..'<div class="comment">\n'
-    t = t..'  <div class="commentinfo" >\n'..
-    '<a href="'..self:url_for('upvotecomment',{commentID = comments[k].id,postID = postID, commentHash = commentHash})..'">up</a>   '..
-    '<a href="'..self:url_for('downvotecomment',{commentID = comments[k].id, postID = postID, commentHash = commentHash})..'">down</a>   '..
-    '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
-    '<a href="'..self:url_for('subscribecomment',{postID = self.params.postID, commentID = comments[k].id})..'">subscribe</a>   '..
-    '<a href="'..self:url_for('viewcomment',{postID = self.params.postID, commentID = comments[k].id})..'">reply</a>'..
-              '\n  </div>\n'
-    t = t..'  <div id="commentinfo" >\n'..(newText )..'\n  </div>\n'
-    if comments[k].filters then
-      for _,filter in pairs(comments[k].filters) do
-        t = t..' filter: '..(filter.title or '')
-      end
-    end
-    t = t..'up: '..comments[k].up..' down: '..comments[k].down..' score: '..comments[k].score
-
-    if next(v) then
-      t = t..'<div id="commentchildren">'
-      t = t..RenderComment(self,comments,v)
-      t = t..'</div>'
-    end
-    t = t..'</div>\n'
-  end
-  --print('found:',t)
-  return t
-end
-
-local function RenderComments(self)
-  return RenderComment(self,self.comments,self.commentTree)
-end
-
 local function GetPost(self)
 
-  local tree,comments = api:GetPostComments(self.params.postID)
-  if tree then
-    --print('tree found')
+  local comments = api:GetPostComments(self.params.postID)
+  for k,v in pairs(comments) do
+    -- one of the 'comments' is actually the postID
+    -- may shift this to api later
+    if v.id then
+      v.commentHash = ngx.md5(v.id..self.session.userID)
+    end
   end
-  self.commentTree = tree
+
+
   self.comments = comments
-  self.RenderComments = RenderComments
 
   local post = api:GetPost(self.params.postID)
 

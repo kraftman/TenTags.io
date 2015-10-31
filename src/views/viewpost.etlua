@@ -16,7 +16,7 @@
     <% render("views.st.tag",{tag = tag}) %>
   <% end %>
 
-  <%- RenderComments() %>
+  <% render("views.st.postcomment", { key = post.id }) %>
 
   <% render("views.st.newcomment") %>
   </div>
