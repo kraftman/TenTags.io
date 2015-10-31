@@ -14,6 +14,10 @@ function worker:UpdatePostField(postID, field, newValue)
   return rediswrite:UpdatePostField(postID, field, newValue)
 end
 
+function worker:UpdateComment(comment)
+  return commentWrite:CreateComment(comment)
+end
+
 function worker:CreatePost(postInfo)
   return rediswrite:CreatePost(postInfo)
 end

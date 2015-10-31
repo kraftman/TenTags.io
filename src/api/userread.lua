@@ -55,6 +55,21 @@ function userread:GetUserAlerts(userID, startAt, endAt)
   end
 end
 
+function userread:GetUserCommentVotes(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:smembers('userCommentVotes:'..userID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user comment votes:',err)
+  end
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+
+end
+
 function userread:GetUserInfo(userID)
   local red = GetRedisConnection()
   local ok, err = red:hgetall('user:'..userID)

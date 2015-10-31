@@ -152,6 +152,59 @@ function api:GetUserComments(userID)
   return comments
 end
 
+function api:UserHasVoted(userID, commentID)
+	local userCommentVotes = cache:GetUserCommentVotes(userID)
+	for _,v in pairs(userCommentVotes) do
+		if v:find(commentID) then
+			return true
+		end
+	end
+	return false
+end
+
+function api:GetScore(up,down)
+	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
+	--http://www.evanmiller.org/bayesian-average-ratings.html
+	if up == 0 then
+      return -down
+  end
+  local n = up + down
+  local z = 1.64485 --1.0 = 85%, 1.6 = 95%
+  local phat = up / n
+  return (phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+
+end
+
+function api:VoteComment(userID, postID, commentID,direction)
+	-- check if the user has already voted
+	-- if theyve voted down then remove down entry,
+	-- check if they can vote more than once
+	-- increment comment votes
+	-- recalculate score
+	-- add to user voted in cache
+	-- add to user voted in redis
+	-- for now dont allow unvoting
+
+	if self:UserHasVoted(userID, commentID) then
+		--return if they cant multivote
+	end
+
+
+	local comment = api:GetComment(postID, commentID)
+	if direction == 'up' then
+		comment.up = comment.up + 1
+	elseif direction == 'down' then
+		comment.down = comment.down + 1
+	end
+
+	comment.score = self:GetScore(comment.up,comment.down)
+	worker:UpdateComment(comment)
+
+
+
+
+end
+
 function api:CreateComment(commentInfo)
 
   commentInfo.id = uuid.generate_random()

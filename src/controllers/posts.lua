@@ -47,13 +47,16 @@ end
 local function RenderComment(self,comments,commentTree,text)
   local t = text or ''
 
-
+  local postID
   for k,v in pairs(commentTree) do
-
+    postID = postID or comments[k].postID
     local newText = markdown(comments[k].text)
-
+    local commentHash = ngx.md5(comments[k].id..self.session.userID)
+    print('hash: ',commentHash)
     t = t..'<div class="comment">\n'
     t = t..'  <div class="commentinfo" >\n'..
+    '<a href="'..self:url_for('upvotecomment',{commentID = comments[k].id,postID = postID, commentHash = commentHash})..'">up</a>   '..
+    '<a href="'..self:url_for('downvotecomment',{commentID = comments[k].id, postID = postID, commentHash = commentHash})..'">down</a>   '..
     '<a href="'..self:url_for('viewuser',{username = comments[k].username})..'">'..comments[k].username..'</a>   '..
     '<a href="'..self:url_for('subscribecomment',{postID = self.params.postID, commentID = comments[k].id})..'">subscribe</a>   '..
     '<a href="'..self:url_for('viewcomment',{postID = self.params.postID, commentID = comments[k].id})..'">reply</a>'..
@@ -64,6 +67,7 @@ local function RenderComment(self,comments,commentTree,text)
         t = t..' filter: '..(filter.title or '')
       end
     end
+    t = t..'up: '..comments[k].up..' down: '..comments[k].down..' score: '..comments[k].score
 
     if next(v) then
       t = t..'<div id="commentchildren">'

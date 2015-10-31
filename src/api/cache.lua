@@ -140,6 +140,8 @@ function cache:GetPostComments(postID)
     indexedComments[comment.id] = comment
   end
 
+  
+
   for k,v in pairs(flat) do
     table.sort(v,function(a,b)
       if a.up+a.down == b.up+b.down then
@@ -384,6 +386,10 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
   end
 
   return freshPosts
+end
+
+function cache:GetUserCommentVotes(userID)
+  return userRead:GetUserCommentVotes(userID)
 end
 
 function cache:GetUserFrontPage(userID,filter,range)
