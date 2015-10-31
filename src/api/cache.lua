@@ -431,8 +431,11 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   local postsWithInfo = {}
 
-  for k,postID in pairs(newPostIDs) do
-    tinsert(postsWithInfo, self:GetPost(postID))
+  for _,postID in pairs(newPostIDs) do
+    local post = self:GetPost(postID)
+    post.filters = self:GetFilterInfo(post.filters) or {}
+    
+    tinsert(postsWithInfo, post)
   end
 
   return postsWithInfo
