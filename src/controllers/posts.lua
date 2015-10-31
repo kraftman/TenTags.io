@@ -43,8 +43,10 @@ local function CreatePost(self)
 end
 
 local function GetPost(self)
+  local sortBy = self.params.sort or 'best'
+  sortBy = sortBy:lower()
 
-  local comments = api:GetPostComments(self.params.postID)
+  local comments = api:GetPostComments(self.params.postID,sortBy)
   for k,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later

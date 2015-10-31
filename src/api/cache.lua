@@ -116,7 +116,8 @@ function cache:GetUsername(userID)
   end
 end
 
-function cache:GetPostComments(postID)
+function cache:GetPostComments(postID,sortBy)
+
   local flatComments = commentRead:GetPostComments(postID)
   local indexedComments = {}
   -- format flatcomments
@@ -127,7 +128,15 @@ function cache:GetPostComments(postID)
     tinsert(indexedComments, tempComment)
   end
 
-  table.sort(indexedComments, function(a,b) return a.score > b.score end)
+  if sortBy == 'top' then
+    print('sort by top')
+    table.sort(indexedComments, function(a,b) return a.up-a.down > b.up -b.down end)
+  elseif sortBy == 'new' then
+    print('sort by new')
+    table.sort(indexedComments, function(a,b) return a.createdAt > b.createdAt end)
+  else
+    table.sort(indexedComments, function(a,b) return a.score > b.score end)
+  end
 
   local keyedComments = {}
 

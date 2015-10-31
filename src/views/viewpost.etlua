@@ -15,6 +15,25 @@
   <% for _,tag in pairs(post.tags) do %>
     <% render("views.st.tag",{tag = tag}) %>
   <% end %>
+  </br>
+  Sort comments:
+  <select onchange="location = this.options[this.selectedIndex].value;" >
+    <option value="<%= url_for('viewpost',{postID = post.id})%>?sort=best"
+      <% if not params or params.sort == 'best' then %>
+        selected = 'selected'
+      <% end %>
+    >Best</option>
+    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=new"
+      <% if params.sort == 'new' then %>
+        selected = 'selected'
+      <% end %>
+    >New</option>
+    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=top"
+      <% if not params or params.sort == 'top' then %>
+        selected = 'selected'
+      <% end %>
+  >Top</option>
+  </select>
 
   <% render("views.st.postcomment", { key = post.id }) %>
 
