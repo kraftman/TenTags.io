@@ -8,6 +8,7 @@
 
 
 
+<div class = 'contents'>
 <form id='createfilter' action='' method='post'
     accept-charset='UTF-8'>
   <fieldset >
@@ -43,3 +44,4 @@
 
   </fieldset>
 </form>
+</div>

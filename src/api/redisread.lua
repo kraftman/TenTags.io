@@ -272,6 +272,24 @@ function read:GetFilter(filterID)
     return nil
   end
   local filter = self:ConvertListToTable(ok)
+
+  filter.bannedUsers = {}
+  filter.bannedDomains = {}
+  local banInfo
+  for k, v in pairs(filter) do
+    if k:find('^bannedUser:') then
+      banInfo = from_json(v)
+      filter.bannedUsers[banInfo.userID] = banInfo
+      filter[k] = nil
+    elseif k:find('^bannedDomain:') then
+      tinsert(filter.bannedDomains, from_json(v))
+      banInfo = from_json(v)
+      filter.bannedDomains[banInfo.domainName] = banInfo
+      filter[k] = nil
+    end
+  end
+
+
   --print(to_json(filter))
 
   ok, err = red:smembers('filter:bannedtags:'..filterID)

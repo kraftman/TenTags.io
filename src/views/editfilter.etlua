@@ -1,0 +1,40 @@
+
+
+
+
+<div class = 'contents'>
+  <% for i,userInfo in pairs(selectedFilter.bannedUsers) do %>
+    <% render("views.st.bannedUser",{userInfo = userInfo}) %>
+  <% end %>
+
+  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
+
+      <legend>Ban User</legend>
+
+      <label for='banuser' >Username</label>
+      <input type='text' name='banuser' id='banuser' maxlength="50" />
+
+      <label for='banUserReason'> Reason: </label>
+      <input type='text' name='banUserReason' id='banUserReason' maxlength="50" />
+
+      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+
+  </form>
+
+  <% for i,banInfo in pairs(selectedFilter.bannedDomains) do %>
+    <% render("views.st.bannedDomain",{banInfo = banInfo}) %>
+  <% end %>
+
+  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
+      <legend>Ban Domain</legend>
+
+      <label for='banDomain' >Domain</label>
+      <input type='text' name='banDomain' id='banDomain' maxlength="50" />
+
+      <label for='banDomainReason'> Reason: </label>
+      <input type='text' name='banDomainReason' id='banDomainReason' maxlength="50" />
+
+      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+
+  </form>
+</div>

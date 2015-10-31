@@ -84,11 +84,68 @@ function write:ConvertListToTable(list)
   return info
 end
 
+function write:FilterBanUser(filterID, banInfo)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('filter:'..filterID, 'bannedUser:'..banInfo.userID, to_json(banInfo))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add banned user: ',err)
+    return nil, err
+  end
+  SetKeepalive(red)
+  return ok
+end
+
+function write:FilterBanDomain(filterID, banInfo)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('filter:'..filterID, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add banned domain: ',err)
+    return nil, err
+  end
+  SetKeepalive(red)
+  return ok
+end
+
+function write:FilterUnbanDomain(filterID, domainName)
+  local red = GetRedisConnection()
+  local ok, err = red:hdel('filter:'..filterID, 'bannedDomain:'..domainName)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to unban domain: ',err)
+  end
+  SetKeepalive(red)
+  return ok, err
+end
+
+function write:FilterUnbanUser(filterID, userID)
+  local red = GetRedisConnection()
+  local ok, err = red:hdel('filter:'..filterID, 'bannedUser:'..userID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to unban user: ',err)
+  end
+  SetKeepalive(red)
+  return ok, err
+end
+
 function write:CreateFilter(filterInfo)
   local requiredTags = filterInfo.requiredTags
   local bannedTags = filterInfo.bannedTags
   filterInfo.bannedTags = nil
   filterInfo.requiredTags = nil
+
+  if filterInfo.bannedUsers then
+    for _, banInfo in pairs(filterInfo.bannedUsers) do
+      tinsert(filterInfo, 'bannedUser:'..banInfo.userID,to_json(banInfo))
+    end
+    filterInfo.bannedUsers = nil
+  end
+
+  if filterInfo.bannedDomains then
+    for _,banInfo in pairs(filterInfo.bannedDomains) do
+      tinsert(filterInfo, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
+    end
+    filterInfo.bannedDomains = nil
+  end
+
 
   -- add id to name conversion table
   local red = GetRedisConnection()

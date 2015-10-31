@@ -58,6 +58,15 @@ function api:UserHasAlerts(userID)
   return #alerts > 0
 end
 
+function api:FilterBanUser(filterID, banInfo)
+	banInfo.bannedAt = ngx.time()
+	return worker:FilterBanUser(filterID, banInfo)
+end
+
+function api:FilterUnbanDomain(filterID, domainName)
+	domainName = self:GetDomain(domainName) or domainName
+	return worker:FilterUnbanDomain(filterID, domainName)
+end
 
 function api:GetUserAlerts(userID)
   local alerts = cache:GetUserAlerts(userID)
@@ -265,8 +274,18 @@ end
 
 function api:GetUserInfo(userID)
 	local userInfo  = cache:GetUserInfo(userID)
-	print(to_json(userInfo))
+
 	return userInfo
+end
+
+function api:FilterUnbanUser(filterID, userID)
+	return worker:FilterUnbanUser(filterID, userID)
+end
+
+function api:FilterBanDomain(filterID, banInfo)
+	banInfo.bannedAt = ngx.time()
+	banInfo.domainName = self:GetDomain(banInfo.domainName) or banInfo.domainName
+	return worker:FilterBanDomain(filterID, banInfo)
 end
 
 function api:ValidateMaster(userCredentials)
@@ -451,6 +470,7 @@ function api:CreatePost(postInfo)
   -- rate limit
   -- basic sanity check
   -- send to worker
+	-- TODO: move most of this to worker
   if not api:PostIsValid(postInfo) then
     return false
   end
@@ -510,6 +530,8 @@ function api:CreatePost(postInfo)
     end
   end
 
+
+
   for k,_ in pairs(chosenFilterIDs) do
     chosenFilterIDs[k] = k
   end
@@ -517,9 +539,16 @@ function api:CreatePost(postInfo)
   --get the info from the filters to find out which tags they want
   local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)
   local finalFilters = {}
+
   for _,filter in pairs(filtersWithInfo) do
     if self:TagsMatch(filter.requiredTags, postInfo.tags) then
-      tinsert(finalFilters,filter)
+			if (filter.bannedUsers[postInfo.createdBy]) then
+				ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',postInfo.createdBy, ' is banned ')
+			elseif filter.bannedDomains[postInfo.domain] then
+				ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as domain ',postInfo.domain, ' is banned ' )
+			else
+      	tinsert(finalFilters,filter)
+			end
     end
   end
 

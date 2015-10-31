@@ -11,7 +11,23 @@ function worker:CreateTag(tagInfo)
 end
 
 function worker:CreatePost(postInfo)
-  rediswrite:CreatePost(postInfo)
+  return rediswrite:CreatePost(postInfo)
+end
+
+function worker:FilterBanDomain(filterID, banInfo)
+  return rediswrite:FilterBanDomain(filterID, banInfo)
+end
+
+function worker:FilterUnbanDomain(filterID, domainName)
+  return rediswrite:FilterUnbanDomain(filterID, domainName)
+end
+
+function worker:FilterUnbanUser(filterID, userID)
+  return rediswrite:FilterUnbanUser(filterID, userID)
+end
+
+function worker:FilterBanUser(filterID, banInfo)
+  return rediswrite:FilterBanUser(filterID, banInfo)
 end
 
 function worker:CreateComment(commentInfo)
