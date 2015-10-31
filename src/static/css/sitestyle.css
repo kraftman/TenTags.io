@@ -1,8 +1,11 @@
 #centerPage {
-  width: 900px;
-  height: 1200px;
-  margin:0 auto;
-
+  width: 100%;
+  height: 900px;
+  left:0;
+  right:0;
+  margin-left:auto;
+  margin-right:auto;
+  position: relative;
   background-color: #D6ECF2;
 
 }
@@ -17,7 +20,7 @@ div {
 }
 
 #titleBox {
-  width: 900px;
+  width: 100%;
   background-color: lightblue;
   color:#0000FF;
   height: 25px;
@@ -25,7 +28,7 @@ div {
 }
 
 #filterbar {
-  width: 200px;
+  width: 20%;
   height: 100%;
   float:left;
 }
@@ -45,9 +48,9 @@ ul {
 
 
 .contents {
-  padding:10px;
-  width: 670px;
-  float: left;
+  width: 70%;
+  position: relative;
+  float:left;
 }
 
 .postLink {
@@ -62,7 +65,7 @@ ul {
 }
 
 #posts {
-
+  position:relative;
 }
 
 .upvote {

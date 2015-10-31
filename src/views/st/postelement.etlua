@@ -4,9 +4,11 @@
     </br>
       <a class='commentLink' href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>
       <% for _,tag in pairs(post.tags) do %>
-        <div class = 'tag'>
-          <%= tag.name%>
-        </div>
+        <% if not tag.name:find('^meta') then %>
+          <div class = 'tag'>
+            <%= tag.name%>
+          </div>
+        <% end %>
       <% end %>
   </div>
 </div>
