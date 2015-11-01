@@ -5,6 +5,7 @@ local m = {}
 
 local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
+local to_json = (require 'lapis.util').to_json
 
 
 local function NewMessage(self)

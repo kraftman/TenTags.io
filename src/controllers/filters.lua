@@ -3,7 +3,6 @@
 local M = {}
 
 local api = require 'api.api'
-local uuid = require 'lib.uuid'
 
 
 local util = require("lapis.util")
@@ -36,7 +35,6 @@ local function NewFilter(self)
   end
   print(self.session.userID)
 
-  local newID =  uuid.generate_random()
   local requiredTags = from_json(self.params.requiredTags)
   local bannedTags = from_json(self.params.bannedTags)
 
@@ -48,7 +46,6 @@ local function NewFilter(self)
     createdBy = self.session.userID,
     ownerID = self.session.userID
   }
-  local tags = {}
 
   info.bannedTags = bannedTags
   info.requiredTags = requiredTags
@@ -158,7 +155,7 @@ local function ViewFilterSettings(self)
 
   self.bannedUsernames = {}
   local userInfo
-  for k,v in pairs(filter.bannedUsers) do
+  for _,v in pairs(filter.bannedUsers) do
     userInfo= api:GetUserInfo(v.userID)
     self.bannedUsernames[v.userID] = userInfo.username
   end

@@ -1,7 +1,6 @@
 local db = require("lapis.db")
 
 local uuid = require 'lib.uuid'
-local util = require 'lapis.util'
 local api = require 'api.api'
 
 local m = {}
@@ -29,8 +28,6 @@ function m:ParseTags()
     return self:DisplayTag(res)
     ---return res.name..' '..res.title..' '..res.description
   end
-
-  return tagName
 end
 
 local function CreateTag(self)

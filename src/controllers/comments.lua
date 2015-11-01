@@ -1,7 +1,7 @@
 
 
-local util = require("lapis.util")
 local api = require 'api.api'
+local to_json = (require 'lapis.util').to_json
 
 local m = {}
 
@@ -36,6 +36,11 @@ local function UpvoteComment(self)
     return 'hashes dont match'
   end
   local ok, err = api:VoteComment(self.session.userID, self.params.postID, self.params.commentID,'up')
+  if ok then
+    return 'success!'
+  else
+    return 'fail: ', err
+  end
 end
 
 local function DownVoteComment(self)
@@ -44,6 +49,11 @@ local function DownVoteComment(self)
   end
 
   local ok, err = api:VoteComment(self.session.userID, self.params.postID, self.params.commentID,'down')
+  if ok then
+    return 'success'
+  else
+    return 'fail: ',err
+  end
 end
 
 function m:Register(app)

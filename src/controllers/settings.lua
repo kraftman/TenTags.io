@@ -5,7 +5,7 @@ m.__index = m
 
 local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
-local trim = require ('lapis.util').trim
+local to_json = (require 'lapis.util').to_json
 
 local function DisplaySettings(self)
   local user = api:GetUserInfo(self.session.userID)

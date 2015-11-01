@@ -12,8 +12,8 @@ local tinsert = table.insert
 local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
+local to_json = (require 'lapis.util').to_json
 
---self.session.current_user
 
 function api:UpdateUser(user)
 	-- update cache later
@@ -139,7 +139,7 @@ end
 function api:SubscribeComment(userID, postID, commentID)
   local comment = cache:GetComment(postID, commentID)
   -- check they dont exist
-  for k, v in pairs(comment.viewers) do
+  for _, v in pairs(comment.viewers) do
     if v == userID then
       return
     end
@@ -189,9 +189,9 @@ function api:VoteComment(userID, postID, commentID,direction)
 	-- add to user voted in redis
 	-- for now dont allow unvoting
 
-	if self:UserHasVoted(userID, commentID) then
+	--if self:UserHasVoted(userID, commentID) then
 		--return if they cant multivote
-	end
+	--end
 
 
 	local comment = api:GetComment(postID, commentID)

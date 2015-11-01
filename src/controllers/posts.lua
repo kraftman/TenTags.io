@@ -2,7 +2,6 @@
 
 local api = require 'api.api'
 local util = require("lapis.util")
-local markdown = require 'lib.markdown'
 
 local from_json = util.from_json
 local to_json = util.to_json
@@ -12,7 +11,6 @@ local m = {}
 local respond_to = (require 'lapis.application').respond_to
 local trim = util.trim
 
-local tinsert = table.insert
 
 local function CreatePost(self)
 
@@ -47,7 +45,7 @@ local function GetPost(self)
   sortBy = sortBy:lower()
 
   local comments = api:GetPostComments(self.params.postID,sortBy)
-  for k,v in pairs(comments) do
+  for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
     if v.id then
@@ -92,32 +90,32 @@ local function CreateComment(self)
   if ok then
     return 'created!'
   else
-    --return 'failed!'
+    return 'failed!'
   end
 
 end
 
 
 local function UpvoteTag(self)
-  local postTag = cache:GetPostTag(self.params.tagID,self.params.postID)
+  local postTag = api:GetPostTag(self.params.tagID,self.params.postID)
   -- increment the post count
   -- check if the user has already up/downvoted
   postTag.up = postTag.up + 1
-  local oldScore = postTag.score or 0
-  local newScore = score:BestScore(postTag.up,postTag.down)
+  --local oldScore = postTag.score or 0
+  local newScore = api:GetScore(postTag.up,postTag.down)
 
   postTag.score = newScore
-  cache:UpdatePostTag(postTag)
+  api:UpdatePostTag(postTag)
   print(postTag.up,postTag.down,'  ',newScore)
 
   --recalculate the tags score
-  if postTag.score > 0.1 and postTag.active == 0 then
+  --if postTag.score > 0.1 and postTag.active == 0 then
     --activate the tag
     -- check any filters that need it and add them
-  elseif postTag.score < -5 and postTag.active == 1 then
+  --elseif postTag.score < -5 and postTag.active == 1 then
     --deactivate the tag
     -- check any filters that need it remove and remove it
-  end
+  --end
 end
 
 function m:Register(app)

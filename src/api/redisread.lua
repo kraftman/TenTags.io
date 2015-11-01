@@ -2,6 +2,7 @@
 
 local redis = require "resty.redis"
 local tinsert = table.insert
+local from_json = (require 'lapis.util').from_json
 
 local read = {}
 
@@ -35,7 +36,7 @@ end
 function read:GetUnseenElements(checkSHA,baseKey, elements)
   local red = GetRedisConnection()
   red:init_pipeline()
-  for k,v in pairs(elements) do
+  for _,v in pairs(elements) do
     red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
   end
   local res, err = red:commit_pipeline()
@@ -75,7 +76,7 @@ function read:GetFilterIDsByTags(tags)
 
   local red = GetRedisConnection()
   red:init_pipeline()
-  for k,v in pairs(tags) do
+  for _,v in pairs(tags) do
     red:hgetall('tag:filters:'..v.id)
   end
   local results, err = red:commit_pipeline()
@@ -94,17 +95,18 @@ end
 
 function read:GetAllTags()
   local red = GetRedisConnection()
-  local ok, err = red:smembers('tags')
+  local ok, results, err
+  ok, err = red:smembers('tags')
   if not ok then
     ngx.log(ngx.ERR, 'unable to load tags:',err)
     return {}
   end
 
   red:init_pipeline()
-  for k,v in pairs(ok) do
+  for _,v in pairs(ok) do
     red:hgetall('tag:'..v)
   end
-  local results, err = red:commit_pipeline(#ok)
+   results, err = red:commit_pipeline(#ok)
 
   for k,v in pairs(results) do
     results[k] = self:ConvertListToTable(v)
@@ -213,10 +215,11 @@ function read:GetThreadInfos(threadIDs)
 
   -- TODO: work out if this can be combined with the above
   red:init_pipeline()
-    for k,thread in pairs(res) do
+    for _,thread in pairs(res) do
       red:hgetall('ThreadMessages:'..thread.id)
     end
-  local msgs, err = red:commit_pipeline()
+  local msgs
+  msgs, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to get thread messages: ',err)
     return {}
@@ -233,7 +236,7 @@ function read:GetThreadInfos(threadIDs)
       threadID = msgs[k][m].threadID
       end
     end
-    for m,thread in pairs(res) do
+    for _,thread in pairs(res) do
       if thread.id == threadID then
         thread.messages = msgs[k]
       end
@@ -330,7 +333,8 @@ function read:GetPost(postID)
 
   local post = self:ConvertListToTable(ok)
 
-  local postTags,err = red:smembers('post:tagIDs:'..postID)
+  local postTags
+  postTags, err = red:smembers('post:tagIDs:'..postID)
   if not postTags then
     ngx.log(ngx.ERR, 'unable to get post tags:',err)
   end
@@ -341,7 +345,7 @@ function read:GetPost(postID)
 
   post.tags = {}
 
-  for k, tagName in pairs(postTags) do
+  for _, tagName in pairs(postTags) do
     ok, err = red:hgetall('posttags:'..postID..':'..tagName)
     if not ok then
       ngx.log(ngx.ERR, 'unable to load posttags:',err)
@@ -412,7 +416,7 @@ end
 function read:BatchLoadPosts(posts)
   local red = GetRedisConnection()
   red:init_pipeline()
-  for k,postID in pairs(posts) do
+  for _,postID in pairs(posts) do
       red:hgetall('post:'..postID)
   end
   local results, err = red:commit_pipeline()
@@ -421,7 +425,7 @@ function read:BatchLoadPosts(posts)
   end
   local processedResults = {}
 
-  for k,v in pairs(results) do
+  for _,v in pairs(results) do
     tinsert(processedResults,self:ConvertListToTable(v))
   end
 

@@ -3,10 +3,10 @@
 local m = {}
 m.__index = m
 
-local uuid = require 'lib.uuid'
 local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
 local trim = (require 'lapis.util').trim
+local to_json = (require 'lapis.util').to_json
 
 local function NewUserForm(self)
   return {render = 'newuser'}
@@ -41,17 +41,6 @@ local function ConfirmEmail(self)
     return err
   end
 
-  local userInfo = cache:LoadUserCredentialsByEmail(self.params.email)
-
-  local newHash  = ngx.md5(userInfo.username..self.params.email..salt)
-
-  if GetActivationKey(newHash) == self.params.activateKey then
-    cache:ActivateUser(userInfo.id)
-    return 'you have successfully activated your account, please login!'
-  else
-    return 'activation failed, you suckkkk'
-  end
-
 end
 
 local function LogOut(self)
@@ -67,7 +56,7 @@ local function ViewUser(self)
   local userID = api:GetUserID(self.params.username)
   self.userInfo = api:GetUserInfo(userID)
   self.comments = api:GetUserComments(userID)
-  for k,v in pairs(self.comments) do
+  for _,v in pairs(self.comments) do
     v.username = api:GetUserInfo(v.createdBy).username
   end
   ngx.log(ngx.ERR, to_json(self.comments))

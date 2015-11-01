@@ -1,6 +1,6 @@
 
 local redis = require "resty.redis"
-local tinsert = table.insert
+local from_json = (require 'lapis.util').from_json
 
 local commentread = {}
 
@@ -54,7 +54,7 @@ function commentread:GetUserComments(postIDcommentIDs)
   local red = GetRedisConnection()
   local postID, commentID
   red:init_pipeline()
-    for k,v in pairs(postIDcommentIDs) do
+    for _,v in pairs(postIDcommentIDs) do
       ngx.log(ngx.ERR,v)
       postID, commentID = v:match('(%w+):(%w+)')
       red:hget('postComment:'..postID,commentID)
@@ -90,7 +90,7 @@ end
 function commentread:GetCommentInfos(commentIDs)
   local red = GetRedisConnection()
   red:init_pipeline()
-  for k,v in pairs(commentIDs) do
+  for _,v in pairs(commentIDs) do
     red:hgetall('comments:'..v)
   end
   local res, err = red:commit_pipeline()

@@ -12,7 +12,6 @@ local function ViewAlerts(self)
   api:UpdateLastUserAlertCheck(self.session.userID)
   self.alerts = {}
 
-  local html = ''
   for _, v in pairs(alerts) do
 
     if v:find('thread:') then
@@ -23,7 +22,7 @@ local function ViewAlerts(self)
       local postID, commentID = v:match('postComment:(%w+):(%w+)')
       local comment = api:GetComment(postID, commentID)
       comment.username = api:GetUserInfo(comment.createdBy).username
-      ngx.log(ngx.ERR, to_json(comment))
+      
       tinsert(self.alerts,{alertType = 'comment', data = comment})
     end
   end

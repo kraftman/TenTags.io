@@ -1,10 +1,10 @@
 local cache = {}
-local userFilterIDs = ngx.shared.userFilterIDs
-local filterDict = ngx.shared.filters
-local frontpages = ngx.shared.frontpages
+--local userFilterIDs = ngx.shared.userFilterIDs
+--local filterDict = ngx.shared.filters
+--local frontpages = ngx.shared.frontpages
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenDict = ngx.shared.usersessionseen
-local tags = ngx.shared.tags
+--local tags = ngx.shared.tags
 local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -13,7 +13,6 @@ local userRead = require 'api.userread'
 local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
-local markdown = require 'lib.markdown'
 
 
 function cache:GetMasterUserInfo(masterID)
@@ -59,7 +58,8 @@ end
 
 
 function cache:AddPost(post)
-  result,err = postInfo:set(post.id,to_json(postInfo))
+  local result,err = postInfo:set(post.id,to_json(postInfo))
+  return result, err
 end
 
 function cache:GetAllTags()
@@ -102,7 +102,7 @@ end
 
 function cache:AddChildren(parentID,flat)
   local t = {}
-  for k,v in pairs(flat[parentID]) do
+  for _,v in pairs(flat[parentID]) do
     t[v.id] = self:AddChildren(v.id,flat)
   end
 
@@ -156,7 +156,7 @@ end
 
 function cache:GetPosts(postIDs)
   local posts = {}
-  for k,v in pairs(postIDs) do
+  for _,v in pairs(postIDs) do
     tinsert(posts, self:GetPost(v))
   end
   return posts
@@ -196,7 +196,7 @@ function cache:GetFilterPosts(filter)
 
   local filterIDs = redisread:GetFilterPosts(filter)
   local posts = {}
-  for k,v in pairs(filterIDs) do
+  for _,v in pairs(filterIDs) do
     tinsert(posts, self:GetPost(v))
   end
   return posts
@@ -277,7 +277,7 @@ end
 
 function cache:GetIndexedUserFilterIDs(userID)
   local indexed = {}
-  for k,v in pairs(self:GetUserFilterIDs(userID)) do
+  for _,v in pairs(self:GetUserFilterIDs(userID)) do
     indexed[v] = true
   end
   return indexed
@@ -290,7 +290,7 @@ function cache:GetUserSessionSeenPosts(userID)
   end
 
   local indexedSeen = {}
-  for k,v in pairs(from_json(result)) do
+  for _,v in pairs(from_json(result)) do
     indexedSeen[v] = true
   end
 
@@ -299,11 +299,11 @@ end
 
 function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
   local flatSeen = {}
-  for k,v in pairs(indexedSeenPosts) do
+  for k,_ in pairs(indexedSeenPosts) do
     tinsert(flatSeen,k)
   end
   local ok,err,forced = userSessionSeenDict:set(userID,to_json(flatSeen))
-  if err then
+  if not ok then
     ngx.log(ngx.ERR, 'unable to write user seen:',err)
   end
   if forced then
@@ -311,7 +311,7 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
   end
 
   ok, err = userUpdateDict:set(userID,1)
-
+  return ok, err
 end
 
 function cache:GetFreshUserPosts(userID,filter) -- needs caching
@@ -350,18 +350,16 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
       break
     end
 
-
     startRange = startRange+1000
     endRange = endRange+1000
-    filteredPosts = {}
 
     if filter == 'seen' then
-      for k,v in pairs(allPostIDs) do
+      for _,v in pairs(allPostIDs) do
         tinsert(freshPosts,v)
       end
     else
 
-      for k, v in pairs(allPostIDs) do
+      for _, v in pairs(allPostIDs) do
         filterID,postID = v:match('(%w+):(%w+)')
         if userFilterIDs[filterID] then
           tinsert(filteredPosts,postID)
@@ -376,7 +374,7 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
         newUnseen = userRead:GetUnseenPosts(userID,filteredPosts)
       end
 
-      for k,v in pairs(newUnseen) do
+      for _,v in pairs(newUnseen) do
         tinsert(freshPosts,v)
       end
 
@@ -405,7 +403,7 @@ function cache:GetUserFrontPage(userID,filter,range)
   local newPostIDs = {}
 
   if filter ~= 'seen' and userID ~= 'default' then
-    for k,postID in pairs(freshPosts) do
+    for _,postID in pairs(freshPosts) do
       if not sessionSeenPosts[postID] then
         sessionSeenPosts[postID] = true
         tinsert(newPostIDs,postID)
@@ -434,7 +432,7 @@ function cache:GetUserFrontPage(userID,filter,range)
   for _,postID in pairs(newPostIDs) do
     local post = self:GetPost(postID)
     post.filters = self:GetFilterInfo(post.filters) or {}
-    
+
     tinsert(postsWithInfo, post)
   end
 
@@ -444,7 +442,7 @@ end
 
 function cache:GetTag(tagName)
   local tags = self:GetAllTags()
-  for k,v in pairs(tags) do
+  for _,v in pairs(tags) do
     if v.name == tagName then
       return v
     end

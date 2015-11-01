@@ -110,6 +110,9 @@ function write:UpdatePostField(postID, field, newValue)
   local red = GetRedisConnection()
   local ok, err = red:hset('post:'..postID,field,newValue)
   SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to update post field: ', err)
+  end
 end
 
 function write:FilterUnbanDomain(filterID, domainName)
@@ -308,7 +311,7 @@ function write:CreatePost(postInfo)
 
   red:init_pipeline()
     -- add all filters that the post has
-    for k,v in pairs(filters) do
+    for _,v in pairs(filters) do
       red:sadd('postfilters:'..postInfo.id,v)
     end
     -- collect tag ids and add taginfo to hash

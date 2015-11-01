@@ -7,11 +7,8 @@ recieved messages
 
 ]]
 
-
-
 local redis = require "resty.redis"
 local checkKey = require 'redisscripts.checkkey'
-local tinsert = table.insert
 
 local userread = {}
 
@@ -80,9 +77,8 @@ function userread:GetUserInfo(userID)
   if not ok or ok == ngx.null then
     return nil
   end
-  local userInfo = {}
-  userInfo = self:ConvertListToTable(ok)
-  return userInfo
+  return self:ConvertListToTable(ok)
+
 end
 
 
@@ -168,7 +164,7 @@ function userread:GetUnseenPosts(baseKey, elements)
   red:init_pipeline()
     local sha1Key = checkKey:GetSHA1()
 
-    for k,v in pairs(elements) do
+    for _,v in pairs(elements) do
       red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
     end
   local res, err = red:commit_pipeline()

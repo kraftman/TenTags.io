@@ -1,7 +1,7 @@
 
 
 local redis = require "resty.redis"
-local tinsert = table.insert
+local to_json = (require 'lapis.util').to_json
 
 local commentwrite = {}
 
@@ -33,11 +33,11 @@ function commentwrite:ConvertListToTable(list)
 end
 
 function commentwrite:CreateComment(commentInfo)
-  
+
   local red = GetRedisConnection()
   local serialComment = to_json(commentInfo)
   local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
-
+  SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to write comment info: ',err)
     return false

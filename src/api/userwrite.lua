@@ -3,7 +3,6 @@ local userwrite = {}
 
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
-local tinsert = table.insert
 local addKey = require 'redisscripts.addkey'
 
 local function GetRedisConnection()
