@@ -5,7 +5,7 @@ local write = {}
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
 local tinsert = table.insert
-local SCORE_FACTOR = 120
+local SCORE_FACTOR = 43200
 
 
 local function GetRedisConnection()

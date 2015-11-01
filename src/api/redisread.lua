@@ -385,7 +385,7 @@ end
 
 function read:GetAllNewPosts(rangeStart,rangeEnd)
   local red = GetRedisConnection()
-  local ok, err = red:zrange('filterpostsall:date',rangeStart,rangeEnd)
+  local ok, err = red:zrevrange('filterpostsall:date',rangeStart,rangeEnd)
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get new posts: ',err)
@@ -407,7 +407,7 @@ end
 
 function read:GetAllBestPosts(rangeStart,rangeEnd)
   local red = GetRedisConnection()
-  local ok, err = red:zrange('filterpostsall:score',rangeStart,rangeEnd)
+  local ok, err = red:zrevrange('filterpostsall:score',rangeStart,rangeEnd)
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get best posts: ',err)
