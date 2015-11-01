@@ -222,15 +222,17 @@ end
 function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 	-- find the filters that intersect
 	-- find the tags of the filters
-
 	local matchingTags = {}
 	local matchedFilter
 	for _,userFilterID in pairs(userFilterIDs) do
 		for _, postFilterID in pairs(postFilterIDs) do
 			if userFilterID == postFilterID then
+				--print('found matching: ',userFilterID)
 				matchedFilter = cache:GetFilterByID(userFilterID)
-				for _,tag in pairs(matchedFilter.requiredTags) do
-					tinsert(matchingTags, tag.id)
+				for _,tagID in pairs(matchedFilter.requiredTags) do
+					print('adding tag: ',tagID)
+					-- prevent duplicates
+					matchingTags[tagID] = tagID
 				end
 			end
 		end
@@ -259,33 +261,22 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 end
 
 function api:UpdatePostFilters(post)
-	--get old filters
-	-- get new filters
-	-- remove postfrom old
-	-- add post to new
-	local oldPostFilters = {}
+	--[[
+		since addfilters and updatefilters are the same, we can just add
+		all of the newfilters, even if they already exist
+	]]
 
-	-- filterID = filter as key
 	local newFilters = self:CalculatePostFilters(post)
-
 	local purgeFilterIDs = {}
-	local addFilters = {}
 
 	for _,filterID in pairs(post.filters) do
-		oldPostFilters[filterID] = filterID
 		if not newFilters[filterID] then
 			purgeFilterIDs[filterID] = filterID
 		end
 	end
 
-	for filterID, filter in pairs(newFilters) do
-		if not oldPostFilters[filterID] then
-			addFilters[filterID] = filter
-		end
-	end
-
 	worker:RemovePostFromFilters(post.id, purgeFilterIDs)
-	worker:AddPostToFilters(post, addFilters)
+	worker:AddPostToFilters(post, newFilters)
 
 	post.filters = newFilters
 end
@@ -308,16 +299,15 @@ function api:VotePost(userID, postID, direction)
 	--end
 
 	-- get tags matching the users filters' tags
+	print('get matching tags')
 	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
+	--print(to_json(matchingTags))
 
 	-- filter out the tags they already voted on
-	matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
-
-	worker:AddUserTagVotes(userID,postID, matchingTags)
-	worker:AddUserPostVotes(userID, postID)
-
+	--matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
 	for _,tagID in pairs(matchingTags) do
 		for _,tag in pairs(post.tags) do
+			--print(tagID ,' ', tag.id)
 			if tag.id == tagID then
 				self:VoteTag(tag, direction)
 			end
@@ -325,13 +315,20 @@ function api:VotePost(userID, postID, direction)
 	end
 
 	self:UpdatePostFilters(post)
+	worker:UpdatePostTags(post)
+
+	worker:AddUserTagVotes(userID,postID, matchingTags)
+	worker:AddUserPostVotes(userID, postID)
+
 
 end
 
 function api:VoteTag(tag,direction)
 	if direction == 'up' then
+		print('vote up')
 		tag.up = tag.up + 1
 	elseif direction == 'down' then
+		print('vote down')
 		tag.down = tag.down + 1
 	end
 	-- recalculate the tag score
@@ -676,6 +673,7 @@ function api:GetValidFilters(filterID, post)
 
 	local filter = cache:GetFilterByID(filterID)
 	if not filter then
+		ngx.log(ngx.ERR,'filter not found: ',filterID)
 		return nil
 	end
 
@@ -684,7 +682,8 @@ function api:GetValidFilters(filterID, post)
 
 	-- check all desired tags are present on the post
 	local matchingTags = self:GetPostFilterTagIntersection(filter.requiredTags, post.tags)
-	if not matchingTags then
+	if not matchingTags or #matchingTags == 0 then
+		--print('tags dont match')
 		return nil
 	end
 
@@ -693,6 +692,7 @@ function api:GetValidFilters(filterID, post)
 		score = score + tag.score
 	end
 	filter.score = score / #matchingTags
+	--print(filter.score)
 
 
 	if (filter.bannedUsers[post.createdBy]) then
@@ -713,6 +713,7 @@ function api:CalculatePostFilters(post)
 	local validTags = {}
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
+			print('valid tag: ',tag.id)
 			tinsert(validTags, tag)
 		end
 	end
@@ -725,6 +726,7 @@ function api:CalculatePostFilters(post)
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
       if filterType == 'required' then
+				--print('wants this tag: ',filterID)
         chosenFilterIDs[filterID] = filterID
       end
     end
@@ -734,6 +736,7 @@ function api:CalculatePostFilters(post)
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
 			if filterType == 'banned' then
+				--print('doesnt want this tag: ',filterID)
 				chosenFilterIDs[filterID] = nil
 			else
 				chosenFilterIDs[filterID] = self:GetValidFilters(filterID, post)
@@ -752,6 +755,7 @@ function api:CreatePost(postInfo)
   -- basic sanity check
   -- send to worker
 	-- TODO: move most of this to worker
+
   if not api:PostIsValid(postInfo) then
     return false
   end

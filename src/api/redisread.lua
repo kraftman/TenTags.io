@@ -396,7 +396,7 @@ end
 
 function read:GetAllFreshPosts(rangeStart,rangeEnd)
   local red = GetRedisConnection()
-  local ok, err = red:zrange('filterpostsall:datescore',rangeStart,rangeEnd)
+  local ok, err = red:zrevrange('filterpostsall:datescore',rangeStart,rangeEnd)
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get fresh posts: ',err)

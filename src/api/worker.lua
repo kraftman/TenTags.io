@@ -26,6 +26,10 @@ function worker:UpdateComment(comment)
   return commentWrite:CreateComment(comment)
 end
 
+function worker:UpdatePostTags(post)
+  return rediswrite:UpdatePostTags(post)
+end
+
 function worker:CreatePost(postInfo)
   return rediswrite:CreatePost(postInfo)
 end

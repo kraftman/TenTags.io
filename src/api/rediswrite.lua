@@ -5,6 +5,7 @@ local write = {}
 local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
 local tinsert = table.insert
+local SCORE_FACTOR = 120
 
 
 local function GetRedisConnection()
@@ -198,10 +199,11 @@ function write:CreateFilter(filterInfo)
 end
 
 function write:CreateFilterPostInfo(red, filterInfo,postInfo)
+  print('updating filter '..filterInfo.title..'with new score: '..filterInfo.score)
   red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
   red:zadd('filterposts:score:'..filterInfo.id,filterInfo.score,postInfo.id)
-  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + filterInfo.score,postInfo.id)
-  red:zadd('filterpostsall:datescore',postInfo.createdAt + filterInfo.score,filterInfo.id..':'..postInfo.id)
+  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + filterInfo.score*SCORE_FACTOR,postInfo.id)
+  red:zadd('filterpostsall:datescore',postInfo.createdAt + filterInfo.score*SCORE_FACTOR,filterInfo.id..':'..postInfo.id)
   red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
   red:zadd('filterpostsall:score',filterInfo.score,filterInfo.id..':'..postInfo.id)
 end
@@ -319,6 +321,20 @@ function write:CreateTag(tagInfo)
 
   SetKeepalive(red)
 
+end
+
+function write:UpdatePostTags(post)
+  local red = GetRedisConnection()
+  red:init_pipeline()
+  for _,tag in pairs(post.tags) do
+    red:hmset('posttags:'..post.id..':'..tag.id,tag)
+  end
+  local res, err = red:commit_pipeline()
+  SetKeepalive(red)
+  if err then
+    ngx.log(ngx.ERR, 'unable to update post tags: ',err)
+  end
+  return res
 end
 
 function write:CreatePost(postInfo)
