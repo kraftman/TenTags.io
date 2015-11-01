@@ -1,7 +1,6 @@
 <div>
   <div class='post' >
     <a href=" <%= url_for('upvotepost',{postID = post.id, postHash = post.hash}) %> ">up</a>
-    <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
 
     <a class ='postLink' href="<%= post.link -%>"> <%= post.title -%></a>
     </br>

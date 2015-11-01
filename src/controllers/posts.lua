@@ -118,6 +118,10 @@ local function UpvoteTag(self)
   --end
 end
 
+local function UpvotePost(self)
+
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
@@ -127,6 +131,7 @@ function m:Register(app)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)
+  app:get('upvotepost','/post/:postID/upvote', UpvotePost)
 
 end
 
