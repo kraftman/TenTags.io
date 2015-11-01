@@ -40,18 +40,23 @@ function userwrite:AddUserTagVotes(userID, postID, tagIDs)
     tagIDs[k] = postID..':'..v
   end
   local ok, err = red:sadd('userTagVotes:'..userID, tagIDs)
-  if not ok then
-
   SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)
+  end
+  return ok
 end
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = GetRedisConnection()
 
   local ok, err = red:sadd('userPostVotes:'..userID, postID)
-  if not ok then
-
   SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add user post vote: ',err)
+  end
+  return ok
+
 end
 
 function userwrite:AddUserAlert(createdAt,userID, alert)

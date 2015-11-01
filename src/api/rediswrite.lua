@@ -199,11 +199,11 @@ end
 
 function write:CreateFilterPostInfo(red, filterInfo,postInfo)
   red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
-  red:zadd('filterposts:score:'..filterInfo.id,postInfo.score,postInfo.id)
-  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + postInfo.score,postInfo.id)
-  red:zadd('filterpostsall:datescore',postInfo.createdAt + postInfo.score,filterInfo.id..':'..postInfo.id)
+  red:zadd('filterposts:score:'..filterInfo.id,filterInfo.score,postInfo.id)
+  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + filterInfo.score,postInfo.id)
+  red:zadd('filterpostsall:datescore',postInfo.createdAt + filterInfo.score,filterInfo.id..':'..postInfo.id)
   red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
-  red:zadd('filterpostsall:score',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
+  red:zadd('filterpostsall:score',filterInfo.score,filterInfo.id..':'..postInfo.id)
 end
 
 function write:AddPostToFilters(post, filters)
@@ -218,6 +218,25 @@ function write:AddPostToFilters(post, filters)
 
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
+  end
+  return results
+end
+
+function write:RemovePostFromFilters(postID, filterIDs)
+  local red = GetRedisConnection()
+  red:init_pipeline()
+    for _,filterID in pairs(filterIDs) do
+      red:zrem('filterposts:date:'..filterID, postID)
+      red:zrem('filterposts:score:'..filterID, postID)
+      red:zadd('filterposts:datescore:'..filterID, postID)
+      red:zadd('filterpostsall:datescore', filterID..':'..postID)
+      red:zadd('filterpostsall:date', filterID..':'..postID)
+      red:zadd('filterpostsall:score', filterID..':'..postID)
+    end
+  local results, err = red:commit_pipeline()
+  SetKeepalive(red)
+  if err then
+    ngx.log(ngx.ERR, 'error removing post from filters: ',err)
   end
   return results
 end

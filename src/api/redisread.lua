@@ -352,7 +352,11 @@ function read:GetPost(postID)
     end
 
     if ok ~= ngx.null then
-      tinsert(post.tags,self:ConvertListToTable(ok))
+      local tag = self:ConvertListToTable(ok)
+      if tag and tag.score then
+        tag.score = tonumber(tag.score)
+      end
+      tinsert(post.tags,tag)
     end
   end
 

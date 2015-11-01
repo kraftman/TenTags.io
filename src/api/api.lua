@@ -14,8 +14,9 @@ local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
 local to_json = (require 'lapis.util').to_json
 --arbitrary, needs adressing later
-local TAG_BOUNDARY = 0.25
-
+local TAG_BOUNDARY = 0.15
+local TAG_START_DOWNVOTES = 0
+local TAG_START_UPVOTES = 5
 
 function api:UpdateUser(user)
 	-- update cache later
@@ -218,13 +219,16 @@ function api:VoteComment(userID, postID, commentID,direction)
 	worker:UpdateComment(comment)
 end
 
-function api:GetMatchingTags(userFilterIDS, postFilterIDs)
+function api:GetMatchingTags(userFilterIDs, postFilterIDs)
+	-- find the filters that intersect
+	-- find the tags of the filters
+
 	local matchingTags = {}
 	local matchedFilter
 	for _,userFilterID in pairs(userFilterIDs) do
 		for _, postFilterID in pairs(postFilterIDs) do
 			if userFilterID == postFilterID then
-				matchedFilter = cache:GetFilterInfo(userFilterID)
+				matchedFilter = cache:GetFilterByID(userFilterID)
 				for _,tag in pairs(matchedFilter.requiredTags) do
 					tinsert(matchingTags, tag.id)
 				end
@@ -254,6 +258,38 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
+function api:UpdatePostFilters(post)
+	--get old filters
+	-- get new filters
+	-- remove postfrom old
+	-- add post to new
+	local oldPostFilters = {}
+
+	-- filterID = filter as key
+	local newFilters = self:CalculatePostFilters(post)
+
+	local purgeFilterIDs = {}
+	local addFilters = {}
+
+	for _,filterID in pairs(post.filters) do
+		oldPostFilters[filterID] = filterID
+		if not newFilters[filterID] then
+			purgeFilterIDs[filterID] = filterID
+		end
+	end
+
+	for filterID, filter in pairs(newFilters) do
+		if not oldPostFilters[filterID] then
+			addFilters[filterID] = filter
+		end
+	end
+
+	worker:RemovePostFromFilters(post.id, purgeFilterIDs)
+	worker:AddPostToFilters(post, addFilters)
+
+	post.filters = newFilters
+end
+
 function api:VotePost(userID, postID, direction)
 	--[[
 		when we vote down a post as a whole we are saying
@@ -266,7 +302,7 @@ function api:VotePost(userID, postID, direction)
 	if not post then
 		return nil, 'post not found'
 	end
-	local user = cache:GetUserInfo(user)
+	local user = cache:GetUserInfo(userID)
 	--if self:UserHasVotedPost(userID, postID) then
 	--	return nil, 'already voted'
 	--end
@@ -283,21 +319,12 @@ function api:VotePost(userID, postID, direction)
 	for _,tagID in pairs(matchingTags) do
 		for _,tag in pairs(post.tags) do
 			if tag.id == tagID then
-				self:VoteTag(user, post, tag)
+				self:VoteTag(tag, direction)
 			end
 		end
 	end
-	local oldPostFilters = post.filters
-	local postFilters = self:CalculatePostFilters(postInfo)
 
-	-- get existing filters
-	-- recalculate filters
-	-- get difference
-	-- remove post from filters it shouldnt be in
-	-- add post to filters it should be in
-
-
-	-- add the post to 'userVotedPosts'
+	self:UpdatePostFilters(post)
 
 end
 
@@ -317,7 +344,7 @@ function api:CreateComment(commentInfo)
   commentInfo.createdAt = ngx.time()
   commentInfo.up = 1
   commentInfo.down = 0
-  commentInfo.score = 0
+  commentInfo.score = self:GetScore(commentInfo.up, commentInfo.down)
   commentInfo.viewers = {commentInfo.createdBy}
   commentInfo.text = self:SanitiseHTML(commentInfo.text)
 
@@ -637,25 +664,36 @@ function api:AddPostTags(postInfo)
 		postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
 
 		if postInfo.tags[k] then
-			postInfo.tags[k].up = 1
-			postInfo.tags[k].down = 0
-			postInfo.tags[k].score = 0
+			postInfo.tags[k].up = TAG_START_UPVOTES
+			postInfo.tags[k].down = TAG_START_DOWNVOTES
+			postInfo.tags[k].score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
 			postInfo.tags[k].active = true
 		end
 	end
 end
 
-function api:CheckFilter(filterID, post)
+function api:GetValidFilters(filterID, post)
 
 	local filter = cache:GetFilterByID(filterID)
 	if not filter then
 		return nil
 	end
 
+	--rather than just checking they exist, also need to get
+	-- all intersecting tags, and calculate an average score
+
 	-- check all desired tags are present on the post
-	if not self:TagsMatch(filter.requiredTags, post.tags) then
+	local matchingTags = self:GetPostFilterTagIntersection(filter.requiredTags, post.tags)
+	if not matchingTags then
 		return nil
 	end
+
+	local score = 0
+	for _,tag in pairs(matchingTags) do
+		score = score + tag.score
+	end
+	filter.score = score / #matchingTags
+
 
 	if (filter.bannedUsers[post.createdBy]) then
 		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
@@ -669,6 +707,17 @@ end
 
 function api:CalculatePostFilters(post)
 	-- get all the filters that care about this posts' tags
+
+
+	-- only include tags above threshold
+	local validTags = {}
+	for _, tag in pairs(post.tags) do
+		if tag.score > TAG_BOUNDARY then
+			tinsert(validTags, tag)
+		end
+	end
+
+
 	local filterIDs = cache:GetFilterIDsByTags(post.tags)
   local chosenFilterIDs = {}
 
@@ -681,7 +730,7 @@ function api:CalculatePostFilters(post)
     end
   end
 
-  -- remove all the filters that
+  -- remove all the filters that dont, or have bans
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
 			if filterType == 'banned' then
@@ -693,6 +742,7 @@ function api:CalculatePostFilters(post)
   end
 
 	-- we now have [filterID] = {filter}
+	-- also filter contains the new score
 
   return chosenFilterIDs
 end
@@ -743,20 +793,21 @@ function api:CreatePost(postInfo)
   return true
 end
 
-function api:TagsMatch(filterTags,postTags)
-  local found
+function api:GetPostFilterTagIntersection(filterTags,postTags)
+
+	local matchingTags = {}
   for _,filterTagID in pairs(filterTags) do
-    found = false
     for _,postTag in pairs(postTags) do
       if filterTagID == postTag.id then
-        found = true
+        tinsert(matchingTags,postTag)
       end
     end
-    if not found then
-      return false
-    end
   end
-  return true
+	if #matchingTags == 0 then
+		return nil
+	end
+
+  return matchingTags
 end
 
 function api:FilterIsValid(filterInfo)

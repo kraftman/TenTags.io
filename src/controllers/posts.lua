@@ -119,8 +119,8 @@ local function UpvoteTag(self)
 end
 
 local function HashIsValid(self)
-  local realHash = ngx.md5(self.params.commentID..self.session.userID)
-  if realHash ~= self.params.commentHash then
+  local realHash = ngx.md5(self.params.postID..self.session.userID)
+  if realHash ~= self.params.postHash then
     ngx.log(ngx.ERR, 'hashes dont match!')
     return false
   end
@@ -132,7 +132,7 @@ local function UpvotePost(self)
   if not HashIsValid(self) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(self.session.userID, self.params.postID'up')
+  local ok, err = api:VotePost(self.session.userID, self.params.postID, 'up')
   if ok then
     return 'success!'
   else
@@ -161,8 +161,8 @@ function m:Register(app)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)
-  app:get('upvotepost','/post/:postID/upvote', UpvotePost)
-  app:get('downvotepost','/post/:postID/downvote', DownvotePost)
+  app:get('upvotepost','/post/:postID/upvote/:postHash', UpvotePost)
+  app:get('downvotepost','/post/:postID/downvote/:postHash', DownvotePost)
 
 end
 

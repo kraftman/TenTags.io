@@ -70,6 +70,7 @@ function worker:CreateFilter(filterInfo)
   rediswrite:CreateFilter(filterInfo)
   self:AddPostsToFilter(filterInfo, posts)
   self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
+
 end
 
 function worker:SubscribeToFilter(userID,filterID)
@@ -82,6 +83,10 @@ end
 
 function worker:AddPostToFilters(post, filters)
   rediswrite:AddPostToFilters(post, filters)
+end
+
+function worker:RemovePostFromFilters(postID, filterIDs)
+  return rediswrite:RemovePostFromFilters(postID, filterIDs)
 end
 
 function worker:FlushAllPosts()
