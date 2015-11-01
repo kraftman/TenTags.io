@@ -13,6 +13,8 @@ local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
 local to_json = (require 'lapis.util').to_json
+--arbitrary, needs adressing later
+local TAG_BOUNDARY = 0.25
 
 
 function api:UpdateUser(user)
@@ -39,6 +41,7 @@ function api:GetUserFilters(userID)
 
   return cache:GetFilterInfo(filterIDs)
 end
+
 
 function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)
@@ -156,10 +159,20 @@ function api:GetUserComments(userID)
   return comments
 end
 
-function api:UserHasVoted(userID, commentID)
+function api:UserHasVotedComment(userID, commentID)
 	local userCommentVotes = cache:GetUserCommentVotes(userID)
 	for _,v in pairs(userCommentVotes) do
 		if v:find(commentID) then
+			return true
+		end
+	end
+	return false
+end
+
+function api:UserHasVotedPost(userID, postID)
+	local userPostVotes = cache:GetUserPostVotes(userID)
+	for _,v in pairs(userPostVotes) do
+		if v:find(postID) then
 			return true
 		end
 	end
@@ -189,7 +202,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 	-- add to user voted in redis
 	-- for now dont allow unvoting
 
-	--if self:UserHasVoted(userID, commentID) then
+	--if self:UserHasVotedComment(userID, commentID) then
 		--return if they cant multivote
 	--end
 
@@ -203,10 +216,99 @@ function api:VoteComment(userID, postID, commentID,direction)
 
 	comment.score = self:GetScore(comment.up,comment.down)
 	worker:UpdateComment(comment)
+end
+
+function api:GetMatchingTags(userFilterIDS, postFilterIDs)
+	local matchingTags = {}
+	local matchedFilter
+	for _,userFilterID in pairs(userFilterIDs) do
+		for _, postFilterID in pairs(postFilterIDs) do
+			if userFilterID == postFilterID then
+				matchedFilter = cache:GetFilterInfo(userFilterID)
+				for _,tag in pairs(matchedFilter.requiredTags) do
+					tinsert(matchingTags, tag.id)
+				end
+			end
+		end
+	end
+	return matchingTags
+end
+
+function api:GetUnvotedTags(user,postID, tagIDs)
+	local votedTags = cache:GetUserTagVotes(user.id)
+	if user.role == 'admin' then
+		return tagIDs
+	end
+
+	local keyedVotedTags = {}
+	for _,v in pairs(votedTags) do
+		keyedVotedTags[v] = v
+	end
+	local unvotedTags = {}
+	for _, v in pairs(tagIDs) do
+		if not keyedVotedTags[postID..':'..v] then
+			tinsert(unvotedTags, v)
+		end
+	end
+	return unvotedTags
+
+end
+
+function api:VotePost(userID, postID, direction)
+	--[[
+		when we vote down a post as a whole we are saying
+		'this post is not good enough to be under these filters'
+		or 'the tags this post has that match the filters i care about are
+		not good'
+
+	]]
+	local post = self:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+	local user = cache:GetUserInfo(user)
+	--if self:UserHasVotedPost(userID, postID) then
+	--	return nil, 'already voted'
+	--end
+
+	-- get tags matching the users filters' tags
+	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
+
+	-- filter out the tags they already voted on
+	matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
+
+	worker:AddUserTagVotes(userID,postID, matchingTags)
+	worker:AddUserPostVotes(userID, postID)
+
+	for _,tagID in pairs(matchingTags) do
+		for _,tag in pairs(post.tags) do
+			if tag.id == tagID then
+				self:VoteTag(user, post, tag)
+			end
+		end
+	end
+	local oldPostFilters = post.filters
+	local postFilters = self:CalculatePostFilters(postInfo)
+
+	-- get existing filters
+	-- recalculate filters
+	-- get difference
+	-- remove post from filters it shouldnt be in
+	-- add post to filters it should be in
 
 
+	-- add the post to 'userVotedPosts'
 
+end
 
+function api:VoteTag(tag,direction)
+	if direction == 'up' then
+		tag.up = tag.up + 1
+	elseif direction == 'down' then
+		tag.down = tag.down + 1
+	end
+	-- recalculate the tag score
+	tag.score = self:GetScore(tag.up,tag.down)
 end
 
 function api:CreateComment(commentInfo)
@@ -527,6 +629,74 @@ function api:GetDomain(url)
 
 end
 
+
+function api:AddPostTags(postInfo)
+	for k,v in pairs(postInfo.tags) do
+
+		v = trim(v:lower())
+		postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
+
+		if postInfo.tags[k] then
+			postInfo.tags[k].up = 1
+			postInfo.tags[k].down = 0
+			postInfo.tags[k].score = 0
+			postInfo.tags[k].active = true
+		end
+	end
+end
+
+function api:CheckFilter(filterID, post)
+
+	local filter = cache:GetFilterByID(filterID)
+	if not filter then
+		return nil
+	end
+
+	-- check all desired tags are present on the post
+	if not self:TagsMatch(filter.requiredTags, post.tags) then
+		return nil
+	end
+
+	if (filter.bannedUsers[post.createdBy]) then
+		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
+		return nil
+	elseif filter.bannedDomains[post.domain] then
+		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as domain ',post.domain, ' is banned ' )
+		return nil
+	end
+	return filter
+end
+
+function api:CalculatePostFilters(post)
+	-- get all the filters that care about this posts' tags
+	local filterIDs = cache:GetFilterIDsByTags(post.tags)
+  local chosenFilterIDs = {}
+
+  -- add all the filters that want these tags
+  for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+      if filterType == 'required' then
+        chosenFilterIDs[filterID] = filterID
+      end
+    end
+  end
+
+  -- remove all the filters that
+  for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+			if filterType == 'banned' then
+				chosenFilterIDs[filterID] = nil
+			else
+				chosenFilterIDs[filterID] = self:GetValidFilters(filterID, post)
+			end
+    end
+  end
+
+	-- we now have [filterID] = {filter}
+
+  return chosenFilterIDs
+end
+
 function api:CreatePost(postInfo)
   -- rate limit
   -- basic sanity check
@@ -552,67 +722,23 @@ function api:CreatePost(postInfo)
     local domain  = self:GetDomain(postInfo.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',postInfo.link)
-      return nil
+      return nil, 'invalid url'
     end
     postInfo.domain = domain
     tinsert(postInfo.tags,'meta:type:link')
     tinsert(postInfo.tags,'meta:link:'..domain)
   end
+	self:AddPostTags(postInfo)
 
-  for k,v in pairs(postInfo.tags) do
 
-    v = trim(v:lower())
-    postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
+	local postFilters = self:CalculatePostFilters(postInfo)
 
-    if postInfo.tags[k] then
-      postInfo.tags[k].up = 1
-      postInfo.tags[k].down = 0
-      postInfo.tags[k].score = 0
-      postInfo.tags[k].active = true
-    end
-  end
+	postInfo.filters = {}
+	for k,_ in pairs(postFilters) do
+		tinsert(postInfo.filters,k)
+	end
 
-  local filterIDs = cache:GetFilterIDsByTags(postInfo.tags)
-  local chosenFilterIDs = {}
-  -- add all the filters that want these tags
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'required' then
-        chosenFilterIDs[filterID] = true
-      end
-    end
-  end
-  -- remove all the filters that dont want one of the tags
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'banned' then
-        chosenFilterIDs[filterID] = nil
-      end
-    end
-  end
-
-  for k,_ in pairs(chosenFilterIDs) do
-    chosenFilterIDs[k] = k
-  end
-
-  postInfo.filters = chosenFilterIDs
-  --get the info from the filters to find out which tags they want
-  local filtersWithInfo = cache:GetFilterInfo(chosenFilterIDs)
-  local finalFilters = {}
-
-  for _,filter in pairs(filtersWithInfo) do
-    if self:TagsMatch(filter.requiredTags, postInfo.tags) then
-			if (filter.bannedUsers[postInfo.createdBy]) then
-				ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',postInfo.createdBy, ' is banned ')
-			elseif filter.bannedDomains[postInfo.domain] then
-				ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as domain ',postInfo.domain, ' is banned ' )
-			else
-      	tinsert(finalFilters,filter)
-			end
-    end
-  end
-
-  worker:AddPostToFilters(finalFilters,postInfo)
+  worker:AddPostToFilters(postInfo, postFilters)
   worker:CreatePost(postInfo)
   return true
 end

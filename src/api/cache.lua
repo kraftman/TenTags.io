@@ -1,3 +1,17 @@
+--[[
+caching the most with the leas
+LRU great for complex objects (tables) but expensive
+as it uses X times the number of workers RAM
+
+common to less common:
+filters
+tags
+posts
+comments
+users
+
+]]
+
 local cache = {}
 --local userFilterIDs = ngx.shared.userFilterIDs
 --local filterDict = ngx.shared.filters
@@ -54,6 +68,10 @@ function cache:GetMasterUserByEmail(email)
   local userInfo = self:GetMasterUserInfo(userID)
   return userInfo
 
+end
+
+function cache:GetUserTagVotes(userID)
+  return userRead:GetUserTagVotes(userID)
 end
 
 
@@ -386,6 +404,10 @@ end
 
 function cache:GetUserCommentVotes(userID)
   return userRead:GetUserCommentVotes(userID)
+end
+
+function cache:GetUserPostVotes(userID)
+  return userRead:GetUserPostVotes(userID)
 end
 
 function cache:GetUserFrontPage(userID,filter,range)

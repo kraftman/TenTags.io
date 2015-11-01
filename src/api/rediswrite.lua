@@ -206,13 +206,13 @@ function write:CreateFilterPostInfo(red, filterInfo,postInfo)
   red:zadd('filterpostsall:score',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
 end
 
-function write:AddPostToFilters(filters,postInfo)
+function write:AddPostToFilters(post, filters)
   -- add post to the filters that want it
   -- by post score, and by date
   local red = GetRedisConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
-      self:CreateFilterPostInfo(red,filterInfo,postInfo)
+      self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
 

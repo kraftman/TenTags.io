@@ -64,7 +64,35 @@ function userread:GetUserCommentVotes(userID)
   else
     return ok
   end
+end
 
+function userread:GetUserTagVotes(userID)
+  local red = GetRedisConnection()
+  local ok, err = red:smembers('userTagVotes:'..userID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user tag votes: ',err)
+  end
+  if not ok or ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
+function userread:GetUserPostVotes(userID)
+  -- replace with bloom later
+  local red = GetRedisConnection()
+  local ok, err = red:smembers('userPostVotes:'..userID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get user post votes:',err)
+  end
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
 end
 
 function userread:GetUserInfo(userID)

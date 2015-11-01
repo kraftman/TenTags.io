@@ -34,6 +34,26 @@ function userwrite:ConvertListToTable(list)
   return info
 end
 
+function userwrite:AddUserTagVotes(userID, postID, tagIDs)
+  local red = GetRedisConnection()
+  for k,v in pairs(tagIDs) do
+    tagIDs[k] = postID..':'..v
+  end
+  local ok, err = red:sadd('userTagVotes:'..userID, tagIDs)
+  if not ok then
+
+  SetKeepalive(red)
+end
+
+function userwrite:AddUserPostVotes(userID, postID)
+  local red = GetRedisConnection()
+
+  local ok, err = red:sadd('userPostVotes:'..userID, postID)
+  if not ok then
+
+  SetKeepalive(red)
+end
+
 function userwrite:AddUserAlert(createdAt,userID, alert)
   local red = GetRedisConnection()
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)

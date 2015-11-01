@@ -10,6 +10,14 @@ function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
 end
 
+function worker:AddUserTagVotes(userID, postID, tagIDs)
+  return userWrite:AddUserTagVotes(userID, postID, tagIDs)
+end
+
+function worker:AddUserPostVotes(userID, postID)
+  return userWrite:AddUserPostVotes(userID, postID)
+end
+
 function worker:UpdatePostField(postID, field, newValue)
   return rediswrite:UpdatePostField(postID, field, newValue)
 end
@@ -72,8 +80,8 @@ function worker:UnsubscribeFromFilter(username,filterID)
   rediswrite:UnsubscribeFromFilter(username,filterID)
 end
 
-function worker:AddPostToFilters(finalFilters,postInfo)
-  rediswrite:AddPostToFilters(finalFilters,postInfo)
+function worker:AddPostToFilters(post, filters)
+  rediswrite:AddPostToFilters(post, filters)
 end
 
 function worker:FlushAllPosts()
