@@ -97,30 +97,15 @@ end
 
 
 local function UpvoteTag(self)
-  local postTag = api:GetPostTag(self.params.tagID,self.params.postID)
-  -- increment the post count
-  -- check if the user has already up/downvoted
-  postTag.up = postTag.up + 1
-  --local oldScore = postTag.score or 0
-  local newScore = api:GetScore(postTag.up,postTag.down)
 
-  postTag.score = newScore
-  api:UpdatePostTag(postTag)
-  print(postTag.up,postTag.down,'  ',newScore)
+  api:VoteTag(self.params.postID, self.params.tagID)
+  return 'meep'
 
-  --recalculate the tags score
-  --if postTag.score > 0.1 and postTag.active == 0 then
-    --activate the tag
-    -- check any filters that need it and add them
-  --elseif postTag.score < -5 and postTag.active == 1 then
-    --deactivate the tag
-    -- check any filters that need it remove and remove it
-  --end
 end
 
 local function HashIsValid(self)
   local realHash = ngx.md5(self.params.postID..self.session.userID)
-  if realHash ~= self.params.postHash then
+  if realHash ~= self.params.hash then
     ngx.log(ngx.ERR, 'hashes dont match!')
     return false
   end
@@ -144,7 +129,7 @@ local function DownvotePost(self)
   if not HashIsValid(self) then
     return 'invalid hash'
   end
-  local ok, err = api:VoteComment(self.session.userID, self.params.postID,'down')
+  local ok, err = api:VotePost(self.session.userID, self.params.postID,'down')
   if ok then
     return 'success!'
   else
@@ -161,8 +146,8 @@ function m:Register(app)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)
-  app:get('upvotepost','/post/:postID/upvote/:postHash', UpvotePost)
-  app:get('downvotepost','/post/:postID/downvote/:postHash', DownvotePost)
+  app:get('upvotepost','/post/:postID/upvote', UpvotePost)
+  app:get('downvotepost','/post/:postID/downvote', DownvotePost)
 
 end
 

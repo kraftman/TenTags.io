@@ -309,7 +309,7 @@ function api:VotePost(userID, postID, direction)
 		for _,tag in pairs(post.tags) do
 			--print(tagID ,' ', tag.id)
 			if tag.id == tagID then
-				self:VoteTag(tag, direction)
+				self:AddVoteToTag(tag, direction)
 			end
 		end
 	end
@@ -320,10 +320,14 @@ function api:VotePost(userID, postID, direction)
 	worker:AddUserTagVotes(userID,postID, matchingTags)
 	worker:AddUserPostVotes(userID, postID)
 
+	return true
+
 
 end
 
-function api:VoteTag(tag,direction)
+
+
+function api:AddVoteToTag(tag,direction)
 	if direction == 'up' then
 		print('vote up')
 		tag.up = tag.up + 1
@@ -650,6 +654,20 @@ end
 
 function api:GetDomain(url)
   return url:match('^%w+://([^/]+)')
+
+end
+
+function api:VoteTag(postID, tagID, direction)
+	local post = cache:GetPost(postID)
+
+	for _, tag in pairs(post.tags) do
+		if tag.id == tagID then
+			self:AddVoteToTag(tag, direction)
+		end
+	end
+
+	self:UpdatePostFilters(post)
+	worker:UpdatePostTags(post)
 
 end
 
