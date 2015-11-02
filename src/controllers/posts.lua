@@ -57,7 +57,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post = api:GetPost(self.params.postID)
-  print(to_json(post))
+  --print(to_json(post))
   self.filters = api:GetFilterInfo(post.filters)
 
   self.post = post
@@ -98,7 +98,14 @@ end
 
 local function UpvoteTag(self)
 
-  api:VoteTag(self.params.postID, self.params.tagID)
+  api:VoteTag(self.params.postID, self.params.tagID, 'up')
+  return 'meep'
+
+end
+
+local function DownvoteTag(self)
+
+  api:VoteTag(self.params.postID, self.params.tagID, 'down')
   return 'meep'
 
 end
@@ -125,6 +132,8 @@ local function UpvotePost(self)
   end
 end
 
+
+
 local function DownvotePost(self)
   if not HashIsValid(self) then
     return 'invalid hash'
@@ -143,6 +152,7 @@ function m:Register(app)
     POST = CreatePost
   }))
   app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)
+  app:get('upvotetag','/post/upvotetag/:tagID/:postID',DownvoteTag)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)

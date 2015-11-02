@@ -658,6 +658,10 @@ function api:GetDomain(url)
 end
 
 function api:VoteTag(postID, tagID, direction)
+	-- check post for existing vote
+	-- check tag for existing vote
+
+
 	local post = cache:GetPost(postID)
 
 	for _, tag in pairs(post.tags) do
