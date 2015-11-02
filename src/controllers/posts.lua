@@ -152,7 +152,7 @@ function m:Register(app)
     POST = CreatePost
   }))
   app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)
-  app:get('upvotetag','/post/upvotetag/:tagID/:postID',DownvoteTag)
+  app:get('downvotetag','/post/downvotetag/:tagID/:postID',DownvoteTag)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
   app:post('newcomment','/post/comment/',CreateComment)

@@ -20,7 +20,9 @@
   </br></br>
   Tags:</br>
   <% for _,tag in pairs(post.tags) do %>
-    <% render("views.st.tag",{tag = tag}) %>
+    <% if not tag.name:find('^meta:') then %>
+      <% render("views.st.tag",{tag = tag}) %>
+    <% end %>
   <% end %>
 
 

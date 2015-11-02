@@ -661,7 +661,6 @@ function api:VoteTag(postID, tagID, direction)
 	-- check post for existing vote
 	-- check tag for existing vote
 
-
 	local post = cache:GetPost(postID)
 
 	for _, tag in pairs(post.tags) do
@@ -710,11 +709,16 @@ function api:GetValidFilters(filterID, post)
 	end
 
 	local score = 0
+	local count = 0
 	for _,tag in pairs(matchingTags) do
-		score = score + tag.score
+		if not tag.name:find('^meta:') then
+			print(tag.name.. ' '..tag.up.. ' '..tag.down)
+			score = score + tag.score
+			count = count + 1
+		end
 	end
-	filter.score = score / #matchingTags
-	--print(filter.score)
+	filter.score = score / count
+	print(filter.score)
 
 
 	if (filter.bannedUsers[post.createdBy]) then
