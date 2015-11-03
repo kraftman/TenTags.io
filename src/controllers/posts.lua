@@ -98,7 +98,7 @@ end
 
 local function UpvoteTag(self)
 
-  api:VoteTag(self.params.postID, self.params.tagID, 'up')
+  api:VoteTag(self.session.userID, self.params.postID, self.params.tagID, 'up')
   return 'meep'
 
 end

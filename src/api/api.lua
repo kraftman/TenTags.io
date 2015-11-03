@@ -180,6 +180,16 @@ function api:UserHasVotedPost(userID, postID)
 	return false
 end
 
+function api:UserHasVotedTag(userID, postID, tagID)
+	local userTagVotes = cache:GetUserTagVotes(userID)
+	for _,v in pairs(userTagVotes) do
+		if v:find(postID..':'..tagID) then
+			return true
+		end
+	end
+	return false
+end
+
 function api:GetScore(up,down)
 	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
 	--http://www.evanmiller.org/bayesian-average-ratings.html
@@ -657,11 +667,21 @@ function api:GetDomain(url)
 
 end
 
-function api:VoteTag(postID, tagID, direction)
+function api:VoteTag(userID, postID, tagID, direction)
 	-- check post for existing vote
 	-- check tag for existing vote
 
+	--if self:UserHasVotedPost(userID, postID) then
+		--return nil, 'already voted'
+	--end
+
+
+
 	local post = cache:GetPost(postID)
+
+	if self:UserHasVotedTag(userID, postID, tagID) then
+		return nil, 'already voted on tag'
+	end
 
 	for _, tag in pairs(post.tags) do
 		if tag.id == tagID then
