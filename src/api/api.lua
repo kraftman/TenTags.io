@@ -13,6 +13,8 @@ local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
 local to_json = (require 'lapis.util').to_json
+local magick = require 'magick'
+local http = require 'lib.http'
 --arbitrary, needs adressing later
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
@@ -796,6 +798,18 @@ function api:CalculatePostFilters(post)
   return chosenFilterIDs
 end
 
+function api:GetIcon(newPost)
+	--see if we can get the webpage
+	--scan the webpage for image links
+	--get the size of each link
+	--create an icon from the largest image
+	local httpc = http.new()
+	local res, err = httpc:request_uri(newPost.link)
+
+	load_image_from_blob
+	img:get_width(), img:get_height()
+end
+
 function api:CreatePost(postInfo)
   -- rate limit
   -- basic sanity check
@@ -819,6 +833,7 @@ function api:CreatePost(postInfo)
 
   tinsert(postInfo.tags,'meta:user:'..postInfo.createdBy)
   if postInfo.link then
+		postInfo.icon = self:GetIcon(postInfo)
     local domain  = self:GetDomain(postInfo.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',postInfo.link)
