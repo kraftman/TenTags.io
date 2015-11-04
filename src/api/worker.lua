@@ -63,9 +63,40 @@ function worker:AddPostsToFilter(filter, posts)
   rediswrite:AddPostsToFilter(filter, posts)
 end
 
-function worker:FindPostsForFilter(filterInfo)
-  return rediswrite:FindPostsForFilter(filterInfo)
+function worker:FindPostsForFilter(filter)
+  -- has to use write as it uses sinterstore
+  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTags, filter.bannedTags)
 end
+
+function worker:UpdateFilterTags(filter, requiredTags, bannedTags)
+  return rediswrite:UpdateFilterTags(filter, requiredTags, bannedTags)
+end
+
+function worker:RemovePostsFromFilter(filterID, postIDs)
+  return rediswrite:RemovePostsFromFilter(filterID, postIDs)
+end
+
+function worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
+  print('required: ',to_json(newRequiredTags))
+  print('banned: ',to_json(newBannedTags))
+  local newPostsKey = filter.id..':tempPosts'
+  local ok, err = rediswrite:CreateTempFilterPosts(newPostsKey, newRequiredTags, newBannedTags)
+  if not ok then
+    return ok, err
+  end
+
+  local oldPostsKey = 'filterposts:'..filter.id
+  local oldPostIDs = rediswrite:GetSetDiff(oldPostsKey, newPostsKey)
+  print('old posts:'..to_json(oldPostIDs))
+  local newPostIDs = rediswrite:GetSetDiff(newPostsKey, oldPostsKey)
+  print('new posts:'..to_json(newPostIDs))
+
+  local newPosts = cache:GetPosts(newPostIDs)
+  rediswrite:DeleteKey(newPostsKey)
+  return newPosts, oldPostIDs
+
+end
+
 
 function worker:CreateFilter(filterInfo)
 

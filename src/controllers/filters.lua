@@ -59,13 +59,12 @@ local function NewFilter(self)
   end
 end
 
+
 local function CreateFilter(self)
   self.tags = api:GetAllTags()
-
-  print(self.session.userID, self.session.username)
-
   return {render = 'createfilter'}
 end
+
 
 local function DisplayFilter(self)
 
@@ -89,7 +88,7 @@ end
 local function LoadAllFilters(self)
 
   self.filters = api:GetFiltersBySubs()
-  print(to_json(self.filters))
+  --print(to_json(self.filters))
 
   return {render = 'allfilters'}
 end
@@ -128,6 +127,23 @@ local function BanDomain(self,filter)
   end
 end
 
+local function UpdateFilterTags(self,filter)
+  print(self.params.requiredTags)
+  local requiredTags = from_json(self.params.requiredTags)
+  local bannedTags = from_json(self.params.bannedTags)
+  local userID = self.session.userID
+
+
+  local ok, err = api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+  if ok then
+    return 'ok'
+  else
+    return 'not ok, ',err
+  end
+end
+
+
+
 local function UpdateFilter(self)
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
@@ -143,16 +159,36 @@ local function UpdateFilter(self)
     ngx.log(ngx.ERR, 'banning domain: ')
     return BanDomain(self,filter)
   end
+
+  if self.params.requiredTags then
+    return UpdateFilterTags(self,filter)
+  end
+
   return {render = 'editfilter'}
 end
 
+
+
 local function ViewFilterSettings(self)
+
+  self.tags = api:GetAllTags()
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
   end
-  print(to_json(filter))
 
+  -- get key indexed tags
+  self.requiredTagKeys = {}
+  for k, v in pairs(filter.requiredTags) do
+    self.requiredTagKeys[v] = true
+  end
+
+  self.bannedTagKeys = {}
+  for k,v in pairs(filter.bannedTags) do
+    self.bannedTagKeys[v] = true
+  end
+
+  -- add usernames to list of banned users
   self.bannedUsernames = {}
   local userInfo
   for _,v in pairs(filter.bannedUsers) do
@@ -200,7 +236,6 @@ function M:Register(app)
   app:get('allfilters','/f',LoadAllFilters)
   app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',UnbanUser)
   app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',UnbanDomain)
-
 
 end
 

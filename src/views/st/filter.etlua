@@ -17,4 +17,7 @@
   <input type="hidden" name="filterID" value="<%= filter.id -%>">
   <button type="submit">Subscribe</button>
 </form>
+
+<a class='postLink' href="<%= url_for('updatefilter',{filterlabel = filter.name}) %>">Settings</a>
+
 </li>

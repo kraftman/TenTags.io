@@ -272,6 +272,45 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
+function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+
+	-- get the actual tag from the tagID
+	for k,v in pairs(requiredTags) do
+		if v ~= '' then
+	 		requiredTags[k] = self:CreateTag(v, userID).id
+		end
+	end
+	for k,v in pairs(bannedTags) do
+		if v ~= '' then
+			bannedTags[k] = self:CreateTag(v, userID).id
+		end
+	end
+
+	local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, requiredTags, bannedTags)
+
+  -- filter needs to have a score per post
+  for _, newPost in pairs(newPosts) do
+    local matchingTags = self:GetPostFilterTagIntersection(requiredTags, newPost.tags)
+		local score = 0
+		local count = 0
+		for _,tag in pairs(matchingTags) do
+			if not tag.name:find('^meta:') then
+				score = score + tag.score
+				count = count + 1
+			end
+		end
+		newPost.score = score / count
+  end
+
+  worker:AddPostsToFilter(filter, newPosts)
+
+
+  worker:RemovePostsFromFilter(filter.id, oldPostIDs)
+  return worker:UpdateFilterTags(filter, requiredTags, bannedTags)
+
+
+end
+
 function api:UpdatePostFilters(post)
 	--[[
 		since addfilters and updatefilters are the same, we can just add
@@ -305,7 +344,7 @@ function api:VotePost(userID, postID, direction)
 	if not post then
 		return nil, 'post not found'
 	end
-	local user = cache:GetUserInfo(userID)
+	--local user = cache:GetUserInfo(userID)
 	--if self:UserHasVotedPost(userID, postID) then
 	--	return nil, 'already voted'
 	--end
@@ -408,57 +447,6 @@ function api:GetDefaultFrontPage(range,filter)
   return cache:GetDefaultFrontPage(range,filter)
 end
 
-function api:GetFilterPosts(filterName,username,offset,sort)
-
-  -- get large list of posts that match the user filter
-  -- load the
-
-
-  offset = offset or 0
-  --sort = sort or 'fresh'
-  if not sort or filterName then
-    print('no sort')
-  end
-
-  --local filterPosts = cache:GetFilterPosts(filterName,username,offset,sort)
-
-
-
-  local userSeenPosts = cache:GetUserSeenPosts(username) or {}
-  local userFilters = cache:GetIndexedUserFilterIDs(username)
-
-  local finalPosts = {}
-  local unfilteredPosts
-  local unfilteredOffset = 0
-
-  local postID, filterID
-  local postInfo
-
-  local finalPostIDs = {}
-
-  while #finalPostIDs < offset + 10 do
-    unfilteredPosts = cache:GetMorePosts(unfilteredOffset,unfilteredOffset+1000)
-
-    for _,v in pairs(unfilteredPosts) do
-      filterID,postID = v:match('(%w+):(%w+)')
-      if userFilters[filterID] then
-        postInfo = cache:GetPost(postID)
-        if not userSeenPosts[postInfo.nodeID] then
-          tinsert(finalPosts, postInfo)
-          userSeenPosts[postInfo.nodeID] = true
-        end
-      end
-    end
-  end
-
-  if username ~= 'default' then
-    cache:UpdateUserSeenPosts(username,userSeenPosts)
-    worker:UpdateUserSeenPosts(username,userSeenPosts)
-  end
-
-  return finalPosts
-
-end
 
 function api:SubscribeToFilter(userID,filterID)
 

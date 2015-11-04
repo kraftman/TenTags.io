@@ -136,9 +136,68 @@ function write:FilterUnbanUser(filterID, userID)
   return ok, err
 end
 
+function write:AddTagsToFilter(red, filterID, requiredTags, bannedTags)
+
+    -- add list of required tags
+    for _, tagID in pairs(requiredTags) do
+      print('writing tag: ',filterID, tagID)
+      red:sadd('filter:requiredtags:'..filterID,tagID)
+    end
+
+    -- add list of banned tags
+    for _, tagID in pairs(bannedTags) do
+      red:sadd('filter:bannedtags:'..filterID, tagID)
+    end
+
+    -- add filter to required tag
+    for _, tagID in pairs(requiredTags) do
+      red:hset('tag:filters:'..tagID, filterID, 'required')
+    end
+    -- add filter to banned tag
+    for _, tagID in pairs(bannedTags) do
+      red:hset('tag:filters:'..tagID, filterID, 'banned')
+    end
+end
+
+function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
+  local red = GetRedisConnection()
+
+  red:init_pipeline()
+    -- remove all existing tags from the filter
+    red:del('filter:requiredtags:'..filter.id)
+    red:del('filter:bannedtags:'..filter.id)
+    -- remove the filter from all tags
+    for _,tagID in pairs(newRequiredTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
+    end
+    for _,tagID in pairs(newBannedTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
+    end
+
+    -- add the new tags
+    self:AddTagsToFilter(red, filter.id, newRequiredTags, newBannedTags)
+  local res, err = red:commit_pipeline()
+  SetKeepalive(red)
+  if err then
+    ngx.log(ngx.ERR, 'unable to update filter tags: ',err)
+  end
+
+  return res, err
+
+end
+
+
+
 function write:CreateFilter(filterInfo)
-  local requiredTags = filterInfo.requiredTags
-  local bannedTags = filterInfo.bannedTags
+  local requiredTags = {}
+  local bannedTags = {}
+  for _,v in pairs( filterInfo.requiredTags) do
+    tinsert(requiredTags, v.id)
+  end
+  for _,v in pairs( filterInfo.bannedTags) do
+    tinsert(bannedTags, v.id)
+  end
+
   filterInfo.bannedTags = nil
   filterInfo.requiredTags = nil
 
@@ -171,26 +230,7 @@ function write:CreateFilter(filterInfo)
 
   -- add all filter info
   red:hmset('filter:'..filterInfo.id, filterInfo)
-
-  -- add list of required tags
-  for _, tagInfo in pairs(requiredTags) do
-    red:sadd('filter:requiredtags:'..filterInfo.id,tagInfo.id)
-  end
-
-  -- add list of banned tags
-  for _, tagInfo in pairs(bannedTags) do
-    red:sadd('filter:bannedtags:'..filterInfo.id,tagInfo.id)
-  end
-
-  -- add filter to required tag
-  for _, tagInfo in pairs(requiredTags) do
-    ngx.log(ngx.ERR,to_json(tagInfo))
-    red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'required')
-  end
-  -- add filter to banned tag
-  for _, tagInfo in pairs(bannedTags) do
-    red:hset('tag:filters:'..tagInfo.id,filterInfo.id,'banned')
-  end
+  self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
   local results, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
@@ -198,14 +238,15 @@ function write:CreateFilter(filterInfo)
   return results
 end
 
-function write:CreateFilterPostInfo(red, filterInfo,postInfo)
-  print('updating filter '..filterInfo.title..'with new score: '..filterInfo.score)
-  red:zadd('filterposts:date:'..filterInfo.id,postInfo.createdAt,postInfo.id)
-  red:zadd('filterposts:score:'..filterInfo.id,filterInfo.score,postInfo.id)
-  red:zadd('filterposts:datescore:'..filterInfo.id,postInfo.createdAt + filterInfo.score*SCORE_FACTOR,postInfo.id)
-  red:zadd('filterpostsall:datescore',postInfo.createdAt + filterInfo.score*SCORE_FACTOR,filterInfo.id..':'..postInfo.id)
-  red:zadd('filterpostsall:date',postInfo.createdAt,filterInfo.id..':'..postInfo.id)
-  red:zadd('filterpostsall:score',filterInfo.score,filterInfo.id..':'..postInfo.id)
+function write:CreateFilterPostInfo(red, filter,postInfo)
+  print('updating filter '..filter.title..'with new score: '..filter.score)
+  red:sadd('filterposts:'..filter.id, postInfo.id)
+  red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
+  red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
+  red:zadd('filterposts:datescore:'..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR,postInfo.id)
+  red:zadd('filterpostsall:datescore',postInfo.createdAt + filter.score*SCORE_FACTOR,filter.id..':'..postInfo.id)
+  red:zadd('filterpostsall:date',postInfo.createdAt,filter.id..':'..postInfo.id)
+  red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
 end
 
 function write:AddPostToFilters(post, filters)
@@ -224,16 +265,48 @@ function write:AddPostToFilters(post, filters)
   return results
 end
 
+function write:RemoveFilterPostInfo(red, filterID,postID)
+  red:srem('filterposts:'..filterID, postID)
+  red:zrem('filterposts:date:'..filterID, postID)
+  red:zrem('filterposts:score:'..filterID, postID)
+  red:zadd('filterposts:datescore:'..filterID, postID)
+  red:zadd('filterpostsall:datescore', filterID..':'..postID)
+  red:zadd('filterpostsall:date', filterID..':'..postID)
+  red:zadd('filterpostsall:score', filterID..':'..postID)
+end
+
 function write:RemovePostFromFilters(postID, filterIDs)
   local red = GetRedisConnection()
   red:init_pipeline()
     for _,filterID in pairs(filterIDs) do
-      red:zrem('filterposts:date:'..filterID, postID)
-      red:zrem('filterposts:score:'..filterID, postID)
-      red:zadd('filterposts:datescore:'..filterID, postID)
-      red:zadd('filterpostsall:datescore', filterID..':'..postID)
-      red:zadd('filterpostsall:date', filterID..':'..postID)
-      red:zadd('filterpostsall:score', filterID..':'..postID)
+      self:RemoveFilterPostInfo(red, filterID, postID)
+    end
+  local results, err = red:commit_pipeline()
+  SetKeepalive(red)
+  if err then
+    ngx.log(ngx.ERR, 'error removing post from filters: ',err)
+  end
+  return results
+end
+
+function write:DeleteKey(key)
+  local red = GetRedisConnection()
+
+  local ok, err = red:del(key)
+
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'failed to delete keys: ', err)
+  end
+  return ok, err
+
+end
+
+function write:RemovePostsFromFilter(filterID, postIDs)
+  local red = GetRedisConnection()
+  red:init_pipeline()
+    for _,postID in pairs(postIDs) do
+      self:RemoveFilterPostInfo(red, filterID, postID)
     end
   local results, err = red:commit_pipeline()
   SetKeepalive(red)
@@ -248,6 +321,9 @@ function write:AddPostsToFilter(filterInfo,posts)
   local red = GetRedisConnection()
     red:init_pipeline()
     for _, postInfo in pairs(posts) do
+      if postInfo.score then
+        filterInfo.score = postInfo.score
+      end
       self:CreateFilterPostInfo(red,filterInfo,postInfo)
     end
   local results, err = red:commit_pipeline()
@@ -258,22 +334,75 @@ function write:AddPostsToFilter(filterInfo,posts)
   return results
 end
 
-function write:FindPostsForFilter(filter)
-  for k,v in pairs(filter) do
-    ngx.log(ngx.ERR, k, ' ',to_json(v))
+function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
+  -- hacky duplicate of FindPostsForFilter, my bannedTagIDs
+  -- TODO: merge back together later
+
+  local red = GetRedisConnection()
+  local requiredTags = {}
+  local bannedTags = {}
+
+  for _,tagID in pairs(requiredTagIDs) do
+    tinsert(requiredTags,'tagPosts:'..tagID)
   end
+
+  for _,tagID in pairs(bannedTagIDs) do
+    tinsert(bannedTags,'tagPosts:'..tagID)
+  end
+
+  local tempRequiredPostsKey = tempKey..':required'
+  print(tempRequiredPostsKey)
+
+  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTags))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
+    red:del(tempRequiredPostsKey)
+    SetKeepalive(red)
+    return nil
+  end
+  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(bannedTags))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to diff tags: ',err)
+    SetKeepalive(red)
+    return nil
+  end
+
+  ok, err = red:del(tempRequiredPostsKey)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to del temp posts set "',tempRequiredPostsKey,'": ',err)
+  end
+  SetKeepalive(red)
+  return ok
+
+end
+
+function write:GetSetDiff(key1, key2)
+  local red = GetRedisConnection()
+  local res, err = red:sdiff(key1, key2)
+  SetKeepalive(red)
+  if not res then
+    ngx.log(ngx.ERR, 'unable to get set diff: ',err)
+    return {}
+  end
+  return res
+end
+
+
+function write:FindPostsForFilter(filterID, requiredTagIDs, bannedTagIDs)
+  -- in the future it may be too big to load in one go, and
+  -- we may want to store the diff and iterate through it in chunks
   local red = GetRedisConnection()
   local matchingPostIDs
   local requiredTags = {}
   local bannedTags = {}
-  for _,v in pairs(filter.requiredTags) do
+  for _,v in pairs(requiredTagIDs) do
     tinsert(requiredTags,'tagPosts:'..v.id)
   end
-  for _,v in pairs(filter.bannedTags) do
+  for _,v in pairs(bannedTagIDs) do
     tinsert(bannedTags,'tagPosts:'..v.id)
   end
 
-  local tempKey = filter.id..':tempPosts'
+  local tempKey = filterID..':tempPosts'
 
   local ok, err = red:sinterstore(tempKey, unpack(requiredTags))
   if not ok then
