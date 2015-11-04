@@ -436,7 +436,7 @@ function cache:GetUserFrontPage(userID,filter,range)
         break
       end
     end
-    print(to_json(user))
+    --print(to_json(user))
     if user.hideSeenPosts == '1' then
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end

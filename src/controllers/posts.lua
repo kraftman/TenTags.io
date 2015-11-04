@@ -146,6 +146,22 @@ local function DownvotePost(self)
   end
 end
 
+local function GetIcon(self)
+  if not self.params.postID then
+    return 'nil'
+  end
+
+  local post = api:GetPost(self.params.postID)
+  if not post.icon then
+    return ''
+  end
+  self.post = post
+
+  return {layout = 'layout.blanklayout',content_type = 'image'}
+
+
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
@@ -158,6 +174,7 @@ function m:Register(app)
   app:post('newcomment','/post/comment/',CreateComment)
   app:get('upvotepost','/post/:postID/upvote', UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', DownvotePost)
+  app:get('geticon', '/icon/:postID', GetIcon)
 
 end
 

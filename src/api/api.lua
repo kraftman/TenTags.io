@@ -734,13 +734,13 @@ function api:GetValidFilters(filterID, post)
 	local count = 0
 	for _,tag in pairs(matchingTags) do
 		if not tag.name:find('^meta:') then
-			print(tag.name.. ' '..tag.up.. ' '..tag.down)
+			--print(tag.name.. ' '..tag.up.. ' '..tag.down)
 			score = score + tag.score
 			count = count + 1
 		end
 	end
 	filter.score = score / count
-	print(filter.score)
+	--print(filter.score)
 
 
 	if (filter.bannedUsers[post.createdBy]) then
@@ -761,7 +761,7 @@ function api:CalculatePostFilters(post)
 	local validTags = {}
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
-			print('valid tag: ',tag.id)
+			--print('valid tag: ',tag.id)
 			tinsert(validTags, tag)
 		end
 	end
@@ -798,6 +798,22 @@ function api:CalculatePostFilters(post)
   return chosenFilterIDs
 end
 
+function api:LoadImage(httpc, imageInfo)
+	local res, err = httpc:request_uri(imageInfo.link)
+	if not res then
+		--print(' cant laod image: ',imageInfo.link, ' err: ',err)
+		return nil
+	end
+	--print(imageInfo.link, type(res.body), res.body)
+	if res.body:len() > 0 then
+		local image = assert(magick.load_image_from_blob(res.body))
+		return image
+	else
+		print('empty body for '..imageInfo.link)
+	end
+	return nil
+end
+
 function api:GetIcon(newPost)
 	--see if we can get the webpage
 	--scan the webpage for image links
@@ -805,9 +821,53 @@ function api:GetIcon(newPost)
 	--create an icon from the largest image
 	local httpc = http.new()
 	local res, err = httpc:request_uri(newPost.link)
+	if not res then
+		print('failed: ', err)
+		return
+	end
 
-	load_image_from_blob
-	img:get_width(), img:get_height()
+	--print(res.body)
+	local imageLinks = {}
+	for imgTag in res.body:gmatch('<img.-src=[\'"](.-)[\'"].->') do
+		if imgTag:find('^//') then
+			imgTag = 'http:'..imgTag
+		end
+		tinsert(imageLinks, {link = imgTag})
+	end
+
+	for k, imageInfo in pairs(imageLinks) do
+		local image = self:LoadImage(httpc, imageInfo)
+		imageInfo.size = 0
+		if image then
+			print('loaded image!')
+			imageInfo.image = image
+			local w,h = image:get_width(), image:get_height()
+			imageInfo.size = w*h
+		else
+
+		end
+	end
+	table.sort(imageLinks, function(a,b) return a.size > b.size end)
+
+	local finalImage
+	for k,v in pairs(imageLinks) do
+		if v.image then
+			finalImage = v.image
+			break
+		end
+	end
+
+	if not finalImage then
+		return nil
+	end
+
+	finalImage:resize_and_crop(100,100)
+	finalImage:set_format('png')
+	--newPost.icon = finalImage:get_blob()
+	newPost.icon = true
+	finalImage:write('static/icons/'..newPost.id..'.png')
+	print('icon added, written to: ',newPost.id..'.png')
+
 end
 
 function api:CreatePost(postInfo)
@@ -833,7 +893,7 @@ function api:CreatePost(postInfo)
 
   tinsert(postInfo.tags,'meta:user:'..postInfo.createdBy)
   if postInfo.link then
-		postInfo.icon = self:GetIcon(postInfo)
+		self:GetIcon(postInfo)
     local domain  = self:GetDomain(postInfo.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',postInfo.link)

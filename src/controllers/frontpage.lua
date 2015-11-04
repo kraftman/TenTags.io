@@ -13,6 +13,9 @@ local function FrontPage(self)
   -- if empty and logged in then redirect to seen posts
   for _,v in pairs(self.posts) do
     v.hash = ngx.md5(v.id..self.session.userID)
+    if v.icon then
+      print('found icon')
+    end
   end
 
   if not self.posts or #self.posts == 0 then
