@@ -12,8 +12,9 @@
 <body>
   <% render("views.navigation") %>
     <% render("views.filterbar") %>
+    <div id='infobar'></div>
     <% content_for("inner") %>
-    <div id='rightbar'></div>
+
   <% render("views.footer") %>
 </body>
 </html>
