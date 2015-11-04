@@ -806,8 +806,8 @@ function api:LoadImage(httpc, imageInfo)
 	end
 	--print(imageInfo.link, type(res.body), res.body)
 	if res.body:len() > 0 then
-		local image = assert(magick.load_image_from_blob(res.body))
-		return image
+		return res.body
+
 	else
 		print('empty body for '..imageInfo.link)
 	end
@@ -835,24 +835,28 @@ function api:GetIcon(newPost)
 		tinsert(imageLinks, {link = imgTag})
 	end
 
-	for k, imageInfo in pairs(imageLinks) do
-		local image = self:LoadImage(httpc, imageInfo)
+	for _, imageInfo in pairs(imageLinks) do
+		local imageBlob = self:LoadImage(httpc, imageInfo)
 		imageInfo.size = 0
-		if image then
-			print('loaded image!')
-			imageInfo.image = image
-			local w,h = image:get_width(), image:get_height()
-			imageInfo.size = w*h
-		else
+		if imageBlob then
+			local image = assert(magick.load_image_from_blob(imageBlob))
 
+			--local icon = assert(magick.thumb(imageBlob, '100x100'))
+
+			if image then
+				imageInfo.image = image
+				local w,h = image:get_width(), image:get_height()
+				imageInfo.size = w*h
+			end
 		end
 	end
+
 	table.sort(imageLinks, function(a,b) return a.size > b.size end)
 
 	local finalImage
 	for k,v in pairs(imageLinks) do
 		if v.image then
-			finalImage = v.image
+			finalImage = v
 			break
 		end
 	end
@@ -861,11 +865,15 @@ function api:GetIcon(newPost)
 		return nil
 	end
 
-	finalImage:resize_and_crop(100,100)
-	finalImage:set_format('png')
+	finalImage.image:resize_and_crop(100,100)
+	finalImage.image:set_format('png')
+	if finalImage.link:find('.gif') then
+		print('trying to coalesce')
+		finalImage.image:coalesce()
+	end
 	--newPost.icon = finalImage:get_blob()
-	newPost.icon = true
-	finalImage:write('static/icons/'..newPost.id..'.png')
+	newPost.icon = finalImage.image:get_blob()
+	finalImage.image:write('static/icons/'..newPost.id..'.png')
 	print('icon added, written to: ',newPost.id..'.png')
 
 end

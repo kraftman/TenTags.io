@@ -1,1 +1,1 @@
-<%= post.icon %>
+<%= iconData %>

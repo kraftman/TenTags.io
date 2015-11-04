@@ -156,6 +156,12 @@ local function GetIcon(self)
     return ''
   end
   self.post = post
+  if not type(post.icon) == 'string' then
+    return ''
+  end
+  print(post.icon)
+
+  self.iconData = ngx.decode_base64(post.icon)
 
   return {layout = 'layout.blanklayout',content_type = 'image'}
 
