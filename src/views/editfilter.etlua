@@ -35,6 +35,20 @@
 
   </form>
 
+  <% for _,mod in pairs(selectedFilter.mods) do %>
+    <%= mod.username or 'test' -%>
+    <form action="" method="post">
+      <button type="submit" name='delmod' value="<%= mod.id -%>">Remove</button>
+    </form>
+  <% end %>
+  <form id='addMod' action='' method='post' accept-charset='UTF-8'>
+    <legend>Add moderator</legend>
+
+    <label for='addmod' >Username</label>
+    <input type='text' name='addmod' id='addmod' maxlength="50" />
+    <input id='addModsButton' type='submit' name='Submit' value='Add Mod' />
+  </form>
+
 
   <% for i,userInfo in pairs(selectedFilter.bannedUsers) do %>
     <% render("views.st.bannedUser",{userInfo = userInfo}) %>

@@ -143,6 +143,25 @@ local function UpdateFilterTags(self,filter)
   end
 end
 
+local function AddMod(self, filter)
+  local modName = self.params.addmod
+  local ok, err = api:AddMod(filter.id, self.session.userID, modName)
+  if ok then
+    return 'success'
+  else
+    return 'fail: ',err
+  end
+end
+
+local function DelMod(self, filter)
+  local modID = self.params.delmod
+  local ok, err = api:DelMod(filter.id, self.session.userID, modID)
+  if ok then
+    return 'success'
+  else
+    return 'fail: ',err
+  end
+end
 
 
 local function UpdateFilter(self)
@@ -153,19 +172,27 @@ local function UpdateFilter(self)
   self.selectedFilter = filter
 
   if self.params.banuser then
-    return BanUser(self, filter)
+     return BanUser(self, filter)
   end
 
   if self.params.banDomain then
     ngx.log(ngx.ERR, 'banning domain: ')
-    return BanDomain(self,filter)
+     return BanDomain(self,filter)
   end
 
   if self.params.requiredTags then
-    return UpdateFilterTags(self,filter)
+     return UpdateFilterTags(self,filter)
   end
 
-  return {render = 'editfilter'}
+  if self.params.addmod then
+    return AddMod(self, filter)
+  end
+
+  if self.params.delmod then
+    return DelMod(self, filter)
+  end
+
+  return 'not found'
 end
 
 
@@ -196,6 +223,13 @@ local function ViewFilterSettings(self)
     userInfo= api:GetUserInfo(v.userID)
     self.bannedUsernames[v.userID] = userInfo.username
   end
+
+  for _,v in pairs(filter.mods) do
+    local user = api:GetUserInfo(v.id)
+    print(to_json(user))
+    v.username = user.username
+  end
+
 
   self.selectedFilter = filter
   return {render = 'editfilter'}

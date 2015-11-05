@@ -955,6 +955,35 @@ function api:GetFiltersBySubs(offset,count)
 
 end
 
+function api:DelMod(filterID, userID, modID)
+	--check user can del mods
+
+	--check they are a mod
+
+	return worker:DelMod(filterID, modID)
+
+end
+
+function api:AddMod(filterID, userID, newModName)
+	local newModID = cache:GetUserID(newModName)
+	if not newModID then
+		return nil, 'could not find user with that name'
+	end
+
+	-- check they arent there already
+	-- check they can be made mod of this sub
+
+	local modInfo = {
+		id = newModID,
+		createdAt = ngx.time(),
+		createdBy = userID,
+		up = 10,
+		down = 0,
+	}
+	return worker:AddMod(filterID, modInfo)
+
+end
+
 function api:CreateFilter(filterInfo)
 
   if not api:FilterIsValid(filterInfo) then
@@ -964,6 +993,7 @@ function api:CreateFilter(filterInfo)
   filterInfo.id = uuid.generate_random()
   filterInfo.name = filterInfo.name:lower()
   filterInfo.subs = 1
+	filterInfo.mods = {}
 
   local tags = {}
 

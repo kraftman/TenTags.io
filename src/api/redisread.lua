@@ -278,6 +278,7 @@ function read:GetFilter(filterID)
 
   filter.bannedUsers = {}
   filter.bannedDomains = {}
+  filter.mods = {}
   local banInfo
   for k, v in pairs(filter) do
     if k:find('^bannedUser:') then
@@ -289,6 +290,8 @@ function read:GetFilter(filterID)
       banInfo = from_json(v)
       filter.bannedDomains[banInfo.domainName] = banInfo
       filter[k] = nil
+    elseif k:find('mod:') then
+      tinsert(filter.mods, from_json(v))
     end
   end
 

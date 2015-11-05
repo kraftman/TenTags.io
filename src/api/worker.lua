@@ -14,6 +14,14 @@ function worker:AddUserTagVotes(userID, postID, tagIDs)
   return userWrite:AddUserTagVotes(userID, postID, tagIDs)
 end
 
+function worker:AddMod(filterID, mod)
+  return rediswrite:AddMod(filterID, mod)
+end
+
+function worker:DelMod(filterID, modID)
+  return rediswrite:DelMod(filterID, modID)
+end
+
 function worker:AddUserPostVotes(userID, postID)
   return userWrite:AddUserPostVotes(userID, postID)
 end

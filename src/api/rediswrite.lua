@@ -186,7 +186,25 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
 
 end
 
+function write:DelMod(filterID, modID)
+  local red = GetRedisConnection()
+  local ok, err = red:hdel('filter:'..filterID, 'mod:'..modID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to del mod: ',err)
+  end
+  return ok, err
+end
 
+function write:AddMod(filterID, mod)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('filter:'..filterID, 'mod:'..mod.id, to_json(mod))
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add mod: ',err)
+  end
+  return ok, err
+end
 
 function write:CreateFilter(filterInfo)
   local requiredTags = {}
@@ -197,6 +215,11 @@ function write:CreateFilter(filterInfo)
   for _,v in pairs( filterInfo.bannedTags) do
     tinsert(bannedTags, v.id)
   end
+
+  for k,mod in pairs(filterInfo.mods) do
+    filterInfo['mod:'..mod] = to_json(mod)
+  end
+  filterInfo.mods = nil
 
   filterInfo.bannedTags = nil
   filterInfo.requiredTags = nil
