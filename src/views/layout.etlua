@@ -5,9 +5,9 @@
   <meta charset="UTF-8">
   <title><%= page_title or "My Page" %></title>
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.css">
-  <script src="/static/js/jquery-2.1.4.js" async></script>
-  <script src="/static/chosen/chosen.jquery.js" async ></script>
-  <script src="/static/js/site.js" async ></script>
+  <script src="/static/js/jquery-2.1.4.js" ></script>
+  <script src="/static/chosen/chosen.jquery.js"  ></script>
+  <script src="/static/js/site.js"  ></script>
 </head>
 <body>
   <div id='centerPage'>
