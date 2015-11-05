@@ -30,7 +30,7 @@ local function UpdateSettings(self)
   user.hideSeenPosts = self.params.hideSeenPosts and 1 or 0
   self.hideSeenPosts = self.params.hideSeenPosts and 'checked' or ''
   ngx.log(ngx.ERR, user.enablePM)
-  api:UpdateUser(user)
+  api:UpdateUser(self.session.userID, user)
 
   return {render = 'ViewSettings'}
 

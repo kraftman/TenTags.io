@@ -5,7 +5,9 @@
   right:0;
   margin-left:auto;
   margin-right:auto;
-  position: relative;
+  padding-top: 2px;
+  padding-left: 3px;
+  padding-right: 3px;
   background-color: #D6ECF2;
 
 }
@@ -16,7 +18,7 @@ html {
 
 
 div {
-    border: 1px solid #000000;
+
 }
 
 .upvoteButton {
@@ -49,10 +51,15 @@ div {
 
 
 #titleBox {
-  width: 100%;
+
   background-color: lightblue;
   color:#0000FF;
   height: 25px;
+  margin: 5px;
+  background: #fff;
+  border-radius: 2px;
+  padding: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 
 }
 
@@ -83,6 +90,10 @@ div {
   width: 200px;
   height: 100%;
   float:left;
+  margin: 5px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 
 }
 
@@ -105,6 +116,7 @@ div {
   padding-left: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
+
 }
 
 .infoBox {
@@ -148,8 +160,11 @@ div {
 
 .post {
   display: flex;
-  margin: 0px;
-  padding:3px;
+  margin: 5px;
+  padding:5px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 
 #register {
@@ -169,5 +184,7 @@ div {
 }
 
 .filterContainer {
-  background-color: #F3F9FB;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }

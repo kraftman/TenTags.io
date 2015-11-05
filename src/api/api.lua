@@ -19,10 +19,23 @@ local http = require 'lib.http'
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
 local TAG_START_UPVOTES = 5
+--local permission = require 'userpermission'
 
-function api:UpdateUser(user)
-	-- update cache later
-	worker:UpdateUser(user)
+function api:UpdateUser(userID, userToUpdate)
+	if userID ~= userToUpdate.id then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin to edit a users details'
+		end
+	end
+
+	local userInfo = {
+		id = userToUpdate.id,
+		enablePM = userToUpdate.enablePM and 1 or 0,
+		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0
+	}
+
+	return worker:UpdateUser(userInfo)
 end
 
 function api:SanitiseHTML(str)
@@ -37,6 +50,7 @@ function api:SanitiseHTML(str)
 end
 
 function api:GetUserFilters(userID)
+	-- can only get your own filters
   if not userID then
     userID = 'default'
   end
@@ -63,34 +77,97 @@ function api:GetThread(threadID)
 end
 
 function api:UserHasAlerts(userID)
+	--can only get your own alerts
   local alerts = cache:GetUserAlerts(userID)
-  --ngx.log(ngx.ERR, #alerts)
   return #alerts > 0
 end
 
-function api:FilterBanUser(filterID, banInfo)
+function api:UserIsMod(userID, filterID)
+
+end
+
+function api:UserIsAdmin(user)
+
+
+end
+
+function api:UserCanEditFilter(userID, filterID)
+	local user = cache:GetUserInfo(userID)
+
+	if not user then
+		return nil, 'userID not found'
+	end
+
+	if user.role == 'Admin' then
+		return true
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+
+	if filter.ownerID == userID then
+		return true
+	end
+
+	for _,mod in pairs(filter.mods) do
+		if mod.id == userID then
+			return true
+		end
+	end
+
+	return false, 'you must be admin or mod to edit filters'
+end
+
+
+function api:FilterBanUser(userID, filterID, banInfo)
+
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
 	banInfo.bannedAt = ngx.time()
 	return worker:FilterBanUser(filterID, banInfo)
 end
 
-function api:FilterUnbanDomain(filterID, domainName)
+function api:FilterUnbanDomain(userID, filterID, domainName)
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
 	domainName = self:GetDomain(domainName) or domainName
 	return worker:FilterUnbanDomain(filterID, domainName)
 end
 
 function api:GetUserAlerts(userID)
+	-- can only get their own
   local alerts = cache:GetUserAlerts(userID)
-  -- need to also update the users lastcheckedAt
+  -- TODO: need to also update the users lastcheckedAt
   -- both in redis and the cache (when it caches)
 
   return alerts
 end
 
 function api:UpdateLastUserAlertCheck(userID)
+	-- can only edit their own
   return worker:UpdateLastUserAlertCheck(userID)
 end
 
-function api:CreateMessageReply(messageInfo)
+function api:VerifyMessageSender(userID, messageInfo)
+	messageInfo.createdBy = messageInfo.createdBy or userID
+	if userID ~= messageInfo.createdBy then
+		--check if they can send a message as another user
+		local user = cache:GetInfo(userID)
+		if user.role ~= 'Admin' then
+			messageInfo.createdBy = userID
+		end
+	end
+end
+
+function api:CreateMessageReply(userID, messageInfo)
+
+	self:VerifyMessageSender(userID, messageInfo)
+
   -- TODO: validate message info
   messageInfo.id = uuid.generate_random()
   messageInfo.createdAt = ngx.time()
@@ -106,7 +183,10 @@ function api:CreateMessageReply(messageInfo)
 
 end
 
-function api:CreateThread(messageInfo)
+function api:CreateThread(userID, messageInfo)
+
+	self:VerifyMessageSender(userID, messageInfo)
+
   local recipientID = cache:GetUserID(messageInfo.recipient)
   ngx.log(ngx.ERR,'recipientID ',recipientID)
 
@@ -155,14 +235,26 @@ function api:SubscribeComment(userID, postID, commentID)
 end
 
 
-function api:GetUserComments(userID)
+function api:GetUserComments(userID, targetUserID)
+	-- check if they allow it
+	local targetUser = cache:GetUserInfo(targetUserID)
+	if not targetUser then
+		return nil, 'could not find user by ID '..targetUserID
+	end
 
-  ngx.log(ngx.ERR, 'userID:',to_json(userID))
-  local comments = cache:GetUserComments(userID)
+	if targetUser.hideComments then
+		local user = cache:GetUserInfo(userID)
+		if not user.role == 'Admin' then
+			return nil, 'user has disabled comment viewing'
+		end
+	end
+
+  local comments = cache:GetUserComments(targetUserID)
   return comments
 end
 
 function api:UserHasVotedComment(userID, commentID)
+	-- can only see own
 	local userCommentVotes = cache:GetUserCommentVotes(userID)
 	for _,v in pairs(userCommentVotes) do
 		if v:find(commentID) then
@@ -173,6 +265,7 @@ function api:UserHasVotedComment(userID, commentID)
 end
 
 function api:UserHasVotedPost(userID, postID)
+	-- can only see own
 	local userPostVotes = cache:GetUserPostVotes(userID)
 	for _,v in pairs(userPostVotes) do
 		if v:find(postID) then
@@ -183,6 +276,7 @@ function api:UserHasVotedPost(userID, postID)
 end
 
 function api:UserHasVotedTag(userID, postID, tagID)
+	-- can only see own
 	local userTagVotes = cache:GetUserTagVotes(userID)
 	for _,v in pairs(userTagVotes) do
 		if v:find(postID..':'..tagID) then
@@ -206,6 +300,8 @@ function api:GetScore(up,down)
 end
 
 function api:VoteComment(userID, postID, commentID,direction)
+	-- do we ever need permissions for this??
+
 	-- check if the user has already voted
 	-- if theyve voted down then remove down entry,
 	-- check if they can vote more than once
@@ -273,16 +369,20 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 end
 
 function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+	local ok, err = self:UserCanEditFilter(userID)
+	if not ok then
+		return ok, err
+	end
 
 	-- get the actual tag from the tagID
 	for k,v in pairs(requiredTags) do
 		if v ~= '' then
-	 		requiredTags[k] = self:CreateTag(v, userID).id
+	 		requiredTags[k] = self:CreateTag(userID, v).id
 		end
 	end
 	for k,v in pairs(bannedTags) do
 		if v ~= '' then
-			bannedTags[k] = self:CreateTag(v, userID).id
+			bannedTags[k] = self:CreateTag(userID, v).id
 		end
 	end
 
@@ -316,6 +416,11 @@ function api:UpdatePostFilters(post)
 		since addfilters and updatefilters are the same, we can just add
 		all of the newfilters, even if they already exist
 	]]
+	local ok, err = self:UserCanEditFilter(userID)
+	if not ok then
+		return ok, err
+	end
+
 
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
@@ -390,7 +495,15 @@ function api:AddVoteToTag(tag,direction)
 	tag.score = self:GetScore(tag.up,tag.down)
 end
 
-function api:CreateComment(commentInfo)
+function api:CreateComment(userID, commentInfo)
+	-- check if they are who they say they are
+	commentInfo.createdBy = commentInfo.createdBy or userID
+	if commentInfo.createdBy ~= userID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you cannot create a comment on behalf of someone else'
+		end
+	end
 
   commentInfo.id = uuid.generate_random()
   commentInfo.createdAt = ngx.time()
@@ -464,20 +577,31 @@ function api:SubscribeToFilter(userID,filterID)
 end
 
 function api:GetUserInfo(userID)
+	-- can only get own for now
 	if not userID or userID == '' then
 		return nil
 	end
-	
+
 	local userInfo  = cache:GetUserInfo(userID)
 
 	return userInfo
 end
 
 function api:FilterUnbanUser(filterID, userID)
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
 	return worker:FilterUnbanUser(filterID, userID)
 end
 
 function api:FilterBanDomain(filterID, banInfo)
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
 	banInfo.bannedAt = ngx.time()
 	banInfo.domainName = self:GetDomain(banInfo.domainName) or banInfo.domainName
 	return worker:FilterBanDomain(filterID, banInfo)
@@ -529,11 +653,8 @@ function api:ActivateAccount(email, key)
 end
 
 function api:GetUserFrontPage(userID,filter,range)
+	-- can only get own
   return cache:GetUserFrontPage(userID,filter,range)
-end
-
-function api:FlushAllPosts()
-  return worker:FlushAllPosts()
 end
 
 
@@ -546,6 +667,7 @@ function api:CreateSubUser(masterID, username)
     parentID = masterID,
     enablePM = 1
   }
+
   local master = cache:GetMasterUserInfo(masterID)
   tinsert(master.users,subUser.id)
 
@@ -553,17 +675,32 @@ function api:CreateSubUser(masterID, username)
 
   return worker:CreateSubUser(subUser)
 
-  -- need to update master info with list of sub users
+  -- TODO: need to update master info with list of sub users
 end
 
-function api:GetMasterUsers(masterID)
+function api:GetMasterUsers(userID, masterID)
   local master = cache:GetMasterUserInfo(masterID)
   local users = {}
-  local user
-  for _, userID in pairs(master.users) do
-      user = cache:GetUserInfo(userID)
+  local user = cache:GetUserInfo(userID)
+
+	if user.role ~= 'Admin' then
+		local found = nil
+		for _,subUserID in pairs(master.users) do
+			if userID == subUserID then
+				found = true
+				break
+			end
+		end
+		if not found then
+			return nil, 'must be admin to view other users'
+		end
+	end
+
+	local subUser
+  for _, subUserID in pairs(master.users) do
+      subUser = cache:GetUserInfo(subUserID)
       if user then
-        tinsert(users, user)
+        tinsert(users, subUser)
       end
   end
   return users
@@ -611,8 +748,16 @@ function api:CreateMasterUser(confirmURL, userInfo)
 
 end
 
-function api:UnsubscribeFromFilter(username,filterID)
-  local filterIDs = cache:GetUserFilterIDs(username)
+function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
+	if userID ~= subscriberID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin to change another users subscriptions'
+		end
+	end
+
+
+  local filterIDs = cache:GetUserFilterIDs(userID)
   local found = false
   for _,v in pairs(filterIDs) do
     if v == filterID then
@@ -624,13 +769,13 @@ function api:UnsubscribeFromFilter(username,filterID)
     return
   end
 
-  worker:UnsubscribeFromFilter(username,filterID)
+  worker:UnsubscribeFromFilter(subscriberID,filterID)
+
 
 end
 
-function api:CreateTag(tagName,createdBy)
-  --check if the tag already exists
-  -- create it
+function api:CreateTag(userID, tagName)
+
   if tagName:gsub(' ','') == '' then
     return nil
   end
@@ -643,7 +788,7 @@ function api:CreateTag(tagName,createdBy)
   local tagInfo = {
     id = uuid.generate_random(),
     createdAt = ngx.time(),
-    createdBy = createdBy,
+    createdBy = userID,
     name = tagName
   }
 
@@ -652,13 +797,11 @@ function api:CreateTag(tagName,createdBy)
 end
 
 function api:PostIsValid(postInfo)
-
   return postInfo
 end
 
 function api:GetDomain(url)
   return url:match('^%w+://([^/]+)')
-
 end
 
 function api:VoteTag(userID, postID, tagID, direction)
@@ -693,7 +836,7 @@ function api:AddPostTags(postInfo)
 	for k,v in pairs(postInfo.tags) do
 
 		v = trim(v:lower())
-		postInfo.tags[k] = self:CreateTag(v,postInfo.createdBy)
+		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, v)
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -748,7 +891,6 @@ end
 function api:CalculatePostFilters(post)
 	-- get all the filters that care about this posts' tags
 
-
 	-- only include tags above threshold
 	local validTags = {}
 	for _, tag in pairs(post.tags) do
@@ -757,7 +899,6 @@ function api:CalculatePostFilters(post)
 			tinsert(validTags, tag)
 		end
 	end
-
 
 	local filterIDs = cache:GetFilterIDsByTags(post.tags)
   local chosenFilterIDs = {}
@@ -870,11 +1011,22 @@ function api:GetIcon(newPost)
 
 end
 
-function api:CreatePost(postInfo)
+function api:CreatePost(userID, postInfo)
   -- rate limit
   -- basic sanity check
   -- send to worker
 	-- TODO: move most of this to worker
+	if not userID then
+		return nil, 'no userID'
+	end
+
+	postInfo.createdBy = postInfo.createdBy or userID
+	if userID ~= postInfo.createdBy then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			postInfo.createdBy = userID
+		end
+	end
 
   if not api:PostIsValid(postInfo) then
     return false
@@ -955,20 +1107,44 @@ function api:GetFiltersBySubs(offset,count)
   count = count or 10
   local filters = cache:GetFiltersBySubs(offset,count)
   return filters
-
-
 end
 
-function api:DelMod(filterID, userID, modID)
-	--check user can del mods
+function api:DelMod(userID, filterID, modID)
 
-	--check they are a mod
+	local filter = cache:GetFilterByID(filterID)
+	if not filter.ownerID == userID then
+		local user = cache:GetUser(userID)
+		if not user.role ~= 'Admin' then
+			return nil, 'you must be admin or filter owner to remove mods'
+		end
+	end
+
+	local found
+	for _,mod in pairs(filter.mods) do
+		if mod.id == userID then
+			found = true
+			break
+		end
+	end
+	if not found then
+		return nil, 'user is not a mod of this filter'
+	end
 
 	return worker:DelMod(filterID, modID)
 
 end
 
-function api:AddMod(filterID, userID, newModName)
+function api:AddMod(userID, filterID, newModName)
+	local filter = cache:GetFilterByID(filterID)
+
+	if userID ~= filter.ownerID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin or filter owner to add mods'
+		end
+	end
+
+
 	local newModID = cache:GetUserID(newModName)
 	if not newModID then
 		return nil, 'could not find user with that name'
@@ -988,7 +1164,14 @@ function api:AddMod(filterID, userID, newModName)
 
 end
 
-function api:CreateFilter(filterInfo)
+function api:CreateFilter(userID, filterInfo)
+	filterInfo.createdBy = filterInfo.createdBy or {}
+	if userID ~= filterInfo.createdBy then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			filterInfo.createdBy = userID
+		end
+	end
 
   if not api:FilterIsValid(filterInfo) then
     return false
@@ -1002,7 +1185,7 @@ function api:CreateFilter(filterInfo)
   local tags = {}
 
   for k,tagName in pairs(filterInfo.requiredTags) do
-    local tag = self:CreateTag(tagName, filterInfo.createdBy)
+    local tag = self:CreateTag(filterInfo.createdBy,tagName)
     if tag then
       tag.filterID = filterInfo.id
       tag.filterType = 'required'

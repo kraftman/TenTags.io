@@ -39,7 +39,7 @@ local function CreateTag(self)
     createdBy = self.session.userID
   }
 
-  local ok, err = api:CreateTag(info)
+  local ok, err = api:CreateTag(self.session.userID, info)
   if ok then
     return 'tag created!'
   else

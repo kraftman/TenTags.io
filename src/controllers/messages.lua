@@ -26,7 +26,7 @@ local function CreateThread(self)
     createdBy = self.session.userID
   }
   ngx.log(ngx.ERR,self.params.subject)
-  api:CreateThread(msgInfo)
+  api:CreateThread(self.session.userID, msgInfo)
 
 end
 
@@ -37,7 +37,7 @@ local function CreateMessageReply(self)
   msgInfo.body = self.params.body
   msgInfo.createdBy = self.session.userID
   ngx.log(ngx.ERR, 'creating reply')
-  api:CreateMessageReply(msgInfo)
+  api:CreateMessageReply(self.session.userID, msgInfo)
 end
 
 local function MessageReply(self)

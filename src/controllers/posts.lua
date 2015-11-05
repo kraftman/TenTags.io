@@ -29,7 +29,7 @@ local function CreatePost(self)
     tags = selectedTags
   }
 
-  local ok, err = api:CreatePost(info)
+  local ok, err = api:CreatePost(self.session.userID, info)
 
   if ok then
     return

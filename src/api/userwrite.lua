@@ -143,8 +143,8 @@ function userwrite:CreateSubUser(userInfo)
     end
     red:hset('userToID',userInfo.username,userInfo.id)
   local results, err = red:commit_pipeline()
-
   SetKeepalive(red)
+  
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)
     return nil

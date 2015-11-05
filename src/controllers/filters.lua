@@ -14,14 +14,15 @@ local respond_to = (require 'lapis.application').respond_to
 local function ToggleDefault(self)
 
   if self.params.setdefault == 'true' then
-    api:SubscribeToFilter('default',self.params.filterID)
+    api:SubscribeToFilter(self.session.userID, 'default',self.params.filterID)
   elseif self.params.setdefault == 'false' then
-    api:UnsubscribeFromFilter('default',self.params.filterID)
+    api:UnsubscribeFromFilter(self.session.userID,'default',self.params.filterID)
   end
+
   if self.params.subscribe == 'true' then
-    api:SubscribeToFilter(self.session.userID,self.params.filterID)
+    api:SubscribeToFilter(self.session.userID, self.session.userID,self.params.filterID)
   elseif self.params.setdefault == 'false' then
-    api:UnsubscribeFromFilter(self.session.userID,self.params.filterID)
+    api:UnsubscribeFromFilter(self.session.userID, self.session.userID,self.params.filterID)
   end
 end
 
@@ -96,6 +97,10 @@ local function DisplayFilter(self)
 end
 
 local function LoadAllFilters(self)
+  local user = api:GetUserInfo(self.session.userID)
+  if user.role == 'Admin' then
+    self.isAdmin = true
+  end
 
   self.filters = api:GetFiltersBySubs()
   --print(to_json(self.filters))
@@ -114,7 +119,7 @@ local function BanUser(self,filter)
     banReason = self.params.banUserReason or '',
     bannedBy = self.session.userID
   }
-  local ok, err = api:FilterBanUser(filter.id, banInfo)
+  local ok, err = api:FilterBanUser(self.session.userID, filter.id, banInfo)
   if ok then
     return 'success'
   else
@@ -154,7 +159,7 @@ end
 
 local function AddMod(self, filter)
   local modName = self.params.addmod
-  local ok, err = api:AddMod(filter.id, self.session.userID, modName)
+  local ok, err = api:AddMod(self.session.userID, filter.id, modName)
   if ok then
     return 'success'
   else
@@ -164,7 +169,7 @@ end
 
 local function DelMod(self, filter)
   local modID = self.params.delmod
-  local ok, err = api:DelMod(filter.id, self.session.userID, modID)
+  local ok, err = api:DelMod(self.session.userID, filter.id, modID)
   if ok then
     return 'success'
   else
@@ -208,11 +213,29 @@ end
 
 local function ViewFilterSettings(self)
 
-  self.tags = api:GetAllTags()
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
+    return 'error!'
   end
+  local user = api:GetUserInfo(self.session.userID)
+
+  if user.role ~= 'Admin' then
+    if filter.ownerID ~= 'userID' then
+      local found = nil
+      for _,mod in pairs(filter.mods) do
+        if mod.id == user.id then
+          found = true
+          break
+        end
+      end
+      if not found then
+        return 'Zutritt verboten!'
+      end
+    end
+  end
+
+  self.tags = api:GetAllTags()
 
   -- get key indexed tags
   self.requiredTagKeys = {}
@@ -265,7 +288,7 @@ local function UnbanDomain(self)
     ngx.log(ngx.ERR, 'no filter label found!')
   end
 
-  local ok, err = api:FilterUnbanDomain(filter.id, self.params.domainName)
+  local ok, err = api:FilterUnbanDomain(self.session.userID, filter.id, self.params.domainName)
   if ok then
     return 'success'
   else

@@ -19,7 +19,7 @@ app:before_filter(function(self)
       ngx.log(ngx.ERR, 'user has alerts!')
       self.userHasAlerts = true
     end
-    self.otherUsers = api:GetMasterUsers(self.session.masterID)
+    self.otherUsers = api:GetMasterUsers(self.session.userID, self.session.masterID)
   end
   --ngx.log(ngx.ERR, to_json(user))
 
@@ -36,7 +36,6 @@ require 'messages':Register(app)
 require 'filters':Register(app)
 require 'comments':Register(app)
 require 'alerts':Register(app)
-require 'admin':Register(app)
 
 -- TESTING
 require 'test.perftest':Register(app)

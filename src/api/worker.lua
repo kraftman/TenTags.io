@@ -132,10 +132,6 @@ function worker:RemovePostFromFilters(postID, filterIDs)
   return rediswrite:RemovePostFromFilters(postID, filterIDs)
 end
 
-function worker:FlushAllPosts()
-  return rediswrite:FlushAllPosts()
-end
-
 function worker:CreateThread(thread)
   return rediswrite:CreateThread(thread)
 end

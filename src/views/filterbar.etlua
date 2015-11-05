@@ -6,6 +6,7 @@
   </div>
   <div class='box-wrap'>
     <div id="box-one" class='infoBox'>
+
       <% if thisfilter then %>
         Description:
         </br>
@@ -23,6 +24,10 @@
   	</div>
 
     <div id="box-two" class='infoBox'>
+
+      <ul>
+        <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
+      </ul>
       <% for i, filter in pairs(userFilters) do %>
         <% render("views.st.filterbarelement",{filter = filter}) %>
       <% end %>
