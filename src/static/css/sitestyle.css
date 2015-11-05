@@ -68,21 +68,52 @@ div {
   text-decoration:none;
 }
 
+.tabButtons {
+  padding: 3px;
+}
+
+.tabButtons a {
+  text-decoration: none;
+  color: red;
+  margin: 5px;
+  width: 100%;
+}
+
 #filterbar {
-  width: 150px;
+  width: 200px;
   height: 100%;
   float:left;
+
 }
-#infobar {
-  width: 150px;
-  height: 100%;
-  float:right;
+
+
+.contents {
+  position: relative;
+  overflow: hidden;
+
+}
+
+.box-wrap {
+  position: relative;
+}
+
+#box-one:target, #box-two:target {
+  z-index: 1;
 }
 
 #filterbar ul {
   padding-left: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
+}
+
+.infoBox {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  background: white;
+  min-height: 300px;
 }
 
 .filterbarelement {
@@ -96,11 +127,6 @@ div {
 
 
 
-.contents {
-  width: 70%;
-  position: relative;
-  float:left;
-}
 
 
 .commentLink {
@@ -108,7 +134,7 @@ div {
 }
 
 #posts {
-  position:relative;
+
 }
 
 .upvote {

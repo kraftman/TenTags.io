@@ -1,6 +1,5 @@
 
-  <div id='centerPage'>
+  
     <div id='titleBox'>
       <% render("views.loginbox") %>
     </div>
-    

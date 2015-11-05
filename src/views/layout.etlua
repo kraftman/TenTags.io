@@ -10,11 +10,12 @@
   <script src="/static/js/site.js" async ></script>
 </head>
 <body>
-  <% render("views.navigation") %>
+  <div id='centerPage'>
+    <% render("views.navigation") %>
     <% render("views.filterbar") %>
-    <div id='infobar'></div>
     <% content_for("inner") %>
+  </div>
 
-  <% render("views.footer") %>
+
 </body>
 </html>
