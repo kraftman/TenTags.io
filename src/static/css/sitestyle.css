@@ -19,12 +19,53 @@ div {
     border: 1px solid #000000;
 }
 
+.upvoteButton {
+}
+
+.downvoteButton {
+}
+
+.linkIcon {
+  padding: 0px;
+  border: 0;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.voteButtons {
+  display: inline-block;
+  margin: 0px;
+  padding: 0px;
+}
+
+
+.postLink {
+  display: inline;
+}
+
+.postBody {
+  display: inline-block;
+}
+
+
 #titleBox {
   width: 100%;
   background-color: lightblue;
   color:#0000FF;
   height: 25px;
 
+}
+
+.filterIcon {
+  display:inline-block;
+  background-color: lightblue;
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border-radius: 3px;
+  font-size:  10px;
+  text-decoration:none;
 }
 
 #filterbar {
@@ -38,8 +79,10 @@ div {
   float:right;
 }
 
-ul {
+#filterbar ul {
   padding-left: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 
 .filterbarelement {
@@ -59,15 +102,9 @@ ul {
   float:left;
 }
 
-.postLink {
-
-}
 
 .commentLink {
   font-size: 10px;
-}
-
-.postLink {
 }
 
 #posts {
@@ -84,8 +121,9 @@ ul {
 }
 
 .post {
-  margin: 2px;
-  padding:5px;
+  display: flex;
+  margin: 0px;
+  padding:3px;
 }
 
 #register {
@@ -100,6 +138,7 @@ ul {
   padding-top: 2px;
   padding-bottom: 2px;
   border-radius: 3px;
+  font-size:  10px;
   text-decoration:none;
 }
 

@@ -1,19 +1,25 @@
 <div>
   <div class='post' >
-    <a href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
-    <a href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
+    <div class = 'voteButtons'>
+      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
+      </br>
+      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
 
+
+    </div>
       <% if post.icon then %>
-        <img src="/static/icons/<%= post.id %>.png" height="50" width="50">
+        <img class = 'linkIcon' src="/static/icons/<%= post.id %>.png" height="40" width="40">
+      <% else %>
+        <img class = 'linkIcon' src="/static/icons/<%= post.id %>.png" height="40" width="40">
       <% end %>
 
-    <a class ='postLink' href="<%= post.link -%>"> <%= post.title -%></a>
-    </br>
+    <div class = 'postBody'>
+      <a class ='postLink' href="<%= post.link -%>"> <%= post.title -%></a>
+      </br>
       <a class='commentLink' href="<%= url_for('viewpost',{postID = post.id}) %>"> <%= post.commentCount -%> comments</a>
       <% for _,filter in pairs(post.filters) do %>
-          <div class = 'tag'>
-            <%= filter.name %>
-          </div>
+          <a class ='filterIcon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
       <% end %>
+    </div>
   </div>
 </div>

@@ -40,7 +40,7 @@ local function NewFilter(self)
 
   local info ={
     title = self.params.title,
-    name= self.params.label ,
+    name= self.params.label:gsub(' ','') ,
     description = self.params.description,
     createdAt = ngx.time(),
     createdBy = self.session.userID,
