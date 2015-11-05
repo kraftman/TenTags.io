@@ -215,11 +215,14 @@ function cache:GetFilterPosts(filter)
 
   local filterIDs = redisread:GetFilterPosts(filter)
   local posts = {}
+  local post
   for _,v in pairs(filterIDs) do
-    tinsert(posts, self:GetPost(v))
+    post = self:GetPost(v)
+    post.filters = self:GetFilterInfo(post.filters) or {}
+    tinsert(posts, post)
   end
-  return posts
 
+  return posts
 end
 
 
@@ -455,7 +458,6 @@ function cache:GetUserFrontPage(userID,filter,range)
   for _,postID in pairs(newPostIDs) do
     local post = self:GetPost(postID)
     post.filters = self:GetFilterInfo(post.filters) or {}
-
     tinsert(postsWithInfo, post)
   end
 

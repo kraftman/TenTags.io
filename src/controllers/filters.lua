@@ -79,6 +79,7 @@ local function DisplayFilter(self)
   -- also load the list of mods
   -- check if the current user is on the list of mods
   -- display settings if they are
+  print(to_json(self.posts[1]))
 
 
   return {render = 'viewfilter'}
