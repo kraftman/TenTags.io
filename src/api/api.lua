@@ -464,6 +464,10 @@ function api:SubscribeToFilter(userID,filterID)
 end
 
 function api:GetUserInfo(userID)
+	if not userID or userID == '' then
+		return nil
+	end
+	
 	local userInfo  = cache:GetUserInfo(userID)
 
 	return userInfo

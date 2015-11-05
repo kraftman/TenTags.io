@@ -7,7 +7,18 @@
   <div class='box-wrap'>
     <div id="box-one" class='infoBox'>
       <% if thisfilter then %>
-          <%= thisfilter.description -%>
+        Description:
+        </br>
+        <%= thisfilter.description -%>
+        </br>
+        Owner:
+        <%= thisfilter.ownerName -%>
+        </br>
+        Mods:
+        </br>
+        <% for _,mod in pairs(thisfilter.mods) do %>
+          <%= mod.username -%>
+        <% end %>
       <% end %>
   	</div>
 

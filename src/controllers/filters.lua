@@ -73,6 +73,15 @@ local function DisplayFilter(self)
   if not filter then
     return CreateFilter(self)
   end
+
+  for _,v in pairs(filter.mods) do
+    local user = api:GetUserInfo(v.id)
+    print(to_json(user))
+    v.username = user.username
+  end
+
+  filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy)
+
   self.thisfilter = filter
 
   self.posts = api:GetFilterPosts(filter)

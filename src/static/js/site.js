@@ -4,6 +4,7 @@ $(function() {
 })
 
 function AddMenuHandler(){
+  $('#box-two').hide();
   $('#infoBoxLink').click(function(e){
     e.preventDefault();
     $('#box-one').show();
