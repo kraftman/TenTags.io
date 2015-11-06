@@ -544,6 +544,7 @@ function api:CreateComment(userID, commentInfo)
 
 	worker:UpdatePostField(commentInfo.postID, 'commentCount',post.commentCount+1)
 
+	return true
 
  --need to add comment to comments, commentid to user
 

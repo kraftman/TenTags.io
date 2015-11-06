@@ -51,7 +51,7 @@ local function NewFilter(self)
   info.bannedTags = bannedTags
   info.requiredTags = requiredTags
 
-  local ok, err = api:CreateFilter(info)
+  local ok, err = api:CreateFilter(self.session.userID, info)
   if ok then
     return
   else
@@ -81,7 +81,7 @@ local function DisplayFilter(self)
     v.username = user.username
   end
 
-  filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy)
+  filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy).username
 
   self.thisfilter = filter
 
