@@ -67,7 +67,9 @@ local function LoginUser(self)
   -- check theyve provided the correct credentials
   local email = self.params.email
   local password = self.params.password
+  print(email, password)
   if not email or not password then
+    print('redirecting')
     return { redirect_to = self:url_for("register") }
   end
 
@@ -83,7 +85,8 @@ local function LoginUser(self)
     local userInfo = api:GetUserInfo(self.session.userID)
     self.session.username = userInfo.username
     self.session.masterID = masterInfo.id
-    return { redirect_to = self:url_for("home") }
+    return 'true'
+    --return { redirect_to = self:url_for("home") }
   elseif inactive then
     return 'Your account has not been activated, please click the link in your email'
   else
@@ -131,6 +134,7 @@ function m:Register(app)
 
 
   app:post('login','/login',LoginUser)
+  app:get('login','/login',LoginUser)
   app:get('viewuser','/user/:username',ViewUser)
   app:get('logout','/logout',LogOut)
   app:get('confirmemail','/confirmemail',ConfirmEmail)
