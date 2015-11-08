@@ -69,7 +69,7 @@ function api:GetFilterInfo(filterIDs)
 end
 
 function api:GetPostComments(userID, postID,sortBy)
-	local comments = cache:GetPostComments(userID, postID,sortBy)
+	local comments = cache:GetSortedComments(userID, postID,sortBy)
 
 
 	return comments
@@ -632,12 +632,9 @@ function api:GetPost(userID, postID)
 	end
 
 	local userVotedTags = cache:GetUserTagVotes(userID)
-	print(to_json(userVotedTags))
 
 	for _,tag in pairs(post.tags) do
-		print(to_json(tag))
 		if userVotedTags[postID..':'..tag.id] then
-			print('user has voted: ',tag.id)
 			tag.userHasVoted = true
 		end
 	end

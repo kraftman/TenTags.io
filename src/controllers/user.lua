@@ -67,9 +67,7 @@ local function LoginUser(self)
   -- check theyve provided the correct credentials
   local email = self.params.email
   local password = self.params.password
-  print(email, password)
   if not email or not password then
-    print('redirecting')
     return { redirect_to = self:url_for("register") }
   end
 
@@ -80,7 +78,6 @@ local function LoginUser(self)
 
   local masterInfo, inactive = api:ValidateMaster(userCredentials)
   if masterInfo then
-    print(to_json(masterInfo))
     self.session.userID = masterInfo.currentUserID
     local userInfo = api:GetUserInfo(self.session.userID)
     self.session.username = userInfo.username

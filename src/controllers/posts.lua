@@ -47,7 +47,7 @@ local function GetPost(self)
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
-    if v.id then
+    if v.id and self.session.userID then
       v.commentHash = ngx.md5(v.id..self.session.userID)
     end
   end

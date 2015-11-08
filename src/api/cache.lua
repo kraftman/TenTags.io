@@ -13,8 +13,8 @@ users
 ]]
 
 local cache = {}
---local userFilterIDs = ngx.shared.userFilterIDs
---local filterDict = ngx.shared.filters
+local userFilterIDs = ngx.shared.userFilterIDs
+local filterDict = ngx.shared.filters
 --local frontpages = ngx.shared.frontpages
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenDict = ngx.shared.usersessionseen
@@ -27,10 +27,37 @@ local userRead = require 'api.userread'
 local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
 local tinsert = table.insert
+local userInfo = ngx.shared.userInfo
+local commentInfo = ngx.shared.comments
+local voteInfo = ngx.shared.userVotes
+
+local DEFAULT_CACHE_TIME = 30
+
+local ENABLE_CACHE = true
 
 
 function cache:GetMasterUserInfo(masterID)
-  return userRead:GetMasterUserInfo(masterID)
+
+  if ENABLE_CACHE then
+    local ok, err = userInfo:get(masterID)
+    if err then
+      ngx.log(ngx.ERR, 'unable to get userinfo: ',err)
+    end
+    if ok then
+      return from_json(ok)
+    end
+  end
+
+  local masterInfo, err = userRead:GetMasterUserInfo(masterID, DEFAULT_CACHE_TIME)
+  if err then
+    return masterInfo, err
+  end
+  ok, err = userInfo:set(masterID, to_json(masterInfo))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set master info: ',err)
+  end
+
+  return masterInfo
 end
 
 function cache:GetThread(threadID)
@@ -45,7 +72,27 @@ function cache:GetThreads(userID)
 end
 
 function cache:GetUserInfo(userID)
-  return userRead:GetUserInfo(userID)
+
+  local ok, err = userInfo:get(userID)
+  if ok then
+    return from_json(ok)
+  end
+  if err then
+    ngx.log(ngx.ERR, 'unable to get user info : ',err)
+  end
+
+  local user, err = userRead:GetUserInfo(userID)
+  if not user then
+    return user, err
+  end
+
+  ok, err = userInfo:set(userID, to_json(user), DEFAULT_CACHE_TIME)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set user ifno:',err)
+    return ok, err
+  end
+  return user
+
 end
 
 function cache:GetUserAlerts(userID)
@@ -71,6 +118,9 @@ function cache:GetMasterUserByEmail(email)
 end
 
 function cache:GetUserTagVotes(userID)
+  if not userID then
+    return {}
+  end
   local indexed = userRead:GetUserTagVotes(userID)
   local keyed = {}
   for _,v in pairs(indexed) do
@@ -135,30 +185,70 @@ function cache:AddChildren(parentID,flat)
 end
 
 function cache:GetUsername(userID)
+
   local user = self:GetUserInfo(userID)
   if user then
     return user.username
   end
 end
 
-function cache:GetPostComments(userID, postID,sortBy)
+function cache:GetPostComments(postID)
 
-  local flatComments = commentRead:GetPostComments(postID)
+  local ok, err = commentInfo:get(postID)
+  if err then
+    ngx.log(ngx.ERR, 'could not get post comments: ',err)
+  end
+
+  if ok then
+    return from_json(ok)
+  end
+
+  local flatComments, err = commentRead:GetPostComments(postID)
+
+  if err then
+    return flatComments, err
+  end
+
+  for k,v in pairs(flatComments) do
+    flatComments[k] = from_json(v)
+  end
+
+  ok, err = commentInfo:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
+  if err then
+    ngx.log(ngx.ERR, 'error setting postcomments: ', err)
+    return ok,err
+  end
+
+
+  return flatComments
+
+end
+
+function cache:GetSortedComments(userID, postID,sortBy)
+
+  local flatComments,err = self:GetPostComments(postID)
+  if err then
+    return flatComments, err
+  end
+
   local indexedComments = {}
   -- format flatcomments
-  local tempComment
 
-  local userVotedComments = self:GetUserCommentVotes(userID)
+  local userVotedComments
+
+  if userID then
+    userVotedComments = self:GetUserCommentVotes(userID)
+  end
 
   for _,v in pairs(flatComments) do
-    tempComment =  from_json(v)
-    tempComment.username = self:GetUsername(tempComment.createdBy)
 
-    if userID and userVotedComments[tempComment.id] then
-      tempComment.userHasVoted = true
+    v.username = self:GetUsername(v.createdBy)
+
+    if userID and userVotedComments[v.id] then
+      v.userHasVoted = true
     end
 
-    tinsert(indexedComments, tempComment)
+    tinsert(indexedComments, v)
   end
 
   if sortBy == 'top' then
@@ -196,7 +286,7 @@ function cache:GetPosts(postIDs)
 end
 
 function cache:GetPost(postID)
-  --[[
+
   local res, err = postInfo:get(postID)
   if err then
     ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -204,25 +294,19 @@ function cache:GetPost(postID)
   if res then
     return from_json(res)
   end
-  --]]
 
-  local result = redisread:GetPost(postID)
+  local result, err = redisread:GetPost(postID)
 
-
-
-  return result or {}
-  --[[
-  if result and result ~= ngx.null then
-    print('found in redis')
-    res, err = postInfo:set(postID,to_json(result))
-    if err then
-      ngx.log(ngx.ERR, 'unable to set postInfo: ',err)
-    end
-    return result
-  else
-    print('couldnt find post')
+  if err then
+    return result, err
   end
-  --]]
+
+
+  res, err = postInfo:set(postID,to_json(result))
+  if not res then
+    ngx.log(ngx.ERR, 'unable to set postInfo: ',err)
+  end
+  return result
 
 end
 
@@ -253,36 +337,31 @@ function cache:GetFilterByName(filterName)
 end
 
 function cache:GetFilterByID(filterID)
-  --[[
-  local res = lru:GetFilter(filterID)
-  if res then
-    return res
-  end
+
   local res, err = filterDict:get(filterID)
+
   if err then
     ngx.log(ngx.ERR, 'unable to get filter info from shdict: ',err)
   end
-  if res then
-    local filterInfo = from_json(res)
-    lru:SetFilter(filterID,filterInfo)
-    return filterInfo
-  end
-  ]]
 
-  local result = redisread:GetFilter(filterID)
-  return result or {}
-  --[[
-  if result then
-    res, err = filterDict:set(filterID,to_json(result))
-    if err then
-      ngx.log('unablet to set filterdict: ',err)
-    end
-    lru:SetFilter(filterID,result)
-    return result
-  else
-    ngx.log(ngx.ERR, 'could not find filter')
+  if res then
+    return from_json(res)
   end
-  ]]
+
+
+  local result,err = redisread:GetFilter(filterID)
+  if err then
+    return result, err
+  end
+
+
+  res, err = filterDict:set(filterID,to_json(result))
+  if err then
+    ngx.log('unablet to set filterdict: ',err)
+  end
+
+  return result
+
 
 end
 
@@ -422,9 +501,30 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
 end
 
 function cache:GetUserCommentVotes(userID)
-  local indexed =  userRead:GetUserCommentVotes(userID)
+  if not userID then
+    return {}
+  end
+
+  local ok, err = voteInfo:get('commentVotes:'..userID)
+
+  if err then
+    ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
+  end
+
+  local commentVotes
+
+  if ok then
+    commentVotes = from_json(ok)
+  else
+    ok, err = userRead:GetUserCommentVotes(userID)
+    if not err then
+      voteInfo:set('commentVotes:'..userID, to_json(ok), DEFAULT_CACHE_TIME)
+      commentVotes = ok
+    end
+  end
+
   local keyed = {}
-  for _,v in pairs(indexed) do
+  for _,v in pairs(commentVotes) do
     keyed[v] = true
   end
   return keyed
@@ -507,37 +607,26 @@ end
 
 
 function cache:GetUserFilterIDs(userID)
-  --[[
 
-  local filters = lru:GetUserFilterIDs(username)
-  if filters then
-    return filters
-  end
-
-  local result,err = userFilterIDs:get(username)
+  local result,err = userFilterIDs:get(userID)
   if err then
     ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)
-    return {}
   end
 
   if result then
-    result = from_json(result)
-    lru:SetUserFilterIDs(username,result)
-    return result
+    return from_json(result)
   end
-  ]]
 
-  local res = userRead:GetUserFilterIDs(userID)
-  return res or {}
-  --[[
-  if res then
-    lru:SetUserFilterIDs(username,result)
-    userFilterIDs:set('default',to_json(res),FILTER_LIST_CACHE_TIME)
-    return res
-  else
-    return {}
+  local res, err = userRead:GetUserFilterIDs(userID)
+  if not res then
+    return res, err
   end
-  --]]
+
+
+  ok, err = userFilterIDs:set(userID,to_json(res),DEFAULT_CACHE_TIME)
+
+  return res
+
 end
 
 
