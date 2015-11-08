@@ -85,7 +85,7 @@ local function CreateComment(self)
     text = self.params.commentText,
   }
   ngx.log(ngx.ERR, to_json(self.params))
-  local ok = api:CreateComment(commentInfo)
+  local ok = api:CreateComment(self.session.userID, commentInfo)
   if ok then
     return 'created!'
   else

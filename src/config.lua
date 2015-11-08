@@ -5,9 +5,10 @@ config("development", {
     host = "127.0.0.1",
     user = "root",
     password = "meep",
-    database = "taggr"
+    database = "taggr",
   },
-  secret = "this is my secrarstrstet string 123456"
+  secret = "this is my secrarstrstet string 123456",
+  num_workers = 'auto',
 })
 
 config("production", {
@@ -21,5 +22,7 @@ config("production", {
     queries = false,
     requests = false
   },
-  code_cache = "on"
+  code_cache = "on",
+  secret = "this is my secrarstrstet string 123456",
+  num_workers = 'auto',
 })

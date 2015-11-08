@@ -11,10 +11,12 @@ local function FrontPage(self)
 
   self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
   -- if empty and logged in then redirect to seen posts
-  for _,v in pairs(self.posts) do
-    v.hash = ngx.md5(v.id..self.session.userID)
-    if v.icon then
-      print('found icon')
+  if self.session.userID then
+    for _,v in pairs(self.posts) do
+      v.hash = ngx.md5(v.id..self.session.userID)
+      if v.icon then
+        print('found icon')
+      end
     end
   end
 
