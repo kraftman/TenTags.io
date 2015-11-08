@@ -24,7 +24,6 @@ local function CreatePost(self)
     title = self.params.title,
     link = self.params.link,
     text = self.params.text,
-    createdAt = ngx.time(),
     createdBy = self.session.userID,
     tags = selectedTags
   }
