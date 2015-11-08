@@ -12,7 +12,7 @@ local tinsert = table.insert
 local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
-local to_json = (require 'lapis.util').to_json
+--local to_json = (require 'lapis.util').to_json
 local magick = require 'magick'
 local http = require 'lib.http'
 --arbitrary, needs adressing later
@@ -382,6 +382,9 @@ function api:VoteComment(userID, postID, commentID,direction)
 
 	comment.score = self:GetScore(comment.up,comment.down)
 	worker:UpdateComment(comment)
+
+	-- also add to user voted comments?
+
 end
 
 function api:GetMatchingTags(userFilterIDs, postFilterIDs)
@@ -581,7 +584,7 @@ end
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
 
-	local newComment = api:ConvertUserCommentToComment(userComment)
+	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
 
   local filters = {}
