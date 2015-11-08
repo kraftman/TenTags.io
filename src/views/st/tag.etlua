@@ -1,6 +1,13 @@
 <div class='tag' data-id='<%= tag.id %>'>
-  <a class = 'upvote'  href='#'>&#10004</a>
+  <% if not tag.userHasVoted then %>
+    <a class = 'upvote'  href='#'>&#10004</a>
+  <% end %>
+
+
   <span class='tagname'><%= tag.name %></span>
   <span class='tagcount' ><%= (tag.up-tag.down) %></span>
-  <a class = 'downvote' href='#'>&#10007</a>
+  <% if not tag.userHasVoted then %>
+    <a class = 'downvote' href='#'>&#10007</a>
+  <% end %>
+
 </div>

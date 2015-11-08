@@ -18,6 +18,8 @@ local function FrontPage(self)
         print('found icon')
       end
     end
+
+
   end
 
   if not self.posts or #self.posts == 0 then

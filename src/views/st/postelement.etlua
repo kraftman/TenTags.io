@@ -1,11 +1,11 @@
 
 <div class='post' >
   <div class = 'voteButtons'>
-    <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
-    </br>
-    <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
-
-
+    <% if not post.userHasVoted then %>
+      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
+      </br>
+      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
+    <% end %>
   </div>
     <% if post.icon then %>
       <img class = 'linkIcon' src="/static/icons/<%= post.id %>.png" height="40" width="40">

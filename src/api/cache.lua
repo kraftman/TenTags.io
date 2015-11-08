@@ -71,7 +71,14 @@ function cache:GetMasterUserByEmail(email)
 end
 
 function cache:GetUserTagVotes(userID)
-  return userRead:GetUserTagVotes(userID)
+  local indexed = userRead:GetUserTagVotes(userID)
+  local keyed = {}
+  for _,v in pairs(indexed) do
+    keyed[v] = true
+  end
+
+  return keyed
+
 end
 
 
@@ -134,23 +141,29 @@ function cache:GetUsername(userID)
   end
 end
 
-function cache:GetPostComments(postID,sortBy)
+function cache:GetPostComments(userID, postID,sortBy)
 
   local flatComments = commentRead:GetPostComments(postID)
   local indexedComments = {}
   -- format flatcomments
   local tempComment
+
+  local userVotedComments = self:GetUserCommentVotes(userID)
+
   for _,v in pairs(flatComments) do
     tempComment =  from_json(v)
     tempComment.username = self:GetUsername(tempComment.createdBy)
+
+    if userID and userVotedComments[tempComment.id] then
+      tempComment.userHasVoted = true
+    end
+
     tinsert(indexedComments, tempComment)
   end
 
   if sortBy == 'top' then
-    print('sort by top')
     table.sort(indexedComments, function(a,b) return a.up-a.down > b.up -b.down end)
   elseif sortBy == 'new' then
-    print('sort by new')
     table.sort(indexedComments, function(a,b) return a.createdAt > b.createdAt end)
   else
     table.sort(indexedComments, function(a,b) return a.score > b.score end)
@@ -194,6 +207,8 @@ function cache:GetPost(postID)
   --]]
 
   local result = redisread:GetPost(postID)
+
+
 
   return result or {}
   --[[
@@ -407,11 +422,22 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
 end
 
 function cache:GetUserCommentVotes(userID)
-  return userRead:GetUserCommentVotes(userID)
+  local indexed =  userRead:GetUserCommentVotes(userID)
+  local keyed = {}
+  for _,v in pairs(indexed) do
+    keyed[v] = true
+  end
+  return keyed
 end
 
 function cache:GetUserPostVotes(userID)
-  return userRead:GetUserPostVotes(userID)
+  local indexed = userRead:GetUserPostVotes(userID)
+  local keyed = {}
+  for _,v in pairs(indexed) do
+    keyed[v] = true
+  end
+  return keyed
+
 end
 
 function cache:GetUserFrontPage(userID,filter,range)
@@ -454,10 +480,14 @@ function cache:GetUserFrontPage(userID,filter,range)
 
 
   local postsWithInfo = {}
+  local userVotedPosts = self:GetUserPostVotes(userID)
 
   for _,postID in pairs(newPostIDs) do
     local post = self:GetPost(postID)
     post.filters = self:GetFilterInfo(post.filters) or {}
+    if userVotedPosts[postID] then
+      post.userHasVoted = true
+    end
     tinsert(postsWithInfo, post)
   end
 

@@ -68,8 +68,11 @@ function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)
 end
 
-function api:GetPostComments(postID,sortBy)
-  return cache:GetPostComments(postID,sortBy)
+function api:GetPostComments(userID, postID,sortBy)
+	local comments = cache:GetPostComments(userID, postID,sortBy)
+
+
+	return comments
 end
 
 function api:GetComment(postID, commentID)
@@ -313,34 +316,21 @@ end
 function api:UserHasVotedComment(userID, commentID)
 	-- can only see own
 	local userCommentVotes = cache:GetUserCommentVotes(userID)
-	for _,v in pairs(userCommentVotes) do
-		if v:find(commentID) then
-			return true
-		end
-	end
-	return false
+	return userCommentVotes[commentID]
 end
 
 function api:UserHasVotedPost(userID, postID)
 	-- can only see own
 	local userPostVotes = cache:GetUserPostVotes(userID)
-	for _,v in pairs(userPostVotes) do
-		if v:find(postID) then
-			return true
-		end
-	end
-	return false
+	return userPostVotes[postID]
+
 end
 
 function api:UserHasVotedTag(userID, postID, tagID)
 	-- can only see own
 	local userTagVotes = cache:GetUserTagVotes(userID)
-	for _,v in pairs(userTagVotes) do
-		if v:find(postID..':'..tagID) then
-			return true
-		end
-	end
-	return false
+	return userTagVotes[postID..':'..tagID]
+
 end
 
 function api:GetScore(up,down)
@@ -381,7 +371,13 @@ function api:VoteComment(userID, postID, commentID,direction)
 	end
 
 	comment.score = self:GetScore(comment.up,comment.down)
-	worker:UpdateComment(comment)
+
+	local ok, err = worker:AddUserCommentVotes(userID, commentID)
+	if not ok then
+		return ok, err
+	end
+
+	return worker:UpdateComment(comment)
 
 	-- also add to user voted comments?
 
@@ -409,15 +405,12 @@ function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 end
 
 function api:GetUnvotedTags(user,postID, tagIDs)
-	local votedTags = cache:GetUserTagVotes(user.id)
 	if user.role == 'admin' then
 		return tagIDs
 	end
 
-	local keyedVotedTags = {}
-	for _,v in pairs(votedTags) do
-		keyedVotedTags[v] = v
-	end
+	local keyedVotedTags = cache:GetUserTagVotes(user.id)
+
 	local unvotedTags = {}
 	for _, v in pairs(tagIDs) do
 		if not keyedVotedTags[postID..':'..v] then
@@ -476,11 +469,6 @@ function api:UpdatePostFilters(post)
 		since addfilters and updatefilters are the same, we can just add
 		all of the newfilters, even if they already exist
 	]]
-	local ok, err = self:UserCanEditFilter(userID)
-	if not ok then
-		return ok, err
-	end
-
 
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
@@ -505,7 +493,7 @@ function api:VotePost(userID, postID, direction)
 		not good'
 
 	]]
-	local post = self:GetPost(postID)
+	local post = cache:GetPost(postID)
 	if not post then
 		return nil, 'post not found'
 	end
@@ -588,7 +576,7 @@ function api:CreateComment(userID, userComment)
 
 
   local filters = {}
-	local parentPost = self:GetPost(newComment.postID)
+	local parentPost = cache:GetPost(newComment.postID)
 	if not parentPost then
 		return nil, 'could not find parent post'
 	end
@@ -624,7 +612,7 @@ function api:CreateComment(userID, userComment)
     end
   end
 
-	local post = self:GetPost(newComment.postID)
+	local post = cache:GetPost(newComment.postID)
 
 	worker:UpdatePostField(newComment.postID, 'commentCount',post.commentCount+1)
 
@@ -632,8 +620,30 @@ function api:CreateComment(userID, userComment)
 
 end
 
-function api:GetPost(postID)
-  return cache:GetPost(postID)
+function api:GetPost(userID, postID)
+
+	if not postID then
+		return nil, 'no postID!'
+	end
+
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
+	local userVotedTags = cache:GetUserTagVotes(userID)
+	print(to_json(userVotedTags))
+
+	for _,tag in pairs(post.tags) do
+		print(to_json(tag))
+		if userVotedTags[postID..':'..tag.id] then
+			print('user has voted: ',tag.id)
+			tag.userHasVoted = true
+		end
+	end
+
+
+  return post
 end
 
 function api:GetDefaultFrontPage(range,filter)
@@ -931,6 +941,11 @@ function api:VoteTag(userID, postID, tagID, direction)
 		if tag.id == tagID then
 			self:AddVoteToTag(tag, direction)
 		end
+	end
+
+	local ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
+	if not ok then
+		return ok, err
 	end
 
 	self:UpdatePostFilters(post)

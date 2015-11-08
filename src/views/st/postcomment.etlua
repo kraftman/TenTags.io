@@ -2,9 +2,11 @@
 <div class="comment">
   <% if child then %>
     <div class="commentInfo">
+      <% if not child.userHasVoted then %>
+        <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
+        <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
+      <% end %>
 
-      <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
-      <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
       <a href="<%= url_for('viewuser',{username = child.username}) %>"> <%= child.username -%> </a>
       <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
       <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
