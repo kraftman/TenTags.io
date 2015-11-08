@@ -159,8 +159,29 @@ populating new filters with existing posts.
 - the result should be a list of applicable posts
 
 
+
 caching and offloading
 creating a post
 - only the user needs to see the post immediately
 - add the post to the cache as soon as its verified, so they can see it
 - add it to the work for deferred processing
+
+
+Shared Dict Numbers
+with the current setup:
+100mb shared dict can hold one of
+- 200k users with info
+- 400k userID -> username maps
+- 100k posts
+- 100k comments
+
+
+reddit has 200m unique visitors per month, 15% of which are logged in
+https://www.quora.com/What-percentage-of-Reddits-traffic-is-by-registered-users
+80% are lurkers and dont post:
+https://www.reddit.com/r/AskReddit/comments/bg7b8/what_percentage_of_redditors_are_lurkers/c0mm7yy
+
+
+Voting
+store list of recently voted posts/comments
+write list to bloom filter after X

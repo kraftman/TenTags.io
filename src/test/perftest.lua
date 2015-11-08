@@ -8,6 +8,7 @@ local tinsert, random = table.insert, math.random
 local api = require 'api.api'
 local redisWrite = require 'api.rediswrite'
 local lru = require 'api.lrucache'
+local cache = require 'api.cache'
 
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -86,7 +87,7 @@ local function TestComments()
 
   local new = lru:GetComments(postID)
   local i = 1
-  for k,v in pairs(new) do
+  for _,_ in pairs(new) do
     i = i+1
   end
   ngx.say('</br> found: ',i, ' iter: ',numIt)
@@ -96,9 +97,150 @@ function ShowGC()
   ngx.say(string.format("Worker %d: GC size: %.3f KB", ngx.var.pid, collectgarbage("count")))
 end
 
+local function TestUserSharedDict(self)
+  local i  = 0
+  local subUser
+  local serialUser
+  local succ, err, forced
+
+  local testDict = ngx.shared.testusers
+
+  while true do
+    i = i + 1
+    if i % 100 == 0 then
+      print(i)
+    end
+
+    subUser = {
+      id = uuid.generate(),
+      username = uuid.generate(),
+      filters = cache:GetUserFilterIDs('default'),
+      parentID = uuid.generate(),
+      enablePM = 1,
+    }
+    serialUser = to_json(subUser)
+    succ, err, forced = testDict:set(subUser.id, serialUser)
+    if forced then
+      return 'max users: '..i
+    end
+  end
+end
+
+local function TestUserIDsSharedDict(self)
+  local i  = 0
+  local succ, err, forced
+
+  local testDict = ngx.shared.testusers
+
+  while true do
+    i = i + 1
+    if i % 100 == 0 then
+      print(i)
+    end
+
+    succ, err, forced = testDict:set(uuid.generate_random(), uuid.generate_random())
+    if forced then
+      return 'max users: '..i
+    end
+  end
+end
+
+local function TestPosting(self)
+
+  local count = 0
+  local info, serialInfo
+  local selectedTags
+
+
+  local testDict = ngx.shared.testusers
+  local succ, err, forced
+
+  while true do
+    count = count +1
+    if count % 100 == 0 then
+      print(count)
+    end
+
+    selectedTags = {}
+    for i = 1, random(10) do
+      tinsert(selectedTags,'testtag'..i)
+    end
+
+    tinsert(selectedTags,'arst')
+
+    self.params.link = 'http://test.com/thene some other long stuff'..random(1,100)
+
+    info ={
+      id = uuid.generate_random(),
+      parentID = uuid.generate_random(),
+      title = 'my fairly average post title made from normal words like maybe a twitter post or something'..ngx.time()..random(100),
+      link = self.params.link,
+      text = [[ an average comment lenght of maybe 200 characters an average comment lenght of maybe 200 characters
+                an average comment lenght of maybe 200 characters
+                an average comment lenght of maybe 200 characters
+                an average comment lenght of maybe 200 characters
+              ]],
+      createdAt = ngx.time(),
+      createdBy = uuid.generate_random(),
+      tags = selectedTags,
+      commentCount = 1000;
+    }
+
+    serialInfo = to_json(info)
+    succ, err, forced = testDict:set(info.id, serialInfo)
+    if forced then
+      return 'max posts: '..count
+    end
+  end
+end
+
+local function TestCommentDict()
+  local i  = 0
+  local comment
+  local serialComment
+  local succ, err, forced
+
+  local testDict = ngx.shared.testusers
+
+  while true do
+    i = i + 1
+    if i % 100 == 0 then
+      print(i)
+    end
+
+    comment = {
+      id = 'ariosetnoairsenoiarestaiorseooia'..i,
+      text = 'aernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatraernstoiearnstioeranstioernstiearnstoiestnaioresiaorsenarsitonsrtatr',
+      up = random(1000),
+      down =  random(1000),
+      score = random(1000),
+      userid = uuid.generate_random(),
+      postID = uuid.generate_random(),
+      createdAt = 1447001826,
+      createdBy = uuid.generate_random(),
+      viewers = {},
+      parentID = uuid.generate_random(),
+
+    }
+    for _ = 1, random(4) do
+      tinsert(comment.viewers, 'aroisetoiarsetoairestoairseaeiorsn')
+    end
+
+    serialComment = to_json(comment)
+    succ, err, forced = testDict:set(comment.id, serialComment)
+    if forced then
+      return 'max users: '..i
+    end
+  end
+
+end
+
+
+
 function m:Register(app)
   app:get('/test/posts',TestPosting)
-  app:get('/test/comments',TestComments)
+  app:get('/test/comments',TestCommentDict)
+  app:get('/test/users',TestUserIDsSharedDict)
   app:get('/gc', ShowGC)
 end
 

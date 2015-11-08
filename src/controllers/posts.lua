@@ -24,7 +24,6 @@ local function CreatePost(self)
     title = self.params.title,
     link = self.params.link,
     text = self.params.text,
-    createdAt = ngx.time(),
     createdBy = self.session.userID,
     tags = selectedTags
   }
@@ -44,7 +43,7 @@ local function GetPost(self)
   local sortBy = self.params.sort or 'best'
   sortBy = sortBy:lower()
 
-  local comments = api:GetPostComments(self.params.postID,sortBy)
+  local comments = api:GetPostComments(self.session.userID, self.params.postID,sortBy)
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
@@ -56,7 +55,7 @@ local function GetPost(self)
 
   self.comments = comments
 
-  local post = api:GetPost(self.params.postID)
+  local post = api:GetPost(self.session.userID, self.params.postID)
   --print(to_json(post))
   self.filters = api:GetFilterInfo(post.filters)
 

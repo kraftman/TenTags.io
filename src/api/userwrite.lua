@@ -39,13 +39,26 @@ function userwrite:AddUserTagVotes(userID, postID, tagIDs)
   for k,v in pairs(tagIDs) do
     tagIDs[k] = postID..':'..v
   end
-  local ok, err = red:sadd('userTagVotes:'..userID, tagIDs)
+  print(to_json(tagIDs))
+  local ok, err = red:sadd('userTagVotes:'..userID, unpack(tagIDs))
   SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)
   end
   return ok
 end
+
+function userwrite:AddUserCommentVotes(userID, commentID)
+  local red = GetRedisConnection()
+
+  local ok, err = red:sadd('userCommentVotes:'..userID, commentID)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add user comment vote: ',err)
+  end
+  return ok
+end
+
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = GetRedisConnection()
@@ -144,7 +157,7 @@ function userwrite:CreateSubUser(userInfo)
     red:hset('userToID',userInfo.username,userInfo.id)
   local results, err = red:commit_pipeline()
   SetKeepalive(red)
-  
+
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)
     return nil

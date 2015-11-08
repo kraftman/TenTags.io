@@ -12,13 +12,17 @@ local tinsert = table.insert
 local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
-local to_json = (require 'lapis.util').to_json
+--local to_json = (require 'lapis.util').to_json
 local magick = require 'magick'
 local http = require 'lib.http'
 --arbitrary, needs adressing later
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
 local TAG_START_UPVOTES = 5
+local COMMENT_START_DOWNVOTES = 0
+local COMMENT_START_UPVOTES = 5
+local COMMENT_LENGTH_LIMIT = 2000
+local POST_TITLE_LENGTH = 300
 --local permission = require 'userpermission'
 
 function api:UpdateUser(userID, userToUpdate)
@@ -64,8 +68,11 @@ function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)
 end
 
-function api:GetPostComments(postID,sortBy)
-  return cache:GetPostComments(postID,sortBy)
+function api:GetPostComments(userID, postID,sortBy)
+	local comments = cache:GetPostComments(userID, postID,sortBy)
+
+
+	return comments
 end
 
 function api:GetComment(postID, commentID)
@@ -158,52 +165,105 @@ function api:VerifyMessageSender(userID, messageInfo)
 	if userID ~= messageInfo.createdBy then
 		--check if they can send a message as another user
 		local user = cache:GetInfo(userID)
-		if user.role ~= 'Admin' then
+		if not user then
+			return nil, 'could not find user'
+		end
+		if user.role and user.role ~= 'Admin' then
 			messageInfo.createdBy = userID
 		end
 	end
 end
 
-function api:CreateMessageReply(userID, messageInfo)
+function api:SanitiseUserInput(msg, length)
+	if type(msg) ~= 'string' or msg == '' then
+		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
+		return ''
+	end
 
-	self:VerifyMessageSender(userID, messageInfo)
+	msg = self:SanitiseHTML(msg)
+	if not length then
+		return msg
+	end
 
-  -- TODO: validate message info
-  messageInfo.id = uuid.generate_random()
-  messageInfo.createdAt = ngx.time()
-  worker:CreateMessage(messageInfo)
+	return msg:sub(1, length)
 
-  local thread = cache:GetThread(messageInfo.threadID)
-  for _,userID in pairs(thread.viewers) do
-    if userID ~= messageInfo.createdBy then
-      ngx.log(ngx.ERR,'adding alert for user: ',userID)
-      worker:AddUserAlert(userID, 'thread:'..thread.id..':'..messageInfo.id)
+end
+
+function api:ConvertUserMessageToMessage(userID, userMessage)
+	if not userMessage.threadID then
+		return nil, 'no thread id'
+	end
+
+	if not userMessage.createdBy then
+		userMessage.createdBy = userID
+	end
+
+	local newInfo = {
+		threadID = self:SanitiseUserInput(userMessage.threadID, 200),
+		body = self:SanitiseUserInput(userMessage.body, 2000),
+		id = uuid.generate_random(),
+		createdAt = ngx.time(),
+		createdBy = self:SanitiseUserInput(userMessage.createdBy)
+	}
+
+	local ok, err = self:VerifyMessageSender(userID, newInfo)
+	if not ok then
+		return ok, err
+	end
+
+	return newInfo
+end
+
+function api:CreateMessageReply(userID, userMessage)
+	local newMessage, ok, err
+
+	newMessage, err = self:ConvertUserMessageToMessage(userID, userMessage)
+
+	if not newMessage then
+		return newMessage, err
+	end
+
+  ok, err = worker:CreateMessage(userMessage)
+	if not ok then
+		return ok, err
+	end
+
+  local thread = cache:GetThread(newMessage.threadID)
+  for _,viewerID in pairs(thread.viewers) do
+    if viewerID ~= newMessage.createdBy then
+      worker:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
 
 end
 
+
+
 function api:CreateThread(userID, messageInfo)
 
-	self:VerifyMessageSender(userID, messageInfo)
+	local ok, err = self:VerifyMessageSender(userID, messageInfo)
+	if not ok then
+		return err
+	end
 
   local recipientID = cache:GetUserID(messageInfo.recipient)
-  ngx.log(ngx.ERR,'recipientID ',recipientID)
+	if not recipientID then
+		return nil, 'couldnt find recipient user'
+	end
 
   local thread = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
     createdAt = ngx.time(),
-    title = messageInfo.title,
+    title = self:SanitiseHTML(messageInfo.title),
     viewers = {messageInfo.createdBy,recipientID},
     lastUpdated = ngx.time()
-
   }
 
   local msg = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
-    body = messageInfo.body,
+    body = self:SanitiseHTML(messageInfo.body),
     createdAt = ngx.time(),
     threadID = thread.id
   }
@@ -256,34 +316,21 @@ end
 function api:UserHasVotedComment(userID, commentID)
 	-- can only see own
 	local userCommentVotes = cache:GetUserCommentVotes(userID)
-	for _,v in pairs(userCommentVotes) do
-		if v:find(commentID) then
-			return true
-		end
-	end
-	return false
+	return userCommentVotes[commentID]
 end
 
 function api:UserHasVotedPost(userID, postID)
 	-- can only see own
 	local userPostVotes = cache:GetUserPostVotes(userID)
-	for _,v in pairs(userPostVotes) do
-		if v:find(postID) then
-			return true
-		end
-	end
-	return false
+	return userPostVotes[postID]
+
 end
 
 function api:UserHasVotedTag(userID, postID, tagID)
 	-- can only see own
 	local userTagVotes = cache:GetUserTagVotes(userID)
-	for _,v in pairs(userTagVotes) do
-		if v:find(postID..':'..tagID) then
-			return true
-		end
-	end
-	return false
+	return userTagVotes[postID..':'..tagID]
+
 end
 
 function api:GetScore(up,down)
@@ -324,7 +371,16 @@ function api:VoteComment(userID, postID, commentID,direction)
 	end
 
 	comment.score = self:GetScore(comment.up,comment.down)
-	worker:UpdateComment(comment)
+
+	local ok, err = worker:AddUserCommentVotes(userID, commentID)
+	if not ok then
+		return ok, err
+	end
+
+	return worker:UpdateComment(comment)
+
+	-- also add to user voted comments?
+
 end
 
 function api:GetMatchingTags(userFilterIDs, postFilterIDs)
@@ -349,15 +405,12 @@ function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 end
 
 function api:GetUnvotedTags(user,postID, tagIDs)
-	local votedTags = cache:GetUserTagVotes(user.id)
 	if user.role == 'admin' then
 		return tagIDs
 	end
 
-	local keyedVotedTags = {}
-	for _,v in pairs(votedTags) do
-		keyedVotedTags[v] = v
-	end
+	local keyedVotedTags = cache:GetUserTagVotes(user.id)
+
 	local unvotedTags = {}
 	for _, v in pairs(tagIDs) do
 		if not keyedVotedTags[postID..':'..v] then
@@ -416,11 +469,6 @@ function api:UpdatePostFilters(post)
 		since addfilters and updatefilters are the same, we can just add
 		all of the newfilters, even if they already exist
 	]]
-	local ok, err = self:UserCanEditFilter(userID)
-	if not ok then
-		return ok, err
-	end
-
 
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
@@ -445,7 +493,7 @@ function api:VotePost(userID, postID, direction)
 		not good'
 
 	]]
-	local post = self:GetPost(postID)
+	local post = cache:GetPost(postID)
 	if not post then
 		return nil, 'post not found'
 	end
@@ -495,64 +543,107 @@ function api:AddVoteToTag(tag,direction)
 	tag.score = self:GetScore(tag.up,tag.down)
 end
 
-function api:CreateComment(userID, commentInfo)
-	-- check if they are who they say they are
-	commentInfo.createdBy = commentInfo.createdBy or userID
-	if commentInfo.createdBy ~= userID then
+function api:ConvertUserCommentToComment(userID, comment)
+
+	comment.createdBy = comment.createdBy or userID
+	if comment.createdBy ~= userID then
 		local user = cache:GetUserInfo(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you cannot create a comment on behalf of someone else'
 		end
 	end
 
-  commentInfo.id = uuid.generate_random()
-  commentInfo.createdAt = ngx.time()
-  commentInfo.up = 1
-  commentInfo.down = 0
-  commentInfo.score = self:GetScore(commentInfo.up, commentInfo.down)
-  commentInfo.viewers = {commentInfo.createdBy}
-  commentInfo.text = self:SanitiseHTML(commentInfo.text)
+	local newComment = {
+		id = uuid.generate_random(),
+		createdAt = ngx.time(),
+		createdBy = self:SanitiseUserInput(comment.createdBy),
+		up = COMMENT_START_UPVOTES,
+		down = COMMENT_START_DOWNVOTES,
+		score = self:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
+		viewers = {comment.createdBy},
+		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
+		parentID = self:SanitiseUserInput(comment.parentID),
+		postID = self:SanitiseUserInput(comment.postID)
+	}
+
+	return newComment
+end
+
+function api:CreateComment(userID, userComment)
+	-- check if they are who they say they are
+
+	local newComment = api:ConvertUserCommentToComment(userID, userComment)
+
 
   local filters = {}
-  local postFilters = self:GetPost(commentInfo.postID).filters
-  ngx.log(ngx.ERR, to_json(postFilters))
-  local userFilters = self:GetUserFilters(commentInfo.createdBy)
+	local parentPost = cache:GetPost(newComment.postID)
+	if not parentPost then
+		return nil, 'could not find parent post'
+	end
 
+
+  local postFilters = parentPost.filters
+  local userFilters = self:GetUserFilters(newComment.createdBy)
+
+	-- get shared filters between user and post
   for _,userFilter in pairs(userFilters) do
     for _,postFilterID in pairs(postFilters) do
-      print(to_json(userFilter.id), to_json(postFilterID))
       if userFilter.id == postFilterID then
-        print('test', to_json(userFilter))
         tinsert(filters, userFilter)
       end
     end
   end
-  commentInfo.filters = filters
 
-   worker:CreateComment(commentInfo)
+  newComment.filters = filters
+
+	-- TODO: check comment is also added to users list of comments
+  local ok, err = worker:CreateComment(newComment)
+	if not ok then
+		return ok, err
+	end
+
   -- need to add alert to all parent comment viewers
-  if commentInfo.parentID == commentInfo.postID then
-    -- whole other kettle of fish
+  if newComment.parentID == newComment.postID then
+    -- TODO: whole other kettle of fish
   else
-    local parentComment = self:GetComment(commentInfo.postID, commentInfo.parentID)
-    for _,userID in pairs(parentComment.viewers) do
-      worker:AddUserAlert(userID, 'postComment:'..commentInfo.postID..':'..commentInfo.id)
+    local parentComment = self:GetComment(newComment.postID, newComment.parentID)
+    for _,viewerID in pairs(parentComment.viewers) do
+      worker:AddUserAlert(viewerID, 'postComment:'..newComment.postID..':'..newComment.id)
     end
   end
 
-	local post = self:GetPost(commentInfo.postID)
+	local post = cache:GetPost(newComment.postID)
 
-	worker:UpdatePostField(commentInfo.postID, 'commentCount',post.commentCount+1)
+	worker:UpdatePostField(newComment.postID, 'commentCount',post.commentCount+1)
 
 	return true
 
- --need to add comment to comments, commentid to user
-
- -- also increment post comment count
 end
 
-function api:GetPost(postID)
-  return cache:GetPost(postID)
+function api:GetPost(userID, postID)
+
+	if not postID then
+		return nil, 'no postID!'
+	end
+
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
+	local userVotedTags = cache:GetUserTagVotes(userID)
+	print(to_json(userVotedTags))
+
+	for _,tag in pairs(post.tags) do
+		print(to_json(tag))
+		if userVotedTags[postID..':'..tag.id] then
+			print('user has voted: ',tag.id)
+			tag.userHasVoted = true
+		end
+	end
+
+
+  return post
 end
 
 function api:GetDefaultFrontPage(range,filter)
@@ -663,9 +754,9 @@ function api:CreateSubUser(masterID, username)
 
   local subUser = {
     id = uuid.generate(),
-    username = username,
+    username = self:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
-    parentID = masterID,
+    parentID = self:SanitiseHTML(masterID,50),
     enablePM = 1
   }
 
@@ -676,7 +767,8 @@ function api:CreateSubUser(masterID, username)
 
   return worker:CreateSubUser(subUser)
 
-  -- TODO: need to update master info with list of sub users
+	-- TODO check incr userCount by one
+
 end
 
 function api:GetMasterUsers(userID, masterID)
@@ -707,43 +799,67 @@ function api:GetMasterUsers(userID, masterID)
   return users
 end
 
+function api:ConvertUserMasterToMaster(master)
+
+
+	if not master.username then
+		return nil, 'no username given'
+	end
+
+	if not master.password then
+		return nil, 'no password given'
+	end
+
+	if not master.email then
+		return nil, 'no email given'
+	end
+
+	master.username = master.username:gsub(' ','')
+	master.password = master.password:gsub(' ','')
+	master.email = master.email:gsub(' ','')
+
+	if #master.password > 200 then
+		return nil, 'password must be shorter than 200 chars'
+	end
+	if #master.password < 8 then
+		return nil, 'password must be longer than 8 chars'
+	end
+
+	local newMaster = {
+		username = self:SanitiseUserInput(master.username, 20),
+		password = master.password,
+		email = self:SanitiseUserInput(master.email),
+		passwordHash = scrypt.crypt(master.password),
+		id = uuid.generate_random(),
+		active = 0,
+		userCount = 1,
+		users = {}
+	}
+
+
+
+
+end
 
 function api:CreateMasterUser(confirmURL, userInfo)
-  userInfo.username = userInfo.username and userInfo.username:lower() or ''
-  userInfo.password = userInfo.password and userInfo.password:lower() or ''
-  userInfo.email = userInfo.email and userInfo.email:lower() or ''
 
-  if trim(userInfo.username) == '' then
-    return nil, 'no username provided!'
-  elseif trim(userInfo.email) == '' then
-    return nil, 'no email provided!'
-  elseif trim(userInfo.password) == '' then
-    return nil, 'no password provided!'
-  end
+	local newMaster = api:ConvertUserMasterToMaster(userInfo)
 
-  local masterInfo = {
-    email = userInfo.email,
-    passwordHash = scrypt.crypt(userInfo.password),
-    id = uuid.generate_random(),
-    active = 0,
-    userCount = 1,
-    users = {}
-  }
 
   local firstUser = {
     id = uuid.generate_random(),
-    username = userInfo.username,
+    username = newMaster.username,
     filters = cache:GetUserFilterIDs('default'),
-    parentID = masterInfo.id
+    parentID = newMaster.id
   }
 
-  tinsert(masterInfo.users,firstUser.id)
-  masterInfo.currentUserID = firstUser.id
+  tinsert(newMaster.users,firstUser.id)
+  newMaster.currentUserID = firstUser.id
 
-  local activateKey = self:CreateActivationKey(masterInfo)
+  local activateKey = self:CreateActivationKey(newMaster)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
   worker:SendActivationEmail(url, userInfo.email)
-  worker:CreateMasterUser(masterInfo)
+  worker:CreateMasterUser(newMaster)
   worker:CreateSubUser(firstUser)
   return true
 
@@ -759,7 +875,7 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 
 
   local filterIDs = cache:GetUserFilterIDs(userID)
-  local found = false
+  local found = nil
   for _,v in pairs(filterIDs) do
     if v == filterID then
       found = true
@@ -781,6 +897,8 @@ function api:CreateTag(userID, tagName)
     return nil
   end
 
+	tagName = self:SanitiseUserInput(tagName, 100)
+
   local tag = cache:GetTag(tagName)
   if tag then
     return tag
@@ -797,9 +915,7 @@ function api:CreateTag(userID, tagName)
   return tagInfo
 end
 
-function api:PostIsValid(postInfo)
-  return postInfo
-end
+
 
 function api:GetDomain(url)
   return url:match('^%w+://([^/]+)')
@@ -827,13 +943,18 @@ function api:VoteTag(userID, postID, tagID, direction)
 		end
 	end
 
+	local ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
+	if not ok then
+		return ok, err
+	end
+
 	self:UpdatePostFilters(post)
 	worker:UpdatePostTags(post)
 
 end
 
 
-function api:AddPostTags(postInfo)
+function api:CreatePostTags(postInfo)
 	for k,v in pairs(postInfo.tags) do
 
 		v = trim(v:lower())
@@ -1012,11 +1133,8 @@ function api:GetIcon(newPost)
 
 end
 
-function api:CreatePost(userID, postInfo)
-  -- rate limit
-  -- basic sanity check
-  -- send to worker
-	-- TODO: move most of this to worker
+function api:ConvertUserPostToPost(userID, post)
+
 	if not userID then
 		return nil, 'no userID'
 	end
@@ -1024,30 +1142,58 @@ function api:CreatePost(userID, postInfo)
 		return nil, 'no post info'
 	end
 
-	postInfo.createdBy = postInfo.createdBy or userID
-	if userID ~= postInfo.createdBy then
+	post.createdBy = post.createdBy or userID
+	if userID ~= post.createdBy then
 		local user = cache:GetUserInfo(userID)
 		if user.role ~= 'Admin' then
-			postInfo.createdBy = userID
+			post.createdBy = userID
 		end
 	end
 
-  if not api:PostIsValid(postInfo) then
-    return false
+	local newID = uuid.generate_random()
+
+	local newPost = {
+		id = newID,
+		parentID = newID,
+		createdBy = post.createdBy,
+		commentCount = 0,
+		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
+		link = post.link,
+		text = self:SanitiseUserInput(post.text, 2000),
+		createdAt = ngx.time()
+	}
+
+	newPost.tags = {}
+
+	for k,v in pairs(post.tags) do
+		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
+	end
+
+
+	return newPost
+
+end
+
+function api:GeneratePostTags(post)
+	if not post.link or trim(post.link) == '' then
+    tinsert(post.tags,'meta:type:self')
   end
 
-  postInfo.id = uuid.generate()
-  postInfo.parentID = postInfo.id
-  postInfo.createdBy = postInfo.createdBy or 'default'
-  postInfo.commentCount = 0
-  postInfo.score = 0
+  tinsert(post.tags,'meta:user:'..post.createdBy)
+end
 
-  if not postInfo or trim(postInfo.link) == '' then
-    tinsert(postInfo.tags,'meta:type:self')
-  end
+function api:CreatePost(userID, postInfo)
 
+	-- TODO: move most of this to worker
+	local newPost, ok, err
 
-  tinsert(postInfo.tags,'meta:user:'..postInfo.createdBy)
+	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
+	if not newPost then
+		return newPost, err
+	end
+
+	self:GeneratePostTags(newPost)
+
   if postInfo.link then
 		self:GetIcon(postInfo)
     local domain  = self:GetDomain(postInfo.link)
@@ -1059,8 +1205,8 @@ function api:CreatePost(userID, postInfo)
     tinsert(postInfo.tags,'meta:type:link')
     tinsert(postInfo.tags,'meta:link:'..domain)
   end
-	self:AddPostTags(postInfo)
 
+	self:CreatePostTags(postInfo)
 
 	local postFilters = self:CalculatePostFilters(postInfo)
 
@@ -1069,8 +1215,16 @@ function api:CreatePost(userID, postInfo)
 		tinsert(postInfo.filters,k)
 	end
 
-  worker:AddPostToFilters(postInfo, postFilters)
-  worker:CreatePost(postInfo)
+  ok, err = worker:AddPostToFilters(postInfo, postFilters)
+	if not ok then
+		return ok, err
+	end
+
+  ok, err = worker:CreatePost(postInfo)
+	if not ok then
+		return ok, err
+	end
+
   return true
 end
 
@@ -1091,12 +1245,6 @@ function api:GetPostFilterTagIntersection(filterTags,postTags)
   return matchingTags
 end
 
-function api:FilterIsValid(filterInfo)
-  return filterInfo
-  -- lower case it
-  -- check for invalid chars
-  -- check it doesnt already exist
-end
 
 function api:GetFilterPosts(filter)
   return cache:GetFilterPosts(filter)
@@ -1168,57 +1316,67 @@ function api:AddMod(userID, filterID, newModName)
 
 end
 
-function api:CreateFilter(userID, filterInfo)
-	filterInfo.createdBy = filterInfo.createdBy or {}
-	if userID ~= filterInfo.createdBy then
+function api:ConvertUserFilterToFilter(userID, userFilter)
+	userFilter.createdBy = userFilter.createdBy or userID
+	if userID ~= userFilter.createdBy then
 		local user = cache:GetUserInfo(userID)
 		if user.role ~= 'Admin' then
-			filterInfo.createdBy = userID
+			userFilter.createdBy = userID
 		end
 	end
 
-  if not api:FilterIsValid(filterInfo) then
-    return false
-  end
+	local newFilter = {
+		id = uuid.generate_random(),
+		name = self:SanitiseUserInput(userFilter.name, 30),
+		subs = 1,
+		mods = {},
+	}
 
-  filterInfo.id = uuid.generate_random()
-  filterInfo.name = filterInfo.name:lower()
-  filterInfo.subs = 1
-	filterInfo.mods = {}
+	return newFilter
+end
+
+function api:CreateFilter(userID, filterInfo)
+	local newFilter, ok, err
+
+	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
+	if not newFilter then
+		return newFilter, err
+	end
+
 
   local tags = {}
 
-  for k,tagName in pairs(filterInfo.requiredTags) do
-    local tag = self:CreateTag(filterInfo.createdBy,tagName)
+  for k,tagName in pairs(newFilter.requiredTags) do
+    local tag = self:CreateTag(newFilter.createdBy,tagName)
     if tag then
-      tag.filterID = filterInfo.id
+      tag.filterID = newFilter.id
       tag.filterType = 'required'
-      tag.createdBy = filterInfo.createdBy
-      tag.createdAt = filterInfo.createdAt
+      tag.createdBy = newFilter.createdBy
+      tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      filterInfo.requiredTags[k] = tag
+      newFilter.requiredTags[k] = tag
     else
-      filterInfo.requiredTags[k] = nil
+      newFilter.requiredTags[k] = nil
     end
   end
 
-  for k,tagName in pairs(filterInfo.bannedTags) do
-    local tag = self:CreateTag(tagName, filterInfo.createdBy)
+  for k,tagName in pairs(newFilter.bannedTags) do
+    local tag = self:CreateTag(tagName, newFilter.createdBy)
     if tag then
-      tag.filterID = filterInfo.id
+      tag.filterID = newFilter.id
       tag.filterType = 'banned'
-      tag.createdBy = filterInfo.createdBy
-      tag.createdAt = filterInfo.createdAt
+      tag.createdBy = newFilter.createdBy
+      tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      filterInfo.bannedTags[k] = tag
+      newFilter.bannedTags[k] = tag
     else
       --if its blank
-      filterInfo.bannedTags[k] = nil
+      newFilter.bannedTags[k] = nil
     end
   end
-  filterInfo.tags = tags
+  newFilter.tags = tags
 
-  worker:CreateFilter(filterInfo)
+  worker:CreateFilter(newFilter)
 
 
   return true

@@ -15,6 +15,8 @@ local function FrontPage(self)
     for _,v in pairs(self.posts) do
       v.hash = ngx.md5(v.id..self.session.userID)
     end
+
+
   end
 
   if not self.posts or #self.posts == 0 then
