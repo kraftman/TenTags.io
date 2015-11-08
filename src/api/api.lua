@@ -1020,6 +1020,9 @@ function api:CreatePost(userID, postInfo)
 	if not userID then
 		return nil, 'no userID'
 	end
+	if not postInfo then
+		return nil, 'no post info'
+	end
 
 	postInfo.createdBy = postInfo.createdBy or userID
 	if userID ~= postInfo.createdBy then

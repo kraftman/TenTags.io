@@ -14,9 +14,6 @@ local function FrontPage(self)
   if self.session.userID then
     for _,v in pairs(self.posts) do
       v.hash = ngx.md5(v.id..self.session.userID)
-      if v.icon then
-        print('found icon')
-      end
     end
   end
 

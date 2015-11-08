@@ -157,3 +157,10 @@ populating new filters with existing posts.
 - sinterstore every filter tag into a new settings
 - diff the new set against the unwanted filter tags
 - the result should be a list of applicable posts
+
+
+caching and offloading
+creating a post
+- only the user needs to see the post immediately
+- add the post to the cache as soon as its verified, so they can see it
+- add it to the work for deferred processing

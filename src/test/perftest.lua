@@ -18,7 +18,12 @@ local m = {}
 
 local function TestPosting(self)
   local ok, err
-  for j = 1, 9000 do
+
+  for j = 1, 10000 do
+    if j % 1000 == 0 then
+      print(j)
+    end
+    
     local selectedTags = {}
     for i = 1, random(10) do
       tinsert(selectedTags,'testtag'..i)
@@ -41,15 +46,16 @@ local function TestPosting(self)
       tags = selectedTags
     }
 
-    ok, err = api:CreatePost(info)
+    ok, err = api:CreatePost(self.session.userID, info)
     if not ok then
       ngx.log(ngx.ERR, 'error from api: ',err or 'none')
       return {status = 500}
     end
 
   end
+  return string.format("</br>Worker %d: GC size: %.3f KB", ngx.var.pid, collectgarbage("count"))
 
-  return 'done'
+
 
 end
 

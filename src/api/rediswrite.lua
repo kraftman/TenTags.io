@@ -262,7 +262,7 @@ function write:CreateFilter(filterInfo)
 end
 
 function write:CreateFilterPostInfo(red, filter,postInfo)
-  print('updating filter '..filter.title..'with new score: '..filter.score)
+  --print('updating filter '..filter.title..'with new score: '..filter.score)
   red:sadd('filterposts:'..filter.id, postInfo.id)
   red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
   red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
