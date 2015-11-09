@@ -3,6 +3,8 @@
 local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
+local respond_to = (require 'lapis.application').respond_to
+
 local m = {}
 
 
@@ -11,8 +13,43 @@ local function ViewComment(self)
 
   self.commentInfo.username = api:GetUserInfo(self.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(self.commentInfo))
-  return {render = 'st.comment'}
+  return {render = 'viewcomment'}
 
+end
+
+-- needs moving to comments controller
+local function CreateComment(self)
+
+
+  local commentInfo = {
+    parentID = self.params.parentID,
+    postID = self.params.postID,
+    createdBy = self.session.userID,
+    text = self.params.commentText,
+  }
+  ngx.log(ngx.ERR, to_json(self.params))
+  local ok = api:CreateComment(self.session.userID, commentInfo)
+  if ok then
+    return 'created!'
+  else
+    return 'failed!'
+  end
+
+end
+
+local function EditComment(self)
+  local commentInfo = {
+    postID = self.params.postID,
+    text = self.params.commentText,
+    id = self.params.commentID
+  }
+
+  local ok,err = api:EditComment(self.session.userID, commentInfo)
+  if ok then
+    return 'created!'
+  else
+    return 'failed: '..err
+  end
 end
 
 local function SubscribeComment(self)
@@ -61,6 +98,12 @@ function m:Register(app)
   app:get('subscribecomment','/comment/subscribe/:postID/:commentID',SubscribeComment)
   app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', UpvoteComment)
   app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash',DownVoteComment)
+  app:post('newcomment','/comment/',CreateComment)
+
+  app:match('viewcomment','/comment/:postID/:commentID', respond_to({
+    GET = ViewComment,
+    POST = EditComment
+  }))
 end
 
 return m

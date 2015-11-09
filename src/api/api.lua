@@ -628,6 +628,39 @@ function api:ConvertUserCommentToComment(userID, comment)
 	return newComment
 end
 
+function api:EditComment(userID, userComment)
+	local ok, err = self:RateLimit('EditComment:'..userID, 4, 120)
+	if not ok then
+		return ok, err
+	end
+
+	if not userComment or not userComment.id or not userComment.postID then
+		return nil, 'invalid comment provided'
+	end
+
+	local comment = cache:GetComment(userComment.postID, userComment.id)
+	if not comment then
+		return nil, 'comment not found'
+	end
+
+	if comment.createdBy ~= userID then
+		local user = cache:GetUserInfo(userID)
+		if not user or user.role ~= 'Admin' then
+			return nil, 'you cannot edit other users comments'
+		end
+	end
+
+	comment.text = userComment.text
+	comment.editedAt = ngx.time()
+
+	ok, err = worker:CreateComment(comment)
+	
+	return ok, err
+
+	-- dont change post comment count
+
+end
+
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
 

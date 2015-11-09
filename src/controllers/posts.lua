@@ -78,27 +78,7 @@ local function CreatePostForm(self)
   return { render = 'createpost' }
 end
 
--- needs moving to comments controller
-local function CreateComment(self)
 
-  --local newCommentID = uuid.generate_random()
-
-  local commentInfo = {
-    --id = newCommentID,
-    parentID = self.params.parentID,
-    postID = self.params.postID,
-    createdBy = self.session.userID,
-    text = self.params.commentText,
-  }
-  ngx.log(ngx.ERR, to_json(self.params))
-  local ok = api:CreateComment(self.session.userID, commentInfo)
-  if ok then
-    return 'created!'
-  else
-    return 'failed!'
-  end
-
-end
 
 
 local function UpvoteTag(self)
@@ -181,7 +161,6 @@ function m:Register(app)
   app:get('downvotetag','/post/downvotetag/:tagID/:postID',DownvoteTag)
   app:get('viewpost','/post/:postID',GetPost)
   app:get('/test',CreatePost)
-  app:post('newcomment','/post/comment/',CreateComment)
   app:get('upvotepost','/post/:postID/upvote', UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', DownvotePost)
   app:get('geticon', '/icon/:postID', GetIcon)
