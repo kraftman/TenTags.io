@@ -33,7 +33,7 @@ local voteInfo = ngx.shared.userVotes
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = true
+local ENABLE_CACHE = false
 
 
 function cache:GetMasterUserInfo(masterID)
