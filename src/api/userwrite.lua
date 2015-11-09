@@ -154,7 +154,7 @@ function userwrite:CreateSubUser(userInfo)
     for _,filterID in pairs(filters) do
       red:sadd('userfilters:'..userInfo.id,filterID)
     end
-    red:hset('userToID',userInfo.username,userInfo.id)
+    red:hset('userToID',userInfo.username:lower(),userInfo.id)
   local results, err = red:commit_pipeline()
   SetKeepalive(red)
 

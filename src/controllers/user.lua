@@ -99,11 +99,11 @@ local function CreateSubUser(self)
   if not self.params.username or trim(self.params.username) == '' then
     return 'no username!'
   end
-  local succ = api:CreateSubUser(self.session.masterID,self.params.username)
+  local succ,err = api:CreateSubUser(self.session.masterID,self.params.username)
   if succ then
     return 'win!'
   else
-    return 'fail'
+    return 'fail: '..err
   end
 end
 

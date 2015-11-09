@@ -341,6 +341,9 @@ end
 
 function cache:GetFilterByName(filterName)
   local filterID = self:GetFilterID(filterName)
+  if not filterID then
+    return nil
+  end
   return self:GetFilterByID(filterID) or {}
 end
 

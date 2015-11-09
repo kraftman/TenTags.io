@@ -111,6 +111,7 @@ end
 
 
 function userread:GetUserID(username)
+  username = username:lower()
   local red = GetRedisConnection()
   local ok,err = red:hget('userToID',username)
   SetKeepalive(red)

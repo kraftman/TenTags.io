@@ -256,7 +256,7 @@ function read:GetFilterID(filterName)
   end
   SetKeepalive(red)
   if ok == ngx.null then
-    return {}
+    return nil
   else
     return ok
   end

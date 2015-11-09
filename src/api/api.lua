@@ -26,7 +26,7 @@ local COMMENT_LENGTH_LIMIT = 2000
 local POST_TITLE_LENGTH = 300
 --local permission = require 'userpermission'
 
-local ENABLE_RATELIMIT = true
+local ENABLE_RATELIMIT = false
 
 function api:RateLimit(key, limit,duration)
 	if not ENABLE_RATELIMIT then
@@ -215,6 +215,8 @@ function api:SanitiseUserInput(msg, length)
 		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
 		return ''
 	end
+	msg = trim(msg)
+
 	if msg == '' then
 		ngx.log(ngx.ERR, 'string is blank')
 		return ''
@@ -884,6 +886,11 @@ function api:CreateSubUser(masterID, username)
     enablePM = 1
   }
 
+	local existingUserID = cache:GetUserID(subUser.username)
+	if existingUserID then
+		return nil, 'username is taken'
+	end
+
   local master = cache:GetMasterUserInfo(masterID)
 
   tinsert(master.users,subUser.id)
@@ -1321,7 +1328,7 @@ function api:CreatePost(userID, postInfo)
 		return ok, err
 	end
 
-	
+
 	local newPost, ok, err
 
 	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
@@ -1462,6 +1469,8 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		end
 	end
 
+
+
 	local newFilter = {
 		id = uuid.generate_random(),
 		name = self:SanitiseUserInput(userFilter.name, 30),
@@ -1475,6 +1484,12 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
 	}
+
+	local existingFilter = cache:GetFilterByName(newFilter.name)
+	if existingFilter then
+		return nil, 'filter name is taken'
+	end
+
 
 	for _,v in pairs(userFilter.requiredTags) do
 		tinsert(newFilter.requiredTags, self:SanitiseUserInput(v, 100))
