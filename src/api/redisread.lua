@@ -354,7 +354,6 @@ function read:GetPost(postID)
 
     if ok ~= ngx.null then
       local tag = self:ConvertListToTable(ok)
-      print(to_json(tag))
       if tag and tag.score then
         tag.score = tonumber(tag.score)
       end
