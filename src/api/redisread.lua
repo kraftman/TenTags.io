@@ -213,7 +213,7 @@ function read:GetThreadInfos(threadIDs)
     res[k] = self:ConvertThreadFromRedis(v)
   end
 
-  -- TODO: work out if this can be combined with the above
+
   red:init_pipeline()
     for _,thread in pairs(res) do
       red:hgetall('ThreadMessages:'..thread.id)
@@ -241,7 +241,6 @@ function read:GetThreadInfos(threadIDs)
         thread.messages = msgs[k]
       end
     end
-    -- TODO sort the messages
 
   end
 

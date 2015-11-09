@@ -183,8 +183,6 @@ end
 function api:GetUserAlerts(userID)
 	-- can only get their own
   local alerts = cache:GetUserAlerts(userID)
-  -- TODO: need to also update the users lastcheckedAt
-  -- both in redis and the cache (when it caches)
 
   return alerts
 end
@@ -726,15 +724,14 @@ function api:CreateComment(userID, userComment)
 
   newComment.filters = filters
 
-	-- TODO: check comment is also added to users list of comments
-  local ok, err = worker:CreateComment(newComment)
+  ok, err = worker:CreateComment(newComment)
 	if not ok then
 		return ok, err
 	end
 
   -- need to add alert to all parent comment viewers
   if newComment.parentID == newComment.postID then
-    -- TODO: whole other kettle of fish
+    -- issue-60
   else
     local parentComment = self:GetComment(newComment.postID, newComment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
@@ -888,13 +885,12 @@ function api:CreateSubUser(masterID, username)
   }
 
   local master = cache:GetMasterUserInfo(masterID)
+
   tinsert(master.users,subUser.id)
 
   worker:CreateMasterUser(master)
 
   return worker:CreateSubUser(subUser)
-
-	-- TODO check incr userCount by one
 
 end
 
@@ -1325,7 +1321,7 @@ function api:CreatePost(userID, postInfo)
 		return ok, err
 	end
 
-	-- TODO: move most of this to worker
+	
 	local newPost, ok, err
 
 	newPost, err = self:ConvertUserPostToPost(userID, postInfo)

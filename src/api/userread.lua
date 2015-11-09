@@ -142,13 +142,10 @@ function userread:GetUserComments(userID)
   end
 end
 
-
-
 function userread:GetMasterUserInfo(masterID)
-  -- TODO: get subusers too
+
   local red = GetRedisConnection()
   local ok, err = red:hgetall('master:'..masterID)
-
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user info:',err)
@@ -161,14 +158,13 @@ function userread:GetMasterUserInfo(masterID)
   end
 
   ok, err = red:smembers('masterusers:'..masterID)
+  SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get master users:',err)
   end
   master.users = ok
-  SetKeepalive(red)
+
   return master
-
-
 end
 
 function userread:GetMasterUserByEmail(email)

@@ -35,7 +35,6 @@ local DEFAULT_CACHE_TIME = 30
 
 local ENABLE_CACHE = false
 
-
 function cache:GetMasterUserInfo(masterID)
 
   if ENABLE_CACHE then
