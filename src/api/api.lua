@@ -628,6 +628,39 @@ function api:ConvertUserCommentToComment(userID, comment)
 	return newComment
 end
 
+function api:EditPost(userID, userPost)
+	local ok, err = self:RateLimit('EditPost:'..userID, 4, 300)
+	if not ok then
+		return ok, err
+	end
+
+	local post = cache:GetPost(userPost.id)
+
+	if post.createdBy ~= userID then
+		print(userPost)
+		local user = cache:GetUserInfo(userID)
+		if not user or user.role ~= 'Admin' then
+			return nil, 'you cannot edit other users posts'
+		end
+	end
+
+
+	if not post then
+		return nil, 'could not find post'
+	end
+
+	if ngx.time() - post.createdAt < 600 then
+		post.title = self:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
+	end
+
+	post.text = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+	post.editedAt = ngx.time()
+
+	ok, err = worker:CreatePost(post)
+	return ok, err
+
+end
+
 function api:EditComment(userID, userComment)
 	local ok, err = self:RateLimit('EditComment:'..userID, 4, 120)
 	if not ok then
@@ -650,11 +683,11 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
-	comment.text = userComment.text
+	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
 	ok, err = worker:CreateComment(comment)
-	
+
 	return ok, err
 
 	-- dont change post comment count

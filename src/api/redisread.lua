@@ -345,7 +345,6 @@ function read:GetPost(postID)
     postTags = {}
   end
 
-
   post.tags = {}
 
   for _, tagID in pairs(postTags) do

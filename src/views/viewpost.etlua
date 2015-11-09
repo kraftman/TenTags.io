@@ -11,7 +11,27 @@
 
   <div>
   <a href="<%= post.link -%>"> <%= post.title -%></a>
-  <p><%= post.text -%></p>
+  <% if post.createdBy == session.userID then %>
+    <form id='createpost' action='' method='post'accept-charset='UTF-8'>
+      <fieldset >
+      <legend>Edit Post</legend>
+
+
+      <label for='posttitle' >Post Title:</label>
+      <input type='text' name='posttitle' id='posttitle' maxlength="50" value="<%= post.title -%>"/>
+
+      <label for='posttext' >Post text</label>
+      <input type='text' name='posttext' id='posttext' maxlength="50" value="<%= post.text -%>"/>
+      </br>
+
+      <input id='submitButton' type='submit' name='Submit' value='Edit' />
+
+      </fieldset>
+    </form>
+  <% else %>
+    <p><%= post.text -%></p>
+  <% end %>
+
 
   Filters:</br>
   <% for _,filter in pairs(filters) do %>

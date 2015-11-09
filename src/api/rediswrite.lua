@@ -517,7 +517,6 @@ function write:CreatePost(postInfo)
     -- add post info
     red:hmset('post:'..postInfo.id,postInfo)
 
-
   local results,err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to create post:',err)

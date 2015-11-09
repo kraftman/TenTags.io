@@ -152,15 +152,36 @@ local function GetIcon(self)
 
 end
 
+local function EditPost(self)
+
+  local post = {
+    id = self.params.postID,
+    title = self.params.posttitle,
+    text = self.params.posttext
+  }
+
+  local ok,err = api:EditPost(self.session.userID, post)
+  if ok then
+    return 'success'
+  else
+    return 'fail: '..err
+  end
+
+
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
     POST = CreatePost
   }))
+  app:match('viewpost','/post/:postID', respond_to({
+    GET = GetPost,
+    POST = EditPost
+  }))
+
   app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)
   app:get('downvotetag','/post/downvotetag/:tagID/:postID',DownvoteTag)
-  app:get('viewpost','/post/:postID',GetPost)
-  app:get('/test',CreatePost)
   app:get('upvotepost','/post/:postID/upvote', UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', DownvotePost)
   app:get('geticon', '/icon/:postID', GetIcon)
