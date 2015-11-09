@@ -144,7 +144,7 @@ local function UpdateFilterTags(self,filter)
   local userID = self.session.userID
 
 
-  local ok, err = api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+  local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTags, bannedTags)
   if ok then
     return 'ok'
   else

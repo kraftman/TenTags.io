@@ -14,6 +14,10 @@ function worker:AddUserTagVotes(userID, postID, tagIDs)
   return userWrite:AddUserTagVotes(userID, postID, tagIDs)
 end
 
+function worker:LogChange(key, time, log)
+  return rediswrite:LogChange(key, time, log)
+end
+
 function worker:AddUserCommentVotes(userID, commentID)
   return userWrite:AddUserCommentVotes(userID, commentID)
 end

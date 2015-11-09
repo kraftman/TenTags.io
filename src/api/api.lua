@@ -474,7 +474,7 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
-function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
 	local ok, err = self:UserCanEditFilter(userID)
 	if not ok then
@@ -484,7 +484,7 @@ function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
 	-- get the actual tag from the tagID
 	for k,v in pairs(requiredTags) do
 		if v ~= '' then
-	 		requiredTags[k] = self:CreateTag(userID, v).id
+			requiredTags[k] = self:CreateTag(userID, v).id
 		end
 	end
 	for k,v in pairs(bannedTags) do
@@ -492,6 +492,8 @@ function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
 			bannedTags[k] = self:CreateTag(userID, v).id
 		end
 	end
+
+	local filter = cache:GetFilter(filterID)
 
 	local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, requiredTags, bannedTags)
 
@@ -509,12 +511,22 @@ function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
 		newPost.score = score / count
   end
 
-  worker:AddPostsToFilter(filter, newPosts)
+  ok , err = worker:AddPostsToFilter(filter, newPosts)
+	if not ok then
+		return ok, err
+	end
 
+  ok, err = worker:RemovePostsFromFilter(filter.id, oldPostIDs)
+	if not ok then
+		return ok, err
+	end
 
-  worker:RemovePostsFromFilter(filter.id, oldPostIDs)
+	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
+	if not ok then
+		return ok,err
+	end
+
   return worker:UpdateFilterTags(filter, requiredTags, bannedTags)
-
 
 end
 
