@@ -31,10 +31,7 @@ local function NewFilter(self)
   if self.params.setdefault or self.params.subscribe then
     return ToggleDefault(self)
   end
-  for k,v in pairs(self.req) do
-    print(k,to_json(v))
-  end
-  print(self.session.userID)
+
 
   local requiredTags = from_json(self.params.requiredTags)
   local bannedTags = from_json(self.params.bannedTags)
@@ -89,8 +86,6 @@ local function DisplayFilter(self)
   -- also load the list of mods
   -- check if the current user is on the list of mods
   -- display settings if they are
-  print(to_json(self.posts[1]))
-
 
   return {render = 'viewfilter'}
 

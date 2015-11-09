@@ -175,8 +175,12 @@ function api:VerifyMessageSender(userID, messageInfo)
 end
 
 function api:SanitiseUserInput(msg, length)
-	if type(msg) ~= 'string' or msg == '' then
+	if type(msg) ~= 'string' then
 		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
+		return ''
+	end
+	if msg == '' then
+		ngx.log(ngx.ERR, 'string is blank')
 		return ''
 	end
 
@@ -919,6 +923,22 @@ function api:GetDomain(url)
 end
 
 function api:VoteTag(userID, postID, tagID, direction)
+	if not userID then
+		return nil, 'no userID'
+	end
+
+	if not postID then
+		return nil, 'no postID'
+	end
+
+	if not tagID then
+		return nil, 'no tagID'
+	end
+
+	if not direction then
+		return nil, 'no direction'
+	end
+
 	-- check post for existing vote
 	-- check tag for existing vote
 
@@ -926,19 +946,17 @@ function api:VoteTag(userID, postID, tagID, direction)
 		--return nil, 'already voted'
 	--end
 
-
-
 	local post = cache:GetPost(postID)
 
-	if self:UserHasVotedTag(userID, postID, tagID) then
-		return nil, 'already voted on tag'
-	end
-
+	--if self:UserHasVotedTag(userID, postID, tagID) then
+	--	return nil, 'already voted on tag'
+	--end
 	for _, tag in pairs(post.tags) do
 		if tag.id == tagID then
 			self:AddVoteToTag(tag, direction)
 		end
 	end
+
 
 	local ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
 	if not ok then
@@ -946,7 +964,7 @@ function api:VoteTag(userID, postID, tagID, direction)
 	end
 
 	self:UpdatePostFilters(post)
-	worker:UpdatePostTags(post)
+	local ok, err = worker:UpdatePostTags(post)
 
 end
 
@@ -1135,7 +1153,7 @@ function api:ConvertUserPostToPost(userID, post)
 	if not userID then
 		return nil, 'no userID'
 	end
-	if not postInfo then
+	if not post then
 		return nil, 'no post info'
 	end
 
@@ -1162,7 +1180,7 @@ function api:ConvertUserPostToPost(userID, post)
 
 	newPost.tags = {}
 
-	for k,v in pairs(post.tags) do
+	for _,v in pairs(post.tags) do
 		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
 	end
 
@@ -1191,33 +1209,33 @@ function api:CreatePost(userID, postInfo)
 
 	self:GeneratePostTags(newPost)
 
-  if postInfo.link then
-		self:GetIcon(postInfo)
-    local domain  = self:GetDomain(postInfo.link)
+  if newPost.link then
+		self:GetIcon(newPost)
+    local domain  = self:GetDomain(newPost.link)
     if not domain then
-      ngx.log(ngx.ERR, 'invalid url: ',postInfo.link)
+      ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
-    postInfo.domain = domain
-    tinsert(postInfo.tags,'meta:type:link')
-    tinsert(postInfo.tags,'meta:link:'..domain)
+    newPost.domain = domain
+    tinsert(newPost.tags,'meta:type:link')
+    tinsert(newPost.tags,'meta:link:'..domain)
   end
 
-	self:CreatePostTags(postInfo)
+	self:CreatePostTags(newPost)
 
-	local postFilters = self:CalculatePostFilters(postInfo)
+	local postFilters = self:CalculatePostFilters(newPost)
 
-	postInfo.filters = {}
+	newPost.filters = {}
 	for k,_ in pairs(postFilters) do
-		tinsert(postInfo.filters,k)
+		tinsert(newPost.filters,k)
 	end
 
-  ok, err = worker:AddPostToFilters(postInfo, postFilters)
+  ok, err = worker:AddPostToFilters(newPost, postFilters)
 	if not ok then
 		return ok, err
 	end
 
-  ok, err = worker:CreatePost(postInfo)
+  ok, err = worker:CreatePost(newPost)
 	if not ok then
 		return ok, err
 	end
@@ -1325,15 +1343,30 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 	local newFilter = {
 		id = uuid.generate_random(),
 		name = self:SanitiseUserInput(userFilter.name, 30),
+		description = self:SanitiseUserInput(userFilter.name, 2000),
+		title = self:SanitiseUserInput(userFilter.name, 200),
 		subs = 1,
 		mods = {},
+		requiredTags = {},
+		bannedTags = {},
+		ownerID = self:SanitiseUserInput(userFilter.ownerID,50),
+		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
+		createdAt = ngx.time()
 	}
+
+	for _,v in pairs(userFilter.requiredTags) do
+		tinsert(newFilter.requiredTags, self:SanitiseUserInput(v, 100))
+	end
+
+	for _,v in pairs(userFilter.requiredTags) do
+		tinsert(newFilter.requiredTags, self:SanitiseUserInput(v, 100))
+	end
 
 	return newFilter
 end
 
 function api:CreateFilter(userID, filterInfo)
-	local newFilter, ok, err
+	local newFilter, err
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
 	if not newFilter then

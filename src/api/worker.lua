@@ -129,7 +129,7 @@ function worker:UnsubscribeFromFilter(username,filterID)
 end
 
 function worker:AddPostToFilters(post, filters)
-  rediswrite:AddPostToFilters(post, filters)
+  return rediswrite:AddPostToFilters(post, filters)
 end
 
 function worker:RemovePostFromFilters(postID, filterIDs)

@@ -103,8 +103,7 @@ local function UpvoteTag(self)
 end
 
 local function DownvoteTag(self)
-
-  api:VoteTag(self.params.postID, self.params.tagID, 'down')
+  api:VoteTag(self.session.userID, self.params.postID, self.params.tagID, 'down')
   return 'meep'
 
 end

@@ -209,6 +209,7 @@ end
 function write:CreateFilter(filterInfo)
   local requiredTags = {}
   local bannedTags = {}
+
   for _,v in pairs( filterInfo.requiredTags) do
     tinsert(requiredTags, v.id)
   end
@@ -216,7 +217,7 @@ function write:CreateFilter(filterInfo)
     tinsert(bannedTags, v.id)
   end
 
-  for k,mod in pairs(filterInfo.mods) do
+  for _,mod in pairs(filterInfo.mods) do
     filterInfo['mod:'..mod] = to_json(mod)
   end
   filterInfo.mods = nil
@@ -252,6 +253,7 @@ function write:CreateFilter(filterInfo)
   red:zadd('filters',filterInfo.createdAt,filterInfo.id)
 
   -- add all filter info
+  print('filter:'..filterInfo.id)
   red:hmset('filter:'..filterInfo.id, filterInfo)
   self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
   local results, err = red:commit_pipeline()
@@ -479,6 +481,7 @@ function write:UpdatePostTags(post)
   local red = GetRedisConnection()
   red:init_pipeline()
   for _,tag in pairs(post.tags) do
+    print('setting: up: ',tag.up, ' down: ',tag.down)
     red:hmset('posttags:'..post.id..':'..tag.id,tag)
   end
   local res, err = red:commit_pipeline()
