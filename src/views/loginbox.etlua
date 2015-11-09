@@ -1,5 +1,5 @@
 <div>
-  <a href="<%= url_for('home') %>">Home</a>
+  <a href="<%= url_for('home') %>">Filtta</a>
 
   <% if session.username then %>
      </a> <a href="<%= url_for('logout') %>">logout</a>
