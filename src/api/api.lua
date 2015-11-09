@@ -15,6 +15,7 @@ local salt = 'poopants'
 --local to_json = (require 'lapis.util').to_json
 local magick = require 'magick'
 local http = require 'lib.http'
+local rateDict = ngx.shared.ratelimit
 --arbitrary, needs adressing later
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
@@ -25,7 +26,40 @@ local COMMENT_LENGTH_LIMIT = 2000
 local POST_TITLE_LENGTH = 300
 --local permission = require 'userpermission'
 
+local ENABLE_RATELIMIT = true
+
+function api:RateLimit(key, limit,duration)
+	if not ENABLE_RATELIMIT then
+		return true
+	end
+
+	local ok, err = rateDict:get(key)
+
+	if not ok then
+		rateDict:set(key, 0, duration)
+	end
+
+	rateDict:incr(key,1)
+
+	if not ok then
+		return true
+	end
+
+	if ok <= limit then
+		return ok
+	else
+		return nil, 429
+	end
+
+end
+
 function api:UpdateUser(userID, userToUpdate)
+
+	local ok, err = self:RateLimit('UpdateUser:'..userID, 3, 30)
+	if not ok then
+		return ok, err
+	end
+
 	if userID ~= userToUpdate.id then
 		local user = cache:GetUserInfo(userID)
 		if user.role ~= 'Admin' then
@@ -156,6 +190,10 @@ function api:GetUserAlerts(userID)
 end
 
 function api:UpdateLastUserAlertCheck(userID)
+	local ok, err = self:RateLimit('UpdateUserAlertCheck:'..userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
 	-- can only edit their own
   return worker:UpdateLastUserAlertCheck(userID)
 end
@@ -250,6 +288,11 @@ function api:CreateThread(userID, messageInfo)
 		return err
 	end
 
+	ok, err = self:RateLimit('CreateThread:'..userID, 2, 30)
+	if not ok then
+		return ok, err
+	end
+
   local recipientID = cache:GetUserID(messageInfo.recipient)
 	if not recipientID then
 		return nil, 'couldnt find recipient user'
@@ -287,6 +330,12 @@ function api:GetThreads(userID)
 end
 
 function api:SubscribeComment(userID, postID, commentID)
+
+	local ok, err = self:RateLimit('SubscribeComment:'..userID, 3, 10)
+	if not ok then
+		return ok, err
+	end
+
   local comment = cache:GetComment(postID, commentID)
   -- check they dont exist
   for _, v in pairs(comment.viewers) do
@@ -426,6 +475,7 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 end
 
 function api:UpdateFilterTags(userID, filter, requiredTags, bannedTags)
+
 	local ok, err = self:UserCanEditFilter(userID)
 	if not ok then
 		return ok, err
@@ -490,6 +540,12 @@ function api:UpdatePostFilters(post)
 end
 
 function api:VotePost(userID, postID, direction)
+
+	local ok, err = self:RateLimit('VotePost:'..userID, 10, 60)
+	if not ok then
+		return ok, err
+	end
+
 	--[[
 		when we vote down a post as a whole we are saying
 		'this post is not good enough to be under these filters'
@@ -574,6 +630,11 @@ end
 
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
+
+	local ok, err = self:RateLimit('CreateComment:'..userID, 1, 30)
+	if not ok then
+		return ok, err
+	end
 
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
@@ -893,6 +954,7 @@ end
 
 function api:CreateTag(userID, tagName)
 
+
   if tagName:gsub(' ','') == '' then
     return nil
   end
@@ -923,6 +985,10 @@ end
 
 function api:VoteTag(userID, postID, tagID, direction)
 
+	local ok, err = self:RateLimit('VoteTag:'..userID, 5, 30)
+	if not ok then
+		return ok, err
+	end
 
 	if not direction then
 		return nil, 'no direction'
@@ -1188,6 +1254,11 @@ end
 
 function api:CreatePost(userID, postInfo)
 
+	local ok, err = self:RateLimit('CreatePost:'..userID, 1, 300)
+	if not ok then
+		return ok, err
+	end
+
 	-- TODO: move most of this to worker
 	local newPost, ok, err
 
@@ -1355,6 +1426,12 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 end
 
 function api:CreateFilter(userID, filterInfo)
+
+	local ok, err = self:RateLimit('CreateFilter:'..userID, 1, 600)
+	if not ok then
+		return ok, err
+	end
+
 	local newFilter, err
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)

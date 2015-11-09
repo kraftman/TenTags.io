@@ -55,7 +55,13 @@ local function GetPost(self)
 
   self.comments = comments
 
-  local post = api:GetPost(self.session.userID, self.params.postID)
+  local post,err = api:GetPost(self.session.userID, self.params.postID)
+  if not post then
+    if type(err) == 'number' then
+      return {status = err}
+    end
+    return err
+  end
   --print(to_json(post))
   self.filters = api:GetFilterInfo(post.filters)
 

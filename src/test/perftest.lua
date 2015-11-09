@@ -24,7 +24,7 @@ local function TestPosting(self)
     if j % 1000 == 0 then
       print(j)
     end
-    
+
     local selectedTags = {}
     for i = 1, random(10) do
       tinsert(selectedTags,'testtag'..i)
@@ -235,9 +235,29 @@ local function TestCommentDict()
 
 end
 
+local function TestRate()
+  local rate = ngx.shared.ratelimit
+  local count = 0
+  local ok, err, forced
+
+  while true do
+    count = count + 1
+    if count % 100 == 0 then
+      print(count)
+    end
+
+    ok, err,forced = rate:set('userupdateten:'..uuid.generate_random(), random (5, 10))
+    if forced then
+      return 'max rate keys: '..count
+    end
+
+  end
+end
+
 
 
 function m:Register(app)
+  app:get('/test/rate',TestRate)
   app:get('/test/posts',TestPosting)
   app:get('/test/comments',TestCommentDict)
   app:get('/test/users',TestUserIDsSharedDict)
