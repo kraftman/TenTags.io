@@ -65,6 +65,11 @@ local function GetPost(self)
   --print(to_json(post))
   self.filters = api:GetFilterInfo(post.filters)
 
+  if self.session.userID then
+    post.hash = ngx.md5(post.id..self.session.userID)
+    post.userHasVoted = api:UserHasVotedPost(self.session.userID, post.id)
+  end
+
   self.post = post
 
   return {render = true}
