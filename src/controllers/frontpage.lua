@@ -13,7 +13,9 @@ local function FrontPage(self)
   -- if empty and logged in then redirect to seen posts
   if self.session.userID then
     for _,v in pairs(self.posts) do
-      v.hash = ngx.md5(v.id..self.session.userID)
+      if v.id then
+        v.hash = ngx.md5(v.id..self.session.userID)
+      end
     end
 
 
