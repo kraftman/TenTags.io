@@ -31,7 +31,7 @@ end
 
 --===================================
 
-wrk.path = '/post/58da6737055549348ad0e0c24bc0328d'
+wrk.path = '/post/9261a692abb84924a0d9729fc6f8b887'
 wrk.headers["cookie"] = GetHeader()
 
 
