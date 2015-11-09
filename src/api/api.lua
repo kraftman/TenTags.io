@@ -533,8 +533,6 @@ function api:VotePost(userID, postID, direction)
 
 end
 
-
-
 function api:AddVoteToTag(tag,direction)
 	if direction == 'up' then
 		print('vote up')
@@ -545,6 +543,7 @@ function api:AddVoteToTag(tag,direction)
 	end
 	-- recalculate the tag score
 	tag.score = self:GetScore(tag.up,tag.down)
+	print(tag.score)
 end
 
 function api:ConvertUserCommentToComment(userID, comment)
@@ -923,17 +922,7 @@ function api:GetDomain(url)
 end
 
 function api:VoteTag(userID, postID, tagID, direction)
-	if not userID then
-		return nil, 'no userID'
-	end
 
-	if not postID then
-		return nil, 'no postID'
-	end
-
-	if not tagID then
-		return nil, 'no tagID'
-	end
 
 	if not direction then
 		return nil, 'no direction'
@@ -1032,12 +1021,12 @@ function api:CalculatePostFilters(post)
 	local validTags = {}
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
-			--print('valid tag: ',tag.id)
+			print('valid tag: ',tag.id,tag.name)
 			tinsert(validTags, tag)
 		end
 	end
 
-	local filterIDs = cache:GetFilterIDsByTags(post.tags)
+	local filterIDs = cache:GetFilterIDsByTags(validTags)
   local chosenFilterIDs = {}
 
   -- add all the filters that want these tags

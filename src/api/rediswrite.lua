@@ -481,7 +481,6 @@ function write:UpdatePostTags(post)
   local red = GetRedisConnection()
   red:init_pipeline()
   for _,tag in pairs(post.tags) do
-    print('setting: up: ',tag.up, ' down: ',tag.down)
     red:hmset('posttags:'..post.id..':'..tag.id,tag)
   end
   local res, err = red:commit_pipeline()
