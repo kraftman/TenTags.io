@@ -16,17 +16,20 @@ app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
 
   if self.session.userID and self.session.masterID then
-    
+
     if api:UserHasAlerts(self.session.userID) then
 
       self.userHasAlerts = true
     end
     self.otherUsers = api:GetMasterUsers(self.session.userID, self.session.masterID)
   end
+  if not self.otherUsers then
+    self.otherUsers = {}
+  end
   --ngx.log(ngx.ERR, to_json(user))
 
   self.csrf_token = csrf.generate_token(self,self.session.userID)
-  self.userFilters = api:GetUserFilters(self.session.userID) or {}
+  self.userFilters = api:GetUserFilters(self.session.userID or 'default') or {}
 end)
 
 require 'tags':Register(app)

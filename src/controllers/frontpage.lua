@@ -17,13 +17,11 @@ local function FrontPage(self)
         v.hash = ngx.md5(v.id..self.session.userID)
       end
     end
-
-
   end
 
   if not self.posts or #self.posts == 0 then
     if filter ~= 'seen' then
-      return { redirect_to = self:url_for("seen") }
+      --return { redirect_to = self:url_for("seen") }
     end
   end
 
