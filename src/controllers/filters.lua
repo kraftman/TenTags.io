@@ -129,7 +129,7 @@ local function BanDomain(self,filter)
     banReason = self.params.banDomainReason or '',
     bannedBy = self.session.userID
   }
-  local ok, err = api:FilterBanDomain(filter.id, banInfo)
+  local ok, err = api:FilterBanDomain(self.session.userID,filter.id, banInfo)
   if ok then
     return 'success'
   else

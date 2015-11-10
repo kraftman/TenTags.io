@@ -34,6 +34,9 @@ function api:RateLimit(key, limit,duration)
 	end
 
 	local ok, err = rateDict:get(key)
+	if err then
+		ngx.log(ngx.ERR, 'error getting rate limit key ',key)
+	end
 
 	if not ok then
 		rateDict:set(key, 0, duration)
@@ -59,7 +62,7 @@ function api:LabelUser(userID, targetUserID, label)
 		return ok, err
 	end
 
-	local ok, err = worker:LabelUser(userID, targetUserID, label)
+	ok, err = worker:LabelUser(userID, targetUserID, label)
 	return ok, err
 
 end
@@ -132,15 +135,6 @@ function api:UserHasAlerts(userID)
 	--can only get your own alerts
   local alerts = cache:GetUserAlerts(userID)
   return #alerts > 0
-end
-
-function api:UserIsMod(userID, filterID)
-
-end
-
-function api:UserIsAdmin(user)
-
-
 end
 
 function api:UserCanEditFilter(userID, filterID)
@@ -828,7 +822,7 @@ function api:FilterUnbanUser(filterID, userID)
 	return worker:FilterUnbanUser(filterID, userID)
 end
 
-function api:FilterBanDomain(filterID, banInfo)
+function api:FilterBanDomain(userID, filterID, banInfo)
 	local ok, err = self:UserCanEditFilter(userID, filterID)
 	if not ok then
 		return ok, err
@@ -980,8 +974,7 @@ function api:ConvertUserMasterToMaster(master)
 		users = {}
 	}
 
-
-
+	return newMaster
 
 end
 
@@ -1096,13 +1089,14 @@ function api:VoteTag(userID, postID, tagID, direction)
 	end
 
 
-	local ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
+	ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
 	if not ok then
 		return ok, err
 	end
 
 	self:UpdatePostFilters(post)
-	local ok, err = worker:UpdatePostTags(post)
+	ok, err = worker:UpdatePostTags(post)
+	return ok, err
 
 end
 
@@ -1192,7 +1186,7 @@ end
 
 function api:LoadImage(httpc, imageInfo)
 	local res, err = httpc:request_uri(imageInfo.link)
-	if not res then
+	if err then
 		--print(' cant laod image: ',imageInfo.link, ' err: ',err)
 		return nil
 	end
@@ -1246,7 +1240,7 @@ function api:GetIcon(newPost)
 	table.sort(imageLinks, function(a,b) return a.size > b.size end)
 
 	local finalImage
-	for k,v in pairs(imageLinks) do
+	for _,v in pairs(imageLinks) do
 		if v.image then
 			finalImage = v
 			break
@@ -1320,14 +1314,12 @@ function api:GeneratePostTags(post)
 end
 
 function api:CreatePost(userID, postInfo)
+	local newPost, ok, err
 
-	local ok, err = self:RateLimit('CreatePost:'..userID, 1, 300)
+	ok, err = self:RateLimit('CreatePost:'..userID, 1, 300)
 	if not ok then
 		return ok, err
 	end
-
-
-	local newPost, ok, err
 
 	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
 	if not newPost then
@@ -1509,13 +1501,12 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 end
 
 function api:CreateFilter(userID, filterInfo)
+	local newFilter, err, ok
 
-	local ok, err = self:RateLimit('CreateFilter:'..userID, 1, 600)
+	ok, err = self:RateLimit('CreateFilter:'..userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
-
-	local newFilter, err
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
 	if not newFilter then
