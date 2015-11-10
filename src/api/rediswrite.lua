@@ -76,18 +76,6 @@ function write:GetComments(postID)
   return self:ConvertListToTable(ok)
 end
 
-function write:LogChange(key, time, log)
-  local red = GetRedisConnection()
-
-  local ok, err = red:zadd(key, time, to_json(log))
-  SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, ' unable to add log: ', err)
-  end
-
-  return ok, err
-end
-
 
 function write:ConvertListToTable(list)
   local info = {}

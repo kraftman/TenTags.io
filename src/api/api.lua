@@ -510,16 +510,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
   -- filter needs to have a score per post
   for _, newPost in pairs(newPosts) do
-    local matchingTags = self:GetPostFilterTagIntersection(requiredTags, newPost.tags)
-		local score = 0
-		local count = 0
-		for _,tag in pairs(matchingTags) do
-			if not tag.name:find('^meta:') then
-				score = score + tag.score
-				count = count + 1
-			end
-		end
-		newPost.score = score / count
+    newPost.score = self:AverageTagScore(requiredTags, newPost.tags)
   end
 
   ok , err = worker:AddPostsToFilter(filter, newPosts)
@@ -1142,24 +1133,8 @@ function api:GetValidFilters(filterID, post)
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
 
-	-- check all desired tags are present on the post
-	local matchingTags = self:GetPostFilterTagIntersection(filter.requiredTags, post.tags)
-	if not matchingTags or #matchingTags == 0 then
-		--print('tags dont match')
-		return nil
-	end
+	filter.score = self:AverageTagScore(filter.requiredTags, post.tags)
 
-	local score = 0
-	local count = 0
-	for _,tag in pairs(matchingTags) do
-		if not tag.name:find('^meta:') then
-			--print(tag.name.. ' '..tag.up.. ' '..tag.down)
-			score = score + tag.score
-			count = count + 1
-		end
-	end
-	filter.score = score / count
-	--print(filter.score)
 
 
 	if (filter.bannedUsers[post.createdBy]) then
@@ -1395,21 +1370,29 @@ function api:CreatePost(userID, postInfo)
   return true
 end
 
-function api:GetPostFilterTagIntersection(filterTags,postTags)
+function api:AverageTagScore(filterRequiredTagIDs,postTags)
 
-	local matchingTags = {}
-  for _,filterTagID in pairs(filterTags) do
+	local score = 0
+	local count = 0
+
+  for _,filterTagID in pairs(filterRequiredTagIDs) do
     for _,postTag in pairs(postTags) do
       if filterTagID == postTag.id then
-        tinsert(matchingTags,postTag)
+				if (not postTag.name:find('^meta:')) and
+					(not postTag.name:find('^source:')) and
+					postTag.score > TAG_BOUNDARY then
+	        	score = score + postTag.score
+						count = count + 1
+				end
       end
     end
   end
-	if #matchingTags == 0 then
-		return nil
+
+	if count == 0 then
+		return 0
 	end
 
-  return matchingTags
+	return score / count
 end
 
 
