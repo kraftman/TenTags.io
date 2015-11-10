@@ -5,6 +5,12 @@
   </div>
 <% end %>
 
+<form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
+  <textarea name='tagUser' id='tagUser' rows="4" cols="50"></textarea>
+  </br>
+  <input type='submit' value="Tag User"></input>
+</form>
+
 <% for i, comment in pairs(comments) do %>
   <% render("views.st.comment",{commentInfo = comment}) %>
 <% end %>

@@ -18,6 +18,10 @@ function worker:LogChange(key, time, log)
   return rediswrite:LogChange(key, time, log)
 end
 
+function worker:LabelUser(userID, targetUserID, label)
+  return userWrite:LabelUser(userID, targetUserID, label)
+end
+
 function worker:AddUserCommentVotes(userID, commentID)
   return userWrite:AddUserCommentVotes(userID, commentID)
 end

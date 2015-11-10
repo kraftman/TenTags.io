@@ -102,10 +102,24 @@ function userread:GetUserInfo(userID)
   if not ok then
     ngx.log(ngx.ERR,'unable to get user: ',err)
   end
+
   if not ok or ok == ngx.null then
     return nil
   end
-  return self:ConvertListToTable(ok)
+
+  local user = self:ConvertListToTable(ok)
+
+  user.userLabels = {}
+  local targetUserID
+  for k, v in pairs(user) do
+    if k:find('userlabel:') then
+      targetUserID = k:match('userlabel:(.+)')
+      user.userLabels[targetUserID] = v
+      user[k] = nil
+    end
+  end
+
+  return user
 
 end
 

@@ -53,9 +53,9 @@ end
 
 
 local function ViewUser(self)
-  local userID = api:GetUserID(self.params.username)
-  self.userInfo = api:GetUserInfo(userID)
-  self.comments = api:GetUserComments(self.session.userID, userID)
+  self.userID = api:GetUserID(self.params.username)
+  self.userInfo = api:GetUserInfo(self.userID)
+  self.comments = api:GetUserComments(self.session.userID, self.userID)
   for _,v in pairs(self.comments) do
     v.username = api:GetUserInfo(v.createdBy).username
   end
@@ -118,6 +118,19 @@ local function SwitchUser(self)
 
 end
 
+local function TagUser(self)
+
+  local userTag = self.params.tagUser
+
+  local ok, err = api:LabelUser(self.session.userID, self.params.userID, userTag)
+  if ok then
+    return 'success'
+  else
+    return 'fail: '..err
+  end
+
+end
+
 function m:Register(app)
 
   app:match('newuser','/user/new', respond_to({
@@ -129,9 +142,9 @@ function m:Register(app)
     POST = CreateSubUser
   }))
 
-
   app:post('login','/login',LoginUser)
   app:get('login','/login',LoginUser)
+  app:post('taguser', '/user/tag/:userID', TagUser)
   app:get('viewuser','/user/:username',ViewUser)
   app:get('logout','/logout',LogOut)
   app:get('confirmemail','/confirmemail',ConfirmEmail)

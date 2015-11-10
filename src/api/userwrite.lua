@@ -140,6 +140,16 @@ function userwrite:AddSeenPosts(userID,seenPosts)
   return true
 end
 
+function userwrite:LabelUser(userID, targetUserID, label)
+  local red = GetRedisConnection()
+
+  local ok, err = red:hset('user:'..userID, 'userlabel:'..targetUserID, label)
+  if err then
+    ngx.log(ngx.ERR, 'unable to set user label')
+  end
+  return ok, err
+end
+
 function userwrite:CreateSubUser(userInfo)
   local red = GetRedisConnection()
   local filters = userInfo.filters or {}

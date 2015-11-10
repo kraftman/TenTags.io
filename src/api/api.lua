@@ -53,6 +53,17 @@ function api:RateLimit(key, limit,duration)
 
 end
 
+function api:LabelUser(userID, targetUserID, label)
+	local ok, err = self:RateLimit('UpdateUser:'..userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
+	local ok, err = worker:LabelUser(userID, targetUserID, label)
+	return ok, err
+
+end
+
 function api:UpdateUser(userID, userToUpdate)
 
 	local ok, err = self:RateLimit('UpdateUser:'..userID, 3, 30)

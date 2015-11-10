@@ -7,7 +7,12 @@
         <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
       <% end %>
 
-      <a href="<%= url_for('viewuser',{username = child.username}) %>"> <%= child.username -%> </a>
+      <a href="<%= url_for('viewuser',{username = child.username}) %>">
+        <%= child.username -%>
+        <% if userLabels[child.createdBy] then %>
+          <%= userLabels[child.createdBy] -%>
+        <% end %>
+      </a>
       <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
       <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
     </div>
