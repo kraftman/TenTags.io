@@ -10,12 +10,15 @@ function worker:New()
   w.redisread = require 'api.redisread'
   w.cjson = require 'cjson'
   w.userWrite = require 'api.userwrite'
+  w.util = require 'util'
 
   -- shared dicts
   w.locks = ngx.shared.locks
   w.scripts = ngx.shared.scripts
   w.userUpdateDict = ngx.shared.userupdates
   w.userSessionSeenDict = ngx.shared.usersessionseen
+
+  w.emailer = (require 'timers.emailsender'):New(w.util)
 
   return w
 end
@@ -44,14 +47,15 @@ end
 
 function worker.ProcessRecurring(_,self)
   self:ScheduleTimer()
-
   self:FlushUserSeen()
-
 end
 
 
 function worker.OnServerStart(_,self)
-  if not self:GetLock('l:ServerStart', 5) then
+
+  self.emailer.Run(_,self.emailer)
+
+  if not self.util:GetLock('l:ServerStart', 5) then
     return
   end
 
@@ -59,26 +63,14 @@ function worker.OnServerStart(_,self)
 end
 
 
-function worker:GetLock(key, lockTime)
-  local success, err = self.locks:add(key, true, lockTime)
-  if not success then
-    if err ~= 'exists' then
-      ngx.log(ngx.ERR, 'failed to add lock key: ',err)
-    end
-    return nil
-  end
-  return true
-end
-
 function worker:FlushUserSeen()
-  if not self:GetLock('l:FlushUsers',10) then
+  if not self.util:GetLock('l:FlushUsers',10) then
     return
   end
-  --ngx.log(ngx.ERR, 'flushing user scripts')
 
   local userIDs = self.userUpdateDict:get_keys(1000)
   local sessionSeenPosts
-  for k,userID in pairs(userIDs) do
+  for _,userID in pairs(userIDs) do
     sessionSeenPosts = self.userSessionSeenDict:get(userID)
     sessionSeenPosts = self.cjson.decode(sessionSeenPosts)
 

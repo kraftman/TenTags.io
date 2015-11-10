@@ -21,14 +21,13 @@ local function CreateNewUser(self)
 
   local confirmURL = self:build_url()..self:url_for("confirmemail")
   local ok,err  = api:CreateMasterUser(confirmURL, info)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to activate:',err)
-    return {render = err, status = 400}
+
+  if ok then
+    return 'Success, please activate your account via email!'
+  else
+    return 'Unable to create account: '..err
   end
-
-
-  return 'success, please activate your account via email'
-
+  
 end
 
 local function ConfirmEmail(self)

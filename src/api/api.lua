@@ -990,12 +990,22 @@ function api:CreateMasterUser(confirmURL, userInfo)
     parentID = newMaster.id
   }
 
+	local existingUserID = cache:GetUserID(newMaster.username)
+	if existingUserID then
+		return nil, 'username is taken'
+	end
+
+
   tinsert(newMaster.users,firstUser.id)
   newMaster.currentUserID = firstUser.id
 
   local activateKey = self:CreateActivationKey(newMaster)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
-  worker:SendActivationEmail(url, userInfo.email)
+  local ok, err = worker:SendActivationEmail(url, userInfo.email)
+	if err then
+		return ok, err
+	end
+
   worker:CreateMasterUser(newMaster)
   worker:CreateSubUser(firstUser)
   return true

@@ -4,7 +4,7 @@ local ltn12 = require 'resty.smtp.ltn12'
 
 local m = {}
 
-function m:sendMessage(subject, body, recipient)
+function m:SendMessage(subject, body, recipient)
     local msg = {
         headers = {
             to = '<crtanner@gmail.com>',
@@ -26,6 +26,7 @@ function m:sendMessage(subject, body, recipient)
     if not ok then
         print("Mail send failed", err) -- better error handling required
     end
+    return ok, err
 end
 
 return m

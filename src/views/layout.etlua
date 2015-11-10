@@ -16,7 +16,5 @@
     <% render("views.filterbar") %>
     <% content_for("inner") %>
   </div>
-
-
 </body>
 </html>

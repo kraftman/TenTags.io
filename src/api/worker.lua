@@ -2,9 +2,11 @@ local worker = {}
 
 local rediswrite = require 'api.rediswrite'
 local userWrite = require 'api.userwrite'
-local email = require 'lib.testemail'
 local commentWrite = require 'api.commentwrite'
 local cache = require 'api.cache'
+local to_json = (require 'lapis.util').to_json
+
+local emailDict = ngx.shared.emailQueue
 
 function worker:CreateTag(tagInfo)
   rediswrite:CreateTag(tagInfo)
@@ -156,14 +158,24 @@ end
 
 function worker:SendActivationEmail(url,emailAddr)
 
-  local subject = "Email confirmation"
-  local body = [[
+  local email = {}
+  email.body = [[
     Congrats for registering, you are the best!
     Please click this link to confirm your email address
   ]]
-  body = body..url
-  email:sendMessage(subject,body,emailAddr)
+  email.body = email.body..url
+  email.subject = 'Email confirmation'
 
+  local ok, err, forced = emailDict:set(emailAddr, to_json(email))
+  if (not ok) and err then
+    ngx.log(ngx.ERR, 'unable to set emaildict: ', err)
+    return nil, 'unable to send email'
+  end
+  if forced then
+    ngx.log(ngx.ERR, 'WARNING! forced email dict! needs to be bigger!')
+  end
+
+  return true
 end
 
 function worker:CreateSubUser(userInfo)
