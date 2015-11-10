@@ -4,7 +4,7 @@ local ltn12 = require 'resty.smtp.ltn12'
 
 local m = {}
 
-function m:sendMessage(subject, body)
+function m:sendMessage(subject, body, recipient)
     local msg = {
         headers = {
             to = '<crtanner@gmail.com>',
@@ -14,12 +14,12 @@ function m:sendMessage(subject, body)
     }
 
     local ok, err = smtp.send {
-        from = '<me@itschr.is>',
-        rcpt = '<crtanner@gmail.com>',
+        from = '<admin@filtta.com>',
+        rcpt = '<'..recipient..'>',
         source = smtp.message(msg),
-        user = 'me@itschr.is',
-        password = 'rimhgxozkljiozbf',
-        server = 'smtp.gmail.com',
+        user = 'admin@filtta.com',
+        password = '*n7NvY[Oh9K8$',
+        server = 'mail.privateemail.com',
         port = 465,
         ssl = {enable = true}
     }
