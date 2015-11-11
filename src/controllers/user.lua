@@ -131,6 +131,57 @@ local function TagUser(self)
 
 end
 
+local function ResetUser(self)
+  -- get the email
+  -- get the master from the email
+  -- set the master to restting
+  -- addd a reset uui
+
+  -- dont reveal anything about what happened
+  local url = self:build_url()..'/passwordreset?email='..self.params.email..'&key='
+  local ok , err = api:SendPasswordReset(url, self.params.email)
+  if ok then
+    return 'success, please check your email'
+  else
+    return 'there was an error sending the password reset link'
+  end
+
+end
+
+local function ResetPasswordLink(self)
+  local emailAddr = self.params.email
+  local key = self.params.key
+  print(emailAddr,key)
+  if not emailAddr or not key then
+    return 'params missing'
+  end
+
+  local ok, err = api:VerifyReset(emailAddr,key)
+  if not ok then
+    return 'invalid key!'
+  end
+
+  self.emailAddr = emailAddr
+  self.resetKey = key
+
+  return { render = 'resetpassword'}
+
+end
+
+local function ChangePassword(self)
+  local emailAddr = self.params.emailAddr
+  local resetKey = self.params.resetKey
+  local newPassword = self.params.password
+
+  local ok, err = api:ResetPassword(emailAddr, resetKey, newPassword)
+  if ok then
+    return 'success, please login!'
+  else
+    return 'failure, sorry!'
+  end
+
+end
+
 function m:Register(app)
 
   app:match('newuser','/user/new', respond_to({
@@ -142,6 +193,13 @@ function m:Register(app)
     POST = CreateSubUser
   }))
 
+  app:match('resetpasswordlink','/passwordreset', respond_to({
+    GET = ResetPasswordLink,
+    POST = ChangePassword
+  }))
+
+
+  app:post('resetpassword', '/user/reset', ResetUser)
   app:post('login','/login',LoginUser)
   app:get('login','/login',LoginUser)
   app:post('taguser', '/user/tag/:userID', TagUser)

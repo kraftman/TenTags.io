@@ -833,22 +833,61 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 	return worker:FilterBanDomain(filterID, banInfo)
 end
 
+
+function api:VerifyReset(emailAddr, resetKey)
+  return cache:VerifyReset(emailAddr, resetKey)
+end
+
+function api:ResetPassword(email, key, password)
+	local ok, err = cache:VerifyReset(email, key)
+	if not ok then
+		return nil, 'validation failed'
+	end
+
+	local master = cache:GetMasterUserByEmail(email)
+	print('new password:',password)
+	local passwordHash = scrypt.crypt(password)
+	ok, err = worker:ResetMasterPassword(master.id, passwordHash)
+	if not ok then
+		return nil, 'validation failed'
+	end
+	ok, err = worker:DeleteResetKey(email)
+	return ok, err
+	-- can set new password
+end
+
 function api:ValidateMaster(userCredentials)
   local masterInfo = cache:GetMasterUserByEmail(userCredentials.email)
-
+	print('checking master id: ',masterInfo.id)
   if not masterInfo then
+		print('master not found')
     return
   end
 
   if masterInfo.active == 0 then
     return nil,true
   end
-
+	print(userCredentials.password, ' =',masterInfo.passwordHash, '=')
   local valid = scrypt.check(userCredentials.password,masterInfo.passwordHash)
+	if not valid then
+		print('password not valid')
+	end
   if valid then
     masterInfo.passwordHash = nil
     return masterInfo
   end
+
+end
+
+function api:SendPasswordReset(url, email)
+
+	local masterInfo = cache:GetMasterUserByEmail(email)
+	if not masterInfo then
+		return true
+	end
+
+	local resetKey = uuid.generate_random()
+	return worker:SendPasswordReset(url, email, resetKey)
 
 end
 
@@ -965,7 +1004,6 @@ function api:ConvertUserMasterToMaster(master)
 
 	local newMaster = {
 		username = self:SanitiseUserInput(master.username, 20),
-		password = master.password,
 		email = self:SanitiseUserInput(master.email),
 		passwordHash = scrypt.crypt(master.password),
 		id = uuid.generate_random(),

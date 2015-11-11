@@ -178,6 +178,39 @@ function worker:SendActivationEmail(url,emailAddr)
   return true
 end
 
+function worker:ResetMasterPassword(masterID, passwordHash)
+  return userWrite:ResetMasterPassword(masterID, passwordHash)
+end
+
+function worker:SendPasswordReset(url, emailAddr, uuid)
+
+  local ok, err = rediswrite:AddPasswordReset(emailAddr, uuid)
+  if not ok then
+    return ok, err
+  end
+
+  local email = {}
+  email.body = [[
+    To reset your password, please click this link:
+  ]]
+  email.body = email.body.. url..uuid
+
+  ok, err, forced = emailDict:set(emailAddr, to_json(email))
+  if (not ok) and err then
+    ngx.log(ngx.ERR, 'unable to set emaildict: ', err)
+    return nil, 'unable to send email'
+  end
+  if forced then
+    ngx.log(ngx.ERR, 'WARNING! forced email dict! needs to be bigger!')
+  end
+
+  return true
+end
+
+function worker:DeleteResetKey(emailAddr)
+  return rediswrite:DeleteResetKey(emailAddr)
+end
+
 function worker:CreateSubUser(userInfo)
   return userWrite:CreateSubUser(userInfo)
 end

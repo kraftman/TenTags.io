@@ -97,6 +97,10 @@ function cache:GetUserInfo(userID)
 
 end
 
+function cache:VerifyReset(emailAddr, key)
+  return redisread:VerifyReset(emailAddr, key)
+end
+
 function cache:GetUserAlerts(userID)
   local user = self:GetUserInfo(userID)
   if not user.alertCheck then

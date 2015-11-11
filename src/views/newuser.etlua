@@ -1,6 +1,6 @@
 <div class='contents'>
   <% if email then %>
-    <form id='register' action='<%= url_for('resestpassword') %>' method='post'
+    <form id='register' action='<%= url_for('resetpassword') %>' method='post'
         accept-charset='UTF-8'>
       <fieldset >
         <legend>Forgotten Password</legend>

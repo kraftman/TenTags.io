@@ -36,6 +36,29 @@ function write:ConvertListToTable(list)
   return info
 end
 
+function write:DeleteResetKey(emailAddr)
+  local red = GetRedisConnection()
+
+  local ok, err = red:del('emailReset:'..emailAddr)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to remove password reset: ',err)
+  end
+
+  return ok, err
+end
+
+function write:AddPasswordReset(emailAddr, uuid)
+  local red = GetRedisConnection()
+  local PASSWORD_RESET_TIME = 3600
+
+  local ok, err = red:setex('emailReset:'..emailAddr, PASSWORD_RESET_TIME, uuid)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set password reset: ',err)
+  end
+
+  return ok, err
+end
+
 function write:LoadScript(script)
   local red = GetRedisConnection()
   local ok, err = red:script('load',script)

@@ -100,6 +100,18 @@ function userwrite:AddComment(commentInfo)
   end
 end
 
+function userwrite:ResetMasterPassword(masterID, passwordHash)
+  local red = GetRedisConnection()
+  print(masterID, ' setting to password hash ',passwordHash)
+  
+  local ok ,err = red:hset('master:'..masterID, 'passwordHash', passwordHash)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to reset password: ',err)
+  end
+
+  return ok , err
+end
+
 function userwrite:CreateMasterUser(masterInfo)
   -- pipeline
   local red = GetRedisConnection()

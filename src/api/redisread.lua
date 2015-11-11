@@ -93,6 +93,21 @@ function read:GetFilterIDsByTags(tags)
   return results
 end
 
+function read:VerifyReset(emailAddr, resetKey)
+  local red = GetRedisConnection()
+
+  local ok, err = red:get('emailReset:'..emailAddr)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get email reset: ',err)
+  end
+
+  if ok == resetKey then
+    print('key is valid')
+    return true
+  end
+
+end
+
 function read:GetAllTags()
   local red = GetRedisConnection()
   local ok, results, err
