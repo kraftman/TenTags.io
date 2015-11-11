@@ -27,7 +27,7 @@ local function CreateNewUser(self)
   else
     return 'Unable to create account: '..err
   end
-  
+
 end
 
 local function ConfirmEmail(self)
@@ -86,6 +86,7 @@ local function LoginUser(self)
   elseif inactive then
     return 'Your account has not been activated, please click the link in your email'
   else
+    self.email = email
     return { render = 'newuser' }
   end
 end
