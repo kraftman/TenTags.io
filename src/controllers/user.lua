@@ -83,7 +83,7 @@ local function LoginUser(self)
     self.session.masterID = masterInfo.id
     return 'true'
     --return { redirect_to = self:url_for("home") }
-  elseif inactive then
+  elseif inactive == true then
     return 'Your account has not been activated, please click the link in your email'
   else
     self.email = email

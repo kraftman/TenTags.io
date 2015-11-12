@@ -479,14 +479,41 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
+local function UpdateFilterTags(filter, newRequiredTags,newBannedTags)
+		print(to_json(newRequiredTags))
+		print(to_json(newBannedTags))
+		local ok, err
+		local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
+
+	  -- filter needs to have a score per post
+	  for _, newPost in pairs(newPosts) do
+	    newPost.score = self:AverageTagScore(newRequiredTags, newPost.tags)
+	  end
+
+	  ok , err = worker:AddPostsToFilter(filter, newPosts)
+		if not ok then
+			return ok, err
+		end
+
+	  ok, err = worker:RemovePostsFromFilter(filter.id, oldPostIDs)
+		if not ok then
+			return ok, err
+		end
+
+
+	  return worker:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
+
+end
+
 function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
-	local ok, err = self:UserCanEditFilter(userID)
+	local ok, err = self:UserCanEditFilter(userID,filterID)
 	if not ok then
 		return ok, err
 	end
 
 	-- get the actual tag from the tagID
+
 	for k,v in pairs(requiredTags) do
 		if v ~= '' then
 			requiredTags[k] = self:CreateTag(userID, v).id
@@ -500,19 +527,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
 	local filter = cache:GetFilter(filterID)
 
-	local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, requiredTags, bannedTags)
-
-  -- filter needs to have a score per post
-  for _, newPost in pairs(newPosts) do
-    newPost.score = self:AverageTagScore(requiredTags, newPost.tags)
-  end
-
-  ok , err = worker:AddPostsToFilter(filter, newPosts)
-	if not ok then
-		return ok, err
-	end
-
-  ok, err = worker:RemovePostsFromFilter(filter.id, oldPostIDs)
+	ok, err =  UpdateFilterTags(filter, requiredTags, bannedTags)
 	if not ok then
 		return ok, err
 	end
@@ -521,8 +536,6 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 	if not ok then
 		return ok,err
 	end
-
-  return worker:UpdateFilterTags(filter, requiredTags, bannedTags)
 
 end
 
@@ -858,10 +871,10 @@ end
 
 function api:ValidateMaster(userCredentials)
   local masterInfo = cache:GetMasterUserByEmail(userCredentials.email)
-	print('checking master id: ',masterInfo.id)
+
   if not masterInfo then
 		print('master not found')
-    return
+    return nil, 'error getting profile'
   end
 
   if masterInfo.active == 0 then
@@ -880,6 +893,8 @@ function api:ValidateMaster(userCredentials)
 end
 
 function api:SendPasswordReset(url, email)
+
+	email = self:SanitiseUserInput(email, 200)
 
 	local masterInfo = cache:GetMasterUserByEmail(email)
 	if not masterInfo then
@@ -1563,8 +1578,10 @@ function api:CreateFilter(userID, filterInfo)
 
 
   local tags = {}
+	local requiredTags = {}
+	local bannedTags = {}
 
-  for k,tagName in pairs(newFilter.requiredTags) do
+  for k,tagName in pairs(filterInfo.requiredTags) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)
     if tag then
       tag.filterID = newFilter.id
@@ -1572,13 +1589,13 @@ function api:CreateFilter(userID, filterInfo)
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      newFilter.requiredTags[k] = tag
+      requiredTags[k] = tag
     else
-      newFilter.requiredTags[k] = nil
+      requiredTags[k] = nil
     end
   end
 
-  for k,tagName in pairs(newFilter.bannedTags) do
+  for k,tagName in pairs(filterInfo.bannedTags) do
     local tag = self:CreateTag(tagName, newFilter.createdBy)
     if tag then
       tag.filterID = newFilter.id
@@ -1586,15 +1603,17 @@ function api:CreateFilter(userID, filterInfo)
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      newFilter.bannedTags[k] = tag
+      bannedTags[k] = tag
     else
       --if its blank
-      newFilter.bannedTags[k] = nil
+      bannedTags[k] = nil
     end
   end
   newFilter.tags = tags
 
   worker:CreateFilter(newFilter)
+
+	UpdateFilterTags(newFilter, newFilter.requiredTags, newFilter.bannedTags)
 
 
   return true

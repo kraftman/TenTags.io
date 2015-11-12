@@ -190,11 +190,11 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
     red:del('filter:requiredtags:'..filter.id)
     red:del('filter:bannedtags:'..filter.id)
     -- remove the filter from all tags
-    for _,tagID in pairs(newRequiredTags) do
-      red:hdel('tag:filters:'..tagID, filter.id)
+    for _,tag in pairs(filter.requiredTags) do
+      red:hdel('tag:filters:'..tag.id, filter.id)
     end
-    for _,tagID in pairs(newBannedTags) do
-      red:hdel('tag:filters:'..tagID, filter.id)
+    for _,tag in pairs(filter.bannedTags) do
+      red:hdel('tag:filters:'..tag.id, filter.id)
     end
 
     -- add the new tags
@@ -230,6 +230,7 @@ function write:AddMod(filterID, mod)
 end
 
 function write:CreateFilter(filterInfo)
+  local tempRequiredTags, tempBannedTags = filterInfo.requiredTags, filterInfo.bannedTags
   local requiredTags = {}
   local bannedTags = {}
 
@@ -276,8 +277,9 @@ function write:CreateFilter(filterInfo)
   red:zadd('filters',filterInfo.createdAt,filterInfo.id)
 
   -- add all filter info
-  print('filter:'..filterInfo.id)
   red:hmset('filter:'..filterInfo.id, filterInfo)
+  filterInfo.requiredTags = tempRequiredTags
+  filterInfo.bannedTags = tempBannedTags
   self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
   local results, err = red:commit_pipeline()
   if err then
