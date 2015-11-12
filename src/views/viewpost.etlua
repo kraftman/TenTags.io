@@ -39,6 +39,19 @@
   <% end %>
 
 
+  <form id='addsource' action='' method='post'accept-charset='UTF-8'>
+    <fieldset >
+    <legend>Add Repost Source</legend>
+
+
+    <label for='sourceurl' >Source URL:</label>
+    <input type='text' name='sourceurl' id='sourceurl' maxlength="50" value="<%= post.title -%>"/>
+
+    <input id='submitButton' type='submit' name='Submit' value='Submit' />
+
+    </fieldset>
+  </form>
+
   Filters:</br>
   <% for _,filter in pairs(filters) do %>
     <% render("views.st.postfilterelement",{filter = filter}) %>

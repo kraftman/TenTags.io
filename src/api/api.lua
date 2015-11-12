@@ -554,10 +554,17 @@ function api:UpdatePostFilters(post)
 		end
 	end
 
-	worker:RemovePostFromFilters(post.id, purgeFilterIDs)
-	worker:AddPostToFilters(post, newFilters)
+	local ok, err = worker:RemovePostFromFilters(post.id, purgeFilterIDs)
+	if not ok then
+		return ok, err
+	end
+	ok, err = worker:AddPostToFilters(post, newFilters)
+	if not ok then
+		return ok, err
+	end
 
 	post.filters = newFilters
+	return true
 end
 
 function api:VotePost(userID, postID, direction)
@@ -1211,7 +1218,6 @@ function api:CalculatePostFilters(post)
 	local validTags = {}
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
-			print('valid tag: ',tag.id,tag.name)
 			tinsert(validTags, tag)
 		end
 	end
@@ -1370,7 +1376,7 @@ end
 
 function api:GeneratePostTags(post)
 	if not post.link or trim(post.link) == '' then
-    tinsert(post.tags,'meta:type:self')
+    tinsert(post.tags,'meta:self')
   end
 
   tinsert(post.tags,'meta:user:'..post.createdBy)
@@ -1399,7 +1405,7 @@ function api:CreatePost(userID, postInfo)
       return nil, 'invalid url'
     end
     newPost.domain = domain
-    tinsert(newPost.tags,'meta:type:link')
+    tinsert(newPost.tags,'meta:link')
     tinsert(newPost.tags,'meta:link:'..domain)
   end
 
@@ -1619,10 +1625,63 @@ function api:CreateFilter(userID, filterInfo)
   return true
 end
 
+function api:AddSource(userID, postID, sourceURL)
+	-- rate limit them
+	-- check existing sources by this user
+
+
+	local ok, err = self:RateLimit('AddSource:'..userID, 1, 600)
+	if not ok then
+		return ok, err
+	end
+
+	local sourcePostID = sourceURL:match('/post/(%w+)')
+	if not sourcePostID then
+		return nil, 'source must be a post from this site!'
+	end
+
+	local post = cache:GetPost(postID)
+
+	local sourceTags = {}
+	for _,tag in pairs(post.tags) do
+		print(tag.name)
+		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
+			return nil, 'cannot add more than one source to a post'
+		end
+	end
+
+	local tagName = 'meta:sourcePost:'..sourcePostID
+	local newTag = self:CreateTag(userID, tagName)
+	newTag.up = TAG_START_UPVOTES
+	newTag.down = TAG_START_DOWNVOTES
+	newTag.score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
+	newTag.active = true
+
+	tinsert(post.tags, newTag)
+
+	local ok, err = worker:UpdatePostTags(post)
+	if not ok then
+		return ok,err
+	end
+
+	-- add the tag to the post
+	-- recalculate which filters this post belongs to
+	-- remove post from filters it shouldnt be in
+	-- add post to filters it should be in
+
+ ok, err = self:UpdatePostFilters(post)
+	if not ok then
+		return ok, err
+	end
+
+	return true
+end
+
 
 function api.GetAllTags()
   return cache:GetAllTags()
 end
+
 
 
 return api

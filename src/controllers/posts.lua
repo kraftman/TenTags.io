@@ -158,7 +158,29 @@ local function GetIcon(self)
 
 end
 
+local function AddSource(self)
+  local sourceURL = self.params.sourceurl
+  local userID = self.session.userID
+  if not sourceURL then
+    return 'no url given!'
+  elseif not userID then
+    return 'you must be logged in to do that!'
+  end
+
+  local ok, err = api:AddSource(userID, self.params.postID, sourceURL)
+  if ok then
+    return 'success!'
+  else
+    return 'error: '..err
+  end
+
+end
+
 local function EditPost(self)
+
+  if self.params.sourceurl then
+    return AddSource(self)
+  end
 
   local post = {
     id = self.params.postID,
