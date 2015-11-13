@@ -82,6 +82,29 @@ function api:RateLimit(key, limit,duration)
 
 end
 
+function api:DeleteComment(userID, postID, commentID)
+	local ok, err = self:RateLimit('DeleteComment:'..userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
+	local post = cache:GetPost(postID)
+	if userID ~= post.createdBy then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'cannot delete other users posts'
+		end
+	end
+
+	local comment = cache:GetComment(postID, commentID)
+	if not comment then
+		return nil, 'error loading comment'
+	end
+	comment.deleted = 'true'
+	return worker:CreateComment(comment)
+
+end
+
 function api:LabelUser(userID, targetUserID, label)
 	local ok, err = self:RateLimit('UpdateUser:'..userID, 1, 60)
 	if not ok then

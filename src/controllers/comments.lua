@@ -93,7 +93,24 @@ local function DownVoteComment(self)
   end
 end
 
+local function DeleteComment(self)
+  local postID = self.params.postID
+  local userID = self.session.userID
+  local commentID = self.params.commentID
+
+  local ok, err = api:DeleteComment(userID, postID, commentID)
+  if ok then
+    return 'deleted!'
+  else
+    return 'failed'..err
+  end
+end
+
 function m:Register(app)
+  app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({
+    GET = DeleteComment,
+    POST = DeleteComment
+  }))
   app:get('viewcomment','/comment/:postID/:commentID',ViewComment)
   app:get('subscribecomment','/comment/subscribe/:postID/:commentID',SubscribeComment)
   app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', UpvoteComment)
