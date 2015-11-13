@@ -1632,6 +1632,20 @@ function api:CreateFilter(userID, filterInfo)
   return true
 end
 
+function api:DeletePost(userID, postID)
+
+	local post = cache:GetPost(postID)
+	if post.createdby ~= userID then
+		local user = cache:GetUserInfo(userID)
+		if user.Role ~= 'Admin' then
+			return nil, 'you cannot delete other peoples posts'
+		end
+	end
+
+	return worker:DeletePost(postID)
+
+end
+
 function api:AddSource(userID, postID, sourceURL)
 	-- rate limit them
 	-- check existing sources by this user

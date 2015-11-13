@@ -188,6 +188,10 @@ function worker:ResetMasterPassword(masterID, passwordHash)
   return userWrite:ResetMasterPassword(masterID, passwordHash)
 end
 
+function worker:DeletePost(postID)
+  return rediswrite:DeletePost(postID)
+end
+
 function worker:SendPasswordReset(url, emailAddr, uuid)
 
   local ok, err = rediswrite:AddPasswordReset(emailAddr, uuid)

@@ -18,6 +18,8 @@
 
   <a href="<%= post.link -%>"> <%= post.title -%></a>
   <% if post.createdBy == session.userID then %>
+
+    <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
       <fieldset >
       <legend>Edit Post</legend>
@@ -34,7 +36,11 @@
       </fieldset>
     </form>
   <% else %>
-    <p><%= post.text -%></p>
+    <% if post.deleted then %>
+      <p> [deleted] </p>
+    <% else %>
+      <p><%= post.text -%></p>
+    <% end %>
   <% end %>
 
   <% if post.containsSources then %>

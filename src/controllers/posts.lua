@@ -55,6 +55,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, self.params.postID)
+  print(to_json(post))
   if not post then
     if type(err) == 'number' then
       return {status = err}
@@ -214,6 +215,26 @@ local function EditPost(self)
 
 end
 
+local function DeletePost(self)
+  local confirmed = self.params.confirmdelete
+
+  if not confirmed then
+    return {render = 'post.confirmdelete'}
+  end
+
+  local postID = self.params.postID
+  local userID = self.params.userID
+
+  local ok, err = api:DeletePost(userID, postID)
+
+  if ok then
+    return 'success'
+  else
+    return 'failed: '..err
+  end
+
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
@@ -221,7 +242,11 @@ function m:Register(app)
   }))
   app:match('viewpost','/post/:postID', respond_to({
     GET = GetPost,
-    POST = EditPost
+    POST = EditPost,
+  }))
+  app:match('deletepost','/post/delete/:postID', respond_to({
+    GET = DeletePost,
+    POST = DeletePost,
   }))
 
   app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)

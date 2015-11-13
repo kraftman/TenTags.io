@@ -208,6 +208,12 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
 
 end
 
+function write:DeletePost(postID)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('post:'..postID, 'deleted', 'true')
+  return ok, err
+end
+
 function write:DelMod(filterID, modID)
   local red = GetRedisConnection()
   local ok, err = red:hdel('filter:'..filterID, 'mod:'..modID)
