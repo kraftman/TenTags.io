@@ -1184,9 +1184,22 @@ function api:VoteTag(userID, postID, tagID, direction)
 	--if self:UserHasVotedTag(userID, postID, tagID) then
 	--	return nil, 'already voted on tag'
 	--end
+	local sourceTags = {}
 	for _, tag in pairs(post.tags) do
+		if tag.name:find('^meta:sourcePost:') then
+			tinsert(sourceTags, tag)
+		end
 		if tag.id == tagID then
 			self:AddVoteToTag(tag, direction)
+		end
+	end
+
+	table.sort(sourceTags, function(a,b) return a.score > b.score end)
+	if sourceTags[1] then
+		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
+		if parentID and post.parentID ~= parentID then
+			post.parentID = parentID
+			--worker:UpdatePostParentID(post)
 		end
 	end
 
