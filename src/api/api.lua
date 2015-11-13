@@ -1195,11 +1195,11 @@ function api:VoteTag(userID, postID, tagID, direction)
 	end
 
 	table.sort(sourceTags, function(a,b) return a.score > b.score end)
-	if sourceTags[1] then
+	if sourceTags[1] and sourceTags[1].score > TAG_BOUNDARY then
 		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
 		if parentID and post.parentID ~= parentID then
 			post.parentID = parentID
-			--worker:UpdatePostParentID(post)
+			worker:UpdatePostParentID(post)
 		end
 	end
 

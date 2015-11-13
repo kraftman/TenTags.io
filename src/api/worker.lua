@@ -114,6 +114,10 @@ function worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
 
 end
 
+function worker:UpdatePostParentID(post)
+  return rediswrite:UpdatePostParentID(post)
+end
+
 
 function worker:FindPostsForFilter(filter)
   -- has to use write as it uses sinterstore

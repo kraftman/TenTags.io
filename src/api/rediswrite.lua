@@ -384,6 +384,14 @@ function write:AddPostsToFilter(filterInfo,posts)
   return results
 end
 
+function write:UpdatePostParentID(post)
+  local red = GetRedisConnection()
+  local ok, err = red:hset('post:'..post.id,'parentID',post.parentID)
+  SetKeepalive(red)
+  return ok, err
+end
+
+
 function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   -- hacky duplicate of FindPostsForFilter, my bannedTagIDs
   -- TODO: merge back together later
