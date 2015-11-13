@@ -1,4 +1,0 @@
-<% render("views.loginbox") %>
-<% for i, post in pairs(posts) do %>
- <%= post.title -%></br>
-<% end %>
