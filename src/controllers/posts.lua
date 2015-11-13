@@ -89,7 +89,7 @@ local function GetPost(self)
 
   self.post = post
 
-  return {render = true}
+  return {render = 'post.view'}
 end
 
 local function CreatePostForm(self)
@@ -97,7 +97,7 @@ local function CreatePostForm(self)
 
   self.tags = tags
 
-  return { render = 'createpost' }
+  return { render = 'post.create' }
 end
 
 
