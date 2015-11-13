@@ -12,8 +12,8 @@
 </head>
 <body>
   <div id='centerPage'>
-    <% render("views.navigation") %>
-    <% render("views.filterbar") %>
+    <% render("views.main.navigation") %>
+    <% render("views.main.filterbar") %>
     <% content_for("inner") %>
   </div>
 </body>

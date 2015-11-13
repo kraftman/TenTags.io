@@ -9,7 +9,7 @@ local to_json = (require 'lapis.util').to_json
 
 
 local function NewMessage(self)
-  return {render = 'createmessage'}
+  return {render = 'message.create'}
 end
 
 local function ViewMessages(self)
@@ -41,7 +41,7 @@ end
 
 local function MessageReply(self)
   self.thread = api:GetThread(self.params.threadID)
-  return {render = 'replymessage'}
+  return {render = 'message.reply'}
 end
 
 function m:Register(app)

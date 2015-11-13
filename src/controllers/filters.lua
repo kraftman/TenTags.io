@@ -60,7 +60,7 @@ end
 
 local function CreateFilter(self)
   self.tags = api:GetAllTags()
-  return {render = 'createfilter'}
+  return {render = 'filter.create'}
 end
 
 
@@ -87,7 +87,7 @@ local function DisplayFilter(self)
   -- check if the current user is on the list of mods
   -- display settings if they are
 
-  return {render = 'viewfilter'}
+  return {render = 'filter.view'}
 
 end
 
@@ -100,7 +100,7 @@ local function LoadAllFilters(self)
   self.filters = api:GetFiltersBySubs()
   --print(to_json(self.filters))
 
-  return {render = 'allfilters'}
+  return {render = 'filter.all'}
 end
 
 local function BanUser(self,filter)
@@ -259,7 +259,7 @@ local function ViewFilterSettings(self)
 
 
   self.selectedFilter = filter
-  return {render = 'editfilter'}
+  return {render = 'filter.edit'}
 end
 
 local function UnbanUser(self)

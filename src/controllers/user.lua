@@ -9,7 +9,7 @@ local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 
 local function NewUserForm(self)
-  return {render = 'newuser'}
+  return {render = 'user.creatmaster'}
 end
 
 
@@ -59,7 +59,7 @@ local function ViewUser(self)
     v.username = api:GetUserInfo(v.createdBy).username
   end
   ngx.log(ngx.ERR, to_json(self.comments))
-  return {render = 'viewuser'}
+  return {render = 'user.viewsub'}
 end
 
 local function LoginUser(self)
@@ -87,12 +87,12 @@ local function LoginUser(self)
     return 'Your account has not been activated, please click the link in your email'
   else
     self.email = email
-    return { render = 'newuser' }
+    return { render = 'user.createmaster' }
   end
 end
 
 local function NewSubUser(self)
-  return {render = 'newsubuser'}
+  return {render = 'createsub'}
 end
 
 local function CreateSubUser(self)
