@@ -163,7 +163,6 @@ function write:AddTagsToFilter(red, filterID, requiredTags, bannedTags)
 
     -- add list of required tags
     for _, tagID in pairs(requiredTags) do
-      print('writing tag: ',filterID, tagID)
       red:sadd('filter:requiredtags:'..filterID,tagID)
     end
 
@@ -278,9 +277,10 @@ function write:CreateFilter(filterInfo)
 
   -- add all filter info
   red:hmset('filter:'..filterInfo.id, filterInfo)
+
+  self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
   filterInfo.requiredTags = tempRequiredTags
   filterInfo.bannedTags = tempBannedTags
-  self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
   local results, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
@@ -392,12 +392,12 @@ function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   local requiredTags = {}
   local bannedTags = {}
 
-  for _,tagID in pairs(requiredTagIDs) do
-    tinsert(requiredTags,'tagPosts:'..tagID)
+  for _,tag in pairs(requiredTagIDs) do
+    tinsert(requiredTags,'tagPosts:'..tag.id)
   end
 
-  for _,tagID in pairs(bannedTagIDs) do
-    tinsert(bannedTags,'tagPosts:'..tagID)
+  for _,tag in pairs(bannedTagIDs) do
+    tinsert(bannedTags,'tagPosts:'..tag.id)
   end
 
   local tempRequiredPostsKey = tempKey..':required'

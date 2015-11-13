@@ -77,6 +77,7 @@ function read:GetFilterIDsByTags(tags)
   local red = GetRedisConnection()
   red:init_pipeline()
   for _,v in pairs(tags) do
+    --print('tag:filters:'..v.id)
     red:hgetall('tag:filters:'..v.id)
   end
   local results, err = red:commit_pipeline()

@@ -52,7 +52,6 @@ local function GetPost(self)
     end
   end
 
-
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, self.params.postID)
@@ -62,7 +61,23 @@ local function GetPost(self)
     end
     return err
   end
-  --print(to_json(post))
+
+  for _,v in pairs(post.tags) do
+    if v.name:find('^meta:sourcePost:') then
+      post.containsSources = true
+      local postID = v.name:match('meta:sourcePost:(%w+)')
+      if postID then
+        print(postID)
+        local parentPost = (api:GetPost(self.session.userID, postID))
+        print(to_json(parentPost))
+        if v.name and parentPost.title then
+          v.fakeName = parentPost.title
+          v.postID = postID
+        end
+      end
+    end
+  end
+
   self.filters = api:GetFilterInfo(post.filters)
 
   if self.session.userID then
@@ -159,6 +174,7 @@ local function GetIcon(self)
 end
 
 local function AddSource(self)
+  print('adding source')
   local sourceURL = self.params.sourceurl
   local userID = self.session.userID
   if not sourceURL then

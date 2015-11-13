@@ -216,7 +216,7 @@ local function ViewFilterSettings(self)
   local user = api:GetUserInfo(self.session.userID)
 
   if user.role ~= 'Admin' then
-    if filter.ownerID ~= 'userID' then
+    if filter.ownerID ~= self.session.userID then
       local found = nil
       for _,mod in pairs(filter.mods) do
         if mod.id == user.id then

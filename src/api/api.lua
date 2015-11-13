@@ -28,6 +28,32 @@ local POST_TITLE_LENGTH = 300
 
 local ENABLE_RATELIMIT = false
 
+
+local function AverageTagScore(filterRequiredTagIDs,postTags)
+
+	local score = 0
+	local count = 0
+
+  for _,filterTagID in pairs(filterRequiredTagIDs) do
+    for _,postTag in pairs(postTags) do
+      if filterTagID == postTag.id then
+				if (not postTag.name:find('^meta:')) and
+					(not postTag.name:find('^source:')) and
+					postTag.score > TAG_BOUNDARY then
+	        	score = score + postTag.score
+						count = count + 1
+				end
+      end
+    end
+  end
+
+	if count == 0 then
+		return 0
+	end
+
+	return score / count
+end
+
 function api:RateLimit(key, limit,duration)
 	if not ENABLE_RATELIMIT then
 		return true
@@ -480,14 +506,13 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 end
 
 local function UpdateFilterTags(filter, newRequiredTags,newBannedTags)
-		print(to_json(newRequiredTags))
-		print(to_json(newBannedTags))
+
 		local ok, err
 		local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
 
 	  -- filter needs to have a score per post
 	  for _, newPost in pairs(newPosts) do
-	    newPost.score = self:AverageTagScore(newRequiredTags, newPost.tags)
+	    newPost.score = AverageTagScore(newRequiredTags, newPost.tags)
 	  end
 
 	  ok , err = worker:AddPostsToFilter(filter, newPosts)
@@ -525,7 +550,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 		end
 	end
 
-	local filter = cache:GetFilter(filterID)
+	local filter = cache:GetFilterByID(filterID)
 
 	ok, err =  UpdateFilterTags(filter, requiredTags, bannedTags)
 	if not ok then
@@ -784,6 +809,7 @@ function api:GetPost(userID, postID)
 	end
 
 	local post = cache:GetPost(postID)
+	--print(postID, to_json(post))
 	if not post then
 		return nil, 'post not found'
 	end
@@ -862,6 +888,10 @@ function api:ResetPassword(email, key, password)
 	local ok, err = cache:VerifyReset(email, key)
 	if not ok then
 		return nil, 'validation failed'
+	end
+
+	if password < 8 then
+		return nil, 'password must be at least 8 characters!'
 	end
 
 	local master = cache:GetMasterUserByEmail(email)
@@ -1040,8 +1070,10 @@ end
 
 function api:CreateMasterUser(confirmURL, userInfo)
 
-	local newMaster = api:ConvertUserMasterToMaster(userInfo)
-
+	local newMaster,err = api:ConvertUserMasterToMaster(userInfo)
+	if not newMaster then
+		return newMaster, err
+	end
 
   local firstUser = {
     id = uuid.generate_random(),
@@ -1104,9 +1136,9 @@ function api:CreateTag(userID, tagName)
   if tagName:gsub(' ','') == '' then
     return nil
   end
-
+	print(#tagName)
 	tagName = self:SanitiseUserInput(tagName, 100)
-
+	print(#tagName)
   local tag = cache:GetTag(tagName)
   if tag then
     return tag
@@ -1197,7 +1229,7 @@ function api:GetValidFilters(filterID, post)
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
 
-	filter.score = self:AverageTagScore(filter.requiredTags, post.tags)
+	filter.score = AverageTagScore(filter.requiredTags, post.tags)
 
 
 
@@ -1221,8 +1253,9 @@ function api:CalculatePostFilters(post)
 			tinsert(validTags, tag)
 		end
 	end
-
+	print('valid tags: '..to_json(validTags))
 	local filterIDs = cache:GetFilterIDsByTags(validTags)
+	print('filters by tags: '..to_json(filterIDs))
   local chosenFilterIDs = {}
 
   -- add all the filters that want these tags
@@ -1431,30 +1464,6 @@ function api:CreatePost(userID, postInfo)
   return true
 end
 
-function api:AverageTagScore(filterRequiredTagIDs,postTags)
-
-	local score = 0
-	local count = 0
-
-  for _,filterTagID in pairs(filterRequiredTagIDs) do
-    for _,postTag in pairs(postTags) do
-      if filterTagID == postTag.id then
-				if (not postTag.name:find('^meta:')) and
-					(not postTag.name:find('^source:')) and
-					postTag.score > TAG_BOUNDARY then
-	        	score = score + postTag.score
-						count = count + 1
-				end
-      end
-    end
-  end
-
-	if count == 0 then
-		return 0
-	end
-
-	return score / count
-end
 
 
 function api:GetFilterPosts(filter)
@@ -1557,15 +1566,6 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		return nil, 'filter name is taken'
 	end
 
-
-	for _,v in pairs(userFilter.requiredTags) do
-		tinsert(newFilter.requiredTags, self:SanitiseUserInput(v, 100))
-	end
-
-	for _,v in pairs(userFilter.requiredTags) do
-		tinsert(newFilter.requiredTags, self:SanitiseUserInput(v, 100))
-	end
-
 	return newFilter
 end
 
@@ -1584,35 +1584,29 @@ function api:CreateFilter(userID, filterInfo)
 
 
   local tags = {}
-	local requiredTags = {}
-	local bannedTags = {}
-
   for k,tagName in pairs(filterInfo.requiredTags) do
+		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = self:CreateTag(newFilter.createdBy,tagName)
-    if tag then
+    if tag and tagName ~= '' then
       tag.filterID = newFilter.id
       tag.filterType = 'required'
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      requiredTags[k] = tag
-    else
-      requiredTags[k] = nil
+      tinsert(newFilter.requiredTags, tag)
     end
   end
 
   for k,tagName in pairs(filterInfo.bannedTags) do
-    local tag = self:CreateTag(tagName, newFilter.createdBy)
-    if tag then
+    local tag = self:CreateTag(newFilter.createdBy,tagName)
+		tagName = self:SanitiseUserInput(tagName, 100)
+    if tag and tagName ~= '' then
       tag.filterID = newFilter.id
       tag.filterType = 'banned'
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
       tinsert(tags,tag)
-      bannedTags[k] = tag
-    else
-      --if its blank
-      bannedTags[k] = nil
+      tinsert(newFilter.bannedTags, tag)
     end
   end
   newFilter.tags = tags
@@ -1634,8 +1628,9 @@ function api:AddSource(userID, postID, sourceURL)
 	if not ok then
 		return ok, err
 	end
-
+	print(sourceURL)
 	local sourcePostID = sourceURL:match('/post/(%w+)')
+	print(sourcePostID)
 	if not sourcePostID then
 		return nil, 'source must be a post from this site!'
 	end
@@ -1644,14 +1639,15 @@ function api:AddSource(userID, postID, sourceURL)
 
 	local sourceTags = {}
 	for _,tag in pairs(post.tags) do
-		print(tag.name)
+		--print(tag.name)
 		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
-			return nil, 'cannot add more than one source to a post'
+			--return nil, 'cannot add more than one source to a post'
 		end
 	end
 
 	local tagName = 'meta:sourcePost:'..sourcePostID
 	local newTag = self:CreateTag(userID, tagName)
+	print(newTag.name)
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
 	newTag.score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)

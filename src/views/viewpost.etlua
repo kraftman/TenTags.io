@@ -22,7 +22,6 @@
       <fieldset >
       <legend>Edit Post</legend>
 
-
       <label for='posttitle' >Post Title:</label>
       <input type='text' name='posttitle' id='posttitle' maxlength="50" value="<%= post.title -%>"/>
 
@@ -38,6 +37,13 @@
     <p><%= post.text -%></p>
   <% end %>
 
+  <% if post.containsSources then %>
+    <% for _,tag in pairs(post.tags) do %>
+      <% if tag.name:find('^meta:sourcePost') then %>
+        <% render("views.st.tag",{tag = tag}) %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <form id='addsource' action='' method='post'accept-charset='UTF-8'>
     <fieldset >
@@ -45,7 +51,7 @@
 
 
     <label for='sourceurl' >Source URL:</label>
-    <input type='text' name='sourceurl' id='sourceurl' maxlength="50" value="<%= post.title -%>"/>
+    <input type='text' name='sourceurl' id='sourceurl' value=""/>
 
     <input id='submitButton' type='submit' name='Submit' value='Submit' />
 
