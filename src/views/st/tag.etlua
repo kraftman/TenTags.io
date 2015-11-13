@@ -15,5 +15,4 @@
   <% if not tag.userHasVoted then %>
     <a class = 'downvote' href='#'>&#10007</a>
   <% end %>
-
 </div>

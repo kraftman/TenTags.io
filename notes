@@ -36,17 +36,17 @@ Vote Weighting
 - weight votes depending on wether the person is subscribed, wehter they viewed the link, etc
 
 Other Ideas from reddit
-- Option to turn of PM's
+- Option to turn of PM's - done
 - Add optional link to credit/original source
-- Rank posts based on discussion (number of comments, length of comments etc)
-- other tags like NSFL, spoiler, etc
+- Rank posts based on discussion (number of comments, length of comments etc) - wont do
+- other tags like NSFL, spoiler, etc - done
 - Vote out mods
-- Instead of deleted, mark as 'deleted by <name>'
+- Instead of deleted, mark as 'deleted by <name>' - mods cant delete posts
 - show related sub based on common user base
 - Limit number of subs a mod can moderate
 - sub specific report reasons
 - sticky comments in a post
-- allow changing title within time duration
+- allow changing title within time duration - done
 
 
 Nodes
