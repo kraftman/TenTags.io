@@ -1153,6 +1153,36 @@ function api:CreateMasterUser(confirmURL, userInfo)
 
 end
 
+function api:AddPostTag(userID, postID, tagName)
+
+	local ok, err = self:RateLimit('AddPostTag:'..userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
+	local post = cache:GetPost(postID)
+	local newTag = self:CreateTag(userID, tagName)
+
+	for _,postTag in pairs(post.tags) do
+		if postTag.id == newTag.id then
+			return nil, 'tag already exists'
+		end
+	end
+
+	newTag.up = TAG_START_UPVOTES
+	newTag.down = TAG_START_DOWNVOTES
+	newTag.score = self:GetScore(newTag.up, newTag.down)
+	newTag.active = true
+
+	tinsert(post.tags, newTag)
+
+
+	self:UpdatePostFilters(post)
+	ok, err = worker:UpdatePostTags(post)
+	return ok, err
+
+end
+
 function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 	if userID ~= subscriberID then
 		local user = cache:GetUserInfo(userID)
@@ -1251,7 +1281,6 @@ function api:VoteTag(userID, postID, tagID, direction)
 			worker:UpdatePostParentID(post)
 		end
 	end
-
 
 	ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
 	if not ok then

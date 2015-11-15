@@ -193,10 +193,28 @@ local function AddSource(self)
 
 end
 
+local function AddTag(self)
+  local tagName = self.params.addtag
+  local userID = self.session.userID
+  local postID = self.params.postID
+
+  local ok, err = api:AddPostTag(userID, postID, tagName)
+  if ok then
+    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+  else
+    return 'failed: '..err
+  end
+
+end
+
 local function EditPost(self)
 
   if self.params.sourceurl then
     return AddSource(self)
+  end
+
+  if self.params.addtag then
+    return AddTag(self)
   end
 
   local post = {

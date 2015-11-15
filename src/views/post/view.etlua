@@ -66,6 +66,14 @@
     </fieldset>
   </form>
 
+  <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
+    <fieldset >
+      <label for='addtag' >Add Tag:</label>
+      <input type='text' name='addtag' id='addtag' value=""/>
+      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+    </fieldset>
+  </form>
+
   Filters:</br>
   <% for _,filter in pairs(filters) do %>
     <% render("views.st.postfilterelement",{filter = filter}) %>
