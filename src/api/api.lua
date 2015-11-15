@@ -505,6 +505,15 @@ function api:VoteComment(userID, postID, commentID,direction)
 		return ok, err
 	end
 
+	if direction == 'up' then
+		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
+	else
+		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
+	end
+	if not ok then
+		return ok, err
+	end
+
 	return worker:UpdateComment(comment)
 
 	-- also add to user voted comments?
@@ -1273,11 +1282,13 @@ function api:VoteTag(userID, postID, tagID, direction)
 	--	return nil, 'already voted on tag'
 	--end
 	local sourceTags = {}
+	local thisTag
 	for _, tag in pairs(post.tags) do
 		if tag.name:find('^meta:sourcePost:') then
 			tinsert(sourceTags, tag)
 		end
 		if tag.id == tagID then
+			thisTag = tag
 			self:AddVoteToTag(tag, direction)
 		end
 	end
@@ -1291,7 +1302,36 @@ function api:VoteTag(userID, postID, tagID, direction)
 		end
 	end
 
+	-- list of tags user has voted on
 	ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
+	if not ok then
+		return ok, err
+	end
+
+	if direction == 'up' then
+		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
+	else
+		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
+	end
+
+	for _,tag in pairs(post.tags) do
+		if tag.name:find('meta:self') then
+			if direction == 'up' then
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selfvoteup',1)
+			else
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selfvotedown',1)
+			end
+			break
+		elseif tag.name:find('meta:link') then
+			if direction == 'up' then
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linkvoteup',1)
+			else
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linkvotedown',1)
+			end
+			break
+		end
+	end
+
 	if not ok then
 		return ok, err
 	end

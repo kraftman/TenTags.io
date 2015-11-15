@@ -103,7 +103,7 @@ end
 function userwrite:ResetMasterPassword(masterID, passwordHash)
   local red = GetRedisConnection()
   print(masterID, ' setting to password hash ',passwordHash)
-  
+
   local ok ,err = red:hset('master:'..masterID, 'passwordHash', passwordHash)
   if not ok then
     ngx.log(ngx.ERR, 'unable to reset password: ',err)
@@ -159,6 +159,13 @@ function userwrite:LabelUser(userID, targetUserID, label)
   if err then
     ngx.log(ngx.ERR, 'unable to set user label')
   end
+  return ok, err
+end
+
+function userwrite:IncrementUserStat(userID, statName, value)
+  local red = GetRedisConnection()
+  local ok, err = red:hincrby('user:'..userID, statName, value)
+  SetKeepalive(red)
   return ok, err
 end
 
