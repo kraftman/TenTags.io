@@ -1163,9 +1163,17 @@ function api:AddPostTag(userID, postID, tagName)
 	local post = cache:GetPost(postID)
 	local newTag = self:CreateTag(userID, tagName)
 
+
+	local count = 0
 	for _,postTag in pairs(post.tags) do
 		if postTag.id == newTag.id then
 			return nil, 'tag already exists'
+		end
+		if postTag.createdBy == userID then
+			count = count +1
+			if count > 2 then
+				return nil, 'you cannot add any more tags'
+			end
 		end
 	end
 
@@ -1173,6 +1181,7 @@ function api:AddPostTag(userID, postID, tagName)
 	newTag.down = TAG_START_DOWNVOTES
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
+	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
 
@@ -1294,7 +1303,7 @@ function api:VoteTag(userID, postID, tagID, direction)
 end
 
 
-function api:CreatePostTags(postInfo)
+function api:CreatePostTags(userID, postInfo)
 	for k,v in pairs(postInfo.tags) do
 
 		v = trim(v:lower())
@@ -1305,6 +1314,7 @@ function api:CreatePostTags(postInfo)
 			postInfo.tags[k].down = TAG_START_DOWNVOTES
 			postInfo.tags[k].score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
 			postInfo.tags[k].active = true
+			postInfo.tags[k].createdBy = userID
 		end
 	end
 end
@@ -1533,7 +1543,9 @@ function api:CreatePost(userID, postInfo)
     tinsert(newPost.tags,'meta:link:'..domain)
   end
 
-	self:CreatePostTags(newPost)
+	self:CreatePostTags(userID, newPost)
+
+	newPost.viewers = {userID}
 
 	local postFilters = self:CalculatePostFilters(newPost)
 
