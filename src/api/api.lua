@@ -264,6 +264,8 @@ function api:VerifyMessageSender(userID, messageInfo)
 	end
 end
 
+
+
 function api:SanitiseUserInput(msg, length)
 	if type(msg) ~= 'string' then
 		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
@@ -383,6 +385,25 @@ function api:GetThreads(userID)
   return cache:GetThreads(userID)
 end
 
+function api:SubscribePost(userID, postID)
+	local ok, err = self:RateLimit('SubscribeComment:'..userID, 3, 30)
+	if not ok then
+		return ok, err
+	end
+
+	local post = cache:GetPost(postID)
+	for _,viewerID in pairs(post.viewers) do
+		if viewerID == userID then
+			return nil, 'already subscribed'
+		end
+	end
+	tinsert(post.viewers, userID)
+
+	local ok, err = worker:CreatePost(post)
+	return ok, err
+
+end
+
 function api:SubscribeComment(userID, postID, commentID)
 
 	local ok, err = self:RateLimit('SubscribeComment:'..userID, 3, 10)
@@ -398,7 +419,7 @@ function api:SubscribeComment(userID, postID, commentID)
     end
   end
   tinsert(comment.viewers, userID)
-  worker:ent(comment)
+  worker:UpdateComment(comment)
 end
 
 
@@ -809,7 +830,12 @@ function api:CreateComment(userID, userComment)
 
   -- need to add alert to all parent comment viewers
   if newComment.parentID == newComment.postID then
-    -- issue-60
+    local post = cache:GetPost(newComment.postID)
+		if post then
+			for _,viewerID in pairs(post.viewers) do
+				worker:AddUserAlert(viewerID, 'postComment:'..newComment.postID..':'..newComment.id)
+			end
+		end
   else
     local parentComment = self:GetComment(newComment.postID, newComment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do

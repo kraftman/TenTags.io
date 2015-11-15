@@ -337,7 +337,6 @@ function read:GetFilter(filterID)
 
 end
 
-
 function read:GetPost(postID)
   local red = GetRedisConnection()
   local ok, err = red:hgetall('post:'..postID)
@@ -350,6 +349,14 @@ function read:GetPost(postID)
   end
 
   local post = self:ConvertListToTable(ok)
+  post.viewers = {}
+  for k,_ in pairs(post) do
+    if k:find('^viewer:') then
+      local viewerID = k:match('^viewer:(%w+)')
+      tinsert(post.viewers, viewerID)
+      post[k] = nil
+    end
+  end
 
   local postTags
   postTags, err = red:smembers('post:tagIDs:'..postID)

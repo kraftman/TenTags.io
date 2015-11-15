@@ -16,6 +16,8 @@
       <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
     <% end %>
 
+    <a href="<%= url_for('subscribepost',{ postID = post.id}) %> ">subscribe</a>
+
   <a href="<%= post.link -%>"> <%= post.title -%></a>
   <% if post.createdBy == session.userID then %>
 

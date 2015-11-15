@@ -538,6 +538,11 @@ function write:CreatePost(postInfo)
   local filters = postInfo.filters
   postInfo.filters = nil
 
+  for _,viewerID in pairs(postInfo.viewers) do
+    postInfo['viewer:'..viewerID] = 'true'
+  end
+  postInfo.viewers = nil
+
   red:init_pipeline()
     -- add all filters that the post has
     for _,v in pairs(filters) do

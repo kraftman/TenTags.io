@@ -235,6 +235,15 @@ local function DeletePost(self)
 
 end
 
+local function SubscribePost(self)
+  local ok, err = api:SubscribePost(self.session.userID,self.params.postID)
+  if ok then
+    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+  else
+    return 'error subscribing: '..err
+  end
+end
+
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
     GET = CreatePostForm,
@@ -254,6 +263,7 @@ function m:Register(app)
   app:get('upvotepost','/post/:postID/upvote', UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', DownvotePost)
   app:get('geticon', '/icon/:postID', GetIcon)
+  app:get('subscribepost', '/post/:postID/subscribe', SubscribePost)
 
 end
 

@@ -92,7 +92,7 @@ local function LoginUser(self)
 end
 
 local function NewSubUser(self)
-  return {render = 'createsub'}
+  return {render = 'user.createsub'}
 end
 
 local function CreateSubUser(self)
