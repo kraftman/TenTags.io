@@ -550,20 +550,20 @@ function write:CreatePost(postInfo)
   local red = GetRedisConnection()
   local tags = postInfo.tags
   postInfo.tags = nil
-  local filters = postInfo.filters
-  postInfo.filters = nil
 
   for _,viewerID in pairs(postInfo.viewers) do
     postInfo['viewer:'..viewerID] = 'true'
   end
   postInfo.viewers = nil
 
+  for _,filterID in pairs(postInfo.filters) do
+    postInfo['filter:'..filterID] = 'true'
+  end
+  postInfo.filters = nil
+
   red:init_pipeline()
-    -- add all filters that the post has
-    red:del('postfilters:'..postInfo.id)
-    for _,v in pairs(filters) do
-      red:sadd('postfilters:'..postInfo.id,v)
-    end
+
+    red:del('post:'..postInfo.id)
 
     -- collect tag ids and add taginfo to hash
     for _,tag in pairs(tags) do
