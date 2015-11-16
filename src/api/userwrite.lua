@@ -39,7 +39,7 @@ function userwrite:AddUserTagVotes(userID, postID, tagIDs)
   for k,v in pairs(tagIDs) do
     tagIDs[k] = postID..':'..v
   end
-  print(to_json(tagIDs))
+  --print(to_json(tagIDs))
   local ok, err = red:sadd('userTagVotes:'..userID, unpack(tagIDs))
   SetKeepalive(red)
   if not ok then

@@ -678,7 +678,7 @@ function api:AddVoteToTag(tag,direction)
 		print('vote up')
 		tag.up = tag.up + 1
 	elseif direction == 'down' then
-		print('vote down')
+		--print('vote down')
 		tag.down = tag.down + 1
 	end
 	-- recalculate the tag score
@@ -1007,6 +1007,7 @@ end
 
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
+	
   return cache:GetUserFrontPage(userID,filter,range)
 end
 

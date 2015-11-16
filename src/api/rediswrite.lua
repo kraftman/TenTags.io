@@ -332,10 +332,10 @@ function write:RemoveFilterPostInfo(red, filterID,postID)
   red:srem('filterposts:'..filterID, postID)
   red:zrem('filterposts:date:'..filterID, postID)
   red:zrem('filterposts:score:'..filterID, postID)
-  red:zadd('filterposts:datescore:'..filterID, postID)
-  red:zadd('filterpostsall:datescore', filterID..':'..postID)
-  red:zadd('filterpostsall:date', filterID..':'..postID)
-  red:zadd('filterpostsall:score', filterID..':'..postID)
+  red:zrem('filterposts:datescore:'..filterID, postID)
+  red:zrem('filterpostsall:datescore', filterID..':'..postID)
+  red:zrem('filterpostsall:date', filterID..':'..postID)
+  red:zrem('filterpostsall:score', filterID..':'..postID)
 end
 
 function write:RemovePostFromFilters(postID, filterIDs)
@@ -560,9 +560,11 @@ function write:CreatePost(postInfo)
 
   red:init_pipeline()
     -- add all filters that the post has
+    red:del('postfilters:'..postInfo.id)
     for _,v in pairs(filters) do
       red:sadd('postfilters:'..postInfo.id,v)
     end
+
     -- collect tag ids and add taginfo to hash
     for _,tag in pairs(tags) do
       red:sadd('tagPosts:'..tag.id, postInfo.id)

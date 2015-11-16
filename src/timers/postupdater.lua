@@ -34,13 +34,16 @@ function config.Run(_,self)
   if not postID then
     return
   end
-  print(to_json(postID))
+
 
 
 
   ok, err = redisWrite:DeleteJob('UpdatePostFilters',postID)
-  if not ok then
-    ngx.log(ngx.ERR, 'error deleting job: ',err)
+  print(to_json(ok))
+  if ok ~= 1 then
+    if err then
+      ngx.log(ngx.ERR, 'error deleting job: ',err)
+    end
     return
   end
 
@@ -98,6 +101,7 @@ function config:GetValidFilters(filterID, post)
 		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as domain ',post.domain, ' is banned ' )
 		return nil
 	end
+
 	return filter
 end
 
@@ -107,15 +111,15 @@ function config:CalculatePostFilters(post)
 
 	-- only include tags above threshold
 	local validTags = {}
-  print(to_json(post))
+  --print(to_json(post))
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
 	end
-	print('valid tags: '..to_json(validTags))
+
 	local filterIDs = cache:GetFilterIDsByTags(validTags)
-	print('filters by tags: '..to_json(filterIDs))
+
   local chosenFilterIDs = {}
 
   -- add all the filters that want these tags
@@ -155,11 +159,15 @@ function config:UpdatePostFilters(post)
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
 
+  print(to_json(post.filters))
 	for _,filterID in pairs(post.filters) do
 		if not newFilters[filterID] then
 			purgeFilterIDs[filterID] = filterID
 		end
 	end
+
+  print('removing from: '..to_json(purgeFilterIDs))
+  print('adding to: '..to_json(newFilters))
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
@@ -171,6 +179,12 @@ function config:UpdatePostFilters(post)
 	end
 
 	post.filters = newFilters
+  post.filters = {}
+  for _,filter in pairs(newFilters) do
+    tinsert(post.filters,filter.id)
+  end
+
+  redisWrite:CreatePost(post)
 	return
 end
 

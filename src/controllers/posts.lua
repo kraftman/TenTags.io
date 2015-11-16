@@ -55,7 +55,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, self.params.postID)
-  print(to_json(post))
+  
   if not post then
     if type(err) == 'number' then
       return {status = err}
