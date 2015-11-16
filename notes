@@ -186,3 +186,22 @@ https://www.reddit.com/r/AskReddit/comments/bg7b8/what_percentage_of_redditors_a
 Voting
 store list of recently voted posts/comments
 write list to bloom filter after X
+
+
+install on api:
+apt-get install -y lua5.1 luajit luarocks libpcre3-dev
+sudo apt-get install libssl-dev
+sudo luarocks install luasec OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
+luarocks install lapis
+
+git clone https://github.com/duhoobo/lua-resty-smtp.git
+luarocks install --local rockspec/resty.smtp-0.0.3-1.rockspec
+
+wget http://download.redis.io/redis-stable.tar.gz
+tar xvzf redis-stable.tar.gz
+cd redis-stable
+make
+
+luarocks install magick
+cp src/lib/scrypt.so /usr/local/scrypt.so
+sudo apt-get install libmagickwand-dev
