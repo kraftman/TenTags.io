@@ -12,17 +12,21 @@ local respond_to = (require 'lapis.application').respond_to
 
 
 local function ToggleDefault(self)
+  if not self.session.userID then
+    return { redirect_to = self:url_for("login") }
+  end
 
   if self.params.setdefault == 'true' then
-    api:SubscribeToFilter(self.session.userID, 'default',self.params.filterID)
+    print('this')
+    return api:SubscribeToFilter(self.session.userID, 'default',self.params.filterID)
   elseif self.params.setdefault == 'false' then
-    api:UnsubscribeFromFilter(self.session.userID,'default',self.params.filterID)
+    return api:UnsubscribeFromFilter(self.session.userID,'default',self.params.filterID)
   end
 
   if self.params.subscribe == 'true' then
-    api:SubscribeToFilter(self.session.userID, self.session.userID,self.params.filterID)
+    return api:SubscribeToFilter(self.session.userID, self.session.userID,self.params.filterID)
   elseif self.params.setdefault == 'false' then
-    api:UnsubscribeFromFilter(self.session.userID, self.session.userID,self.params.filterID)
+    return api:UnsubscribeFromFilter(self.session.userID, self.session.userID,self.params.filterID)
   end
 end
 
@@ -59,6 +63,9 @@ end
 
 
 local function CreateFilter(self)
+  if not self.session.userID then
+    return { redirect_to = self:url_for("login") }
+  end
   self.tags = api:GetAllTags()
   return {render = 'filter.create'}
 end
@@ -93,7 +100,7 @@ end
 
 local function LoadAllFilters(self)
   local user = api:GetUserInfo(self.session.userID)
-  if user.role == 'Admin' then
+  if user and user.role == 'Admin' then
     self.isAdmin = true
   end
 

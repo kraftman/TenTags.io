@@ -249,6 +249,7 @@ function userread:GetUserFilterIDs(userID)
   ok, err = red:smembers('userfilters:'..userID)
 
   SetKeepalive(red)
+  print(userID, to_json(ok))
 
   if not ok then
     ngx.log(ngx.ERR, 'error getting filter list for user "',userID,'", error:',err)

@@ -54,7 +54,11 @@ local function AverageTagScore(filterRequiredTagIDs,postTags)
 	return score / count
 end
 
-function api:RateLimit(key, limit,duration)
+local function RateLimit(action,userID, limit,duration)
+	if not userID then
+		return nil, 'you must be logged in to do that'
+	end
+	local key = action..userID
 	if not ENABLE_RATELIMIT then
 		return true
 	end
@@ -82,8 +86,21 @@ function api:RateLimit(key, limit,duration)
 
 end
 
+
+local function SanitiseHTML(str)
+	local html = {
+		["<"] = "&lt;",
+		[">"] = "&gt;",
+		["&"] = "&amp;",
+	}
+	return string.gsub(tostring(str), "[<>&]", function(char)
+		return html[char] or char
+	end)
+end
+
 function api:DeleteComment(userID, postID, commentID)
-	local ok, err = self:RateLimit('DeleteComment:'..userID, 1, 60)
+
+	local ok, err = RateLimit('DeleteComment:', userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -106,7 +123,8 @@ function api:DeleteComment(userID, postID, commentID)
 end
 
 function api:LabelUser(userID, targetUserID, label)
-	local ok, err = self:RateLimit('UpdateUser:'..userID, 1, 60)
+
+	local ok, err = RateLimit('UpdateUser:',userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -118,7 +136,7 @@ end
 
 function api:UpdateUser(userID, userToUpdate)
 
-	local ok, err = self:RateLimit('UpdateUser:'..userID, 3, 30)
+	local ok, err = RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -139,16 +157,6 @@ function api:UpdateUser(userID, userToUpdate)
 	return worker:UpdateUser(userInfo)
 end
 
-function api:SanitiseHTML(str)
-	local html = {
-		["<"] = "&lt;",
-		[">"] = "&gt;",
-		["&"] = "&amp;",
-	}
-	return string.gsub(tostring(str), "[<>&]", function(char)
-		return html[char] or char
-	end)
-end
 
 function api:GetUserFilters(userID)
 	-- can only get your own filters
@@ -242,7 +250,7 @@ function api:GetUserAlerts(userID)
 end
 
 function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = self:RateLimit('UpdateUserAlertCheck:'..userID, 5, 10)
+	local ok, err = RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
@@ -278,7 +286,7 @@ function api:SanitiseUserInput(msg, length)
 		return ''
 	end
 
-	msg = self:SanitiseHTML(msg)
+	msg = SanitiseHTML(msg)
 	if not length then
 		return msg
 	end
@@ -344,7 +352,7 @@ function api:CreateThread(userID, messageInfo)
 		return err
 	end
 
-	ok, err = self:RateLimit('CreateThread:'..userID, 2, 30)
+	ok, err = RateLimit('CreateThread:', userID, 2, 30)
 	if not ok then
 		return ok, err
 	end
@@ -358,7 +366,7 @@ function api:CreateThread(userID, messageInfo)
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
     createdAt = ngx.time(),
-    title = self:SanitiseHTML(messageInfo.title),
+    title = SanitiseHTML(messageInfo.title),
     viewers = {messageInfo.createdBy,recipientID},
     lastUpdated = ngx.time()
   }
@@ -366,7 +374,7 @@ function api:CreateThread(userID, messageInfo)
   local msg = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
-    body = self:SanitiseHTML(messageInfo.body),
+    body = SanitiseHTML(messageInfo.body),
     createdAt = ngx.time(),
     threadID = thread.id
   }
@@ -386,7 +394,7 @@ function api:GetThreads(userID)
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = self:RateLimit('SubscribeComment:'..userID, 3, 30)
+	local ok, err = RateLimit('SubscribeComment:', userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -406,7 +414,7 @@ end
 
 function api:SubscribeComment(userID, postID, commentID)
 
-	local ok, err = self:RateLimit('SubscribeComment:'..userID, 3, 10)
+	local ok, err = RateLimit('SubscribeComment:', userID, 3, 10)
 	if not ok then
 		return ok, err
 	end
@@ -621,7 +629,7 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-	local ok, err = self:RateLimit('VotePost:'..userID, 10, 60)
+	local ok, err = RateLimit('VotePost:', userID, 10, 60)
 	if not ok then
 		return ok, err
 	end
@@ -713,7 +721,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 end
 
 function api:EditPost(userID, userPost)
-	local ok, err = self:RateLimit('EditPost:'..userID, 4, 300)
+	local ok, err = RateLimit('EditPost:', userID, 4, 300)
 	if not ok then
 		return ok, err
 	end
@@ -746,7 +754,7 @@ function api:EditPost(userID, userPost)
 end
 
 function api:EditComment(userID, userComment)
-	local ok, err = self:RateLimit('EditComment:'..userID, 4, 120)
+	local ok, err = RateLimit('EditComment:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -781,7 +789,7 @@ end
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
 
-	local ok, err = self:RateLimit('CreateComment:'..userID, 1, 30)
+	local ok, err = RateLimit('CreateComment:', userID, 1, 30)
 	if not ok then
 		return ok, err
 	end
@@ -869,18 +877,26 @@ function api:GetDefaultFrontPage(range,filter)
 end
 
 
-function api:SubscribeToFilter(userID,filterID)
+function api:SubscribeToFilter(userID,userToSubID, filterID)
 
   local filterIDs = cache:GetUserFilterIDs(userID)
 
+	if userID ~= userToSubID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin to do that'
+		end
+	end
+
+
   for _, v in pairs(filterIDs) do
-    if v == filterID then
+    if v == userToSubID then
       -- they are already subbed
-      return
+      return nil, userToSubID..' is already subbed!'
     end
   end
 
-  worker:SubscribeToFilter(userID,filterID)
+  worker:SubscribeToFilter(userToSubID,filterID)
 
 end
 
@@ -1007,7 +1023,7 @@ end
 
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
-	
+
   return cache:GetUserFrontPage(userID,filter,range)
 end
 
@@ -1016,9 +1032,9 @@ function api:CreateSubUser(masterID, username)
 
   local subUser = {
     id = uuid.generate(),
-    username = self:SanitiseHTML(username,20),
+    username = SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
-    parentID = self:SanitiseHTML(masterID,50),
+    parentID = SanitiseHTML(masterID,50),
     enablePM = 1
   }
 
@@ -1143,7 +1159,7 @@ end
 
 function api:AddPostTag(userID, postID, tagName)
 
-	local ok, err = self:RateLimit('AddPostTag:'..userID, 1, 60)
+	local ok, err = RateLimit('AddPostTag:', userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -1242,7 +1258,7 @@ end
 
 function api:VoteTag(userID, postID, tagID, direction)
 
-	local ok, err = self:RateLimit('VoteTag:'..userID, 5, 30)
+	local ok, err = RateLimit('VoteTag:', userID, 5, 30)
 	if not ok then
 		return ok, err
 	end
@@ -1481,7 +1497,8 @@ end
 function api:CreatePost(userID, postInfo)
 	local newPost, ok, err
 
-	ok, err = self:RateLimit('CreatePost:'..userID, 1, 300)
+
+	ok, err = RateLimit('CreatePost:',userID, 1, 300)
 	if not ok then
 		return ok, err
 	end
@@ -1620,7 +1637,7 @@ end
 function api:CreateFilter(userID, filterInfo)
 	local newFilter, err, ok
 
-	ok, err = self:RateLimit('CreateFilter:'..userID, 1, 600)
+	ok, err = RateLimit('CreateFilter:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
@@ -1686,7 +1703,7 @@ function api:AddSource(userID, postID, sourceURL)
 	-- check existing sources by this user
 
 
-	local ok, err = self:RateLimit('AddSource:'..userID, 1, 600)
+	local ok, err = RateLimit('AddSource:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end

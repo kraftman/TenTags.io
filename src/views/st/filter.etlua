@@ -17,6 +17,7 @@
   </form>
 <% end %>
 
+  
   <form action="/f/<%= filter.title -%>" method="post">
     <input type="hidden" name="subscribe" value="true">
     <input type="hidden" name="filterID" value="<%= filter.id -%>">

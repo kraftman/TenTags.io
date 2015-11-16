@@ -65,10 +65,11 @@ end
 
 local function LoginUser(self)
   -- check theyve provided the correct credentials
-  local email = self.params.email
-  local password = self.params.password
-  if not email or not password then
-    return { redirect_to = self:url_for("register") }
+  local email = self.params.email or ''
+  local password = self.params.password or ''
+
+  if email == '' or password == '' then
+    return { render = 'user.createmaster' }
   end
 
   local userCredentials = {

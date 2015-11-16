@@ -9,6 +9,9 @@ local to_json = (require 'lapis.util').to_json
 
 
 local function NewMessage(self)
+  if not self.session.userID then
+    return { redirect_to = self:url_for("login") }
+  end
   return {render = 'message.create'}
 end
 

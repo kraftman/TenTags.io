@@ -55,7 +55,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, self.params.postID)
-  
+
   if not post then
     if type(err) == 'number' then
       return {status = err}
@@ -93,6 +93,10 @@ local function GetPost(self)
 end
 
 local function CreatePostForm(self)
+  if not self.session.userID then
+    return { redirect_to = self:url_for("login") }
+  end
+
   local tags = api.GetAllTags(api)
 
   self.tags = tags

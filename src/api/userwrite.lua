@@ -207,6 +207,7 @@ end
 function userwrite:SubscribeToFilter(userID,filterID)
   local userID = userID or 'default'
   local red = GetRedisConnection()
+  print('adding filter ',filterID, ' to ',userID)
   local ok, err = red:sadd('userfilters:'..userID, filterID)
 
   if not ok then
