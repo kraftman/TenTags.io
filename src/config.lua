@@ -25,5 +25,9 @@ config("production", {
   code_cache = "on",
   secret = "this is my secrarstrstet string 123456",
   port = 80,
-  num_workers = 'auto'
+  num_workers = 'auto',
+  logging = {
+    queries = false,
+    requests = false
+  }
 })
