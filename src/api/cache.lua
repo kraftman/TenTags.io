@@ -455,7 +455,7 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
   local freshPosts,filteredPosts = {},{}
   local postID,filterID
   local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
-  print(to_json(userFilterIDs))
+  --print(to_json(userFilterIDs))
 
   local filterFunction
   if filter == 'new' then
@@ -571,7 +571,7 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   -- this will be cached for say 5 minutes
   local freshPosts = cache:GetFreshUserPosts(userID,filter)
-  print(to_json(freshPosts))
+  --print(to_json(freshPosts))
   --ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
   local newPostIDs = {}
