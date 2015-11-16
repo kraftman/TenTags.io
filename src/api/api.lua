@@ -407,7 +407,7 @@ function api:SubscribePost(userID, postID)
 	end
 	tinsert(post.viewers, userID)
 
-	local ok, err = worker:CreatePost(post)
+	ok, err = worker:CreatePost(post)
 	return ok, err
 
 end
@@ -937,7 +937,8 @@ function api:VerifyReset(emailAddr, resetKey)
 end
 
 function api:ResetPassword(email, key, password)
-	local ok, err = cache:VerifyReset(email, key)
+	local ok, err
+	ok = cache:VerifyReset(email, key)
 	if not ok then
 		return nil, 'validation failed'
 	end
@@ -949,7 +950,7 @@ function api:ResetPassword(email, key, password)
 	local master = cache:GetMasterUserByEmail(email)
 	print('new password:',password)
 	local passwordHash = scrypt.crypt(password)
-	ok, err = worker:ResetMasterPassword(master.id, passwordHash)
+	ok = worker:ResetMasterPassword(master.id, passwordHash)
 	if not ok then
 		return nil, 'validation failed'
 	end
@@ -1122,8 +1123,9 @@ function api:ConvertUserMasterToMaster(master)
 end
 
 function api:CreateMasterUser(confirmURL, userInfo)
+	local ok, err,newMaster
 
-	local newMaster,err = api:ConvertUserMasterToMaster(userInfo)
+	newMaster,err = api:ConvertUserMasterToMaster(userInfo)
 	if not newMaster then
 		return newMaster, err
 	end
@@ -1146,7 +1148,8 @@ function api:CreateMasterUser(confirmURL, userInfo)
 
   local activateKey = self:CreateActivationKey(newMaster)
   local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
-  local ok, err = worker:SendActivationEmail(url, userInfo.email)
+
+	ok, err = worker:SendActivationEmail(url, userInfo.email)
 	if err then
 		return ok, err
 	end
@@ -1649,7 +1652,7 @@ function api:CreateFilter(userID, filterInfo)
 
 
   local tags = {}
-  for k,tagName in pairs(filterInfo.requiredTags) do
+  for _,tagName in pairs(filterInfo.requiredTags) do
 		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = self:CreateTag(newFilter.createdBy,tagName)
     if tag and tagName ~= '' then
@@ -1662,7 +1665,7 @@ function api:CreateFilter(userID, filterInfo)
     end
   end
 
-  for k,tagName in pairs(filterInfo.bannedTags) do
+  for _,tagName in pairs(filterInfo.bannedTags) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)
 		tagName = self:SanitiseUserInput(tagName, 100)
     if tag and tagName ~= '' then
@@ -1716,7 +1719,7 @@ function api:AddSource(userID, postID, sourceURL)
 
 	local post = cache:GetPost(postID)
 
-	local sourceTags = {}
+
 	for _,tag in pairs(post.tags) do
 		--print(tag.name)
 		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
@@ -1734,7 +1737,7 @@ function api:AddSource(userID, postID, sourceURL)
 
 	tinsert(post.tags, newTag)
 
-	local ok, err = worker:UpdatePostTags(post)
+	ok, err = worker:UpdatePostTags(post)
 	if not ok then
 		return ok,err
 	end
