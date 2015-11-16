@@ -11,6 +11,14 @@
 local url = 'http://localhost:8080'
 local http = require 'socket.http'
 
+local function CreatePost()
+
+end
+
+local function CreateUser()
+
+end
+
 describe('basic access for logged out user', function()
   it('can load frontpage', function()
     local b,c,h = http.request(url..'/')
