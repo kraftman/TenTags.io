@@ -71,6 +71,20 @@ end
 end
 --]]
 
+function read:GetOldestJob(queueName)
+  local red = GetRedisConnection()
+  local ok, err = red:zrevrange(queueName, 0, 1)
+  SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'error getting job: ',err)
+  end
+  if (not ok) or ok == ngx.null then
+    return nil
+  else
+    return ok[1]
+  end
+
+end
 
 function read:GetFilterIDsByTags(tags)
 
@@ -385,7 +399,7 @@ function read:GetPost(postID)
   end
 
 
-  ok,err =red:smembers('postfilters:'..postID)
+  ok,err = red:smembers('postfilters:'..postID)
   if not ok then
     ngx.log(ngx.ERR, 'could not load filters: ',err)
   end

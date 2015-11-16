@@ -305,6 +305,13 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
 end
 
+function write:QueueJob(queueName,value)
+  local red = GetRedisConnection()
+  local ok, err = red:zadd(queueName,'NX', ngx.time(), value)
+  SetKeepalive(red)
+  return ok, err
+end
+
 function write:AddPostToFilters(post, filters)
   -- add post to the filters that want it
   -- by post score, and by date
@@ -343,6 +350,14 @@ function write:RemovePostFromFilters(postID, filterIDs)
     ngx.log(ngx.ERR, 'error removing post from filters: ',err)
   end
   return results
+end
+
+function write:DeleteJob(queueName, jobKey)
+  local red = GetRedisConnection()
+  local ok, err = red:zrem(queueName, jobKey)
+  SetKeepalive(red)
+  return ok, err
+
 end
 
 function write:DeleteKey(key)

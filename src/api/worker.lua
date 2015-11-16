@@ -56,8 +56,19 @@ function worker:UpdatePostTags(post)
   return rediswrite:UpdatePostTags(post)
 end
 
-function worker:CreatePost(postInfo)
-  return rediswrite:CreatePost(postInfo)
+
+function worker:QueueJob(jobName, value)
+  return rediswrite:QueueJob(jobName, value)
+end
+
+function worker:CreatePost(post)
+
+  local ok, err = self:QueueJob('UpdatePostFilters',post.id)
+  if not ok then
+    return ok, err
+  end
+
+  return rediswrite:CreatePost(post)
 end
 
 function worker:FilterBanDomain(filterID, banInfo)
@@ -152,9 +163,6 @@ function worker:AddPostToFilters(post, filters)
   return rediswrite:AddPostToFilters(post, filters)
 end
 
-function worker:RemovePostFromFilters(postID, filterIDs)
-  return rediswrite:RemovePostFromFilters(postID, filterIDs)
-end
 
 function worker:CreateThread(thread)
   return rediswrite:CreateThread(thread)

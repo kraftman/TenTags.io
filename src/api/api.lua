@@ -617,33 +617,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
 end
 
-function api:UpdatePostFilters(post)
-	--[[
-		since addfilters and updatefilters are the same, we can just add
-		all of the newfilters, even if they already exist
-	]]
 
-	local newFilters = self:CalculatePostFilters(post)
-	local purgeFilterIDs = {}
-
-	for _,filterID in pairs(post.filters) do
-		if not newFilters[filterID] then
-			purgeFilterIDs[filterID] = filterID
-		end
-	end
-
-	local ok, err = worker:RemovePostFromFilters(post.id, purgeFilterIDs)
-	if not ok then
-		return ok, err
-	end
-	ok, err = worker:AddPostToFilters(post, newFilters)
-	if not ok then
-		return ok, err
-	end
-
-	post.filters = newFilters
-	return true
-end
 
 function api:VotePost(userID, postID, direction)
 
@@ -684,7 +658,11 @@ function api:VotePost(userID, postID, direction)
 		end
 	end
 
-	self:UpdatePostFilters(post)
+
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	if not ok then
+		return ok, err
+	end
 	worker:UpdatePostTags(post)
 
 	worker:AddUserTagVotes(userID,postID, matchingTags)
@@ -1195,7 +1173,10 @@ function api:AddPostTag(userID, postID, tagName)
 	tinsert(post.tags, newTag)
 
 
-	self:UpdatePostFilters(post)
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	if not ok then
+		return ok, err
+	end
 	ok, err = worker:UpdatePostTags(post)
 	return ok, err
 
@@ -1233,9 +1214,9 @@ function api:CreateTag(userID, tagName)
   if tagName:gsub(' ','') == '' then
     return nil
   end
-	print(#tagName)
+	--print(#tagName)
 	tagName = self:SanitiseUserInput(tagName, 100)
-	print(#tagName)
+	--print(#tagName)
   local tag = cache:GetTag(tagName)
   if tag then
     return tag
@@ -1336,7 +1317,10 @@ function api:VoteTag(userID, postID, tagID, direction)
 		return ok, err
 	end
 
-	self:UpdatePostFilters(post)
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	if not ok then
+		return ok, err
+	end
 	ok, err = worker:UpdatePostTags(post)
 	return ok, err
 
@@ -1359,73 +1343,9 @@ function api:CreatePostTags(userID, postInfo)
 	end
 end
 
-function api:GetValidFilters(filterID, post)
-
-	local filter = cache:GetFilterByID(filterID)
-	if not filter then
-		ngx.log(ngx.ERR,'filter not found: ',filterID)
-		return nil
-	end
-
-	--rather than just checking they exist, also need to get
-	-- all intersecting tags, and calculate an average score
-
-	filter.score = AverageTagScore(filter.requiredTags, post.tags)
 
 
 
-	if (filter.bannedUsers[post.createdBy]) then
-		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
-		return nil
-	elseif filter.bannedDomains[post.domain] then
-		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as domain ',post.domain, ' is banned ' )
-		return nil
-	end
-	return filter
-end
-
-function api:CalculatePostFilters(post)
-	-- get all the filters that care about this posts' tags
-
-	-- only include tags above threshold
-	local validTags = {}
-	for _, tag in pairs(post.tags) do
-		if tag.score > TAG_BOUNDARY then
-			tinsert(validTags, tag)
-		end
-	end
-	print('valid tags: '..to_json(validTags))
-	local filterIDs = cache:GetFilterIDsByTags(validTags)
-	print('filters by tags: '..to_json(filterIDs))
-  local chosenFilterIDs = {}
-
-  -- add all the filters that want these tags
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'required' then
-				--print('wants this tag: ',filterID)
-        chosenFilterIDs[filterID] = filterID
-      end
-    end
-  end
-
-  -- remove all the filters that dont, or have bans
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-			if filterType == 'banned' then
-				--print('doesnt want this tag: ',filterID)
-				chosenFilterIDs[filterID] = nil
-			else
-				chosenFilterIDs[filterID] = self:GetValidFilters(filterID, post)
-			end
-    end
-  end
-
-	-- we now have [filterID] = {filter}
-	-- also filter contains the new score
-
-  return chosenFilterIDs
-end
 
 function api:LoadImage(httpc, imageInfo)
 	local res, err = httpc:request_uri(imageInfo.link)
@@ -1534,7 +1454,8 @@ function api:ConvertUserPostToPost(userID, post)
 		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
 		link = post.link,
 		text = self:SanitiseUserInput(post.text, 2000),
-		createdAt = ngx.time()
+		createdAt = ngx.time(),
+		filters = {}
 	}
 
 	newPost.tags = {}
@@ -1553,7 +1474,7 @@ function api:GeneratePostTags(post)
     tinsert(post.tags,'meta:self')
   end
 
-  tinsert(post.tags,'meta:user:'..post.createdBy)
+  tinsert(post.tags,'meta:createdBy:'..post.createdBy)
 end
 
 function api:CreatePost(userID, postInfo)
@@ -1572,39 +1493,22 @@ function api:CreatePost(userID, postInfo)
 	self:GeneratePostTags(newPost)
 
   if newPost.link then
-		self:GetIcon(newPost)
+		--self:GetIcon(newPost)
     local domain  = self:GetDomain(newPost.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
     newPost.domain = domain
-    tinsert(newPost.tags,'meta:link')
-    tinsert(newPost.tags,'meta:link:'..domain)
+    tinsert(newPost.tags,'meta:link:'..newPost.link)
+    tinsert(newPost.tags,'meta:domain:'..domain)
   end
 
 	self:CreatePostTags(userID, newPost)
 
 	newPost.viewers = {userID}
 
-	local postFilters = self:CalculatePostFilters(newPost)
-
-	newPost.filters = {}
-	for k,_ in pairs(postFilters) do
-		tinsert(newPost.filters,k)
-	end
-
-  ok, err = worker:AddPostToFilters(newPost, postFilters)
-	if not ok then
-		return ok, err
-	end
-
-  ok, err = worker:CreatePost(newPost)
-	if not ok then
-		return ok, err
-	end
-
-  return true
+	return worker:CreatePost(newPost)
 end
 
 
@@ -1822,7 +1726,7 @@ function api:AddSource(userID, postID, sourceURL)
 	-- remove post from filters it shouldnt be in
 	-- add post to filters it should be in
 
- ok, err = self:UpdatePostFilters(post)
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end

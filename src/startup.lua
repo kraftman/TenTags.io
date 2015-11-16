@@ -19,6 +19,7 @@ function worker:New()
   w.userSessionSeenDict = ngx.shared.usersessionseen
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
+  w.postUpdater = (require 'timers.postupdater'):New(w.util)
 
   return w
 end
@@ -54,7 +55,8 @@ end
 function worker.OnServerStart(_,self)
 
   self.emailer.Run(_,self.emailer)
-
+  self.postUpdater.Run(_,self.postUpdater)
+  
   if not self.util:GetLock('l:ServerStart', 5) then
     return
   end
