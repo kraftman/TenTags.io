@@ -9,6 +9,7 @@ config("development", {
   },
   secret = "this is my secrarstrstet string 123456",
   num_workers = 'auto',
+  port = 8181
 })
 
 config("production", {
