@@ -1,6 +1,6 @@
 apt-get install -y lua5.1 libpcre3 libpcre3-dev libuuid-dev
 apt-get install -y libreadline-dev libncurses5-dev libpcre3-dev \
-    libssl-dev perl make build-essential
+    libssl-dev perl make build-essential autossh
 apt-get install -y luarocks
 
 wget https://openresty.org/download/ngx_openresty-1.9.3.1.tar.gz
@@ -34,4 +34,4 @@ service zabbix-agent restart
 #also need to setup on startup
 autossh -f -M 0 -N -L 6379:localhost:6379 -o "ServerAliveInterval 60" \
   -o "ServerAliveCountMax 3" -o "StrictHostKeyChecking=no" -o "BatchMode=yes" \
-  -i /root/.ssh/id_rsa root@server.itschr.is
+  -i /root/.ssh/id_rsa root@master.filtta.com
