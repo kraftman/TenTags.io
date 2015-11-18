@@ -1,0 +1,7 @@
+apt-get update
+apt-get install git
+git clone https://kraftman@bitbucket.org/kraftman/taggr.git
+cd taggr
+git checkout dev
+cd ..
+sh taggr/apisetup/apisetup.sh
