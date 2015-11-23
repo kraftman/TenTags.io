@@ -1,0 +1,11 @@
+apt-get update
+apt-get install -y git
+git clone https://kraftman@bitbucket.org/kraftman/taggr.git
+cd taggr
+git checkout dev
+cd ..
+cp taggr/apisetup/id_rsa .ssh/id_rsa
+cp taggr/apisetup/id_rsa.pub .ssh/id_rsa.pub
+ssh-copy-id root@master.filtta.com
+
+sh taggr/apisetup/apisetup.sh
