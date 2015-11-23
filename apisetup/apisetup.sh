@@ -1,4 +1,4 @@
-apt-get install -y lua5.1 libpcre3 libpcre3-dev libuuid-dev
+apt-get install -y lua5.1 libpcre3 libpcre3-dev uuid-dev
 apt-get install -y libreadline-dev libncurses5-dev libpcre3-dev \
     libssl-dev perl make build-essential
 
