@@ -141,7 +141,7 @@ local function ResetUser(self)
 
   -- dont reveal anything about what happened
   local url = self:build_url()..'/passwordreset?email='..self.params.email..'&key='
-  local ok , err = api:SendPasswordReset(url, self.params.email)
+  local ok  = api:SendPasswordReset(url, self.params.email)
   if ok then
     return 'success, please check your email'
   else
@@ -158,7 +158,7 @@ local function ResetPasswordLink(self)
     return 'params missing'
   end
 
-  local ok, err = api:VerifyReset(emailAddr,key)
+  local ok = api:VerifyReset(emailAddr,key)
   if not ok then
     return 'invalid key!'
   end
@@ -175,7 +175,7 @@ local function ChangePassword(self)
   local resetKey = self.params.resetKey
   local newPassword = self.params.password
 
-  local ok, err = api:ResetPassword(emailAddr, resetKey, newPassword)
+  local ok = api:ResetPassword(emailAddr, resetKey, newPassword)
   if ok then
     return 'success, please login!'
   else

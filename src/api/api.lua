@@ -972,13 +972,16 @@ function api:ValidateMaster(userCredentials)
   end
 	print(userCredentials.password, ' =',masterInfo.passwordHash, '=')
   local valid = scrypt.check(userCredentials.password,masterInfo.passwordHash)
+
 	if not valid then
-		print('password not valid')
+		return nil
 	end
-  if valid then
-    masterInfo.passwordHash = nil
-    return masterInfo
-  end
+
+	local userIP = ngx.var.host
+	worker:AddMasterIP(masterInfo.id, userIP)
+
+  masterInfo.passwordHash = nil
+  return masterInfo
 
 end
 

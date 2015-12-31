@@ -12,12 +12,12 @@
       <% else %>
         <a href="<%= url_for('viewuser',{username = child.username}) %>">
           <%= child.username -%>
-          <% if userLabels[child.createdBy] then %>
+          <% if userLabels and userLabels[child.createdBy] then %>
             <%= userLabels[child.createdBy] -%>
           <% end %>
         </a>
       <% end %>
-      
+
       <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
       <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
       <% if child.createdBy == session.userID then %>
