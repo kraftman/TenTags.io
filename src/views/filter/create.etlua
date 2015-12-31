@@ -9,6 +9,7 @@
 
 
 <div class = 'contents'>
+<input id='testbutton' type='button' name='Submit' value='test' />
 <form id='createfilter' action='' method='post'
     accept-charset='UTF-8'>
   <fieldset >

@@ -1655,6 +1655,10 @@ function api:CreateFilter(userID, filterInfo)
 
 
   local tags = {}
+	if type(filterInfo.requiredTags) ~= 'table' then
+		return nil, 'required tags not provided'
+	end
+
   for _,tagName in pairs(filterInfo.requiredTags) do
 		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = self:CreateTag(newFilter.createdBy,tagName)
@@ -1667,6 +1671,10 @@ function api:CreateFilter(userID, filterInfo)
       tinsert(newFilter.requiredTags, tag)
     end
   end
+
+	if type(filterInfo.bannedTags) ~= 'table' then
+		filterInfo.bannedTags = {}
+	end
 
   for _,tagName in pairs(filterInfo.bannedTags) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)

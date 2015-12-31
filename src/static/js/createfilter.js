@@ -1,6 +1,11 @@
 
 
 $(function() {
+
+  $('#testbutton').click(function(){
+    }
+  );
+
   $(".chosen-select").chosen();
   $("#requiredSelect_chosen").bind('keyup',function(e) {
     if(e.which === 13 || e.which === 32) {
@@ -44,10 +49,12 @@ $("#bannedSelect_chosen").bind('keyup',function(e) {
       url: '/filters/create',
       data: form,
       success: function(data) {
-           console.log(data);
-         },
+        console.log('redirecting')
+        window.location.replace('/');
+      },
       error: function(data) {
-        console.log(data.responseText);
+        console.log('failed');
+        console.log(data);
       },
       dataType: 'json'
     });

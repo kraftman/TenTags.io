@@ -59,6 +59,9 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
+function userwrite:AddMasterIP(masterID, IP)
+
+end
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = GetRedisConnection()
