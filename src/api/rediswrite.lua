@@ -137,6 +137,7 @@ function write:UpdatePostField(postID, field, newValue)
   if not ok then
     ngx.log(ngx.ERR, 'unable to update post field: ', err)
   end
+  return ok,err
 end
 
 function write:FilterUnbanDomain(filterID, domainName)
@@ -352,12 +353,30 @@ function write:RemovePostFromFilters(postID, filterIDs)
   return results
 end
 
+function write:SetNX(key,value)
+  local red = GetRedisConnection()
+  local ok, err = red:set(key,value,'NX')
+  if err then
+    ngx.log(ngx.ERR, 'unable to setNX: ',err)
+  end
+  return ok, err
+end
+
 function write:DeleteJob(queueName, jobKey)
   local red = GetRedisConnection()
   local ok, err = red:zrem(queueName, jobKey)
   SetKeepalive(red)
   return ok, err
 
+end
+
+function write:GetLock(key, expires)
+  local red = GetRedisConnection()
+  local ok, err = red:set(key, key,'NX', 'EX',expires)
+  if err then
+    ngx.log(ngx.ERR, 'unable to setex: ',err)
+  end
+  return ok, err
 end
 
 function write:DeleteKey(key)
@@ -587,6 +606,7 @@ function write:CreatePost(postInfo)
   SetKeepalive(red)
   return results
 end
+
 
 function write:CreateThread(thread)
   local red = GetRedisConnection()

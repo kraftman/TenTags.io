@@ -72,6 +72,11 @@ function worker:CreatePost(post)
     return ok, err
   end
 
+  ok, err = self:QueueJob('AddPostShortURL',post.id)
+  if not ok then
+    return ok, err
+  end
+
   return rediswrite:CreatePost(post)
 end
 

@@ -10,8 +10,8 @@ local redisWrite = require 'api.rediswrite'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
-to_json = (require 'lapis.util').to_json
-from_json = (require 'lapis.util').from_json
+local to_json = (require 'lapis.util').to_json
+local SEED = 1
 
 function config:New(util)
   local c = setmetatable({},self)
@@ -29,30 +29,8 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
-
-  local postID = redisRead:GetOldestJob('UpdatePostFilters')
-  if not postID then
-    return
-  end
-
-
-
-
-  ok, err = redisWrite:DeleteJob('UpdatePostFilters',postID)
-  print(to_json(ok))
-  if ok ~= 1 then
-    if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
-    end
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-  if not post then
-    return
-  end
-
-  self:UpdatePostFilters(post)
+  self:UpdatePostShortURL()
+  self:UpdatePostFilters()
 
 end
 
@@ -150,11 +128,96 @@ function config:CalculatePostFilters(post)
   return chosenFilterIDs
 end
 
-function config:UpdatePostFilters(post)
+function config:GetJob(jobName)
+  local postID = redisRead:GetOldestJob(jobName)
+  if not postID then
+    return
+  end
+
+  local ok, err = redisWrite:DeleteJob(jobName,postID)
+  print(to_json(ok))
+  if ok ~= 1 then
+    if err then
+      ngx.log(ngx.ERR, 'error deleting job: ',err)
+    end
+    return
+  end
+
+  local post = redisRead:GetPost(postID)
+  if not post then
+    return
+  end
+end
+
+function config:CreateShortURL()
+  local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  SEED = SEED + 1
+  math.randomseed(ngx.time()+ngx.worker.pid()+SEED)
+  local newURL = ''
+  for _ = 1, 7 do
+    local v = math.random(#urlChars)
+    newURL = newURL..urlChars:sub(v,v)
+  end
+
+  --check if its taken
+  return newURL
+end
+
+function config:UpdatePostShortURL()
+
+  local postID = redisRead:GetOldestJob('AddPostShortURL')
+  if not postID then
+    return
+  end
+
+  local ok, err = redisWrite:GetLock('UpdatePostShortURL:'..postID,10)
+  if ok == ngx.null then
+    return
+  end
+
+  local shortURL
+  for i = 1, 5 do
+    shortURL = self:CreateShortURL()
+    ok, err = redisWrite:SetNX('ppURL:'..shortURL, postID)
+    if err then
+      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
+      return
+    end
+
+    if ok ~= ngx.null then
+      break
+    end
+
+    if (i == 5) then
+      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', postID)
+      return
+    end
+  end
+
+  -- add short url to hash
+  -- deleted job
+  ok, err = redisWrite:UpdatePostField(postID, 'shortURL', shortURL)
+  if not ok then
+    print('error updating post field: ',err)
+    return
+  end
+
+  ok, err = redisWrite:DeleteJob('AddPostShortURL',postID)
+
+  ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
+
+end
+
+function config:UpdatePostFilters()
 	--[[
 		since addfilters and updatefilters are the same, we can just add
 		all of the newfilters, even if they already exist
 	]]
+
+  local post = self:GetJob('UpdatePostFilters')
+  if not post then
+    return
+  end
 
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}

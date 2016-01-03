@@ -205,3 +205,10 @@ make
 luarocks install magick
 cp src/lib/scrypt.so /usr/local/scrypt.so
 sudo apt-get install libmagickwand-dev
+
+
+Short URLs
+- create post with full url
+- deferred processing, add short url
+- link to short url if generated, long url if not
+- store short url -> long url map in set, short url in hash once generated.
