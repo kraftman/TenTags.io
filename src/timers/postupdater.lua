@@ -181,7 +181,7 @@ function config:UpdatePostShortURL()
   local shortURL
   for i = 1, 5 do
     shortURL = self:CreateShortURL()
-    ok, err = redisWrite:SetNX('pURL:'..shortURL, postID)
+    ok, err = redisWrite:SetNX('shortURL:'..shortURL, postID)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
       return
@@ -226,7 +226,7 @@ function config:AddCommentShortURL()
   local shortURL
   for i = 1, 5 do
     shortURL = self:CreateShortURL()
-    ok, err = redisWrite:SetNX('cURL:'..shortURL, commentPostPair)
+    ok, err = redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' commentPostPair: ', commentPostPair)
       return
@@ -243,7 +243,7 @@ function config:AddCommentShortURL()
   end
 
   local postID, commentID = commentPostPair:match('(%w+):(%w+)')
-  
+
   ok, err = commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
   if not ok then
     print('error updating post field: ',err)

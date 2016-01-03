@@ -17,6 +17,14 @@ local function ViewComment(self)
 
 end
 
+local function ViewShortURLComment(self)
+  self.commentInfo = api:GetComment(self.params.commentShortURL)
+  self.commentInfo.username = api:GetUserInfo(self.commentInfo.createdBy).username
+  ngx.log(ngx.ERR, to_json(self.commentInfo))
+  return {render = 'viewcomment'}
+
+end
+
 -- needs moving to comments controller
 local function CreateComment(self)
 
@@ -112,6 +120,8 @@ function m:Register(app)
     POST = DeleteComment
   }))
   app:get('viewcomment','/comment/:postID/:commentID',ViewComment)
+
+  app:get('viewcommentshort','/comment/:commentShortURL',ViewShortURLComment)
   app:get('subscribecomment','/comment/subscribe/:postID/:commentID',SubscribeComment)
   app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', UpvoteComment)
   app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash',DownVoteComment)

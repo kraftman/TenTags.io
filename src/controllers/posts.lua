@@ -45,7 +45,7 @@ local function GetPost(self)
 
   local postID = self.params.postID
   if #postID < 10 then
-    postID = api:GetLongPostID(postID) or postID
+    postID = api:ConvertShortURL(postID) or postID
   end
 
   local comments = api:GetPostComments(self.session.userID, postID,sortBy)

@@ -168,8 +168,8 @@ function api:GetUserFilters(userID)
   return cache:GetFilterInfo(filterIDs)
 end
 
-function api:GetLongPostID(shortURL)
-	return cache:GetLongPostID(shortURL)
+function api:ConvertShortURL(shortURL)
+	return cache:ConvertShortURL(shortURL)
 end
 
 
@@ -185,6 +185,17 @@ function api:GetPostComments(userID, postID,sortBy)
 end
 
 function api:GetComment(postID, commentID)
+	if not postID then
+		return nil, 'no postID or commentURL'
+	end
+	if not commentID then
+	 	local postIDCommentID = cache:ConvertShortURL(postID)
+		postID, commentID = postIDCommentID:match('(%w+):(%w+)')
+		if (not postID) or (not commentID) then
+			return nil, 'error getting url'
+		end
+	end
+
   return cache:GetComment(postID, commentID)
 end
 

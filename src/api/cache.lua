@@ -97,6 +97,10 @@ function cache:GetUserInfo(userID)
 
 end
 
+function cache:GetCommentIDFromURL(commentURL)
+  return commentRead:GetCommentIDFromURL(commentURL)
+end
+
 function cache:VerifyReset(emailAddr, key)
   return redisread:VerifyReset(emailAddr, key)
 end
@@ -234,8 +238,8 @@ function cache:GetPostComments(postID)
 
 end
 
-function cache:GetLongPostID(shortURL)
-  return redisread:GetLongPostID(shortURL)
+function cache:ConvertShortURL(shortURL)
+  return redisread:ConvertShortURL(shortURL)
 end
 
 function cache:GetSortedComments(userID, postID,sortBy)

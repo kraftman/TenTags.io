@@ -87,9 +87,9 @@ function read:GetOldestJob(queueName)
 
 end
 
-function read:GetLongPostID(shortURL)
+function read:ConvertShortURL(shortURL)
   local red = GetRedisConnection()
-  local ok, err = red:get('pURL:'..shortURL)
+  local ok, err = red:get('shortURL:'..shortURL)
   if err then
     ngx.log(ngx.ERR, 'unable to get short url: ',err)
   end
@@ -506,6 +506,7 @@ function read:GetTag(tagName)
 
   return tagInfo
 end
+
 
 
 
