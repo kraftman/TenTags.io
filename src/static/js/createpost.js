@@ -28,8 +28,9 @@ $(function() {
       url: '/post/new',
       data: form,
       success: function(data) {
-           console.log(data);
-         },
+        console.log(data);
+        window.location.replace('/post/'+data.id);
+      },
       error: function(data) {
         console.log(data.responseText);
       },
