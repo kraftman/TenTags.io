@@ -77,6 +77,7 @@ end
 
 function userwrite:AddUserAlert(createdAt,userID, alert)
   local red = GetRedisConnection()
+  print('adding user alert for ',userID,to_json(alert))
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
   if not ok then
     ngx.log(ngx.ERR, 'unable to create alert: ',err)

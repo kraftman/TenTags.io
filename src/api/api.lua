@@ -285,6 +285,7 @@ function api:VerifyMessageSender(userID, messageInfo)
 			messageInfo.createdBy = userID
 		end
 	end
+	return true
 end
 
 
@@ -362,18 +363,25 @@ end
 
 function api:CreateThread(userID, messageInfo)
 
+	print('a')
 	local ok, err = self:VerifyMessageSender(userID, messageInfo)
 	if not ok then
+		print(ok,err)
 		return err
 	end
 
-	ok, err = RateLimit('CreateThread:', userID, 2, 30)
+	print('b')
+	ok, err = RateLimit('CreateThread:', userID, 20, 30)
+	print('b1')
 	if not ok then
+		print('rate limited')
 		return ok, err
 	end
 
+	print('c')
   local recipientID = cache:GetUserID(messageInfo.recipient)
 	if not recipientID then
+		ngx.log(ngx.ERR, 'user not found: ',messageInfo.recipint)
 		return nil, 'couldnt find recipient user'
 	end
 
@@ -393,7 +401,7 @@ function api:CreateThread(userID, messageInfo)
     createdAt = ngx.time(),
     threadID = thread.id
   }
-
+	print('create thread2')
   worker:CreateThread(thread)
   worker:CreateMessage(msg)
   worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)

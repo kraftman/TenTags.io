@@ -28,9 +28,8 @@ local function CreateThread(self)
     recipient = self.params.recipient,
     createdBy = self.session.userID
   }
-  ngx.log(ngx.ERR,self.params.subject)
+  print('create thread')
   api:CreateThread(self.session.userID, msgInfo)
-
 end
 
 local function CreateMessageReply(self)
