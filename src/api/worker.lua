@@ -60,6 +60,14 @@ function worker:UpdatePostTags(post)
   return rediswrite:UpdatePostTags(post)
 end
 
+function worker:UpdateFilterDescription(filter)
+  return rediswrite:UpdateFilterDescription(filter)
+end
+
+
+function worker:UpdateFilterTitle(filter)
+  return rediswrite:UpdateFilterTitle(filter)
+end
 
 function worker:QueueJob(jobName, value)
   return rediswrite:QueueJob(jobName, value)

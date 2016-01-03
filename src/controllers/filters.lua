@@ -180,10 +180,21 @@ local function DelMod(self, filter)
 end
 
 local function UpdateTitle(self, filter)
-  filter.title = self.params.filtertitle
-  filter.description = self.params.filterDescription()
+  local title = self.params.filtertitle
 
-  local ok, err = api:UpdateFilterDescription(self.session.userID, filter.id)
+  local description = self.params.filterdescription
+
+  local ok, err = api:UpdateFilterDescription(self.session.userID, filter.id,description)
+  if not ok then
+    return 'failed to update description: ',err
+  end
+
+  ok, err = api:UpdateFilterTitle(self.session.userID, filter.id, title)
+  if not ok then
+    return 'failed to update title: ',err
+  else
+    return 'success'
+  end
 
 end
 

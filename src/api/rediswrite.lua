@@ -566,6 +566,34 @@ function write:UpdatePostTags(post)
   return res
 end
 
+function write:UpdateFilterDescription(filter)
+  local red = GetRedisConnection()
+  print('filter:'..filter.id)
+  local ok, err = red:hset('filter:'..filter.id, 'description', filter.description)
+  if err then
+    ngx.log(ngx.ERR, 'unable to update description: ', err)
+  end
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
+function write:UpdateFilterTitle(filter)
+  local red = GetRedisConnection()
+
+  local ok, err = red:hset('filter:'..filter.id, 'title', filter.title)
+  if err then
+    ngx.log(ngx.ERR, 'unable to update description: ', err)
+  end
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
 function write:CreatePost(postInfo)
   local red = GetRedisConnection()
   local tags = postInfo.tags

@@ -88,10 +88,12 @@
   <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
 
     <label for='filtertitle' >Filter Title:</label>
-    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
+    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
 
     <label for='filterdescription' >Filter Description</label>
-    <input type='text' name='filterdescription' id='filterdescription' maxlength="50" />
+    <input type='text' name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>" maxlength="50" />
     </br>
+    <input id='submitButton' type='submit' name='Submit' value='Submit' />
+
   </form>
 </div>

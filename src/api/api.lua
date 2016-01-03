@@ -768,7 +768,7 @@ function api:EditPost(userID, userPost)
 
 end
 
-function api:UpdateFilterDescriptions(userID, filterID)
+function api:UpdateFilterDescription(userID, filterID, newDescription)
 	local ok, err = RateLimit('EditFilter:', userID, 4, 120)
 	if not ok then
 		return ok, err
@@ -786,7 +786,33 @@ function api:UpdateFilterDescriptions(userID, filterID)
 		end
 	end
 
-	return worker:UpdateFilterDescription()
+	filter.description = self:SanitiseUserInput(newDescription, 2000)
+
+	return worker:UpdateFilterDescription(filter)
+
+end
+
+function api:UpdateFilterTitle(userID, filterID, newTitle)
+	local ok, err = RateLimit('EditFilterTitle:', userID, 4, 120)
+	if not ok then
+		return ok, err
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+	if not filter then
+		return nil, 'could not find filter'
+	end
+
+	if userID ~= filter.ownerID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin or filter owner to add mods'
+		end
+	end
+
+	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
+
+	return worker:UpdateFilterTitle(filter)
 
 end
 
@@ -1704,7 +1730,7 @@ function api:CreateFilter(userID, filterInfo)
       tag.filterType = 'required'
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
-      tinsert(tags,tag)text
+      tinsert(tags,tag)
       tinsert(newFilter.requiredTags, tag)
     end
   end
