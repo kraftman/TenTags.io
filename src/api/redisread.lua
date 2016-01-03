@@ -14,6 +14,7 @@ local function GetRedisConnection()
       ngx.say("failed to connect: ", err)
       return
   end
+  red:select(0)
   return red
 end
 
@@ -84,6 +85,19 @@ function read:GetOldestJob(queueName)
     return ok[1]
   end
 
+end
+
+function read:GetLongPostID(shortURL)
+  local red = GetRedisConnection()
+  local ok, err = red:get('pURL:'..shortURL)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get short url: ',err)
+  end
+  if ok == ngx.null then
+    return nil
+  end
+
+  return ok, err
 end
 
 function read:GetFilterIDsByTags(tags)
@@ -365,7 +379,7 @@ function read:GetPost(postID)
   local post = self:ConvertListToTable(ok)
   post.viewers = {}
   post.filters = {}
-  
+
   for k,_ in pairs(post) do
     if k:find('^viewer:') then
       local viewerID = k:match('^viewer:(%w+)')

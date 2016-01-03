@@ -168,6 +168,10 @@ function api:GetUserFilters(userID)
   return cache:GetFilterInfo(filterIDs)
 end
 
+function api:GetLongPostID(shortURL)
+	return cache:GetLongPostID(shortURL)
+end
+
 
 function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)

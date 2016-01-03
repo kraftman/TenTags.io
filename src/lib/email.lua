@@ -12,7 +12,7 @@ function m:SendMessage(subject, body, recipient)
         },
         body = body
     }
-
+    print('sending email')
     local ok, err = smtp.send {
         from = '<admin@filtta.com>',
         rcpt = '<'..recipient..'>',

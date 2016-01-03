@@ -43,7 +43,12 @@ local function GetPost(self)
   local sortBy = self.params.sort or 'best'
   sortBy = sortBy:lower()
 
-  local comments = api:GetPostComments(self.session.userID, self.params.postID,sortBy)
+  local postID = self.params.postID
+  if #postID < 10 then
+    postID = api:GetLongPostID(postID) or postID
+  end
+
+  local comments = api:GetPostComments(self.session.userID, postID,sortBy)
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
@@ -54,7 +59,7 @@ local function GetPost(self)
 
   self.comments = comments
 
-  local post,err = api:GetPost(self.session.userID, self.params.postID)
+  local post,err = api:GetPost(self.session.userID, postID)
 
   if not post then
     if type(err) == 'number' then

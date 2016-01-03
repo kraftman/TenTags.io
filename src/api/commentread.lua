@@ -12,6 +12,7 @@ local function GetRedisConnection()
       ngx.say("failed to connect: ", err)
       return
   end
+  red:select(1)
   return red
 end
 

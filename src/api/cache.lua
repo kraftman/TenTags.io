@@ -234,6 +234,10 @@ function cache:GetPostComments(postID)
 
 end
 
+function cache:GetLongPostID(shortURL)
+  return redisread:GetLongPostID(shortURL)
+end
+
 function cache:GetSortedComments(userID, postID,sortBy)
 
   local flatComments,err = self:GetPostComments(postID)

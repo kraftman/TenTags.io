@@ -147,6 +147,7 @@ function config:GetJob(jobName)
   if not post then
     return
   end
+  return post
 end
 
 function config:CreateShortURL()
@@ -178,7 +179,7 @@ function config:UpdatePostShortURL()
   local shortURL
   for i = 1, 5 do
     shortURL = self:CreateShortURL()
-    ok, err = redisWrite:SetNX('ppURL:'..shortURL, postID)
+    ok, err = redisWrite:SetNX('pURL:'..shortURL, postID)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
       return
