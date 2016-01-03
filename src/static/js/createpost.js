@@ -16,7 +16,6 @@ $(function() {
 
   $('input#submitButton').click( function(e) {
     e.preventDefault();
-    console.log($('form#createpost').serialize());
     var selectedtags =  $(".chosen-select").val()
     var form = {
       selectedtags: JSON.stringify(selectedtags),

@@ -1566,7 +1566,6 @@ end
 function api:CreatePost(userID, postInfo)
 	local newPost, ok, err
 
-
 	ok, err = RateLimit('CreatePost:',userID, 1, 300)
 	if not ok then
 		return ok, err

@@ -16,9 +16,11 @@
 
 <label for='posttitle' >Post Title:</label>
 <input type='text' name='posttitle' id='posttitle' maxlength="50" />
+</br>
 
 <label for='postlink' >Post Link</label>
 <input type='text' name='postlink' id='postlink' maxlength="50" />
+</br>
 
 <label for='posttext' >Post text</label>
 <input type='text' name='posttext' id='posttext' maxlength="50" />

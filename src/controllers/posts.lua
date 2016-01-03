@@ -31,10 +31,11 @@ local function CreatePost(self)
   local ok, err = api:CreatePost(self.session.userID, info)
 
   if ok then
-    return
+    print(to_json(ok))
+    return {json = ok}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-    return {status = 500}
+    return {status = 500, json = err}
   end
 
 end
@@ -46,6 +47,11 @@ local function GetPost(self)
   local postID = self.params.postID
   if #postID < 10 then
     postID = api:ConvertShortURL(postID) or postID
+  else
+    local post = api:GetPost(self.session.userID, postID)
+    if post.shortURL then
+      return { redirect_to = self:url_for("viewpost",{postID = post.shortURL}) }
+    end
   end
 
   local comments = api:GetPostComments(self.session.userID, postID,sortBy)

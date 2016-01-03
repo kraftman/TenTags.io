@@ -633,7 +633,7 @@ function write:CreatePost(postInfo)
   end
 
   SetKeepalive(red)
-  return results
+  return results, err
 end
 
 

@@ -85,7 +85,12 @@ function worker:CreatePost(post)
     return ok, err
   end
 
-  return rediswrite:CreatePost(post)
+  ok, err = rediswrite:CreatePost(post)
+  if ok then
+    return post
+  else
+    return ok, err
+  end
 end
 
 function worker:FilterBanDomain(filterID, banInfo)
