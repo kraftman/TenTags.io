@@ -98,7 +98,18 @@ end
 
 function worker:CreateComment(commentInfo)
   userWrite:AddComment(commentInfo)
-  return commentWrite:CreateComment(commentInfo)
+
+
+  local ok, err = commentWrite:CreateComment(commentInfo)
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self:QueueJob('AddCommentShortURL',commentInfo.postID..':'..commentInfo.id)
+  if not ok then
+    return ok, err
+  end
+
 end
 
 function worker:UpdateUser(user)

@@ -7,6 +7,7 @@ config.http = require 'lib.http'
 config.cjson = require 'cjson'
 local redisRead = require 'api.redisread'
 local redisWrite = require 'api.rediswrite'
+local commentWrite = require 'api.commentwrite'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
@@ -30,6 +31,7 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
   self:UpdatePostShortURL()
+  self:AddCommentShortURL()
   self:UpdatePostFilters()
 
 end
@@ -208,6 +210,52 @@ function config:UpdatePostShortURL()
   ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
 
 end
+
+function config:AddCommentShortURL()
+
+  local commentPostPair = redisRead:GetOldestJob('AddCommentShortURL')
+  if not commentPostPair then
+    return
+  end
+
+  local ok, err = redisWrite:GetLock('AddCommentShortURL:'..commentPostPair,10)
+  if ok == ngx.null then
+    return
+  end
+
+  local shortURL
+  for i = 1, 5 do
+    shortURL = self:CreateShortURL()
+    ok, err = redisWrite:SetNX('cURL:'..shortURL, commentPostPair)
+    if err then
+      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' commentPostPair: ', commentPostPair)
+      return
+    end
+
+    if ok ~= ngx.null then
+      break
+    end
+
+    if (i == 5) then
+      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', commentPostPair)
+      return
+    end
+  end
+
+  local postID, commentID = commentPostPair:match('(%w+):(%w+)')
+  
+  ok, err = commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
+  if not ok then
+    print('error updating post field: ',err)
+    return
+  end
+
+  ok, err = redisWrite:DeleteJob('AddCommentShortURL',commentPostPair)
+
+  ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
+
+end
+
 
 function config:UpdatePostFilters()
 	--[[
