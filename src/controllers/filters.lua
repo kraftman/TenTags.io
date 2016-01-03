@@ -179,6 +179,14 @@ local function DelMod(self, filter)
   end
 end
 
+local function UpdateTitle(self, filter)
+  filter.title = self.params.filtertitle
+  filter.description = self.params.filterDescription()
+
+  local ok, err = api:UpdateFilterDescription(self.session.userID, filter.id)
+
+end
+
 
 local function UpdateFilter(self)
   local filter = api:GetFilterByName(self.params.filterlabel)
@@ -186,6 +194,10 @@ local function UpdateFilter(self)
     return CreateFilter(self)
   end
   self.selectedFilter = filter
+
+  if self.params.filtertitle then
+    return UpdateTitle(self, filter)
+  end
 
   if self.params.banuser then
      return BanUser(self, filter)

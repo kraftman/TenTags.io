@@ -84,4 +84,14 @@
       <input id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
+
+  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
+
+    <label for='filtertitle' >Filter Title:</label>
+    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
+
+    <label for='filterdescription' >Filter Description</label>
+    <input type='text' name='filterdescription' id='filterdescription' maxlength="50" />
+    </br>
+  </form>
 </div>

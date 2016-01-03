@@ -768,6 +768,28 @@ function api:EditPost(userID, userPost)
 
 end
 
+function api:UpdateFilterDescriptions(userID, filterID)
+	local ok, err = RateLimit('EditFilter:', userID, 4, 120)
+	if not ok then
+		return ok, err
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+	if not filter then
+		return nil, 'could not find filter'
+	end
+
+	if userID ~= filter.ownerID then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin or filter owner to add mods'
+		end
+	end
+
+	return worker:UpdateFilterDescription()
+
+end
+
 function api:EditComment(userID, userComment)
 	local ok, err = RateLimit('EditComment:', userID, 4, 120)
 	if not ok then
@@ -1682,7 +1704,7 @@ function api:CreateFilter(userID, filterInfo)
       tag.filterType = 'required'
       tag.createdBy = newFilter.createdBy
       tag.createdAt = newFilter.createdAt
-      tinsert(tags,tag)
+      tinsert(tags,tag)text
       tinsert(newFilter.requiredTags, tag)
     end
   end
