@@ -288,8 +288,6 @@ function api:VerifyMessageSender(userID, messageInfo)
 	return true
 end
 
-
-
 function api:SanitiseUserInput(msg, length)
 	if type(msg) ~= 'string' then
 		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
@@ -363,22 +361,25 @@ end
 
 function api:CreateThread(userID, messageInfo)
 
-	print('a')
 	local ok, err = self:VerifyMessageSender(userID, messageInfo)
 	if not ok then
 		print(ok,err)
 		return err
 	end
 
-	print('b')
-	ok, err = RateLimit('CreateThread:', userID, 20, 30)
-	print('b1')
+	ok, err = RateLimit('CreateThread:', userID, 2, 60)
 	if not ok then
-		print('rate limited')
 		return ok, err
 	end
 
-	print('c')
+	messageInfo.title = messageInfo.title or ''
+	messageInfo.body = messageInfo.body or ''
+
+	if messageInfo.title:gsub(' ','')== '' or messageInfo.body:gsub(' ','') == '' then
+		return nil, 'blank message!'
+	end
+
+
   local recipientID = cache:GetUserID(messageInfo.recipient)
 	if not recipientID then
 		ngx.log(ngx.ERR, 'user not found: ',messageInfo.recipint)
@@ -402,10 +403,18 @@ function api:CreateThread(userID, messageInfo)
     threadID = thread.id
   }
 	print('create thread2')
-  worker:CreateThread(thread)
-  worker:CreateMessage(msg)
-  worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
+  ok, err = worker:CreateThread(thread)
+	if not ok then
+		return ok, err
+	end
 
+  ok, err = worker:CreateMessage(msg)
+	if not ok then
+		return ok, err
+	end
+
+  ok, err = worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
+	return ok, err
 end
 
 function api:GetUserID(username)

@@ -18,7 +18,7 @@ end
 local function ViewMessages(self)
   self.threads = api:GetThreads(self.session.userID)
   ngx.log(ngx.ERR, to_json(self.threads))
-  return {render = 'viewmessages'}
+  return {render = 'message.view'}
 end
 
 local function CreateThread(self)
@@ -29,7 +29,14 @@ local function CreateThread(self)
     createdBy = self.session.userID
   }
   print('create thread')
-  api:CreateThread(self.session.userID, msgInfo)
+  local ok, err = api:CreateThread(self.session.userID, msgInfo)
+  if ok then
+    self.threads = api:GetThreads(self.session.userID)
+    ngx.log(ngx.ERR, to_json(self.threads))
+    return {render = 'message.view'}
+  else
+    return 'fail '..err
+  end
 end
 
 local function CreateMessageReply(self)
