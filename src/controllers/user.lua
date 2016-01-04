@@ -83,8 +83,8 @@ local function LoginUser(self)
     local userInfo = api:GetUserInfo(self.session.userID)
     self.session.username = userInfo.username
     self.session.masterID = masterInfo.id
-    return 'true'
-    --return { redirect_to = self:url_for("home") }
+    --return 'true'
+    return { redirect_to = self:url_for("home") }
   elseif inactive == true then
     return 'Your account has not been activated, please click the link in your email'
   else

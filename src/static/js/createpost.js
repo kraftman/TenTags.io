@@ -28,10 +28,15 @@ $(function() {
       url: '/post/new',
       data: form,
       success: function(data) {
-        console.log(data);
-        window.location.replace('/post/'+data.id);
+        console.log('this '+data)
+        console.log(data)
+        if (data.id) {
+          window.location.assign('/post/'+data.id);
+        }
+        $('#submitError').html(data);
       },
       error: function(data) {
+        console.log('that');
         console.log(data.responseText);
       },
       dataType: 'json'

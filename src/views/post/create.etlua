@@ -8,31 +8,32 @@
 
 
 
-<form id='createpost' action='/post/new' method='post'
-    accept-charset='UTF-8'>
-<fieldset >
-<legend>Create Post</legend>
-<input type='hidden' name='submitted' id='submitted' value='1'/>
+<form id='createpost' action='/post/new' method='post' accept-charset='UTF-8'>
+  <fieldset >
 
-<label for='posttitle' >Post Title:</label>
-<input type='text' name='posttitle' id='posttitle' maxlength="50" />
-</br>
+    <div id="submitError"></div>
+    <legend>Create Post</legend>
+    <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-<label for='postlink' >Post Link</label>
-<input type='text' name='postlink' id='postlink' maxlength="50" />
-</br>
+    <label for='posttitle' >Post Title:</label>
+    <input type='text' name='posttitle' id='posttitle' maxlength="50" />
+    </br>
 
-<label for='posttext' >Post text</label>
-<input type='text' name='posttext' id='posttext' maxlength="50" />
-</br>
-<select name='tagselect' id='test2select' style="width:350px;" multiple='true' class="chosen-select">
-  <% for i, tag in pairs(tags) do %>
-   <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-  <% end %>
-</select>
+    <label for='postlink' >Post Link</label>
+    <input type='text' name='postlink' id='postlink' maxlength="50" />
+    </br>
+
+    <label for='posttext' >Post text</label>
+    <input type='text' name='posttext' id='posttext' maxlength="50" />
+    </br>
+    <select name='tagselect' id='test2select' style="width:350px;" multiple='true' class="chosen-select">
+      <% for i, tag in pairs(tags) do %>
+       <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
+      <% end %>
+    </select>
 
 
-<input id='submitButton' type='submit' name='Submit' value='Submit' />
+    <input id='submitButton' type='submit' name='Submit' value='Submit' />
 
-</fieldset>
+  </fieldset>
 </form>

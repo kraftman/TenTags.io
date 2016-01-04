@@ -13,7 +13,7 @@ local trim = util.trim
 
 
 local function CreatePost(self)
-
+  print(self.params.selectedtags)
   local selectedTags = from_json(self.params.selectedtags)
 
   if trim(self.params.link) == '' then
@@ -31,11 +31,10 @@ local function CreatePost(self)
   local ok, err = api:CreatePost(self.session.userID, info)
 
   if ok then
-    print(to_json(ok))
     return {json = ok}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-    return {status = 500, json = err}
+    return {json = err}
   end
 
 end

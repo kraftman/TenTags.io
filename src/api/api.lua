@@ -1562,6 +1562,9 @@ function api:ConvertUserPostToPost(userID, post)
 	}
 
 	newPost.tags = {}
+	if post.tags == ngx.null then
+		return nil, 'post needs tags!'
+	end
 
 	for _,v in pairs(post.tags) do
 		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
