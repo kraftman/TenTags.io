@@ -306,6 +306,10 @@ end
 function cache:GetPost(postID)
   local ok, err,result
 
+  if #postID < 10 then
+    postID = self:ConvertShortURL(postID)
+  end
+
   if ENABLE_CACHE then
     ok, err = postInfo:get(postID)
     if err then

@@ -1251,17 +1251,21 @@ function api:AddPostTag(userID, postID, tagName)
 	end
 
 	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
 	local newTag = self:CreateTag(userID, tagName)
 
-
 	local count = 0
-	for _,postTag in pairs(post.tags) do
+	for _,postTag in pairs(post.tags) do	print('a')
+
 		if postTag.id == newTag.id then
 			return nil, 'tag already exists'
 		end
 		if postTag.createdBy == userID then
 			count = count +1
-			if count > 2 then
+			if count > 5 then
 				return nil, 'you cannot add any more tags'
 			end
 		end
@@ -1274,12 +1278,12 @@ function api:AddPostTag(userID, postID, tagName)
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
-
-
+	print(post.id)
 	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
+
 	ok, err = worker:UpdatePostTags(post)
 	return ok, err
 

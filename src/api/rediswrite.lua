@@ -309,8 +309,12 @@ end
 
 function write:QueueJob(queueName,value)
   local red = GetRedisConnection()
+  print(queueName, value)
   local ok, err = red:zadd(queueName,'NX', ngx.time(), value)
   SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to queue job: ',err)
+  end
   return ok, err
 end
 
@@ -560,6 +564,7 @@ function write:UpdatePostTags(post)
   end
   local res, err = red:commit_pipeline()
   SetKeepalive(red)
+  print('update: ',err)
   if err then
     ngx.log(ngx.ERR, 'unable to update post tags: ',err)
   end

@@ -216,6 +216,7 @@ local function AddTag(self)
   if ok then
     return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
   else
+    print('failed: ',err)
     return 'failed: '..err
   end
 
