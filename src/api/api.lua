@@ -13,7 +13,7 @@ local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
 local salt = 'poopants'
 --local to_json = (require 'lapis.util').to_json
-local magick = require 'magick'
+--local magick = require 'magick'
 local http = require 'lib.http'
 local rateDict = ngx.shared.ratelimit
 --arbitrary, needs adressing later
@@ -27,6 +27,7 @@ local POST_TITLE_LENGTH = 300
 --local permission = require 'userpermission'
 
 local ENABLE_RATELIMIT = false
+local MAX_ALLOWED_TAG_COUNT = 20
 
 
 local function AverageTagScore(filterRequiredTagIDs,postTags)
@@ -1265,7 +1266,7 @@ function api:AddPostTag(userID, postID, tagName)
 		end
 		if postTag.createdBy == userID then
 			count = count +1
-			if count > 5 then
+			if count > MAX_ALLOWED_TAG_COUNT then
 				return nil, 'you cannot add any more tags'
 			end
 		end

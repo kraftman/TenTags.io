@@ -1,3 +1,11 @@
+
+--[[
+  This checks the users cookies and loads some initial values that every request needs
+  Then dispatches the request to the controller that can handle the request
+  the controllers for the most part just do some basic checks before requesting stuff from the api
+  then load the required information for the page to be rendered
+--]]
+
 local lapis = require("lapis")
 local app = lapis.Application()
 local api = require 'api.api'
