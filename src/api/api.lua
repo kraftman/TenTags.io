@@ -1338,7 +1338,13 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  worker:CreateTag(tagInfo)
+  local existingTag, err = worker:CreateTag(tagInfo)
+	-- tag might exist but not be in cache
+	if existingTag and existingTag ~= true then
+		print('tag exists: ',to_json(existingTag))
+		return existingTag
+	end
+
   return tagInfo
 end
 

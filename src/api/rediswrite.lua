@@ -541,7 +541,18 @@ end
 
 function write:CreateTag(tagInfo)
   local red = GetRedisConnection()
-  local ok, err = red:hmset('tag:'..tagInfo.name,tagInfo)
+  local ok, err = red:hgetall('tag:'..tagInfo.name)
+
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get tag: ',err)
+  end
+  print('got tag: ', to_json(ok))
+
+  if ok ~= ngx.null and next(ok) then
+    return self:ConvertListToTable(ok)
+  end
+
+  ok, err = red:hmset('tag:'..tagInfo.name,tagInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add tag: ',err)
   end
@@ -552,7 +563,7 @@ function write:CreateTag(tagInfo)
   end
 
   SetKeepalive(red)
-
+  return true
 end
 
 function write:UpdatePostTags(post)

@@ -9,7 +9,7 @@ local to_json = (require 'lapis.util').to_json
 local emailDict = ngx.shared.emailQueue
 
 function worker:CreateTag(tagInfo)
-  rediswrite:CreateTag(tagInfo)
+  return rediswrite:CreateTag(tagInfo)
 end
 
 function worker:IncrementUserStat(userID, statName, value)
@@ -74,7 +74,7 @@ function worker:QueueJob(jobName, value)
 end
 
 function worker:CreatePost(post)
-  
+
   local ok, err = self:QueueJob('UpdatePostFilters',post.id)
   if not ok then
     return ok, err
