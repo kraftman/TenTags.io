@@ -12,11 +12,11 @@
     <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
     <label for='plustagselect'>Required Tags</label>
     <select name='plustagselect' id='requiredSelect' style="width:350px;" multiple='true' class="chosen-select">
-      <% for i, tag in pairs(tags) do %>
+      <% for i, tag in pairs(tags) do print(tag.name, tag.id, requiredTagKeys[tag.id]) %>
        <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
-        <% if requiredTagKeys[tag.id] then %>
+        <% if requiredTagKeys[tag.id] then  %>
           selected = 'selected'
-        <% end %>
+        <% end  %>
         ><%= tag.name -%></option>
       <% end %>
     </select>

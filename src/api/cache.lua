@@ -396,6 +396,7 @@ end
 function cache:GetFilterIDsByTags(tags)
 
   -- return all filters that are interested in these tags
+
   return redisread:GetFilterIDsByTags(tags)
 
 end

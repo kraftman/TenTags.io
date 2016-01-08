@@ -75,6 +75,7 @@ local function DisplayFilter(self)
 
   -- does the filter exist? if not then lets make it
   local filter = api:GetFilterByName(self.params.filterlabel)
+
   if not filter then
     return CreateFilter(self)
   end
@@ -243,6 +244,7 @@ local function ViewFilterSettings(self)
     ngx.log(ngx.ERR, 'no filter label found!')
     return 'error!'
   end
+  print(to_json(filter))
   local user = api:GetUserInfo(self.session.userID)
 
   if user.role ~= 'Admin' then
@@ -267,6 +269,7 @@ local function ViewFilterSettings(self)
   for k, v in pairs(filter.requiredTags) do
     self.requiredTagKeys[v] = true
   end
+  print(to_json(self.requiredTagKeys))
 
   self.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTags) do

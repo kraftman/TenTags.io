@@ -61,13 +61,8 @@ local function AverageTagScore(filterRequiredTagIDs,postTags)
 	return score / count
 end
 
-function config:GetValidFilters(filterID, post)
+function config:GetValidFilters(filter, post)
 
-	local filter = cache:GetFilterByID(filterID)
-	if not filter then
-		ngx.log(ngx.ERR,'filter not found: ',filterID)
-		return nil
-	end
 
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
@@ -85,6 +80,25 @@ function config:GetValidFilters(filterID, post)
 	return filter
 end
 
+function config:TagsMatch(filter, post)
+  -- the post needs to have all of the tags that the filter has in order to be valid
+  local found
+  for _,filterTagID in pairs(filter.requiredTags) do
+    found = false
+
+    for _,postTag in pairs(post.tags) do
+      if filterTagID == postTag.id then
+				found = true
+      end
+    end
+
+    if not found then
+      return false
+    end
+  end
+  return true
+end
+
 
 function config:CalculatePostFilters(post)
 	-- get all the filters that care about this posts' tags
@@ -92,42 +106,59 @@ function config:CalculatePostFilters(post)
 	-- only include tags above threshold
 	local validTags = {}
   --print(to_json(post))
+
+  -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
 	end
 
+  --get all filters that match any of these tags
 	local filterIDs = cache:GetFilterIDsByTags(validTags)
+  -- cant flatten this table yet as it would remove duplicates
 
   local chosenFilterIDs = {}
 
-  -- add all the filters that want these tags
+  -- add all the filters that actually want these tags
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
       if filterType == 'required' then
-				--print('wants this tag: ',filterID)
         chosenFilterIDs[filterID] = filterID
       end
     end
   end
 
-  -- remove all the filters that dont, or have bans
+
+  local chosenFilters = {}
+  -- if a filter doesnt want any of the tags, remove it
+  -- else load it
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
-			if filterType == 'banned' then
-				--print('doesnt want this tag: ',filterID)
-				chosenFilterIDs[filterID] = nil
-			else
-				chosenFilterIDs[filterID] = self:GetValidFilters(filterID, post)
-			end
+      if filterType ~= 'banned' then
+        chosenFilters[filterID] = cache:GetFilterByID(filterID)
+        if not chosenFilters[filterID] then
+          ngx.log(ngx.ERR,'filter not found: ',filterID)
+        end
+      end
+    end
+  end
+  print('potential filters: ',to_json(chosenFilters))
+
+  --at this point we know that the filters want at least one tag
+  --that the post has
+
+  for filterID,filter in pairs(chosenFilters) do
+    if self:TagsMatch(filter, post) then
+		  chosenFilters[filterID] = self:GetValidFilters(filter, post)
+    else
+      chosenFilters[filterID] = nil
     end
   end
 
-	-- we now have [filterID] = {filter}
-	-- also filter contains the new score
+	-- dodgy: filter now contains the new score for the post
 
-  return chosenFilterIDs
+  return chosenFilters
 end
 
 function config:GetJob(jobName)

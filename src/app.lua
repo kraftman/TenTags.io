@@ -50,6 +50,7 @@ require 'filters':Register(app)
 require 'comments':Register(app)
 require 'alerts':Register(app)
 require 'api':Register(app)
+require 'auto':Register(app)
 
 -- TESTING
 require 'test.perftest':Register(app)

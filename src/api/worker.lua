@@ -74,7 +74,7 @@ function worker:QueueJob(jobName, value)
 end
 
 function worker:CreatePost(post)
-
+  
   local ok, err = self:QueueJob('UpdatePostFilters',post.id)
   if not ok then
     return ok, err

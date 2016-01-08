@@ -1318,8 +1318,9 @@ end
 
 function api:CreateTag(userID, tagName)
 
+	tagName = tagName:gsub(' ','')
 
-  if tagName:gsub(' ','') == '' then
+  if tagName == '' then
     return nil
   end
 	--print(#tagName)
@@ -1571,6 +1572,10 @@ function api:ConvertUserPostToPost(userID, post)
 		return nil, 'post needs tags!'
 	end
 
+	if not post.tags then
+		return nil, 'post has no tags!'
+	end
+
 	for _,v in pairs(post.tags) do
 		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
 	end
@@ -1618,7 +1623,7 @@ function api:CreatePost(userID, postInfo)
 	self:CreatePostTags(userID, newPost)
 
 	newPost.viewers = {userID}
-
+	print('creating new post')
 	return worker:CreatePost(newPost)
 end
 
