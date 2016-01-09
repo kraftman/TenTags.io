@@ -1256,6 +1256,10 @@ function api:AddPostTag(userID, postID, tagName)
 		return ok, err
 	end
 
+	if tagName:find('^meta:') then
+		return nil, 'users cannot add meta tags'
+	end
+
 	local post = cache:GetPost(postID)
 	if not post then
 		return nil, 'post not found'
@@ -1448,10 +1452,11 @@ end
 
 
 function api:CreatePostTags(userID, postInfo)
-	for k,v in pairs(postInfo.tags) do
+	for k,tagName in pairs(postInfo.tags) do
 
-		v = trim(v:lower())
-		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, v)
+		tagName = trim(tagName:lower())
+		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, tagName)
+
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -1616,6 +1621,14 @@ function api:CreatePost(userID, postInfo)
 	if not newPost then
 		return newPost, err
 	end
+
+	-- clear out any tags that shouldnt be allowed
+	for k,tagName in pairs(newPost.tags) do
+		if tagName:find('^meta:') then
+			newPost.tags[k] = ''
+		end
+	end
+
 
 	self:GeneratePostTags(newPost)
 
