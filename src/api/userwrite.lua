@@ -59,7 +59,16 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
-function userwrite:AddMasterIP(masterID, IP)
+function userwrite:LogSuccessfulLogin(masterID, loginInfo)
+  local red = GetRedisConnection()
+  local hash = ngx.md5(loginInfo.userIP..loginInfo.userAgent)
+
+  print('logging login: ',loginInfo.userAgent, loginInfo.userIP,hash)
+  local ok, err = red:hset('master:'..masterID, 'login:'..hash, to_json(loginInfo))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set login info: ',err)
+  end
+  return ok, err
 
 end
 

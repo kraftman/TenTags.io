@@ -1058,8 +1058,13 @@ function api:ValidateMaster(userCredentials)
 		return nil
 	end
 
-	local userIP = ngx.var.host
-	worker:AddMasterIP(masterInfo.id, userIP)
+	local loginInfo = {
+		userIP = ngx.var.host,
+		userAgent = ngx.var.http_user_agent,
+		loginTime = ngx.time()
+	}
+
+	worker:LogSuccessfulLogin(masterInfo.id, loginInfo)
 
   masterInfo.passwordHash = nil
   return masterInfo

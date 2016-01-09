@@ -16,8 +16,8 @@ function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
 
-function worker:AddMasterIP(masterID, IP)
-  return userWrite:AddMasterIP(masterID, IP)
+function worker:LogSuccessfulLogin(masterID, IP)
+  return userWrite:LogSuccessfulLogin(masterID, IP)
 end
 
 function worker:AddUserTagVotes(userID, postID, tagIDs)
