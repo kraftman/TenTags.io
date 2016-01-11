@@ -54,6 +54,7 @@ local function GetPost(self)
   end
 
   local comments = api:GetPostComments(self.session.userID, postID,sortBy)
+
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later

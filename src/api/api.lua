@@ -886,6 +886,7 @@ function api:CreateComment(userID, userComment)
 
 
   local postFilters = parentPost.filters
+
   local userFilters = self:GetUserFilters(newComment.createdBy)
 
 	-- get shared filters between user and post

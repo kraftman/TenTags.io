@@ -4,6 +4,13 @@ var depth = 0
 var hasFocus = false
 var currentParent
 
+$(function() {
+  $('.filtername').click( function(e) {
+    console.log($(this).html())
+    $('.filter_' + $(this).html()).toggle()
+  })
+})
+
 function ChangeFocus(value) {
   if (index == -1) {
     index = 0
