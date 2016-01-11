@@ -14,9 +14,9 @@ local filters = {
 }
 
 local posts = {
-  --{title = 'Hockey Practise', link = 'https://i.imgur.com/zAwz5jB.gifv', text = '',tags = {'gifs', 'funny'}},
-  --{title = 'Funny Cat', link = 'https://i.imgur.com/IrbGz3l.gifv', text = '',tags = {'gifs', 'funny','cat'}},
-  --{title = 'Skrillex LOLOL', link = 'https://i.imgur.com/ve9Ilrr.jpg', text = '',tags = {'funny','pics'}},
+  {title = 'Hockey Practise', link = 'https://i.imgur.com/zAwz5jB.gifv', text = '',tags = {'gifs', 'funny'}},
+  {title = 'Funny Cat', link = 'https://i.imgur.com/IrbGz3l.gifv', text = '',tags = {'gifs', 'funny','cat'}},
+  {title = 'Skrillex LOLOL', link = 'https://i.imgur.com/ve9Ilrr.jpg', text = '',tags = {'funny','pics'}},
   {title = 'Rabbit', link = 'http://i.imgur.com/XfyH2oE.gifv', text = '',tags = {'cute', 'gifs'}},
   --{title = 'Funny Cat', link = 'https://i.imgur.com/IrbGz3l.gifv', text = '',tags = {'gifs', 'funny','cat'}},
   --{title = 'Funny Cat', link = 'https://i.imgur.com/IrbGz3l.gifv', text = '',tags = {'gifs', 'funny','cat'}}
@@ -29,7 +29,7 @@ function m:AutoContent(app)
     return 'no userID!'
   end
 
-  --[[
+  ---[[
   for k,v in pairs(filters) do
     local info ={
       title = v.title,
