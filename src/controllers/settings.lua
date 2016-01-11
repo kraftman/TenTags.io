@@ -38,7 +38,7 @@ end
 
 
 function m:Register(app)
-  app:match('viewsettings','/settings', respond_to({
+  app:match('usersettings','/settings', respond_to({
     GET = DisplaySettings,
     POST = UpdateSettings
   }))

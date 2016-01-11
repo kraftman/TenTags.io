@@ -12,7 +12,7 @@
         ><%= user.username %></option>
       <% end %>
     </select>
-    <a href="<%= url_for('viewsettings') %>">Settings</a>
+    <a href="<%= url_for('usersettings') %>">Settings</a>
   <% else %>
     <form id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
       <input type='text' name='email' id='email' maxlength="50" placeholder="email"/>

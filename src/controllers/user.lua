@@ -103,7 +103,7 @@ local function CreateSubUser(self)
   end
   local succ,err = api:CreateSubUser(self.session.masterID,self.params.username)
   if succ then
-    return 'win!'
+    return { redirect_to = self:url_for("usersettings") }
   else
     return 'fail: '..err
   end
