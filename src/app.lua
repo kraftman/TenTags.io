@@ -23,10 +23,10 @@ from_json = (require 'lapis.util').from_json
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
 
+  self.enableAds = false
+
   if self.session.userID and self.session.masterID then
-
     if api:UserHasAlerts(self.session.userID) then
-
       self.userHasAlerts = true
     end
     self.otherUsers = api:GetMasterUsers(self.session.userID, self.session.masterID)
