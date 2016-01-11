@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
   <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'>
-  <title><%= page_title or "My Page" %></title>
+  <title><%= page_title or "Filtta" %></title>
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.css">
   <script src="/static/js/jquery-2.1.4.js" ></script>
   <script src="/static/chosen/chosen.jquery.js"  ></script>
