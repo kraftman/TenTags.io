@@ -381,14 +381,12 @@ function read:GetPost(postID)
   post.filters = {}
 
   for k,_ in pairs(post) do
-    print(k)
     if k:find('^viewer:') then
       local viewerID = k:match('^viewer:(%w+)')
       tinsert(post.viewers, viewerID)
       post[k] = nil
     elseif k:find('^filter:') then
       local filterID = k:match('^filter:(%w+)')
-      print('adding filter: ',filterID)
       tinsert(post.filters, filterID)
       post[k] = nil
     end
@@ -428,7 +426,7 @@ function read:GetPost(postID)
   --ngx.log(ngx.ERR, to_json(ok))
   post.filters = ok
   --]]
-  
+
   return post
 end
 

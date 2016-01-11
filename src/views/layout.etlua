@@ -13,6 +13,7 @@
 </head>
 <body>
   <div id='centerPage'>
+    <% render("views.main.navigation") %>
     <% render("views.main.filterbar") %>
     <% content_for("inner") %>
   </div>
