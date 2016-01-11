@@ -1,7 +1,7 @@
 
-<div class="comment">
+<div class="comment" tabindex="0" >
   <% if child then %>
-    <div class="commentInfo">
+    <div class="commentInfo"  >
       <% if not child.userHasVoted then %>
         <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
         <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
