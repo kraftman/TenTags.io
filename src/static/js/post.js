@@ -48,7 +48,7 @@ Mousetrap.bind('tab', function(e) {
     });
     Mousetrap.bind('right', function(e) {
       e.preventDefault();
-      if (currentParent.children(".comment").length) {
+      if (currentParent.children(".comment").eq(0).length) {
         currentParent = currentParent.children(".comment").eq(0);
         index = 0
         currentParent.children(".comment").eq(0).focus()

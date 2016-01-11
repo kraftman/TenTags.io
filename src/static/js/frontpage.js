@@ -11,7 +11,30 @@ function ChangeFocus(value) {
   $('#posts').children().eq(index).focus();
 }
 
-function
+function OpenLink(e) {
+  if ($(':focus').find(".postLink").length) {
+    window.open($(':focus').find(".postLink").attr('href'), '_blank');
+  }
+}
+
+function OpenComments(e) {
+  if ($(':focus').find(".commentLink").length) {
+    var win = window.open($(':focus').find(".commentLink").attr('href'), '_blank');
+    if (win) {
+      win.focus()
+    }
+  }
+}
+
+function Upvote(e) {
+  if ($(':focus').find(".postLink").length) {
+    var currentPost = $(':focus')
+  }
+}
+
+function Downvote(e) {
+
+}
 
 Mousetrap.bind('tab', function(e) {
   e.preventDefault();
@@ -20,6 +43,11 @@ Mousetrap.bind('tab', function(e) {
     hasFocus = false
     Mousetrap.bind('up');
     Mousetrap.bind('down');
+    Mousetrap.bind('left');
+    Mousetrap.bind('right');
+    Mousetrap.bind('enter');
+    Mousetrap.bind('ctrl+enter');
+
   } else {
     hasFocus = true
     Mousetrap.bind('up', function(e) {
@@ -30,5 +58,11 @@ Mousetrap.bind('tab', function(e) {
       e.preventDefault();
       ChangeFocus(1);
     });
+    Mousetrap.bind("enter", OpenLink)
+    Mousetrap.bind('ctrl+enter', OpenComments);
+    Mousetrap.bind("right", Upvote)
+    Mousetrap.bind("left", Downvote)
+    index = 0
+    $('#posts').children().eq(index).focus();
   }
 })
