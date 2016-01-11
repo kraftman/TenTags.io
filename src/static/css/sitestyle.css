@@ -103,6 +103,12 @@ div {
 
 }
 
+@media only screen and (max-width: 1026px) {
+  #filterbar {
+    display: none;
+  }
+}
+
 
 .contents {
   position: relative;
