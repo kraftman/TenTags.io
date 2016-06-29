@@ -1,0 +1,24 @@
+
+
+version: '2'
+services:
+  slave-general:
+    build: slave-general
+    volumes:
+      - ./slave-general/:/data
+  slave-user:
+    build: slave-user
+    volumes:
+      - ./slave-user/:/data
+  slave-comment:
+    build: slave-comment
+    volumes:
+      - ./slave-comment /:/data
+
+  slave-sentinel:
+    build: sentinel
+
+networks:
+  default:
+    external:
+      name: 'taggr_net'

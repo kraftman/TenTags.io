@@ -1,0 +1,26 @@
+
+
+version: '2'
+services:
+  master-general:
+    build: master-general
+    volumes:
+     - "./master-general/:/data/"
+  master-user:
+    build: master-user
+    volumes:
+     - "./master-user/:/data/"
+  master-comment:
+    build: master-comment
+    volumes:
+     - "./master-comment/:/data/"
+
+  master-sentinel:
+    build: sentinel
+    expose:
+      - "26379"
+
+networks:
+  default:
+    external:
+      name: 'taggr_net'
