@@ -25,10 +25,18 @@ services:
     volumes:
      - ./imgprocess:/imgprocess
      - ./www:/var/www
-  api-sentinel:
-    build: sentinel
-    expose:
-      - "26379"
+  redis-general:
+    build: redis
+    volumes:
+      - ./redis/general:/bitnami/redis
+  redis-comment:
+    build: redis
+    volumes:
+      - ./redis/comment:/bitnami/redis
+  redis-user:
+    build: redis
+    volumes:
+      - ./redis/user:/bitnami/redis
 
 networks:
   default:

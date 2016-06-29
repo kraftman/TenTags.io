@@ -1553,6 +1553,8 @@ function api:GetIcon(newPost)
 
 end
 
+
+-- sanitise user input
 function api:ConvertUserPostToPost(userID, post)
 
 	if not userID then
@@ -1634,7 +1636,10 @@ function api:CreatePost(userID, postInfo)
 	self:GeneratePostTags(newPost)
 
   if newPost.link then
-		--self:GetIcon(newPost)
+		ok, err = worker:QueueJob('GeneratePostIcon', newPost.id)
+		if not ok then
+			return ok, err
+		end
     local domain  = self:GetDomain(newPost.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)

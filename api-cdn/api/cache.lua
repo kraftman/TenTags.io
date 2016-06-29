@@ -618,6 +618,12 @@ function cache:GetUserFrontPage(userID,filter,range)
   local userVotedPosts = self:GetUserPostVotes(userID)
 
   for _,postID in pairs(newPostIDs) do
+    print(type(postID))
+    if type(postID) then
+      for k,v in pairs(postID) do
+        print(k)
+      end
+    end
     local post = self:GetPost(postID)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if userVotedPosts[postID] then

@@ -23,6 +23,45 @@ function util:GetLock(key, lockTime)
   return true
 end
 
+function util:GetRedisConnection(host)
+  local red = redis:new()
+
+  red:set_timeout(1000)
+  local ok, err = red:connect(host, 6379)
+  if not ok then
+    ngx.log(ngx.ERR, "failed to connect: ", err)
+    return nil
+  end
+  return red
+end
+
+
+function util:GetUserWriteConnection()
+  return self:GetRedisConnection('redis-user')
+end
+
+function util:GetUserReadConnection()
+  return self:GetRedisConnection('redis-user')
+end
+
+function util:GetRedisReadConnection()
+  return self:GetRedisConnection('redis-general')
+end
+
+function util:GetRedisWriteConnection()
+  return self:GetRedisConnection('redis-general')
+end
+
+function util:GetCommentWriteConnection()
+  return self:GetRedisConnection('redis-comment')
+end
+
+function util:GetCommentReadConnection()
+  return self:GetRedisConnection('redis-comment')
+end
+
+
+--[[
 function util:GetRedisConnectionFromSentinel(masterName, role)
   local redis_connector = require "resty.redis.connector"
   local rc = redis_connector.new()
@@ -61,6 +100,7 @@ end
 function util:GetCommentReadConnection()
   return self:GetRedisConnectionFromSentinel('master-user', 's')
 end
+--]]
 
 function util:SetKeepalive(red)
   local ok, err = red:set_keepalive(10000, 200)

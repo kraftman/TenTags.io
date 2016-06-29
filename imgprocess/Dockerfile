@@ -1,5 +1,6 @@
 FROM ubuntu:14.04
-RUN apt-get update
+
+RUN apt-get update #redo
 
 #lua and stuff to build imagemagick/lua-imagemagick
 RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -9,13 +10,14 @@ RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
     cmake \
     luajit-5.1-dev \
     wget build-essential \
-    ghostscript
+    ghostscript \
+    luarocks
 
 RUN apt-get install -y libmagickwand-dev
 # build imagemagick
 RUN wget http://www.imagemagick.org/download/ImageMagick.tar.gz && \
   tar xvzf ImageMagick.tar.gz && \
-  cd ImageMagick-7.0.2-0 && \
+  cd ImageMagick-7.0.2-1 && \
   ./configure && \
   make && \
   make install && \
@@ -34,3 +36,5 @@ RUN git clone https://github.com/isage/lua-imagick.git && \
   cmake .. && \
   make && \
   sudo make install
+
+RUN luarocks install --server=http://luarocks.org/dev giflib
