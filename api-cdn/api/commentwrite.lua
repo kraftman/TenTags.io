@@ -38,6 +38,19 @@ function commentwrite:UpdateCommentField(postID,commentID,field,newValue)
   return true
 end
 
+function commentwrite:LoadScript(script)
+  local red = util:GetCommentWriteConnection()
+  local ok, err = red:script('load',script)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add script to redis:',err)
+    return nil
+  else
+    ngx.log(ngx.ERR, 'added script to redis: ',ok)
+  end
+
+  return ok
+end
+
 function commentwrite:CreateComment(commentInfo)
 
   local red = util:GetCommentWriteConnection()

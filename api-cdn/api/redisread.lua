@@ -22,6 +22,7 @@ end
 function read:GetUnseenElements(checkSHA,baseKey, elements)
   local red = util:GetRedisReadConnection()
   red:init_pipeline()
+  ngx.log(ngx.ERR,'checking for sha: ',checkSHA)
   for _,v in pairs(elements) do
     red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
   end

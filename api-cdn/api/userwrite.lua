@@ -17,6 +17,19 @@ function userwrite:ConvertListToTable(list)
   return info
 end
 
+function userwrite:LoadScript(script)
+  local red = util:GetUserWriteConnection()
+  local ok, err = red:script('load',script)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add script to redis:',err)
+    return nil
+  else
+    ngx.log(ngx.ERR, 'added script to redis: ',ok)
+  end
+
+  return ok
+end
+
 function userwrite:AddUserTagVotes(userID, postID, tagIDs)
   local red = util:GetUserWriteConnection()
   for k,v in pairs(tagIDs) do

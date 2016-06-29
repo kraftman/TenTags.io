@@ -584,7 +584,7 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   -- this will be cached for say 5 minutes
   local freshPosts = cache:GetFreshUserPosts(userID,filter)
-  --print(to_json(freshPosts))
+  print(to_json(freshPosts))
   --ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
   local newPostIDs = {}
@@ -619,11 +619,7 @@ function cache:GetUserFrontPage(userID,filter,range)
 
   for _,postID in pairs(newPostIDs) do
     print(type(postID))
-    if type(postID) then
-      for k,v in pairs(postID) do
-        print(k)
-      end
-    end
+
     local post = self:GetPost(postID)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if userVotedPosts[postID] then

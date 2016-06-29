@@ -1114,6 +1114,7 @@ end
 
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
+	ngx.log(ngx.ERR, userID, filter, range)
 
   return cache:GetUserFrontPage(userID,filter,range)
 end

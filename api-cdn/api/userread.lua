@@ -183,8 +183,10 @@ end
 
 function userread:GetUnseenPosts(baseKey, elements)
   local red = util:GetUserReadConnection()
+  local sha1Key = checkKey:GetSHA1()
+  print(sha1Key)
   red:init_pipeline()
-    local sha1Key = checkKey:GetSHA1()
+
 
     for _,v in pairs(elements) do
       red:evalsha(sha1Key,0,baseKey,10000,0.01,v)

@@ -51,6 +51,8 @@ function write:LoadScript(script)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add script to redis:',err)
     return nil
+  else
+    ngx.log(ngx.ERR, 'added script to redis: ',ok)
   end
 
   return ok

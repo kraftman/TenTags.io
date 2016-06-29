@@ -9,7 +9,8 @@ function worker:New()
   w.rediswrite = require 'api.rediswrite'
   w.redisread = require 'api.redisread'
   w.cjson = require 'cjson'
-  w.userWrite = require 'api.userwrite'
+  w.userwrite = require 'api.userwrite'
+  w.commentwrite = require 'api.commentwrite'
   w.util = require 'util'
 
   -- shared dicts
@@ -56,7 +57,7 @@ function worker.OnServerStart(_,self)
 
   self.emailer.Run(_,self.emailer)
   self.postUpdater.Run(_,self.postUpdater)
-  
+
   if not self.util:GetLock('l:ServerStart', 5) then
     return
   end
@@ -90,14 +91,18 @@ function worker:AddRedisScripts()
   local addKey = require 'redisscripts.addkey'
 
   local addSHA = self.rediswrite:LoadScript(addKey:GetScript())
+   addSHA = self.userwrite:LoadScript(addKey:GetScript())
+   addSHA = self.commentwrite:LoadScript(addKey:GetScript())
 
   local checkKey = require 'redisscripts.checkkey'
 
-  local checkSHA = self.rediswrite:LoadScript(checkKey:GetScript())
+    local checkSHA = self.rediswrite:LoadScript(checkKey:GetScript())
+     checkSHA = self.userwrite:LoadScript(checkKey:GetScript())
+     checkSHA = self.commentwrite:LoadScript(checkKey:GetScript())
 
-  ngx.log(ngx.ERR, 'set script with sha1:',checkSHA)
-  --[[
-  local res = self.redisread:CheckKey(checkSHA,addSHA)
+--  ngx.log(ngx.ERR, 'set script with sha1:',checkSHA)
+  ---[[
+--  local res = self.redisread:CheckKey(checkSHA,addSHA)
   --]]
 
 end

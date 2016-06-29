@@ -28,15 +28,15 @@ services:
   redis-general:
     build: redis
     volumes:
-      - ./redis/general:/bitnami/redis
+      - ./redis/general:/data/redis
   redis-comment:
     build: redis
     volumes:
-      - ./redis/comment:/bitnami/redis
+      - ./redis/comment:/data/redis
   redis-user:
     build: redis
     volumes:
-      - ./redis/user:/bitnami/redis
+      - ./redis/user:/data/redis
 
 networks:
   default:
