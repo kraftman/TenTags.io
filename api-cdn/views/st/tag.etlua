@@ -1,0 +1,18 @@
+<div class='tag' data-id='<%= tag.id %>'>
+  <% if not tag.userHasVoted then %>
+    <a class = 'upvote'  href='#'>&#10004</a>
+  <% end %>
+
+  <% if tag.fakeName then %>
+    </a> <a href="<%= url_for('viewpost',{postID = tag.postID}) %>">
+      <span class='tagname'><%= tag.fakeName or tag.name %></span>
+    </a>
+  <% else %>
+    <span class='tagname'><%= tag.fakeName or tag.name %></span>
+  <% end %>
+
+  <span class='tagcount' ><%= (tag.up-tag.down) %></span>
+  <% if not tag.userHasVoted then %>
+    <a class = 'downvote' href='#'>&#10007</a>
+  <% end %>
+</div>

@@ -1,0 +1,3 @@
+<div class='tag' >
+  <a href ='#' class='filtername'><%= filter.name %></a>
+</div>

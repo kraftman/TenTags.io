@@ -1,0 +1,40 @@
+<div class='contents'>
+  <% if email then %>
+    <form id='register' action='<%= url_for('resetpassword') %>' method='post'
+        accept-charset='UTF-8'>
+      <fieldset >
+        <legend>Forgotten Password</legend>
+        <input type='hidden' name='submitted' id='submitted' value='1'/>
+
+        <label for='email' >Email Address:</label>
+        <input type='text' name='email' id='email' maxlength="50" value="<%= email or 'none' %>"/>
+        </br>
+
+        <input type='submit' name='Submit' value='Reset Password' />
+
+      </fieldset>
+    </form>
+  <% end %>
+
+  </br>
+  <form id='register' action='<%= url_for('newuser') %>' method='post'
+      accept-charset='UTF-8'>
+    <fieldset >
+      <legend>Register</legend>
+      <input type='hidden' name='submitted' id='submitted' value='1'/>
+
+      <label for='username' >UserName:</label>
+      <input type='text' name='username' id='username' maxlength="50" />
+      </br>
+      <label for='email' >Email Address:</label>
+      <input type='text' name='email' id='email' maxlength="50" value="<%= email or 'none' %>"/>
+      </br>
+
+
+      <label for='password' >Password:</label>
+      <input type='password' name='password' id='password' maxlength="50" />
+      <input type='submit' name='Submit' value='Submit' />
+
+    </fieldset>
+  </form>
+<div>

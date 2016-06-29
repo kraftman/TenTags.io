@@ -1,6 +1,0 @@
-<% for i, message in pairs(thread.messages) do %>
-  <div>
-    <%= thread.title %></br>
-    <% render("views.st.messageelement",{message = message}) %>
-  </div>
-<% end %>

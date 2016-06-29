@@ -1,6 +1,0 @@
-
-<div>
-  <%= banInfo.domainName -%>
-  <%= banInfo.banReason -%>
-  <a href="<%= url_for("unbanfilterdomain",{filterlabel = selectedFilter.title, domainName = banInfo.domainName}) %>">Unban</a>
-</div>

@@ -1,6 +1,0 @@
-
-<div>
-  <%= bannedUsernames[userInfo.userID] or userInfo.userID -%>
-  <%= userInfo.banReason -%>
-  <a href="<%= url_for("unbanfilteruser",{filterlabel = selectedFilter.title, userID = userInfo.userID}) %>">Unban</a>
-</div>

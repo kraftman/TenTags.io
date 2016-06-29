@@ -1,7 +1,0 @@
-<div class = 'contents'>
-  <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
-
-  <p> <%= commentInfo.text -%></p>
-
-  
-</div>

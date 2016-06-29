@@ -1,0 +1,36 @@
+version: '2'
+services:
+  api-cdn:
+    build: api-cdn/.
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    links:
+      - imghost
+    volumes:
+      - ./api-cdn:/opt/openresty/nginx/conf
+    entrypoint: ""
+    command:  bash -c "lapis server"
+  imghost:
+    image: tenstartups/openresty
+    ports:
+      - "81:80"
+    volumes:
+     - ./imghost:/imghost
+     - ./www:/var/www
+    entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
+  imgprocess:
+    build: imgprocess/.
+    volumes:
+     - ./imgprocess:/imgprocess
+     - ./www:/var/www
+  api-sentinel:
+    build: sentinel
+    expose:
+      - "26379"
+
+networks:
+  default:
+    external:
+      name: taggr_net
