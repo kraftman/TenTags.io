@@ -37,4 +37,12 @@ RUN git clone https://github.com/isage/lua-imagick.git && \
   make && \
   sudo make install
 
-RUN luarocks install --server=http://luarocks.org/dev giflib
+RUN luarocks install --server=http://luarocks.org/dev giflib && \
+    luarocks install redis-lua && \
+    luarocks install luasocket && \
+    luarocks install magick
+
+
+RUN mkdir /lua
+VOLUME /lua
+CMD [ "lua", "lua/imgconverter.lua" ]

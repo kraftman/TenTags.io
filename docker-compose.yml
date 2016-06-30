@@ -12,6 +12,7 @@ services:
       - ./api-cdn:/opt/openresty/nginx/conf
     entrypoint: ""
     command:  bash -c "lapis server"
+
   imghost:
     image: tenstartups/openresty
     ports:
@@ -23,20 +24,22 @@ services:
   imgprocess:
     build: imgprocess/.
     volumes:
-     - ./imgprocess:/imgprocess
+     - ./imgprocess/lua:/lua
      - ./www:/var/www
+    links:
+      - redis-general
   redis-general:
     build: redis
     volumes:
-      - ./redis/general:/data/redis
+      - ./redis/general:/data
   redis-comment:
     build: redis
     volumes:
-      - ./redis/comment:/data/redis
+      - ./redis/comment:/data
   redis-user:
     build: redis
     volumes:
-      - ./redis/user:/data/redis
+      - ./redis/user:/data
 
 networks:
   default:

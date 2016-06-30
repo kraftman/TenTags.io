@@ -59,8 +59,10 @@ end
 --]]
 
 function read:GetOldestJob(queueName)
+  local realQName = 'queue:'..queueName
+  --print('getting job: ',realQName)
   local red = util:GetRedisReadConnection()
-  local ok, err = red:zrevrange(queueName, 0, 1)
+  local ok, err = red:zrevrange(realQName, 0, 1)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'error getting job: ',err)
@@ -70,7 +72,6 @@ function read:GetOldestJob(queueName)
   else
     return ok[1]
   end
-
 end
 
 function read:ConvertShortURL(shortURL)

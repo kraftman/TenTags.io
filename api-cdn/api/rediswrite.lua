@@ -295,9 +295,10 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
 end
 
 function write:QueueJob(queueName,value)
+  local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
-  print(queueName, value)
-  local ok, err = red:zadd(queueName,'NX', ngx.time(), value)
+  print(realQName, value)
+  local ok, err = red:zadd(realQName,'NX', ngx.time(), value)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to queue job: ',err)
@@ -355,8 +356,9 @@ function write:SetNX(key,value)
 end
 
 function write:DeleteJob(queueName, jobKey)
+  local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
-  local ok, err = red:zrem(queueName, jobKey)
+  local ok, err = red:zrem(realQName, jobKey)
   util:SetKeepalive(red)
   return ok, err
 
