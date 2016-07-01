@@ -43,6 +43,7 @@ RUN luarocks install --server=http://luarocks.org/dev giflib && \
     luarocks install magick
 
 
-RUN mkdir /lua
+RUN mkdir /lua && mkdir -p /var/www
 VOLUME /lua
-CMD [ "lua", "lua/imgconverter.lua" ]
+VOLUME /var/www
+CMD [ "luajit", "lua/imgconverter.lua" ]

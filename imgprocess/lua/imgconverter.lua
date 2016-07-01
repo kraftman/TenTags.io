@@ -1,35 +1,22 @@
 
 
 
---zrange queue:GeneratePostIcon 0 -1
 local magick = require 'magick'
-
 local redis = require 'redis'
 local red = redis.connect('redis-general', 6379)
-
-local io = require("io")
 local http = require("socket.http")
 local ltn12 = require("ltn12")
 
-local function ConvertListToTable(list)
-  local info = {}
-  for i = 1,#list, 2 do
-    info[list[i]] = list[i+1]
-  end
-  return info
-end
 
 local function LoadPost(postID)
-  print(postID)
   local post, err = red:hgetall('post:'..postID)
-
-  print(post.link)
+  if not post then
+    return post, err
+  end
   return post.link
-
-
-
 end
 
+local ok, err
 
 local function LoadImage(imageInfo)
   local res, c, h = http.request ( imageInfo.link )
@@ -60,6 +47,29 @@ local function GetImageLinks(res)
 	end
 
   return imageLinks
+end
+
+local function SendImage(finalImage, postID)
+  local resp = {}
+  local body,code,headers,status = http.request{
+  url = "http://imghost/upload",
+  method = "POST",
+  headers = {
+
+    ["Transfer-Encoding"] = 'chunked',
+    ['content-disposition'] = 'attachment; filename="'..postID..'.png"'
+  },
+  source = ltn12.source.string(finalImage.image:get_blob()),
+  sink = ltn12.sink.table(resp)
+  }
+  print(postID)
+  print(body,code,status)
+
+  if headers then
+      for k,v in pairs(headers) do
+       print(k,v)
+     end
+  end
 end
 
 local function GetPostIcon(postURL, postID)
@@ -109,26 +119,49 @@ local function GetPostIcon(postURL, postID)
   	finalImage.image:set_format('png')
   end
 
-	--newPost.icon = finalImage.image:get_blob()
-	finalImage.image:write('/lua/'..postID..'.png')
-	print('icon added, written to: ',postID..'.png')
 
+  SendImage(finalImage, postID)
+  return true
+
+end
+
+local function ProcessPostIcon(postID)
+  local postURL, err = LoadPost(postID)
+  if not postURL then
+    return nil, err
+  end
+
+   ok, err = GetPostIcon(postURL, postID)
+  if not ok then
+     return nil, ok
+  end
+  return true
 end
 
 
 local function GetNextPost()
-  local ok, err = red:zrevrange('queue:GeneratePostIcon', 0, 1)
-  local postURL = LoadPost(ok[1])
-  if (not ok) then
-    -- update it in the queue so we try it later
-    -- dont want to spam the site repeatedly if it fail
+  local queueName = 'queue:GeneratePostIcon'
+  ok, err = red:zrevrange(queueName, 0, 10)
+  if not ok then
+    print('couldnt get next posts: ', err)
+    return
   end
 
-  local icon = GetPostIcon(postURL, ok[1])
-
-
-
-
+  for _,postID in pairs(ok) do
+    ok, err = ProcessPostIcon(postID)
+    if ok then
+      --remove from queue
+      ok, err = red:zrem(queueName, postID)
+      if not ok then
+        print('cant remove from redis! ', err)
+      else
+        print('removed: '..postID..' from redis after processing')
+      end
+    else
+      -- add back into queue but later
+      ok, err = red:zadd(queueName, os.time(), postID)
+    end
+ end
 end
 
 
@@ -137,5 +170,7 @@ end
 --=====================================================
 
 
-
-GetNextPost()
+while true do
+  socket.sleep(1)
+  GetNextPost()
+end
