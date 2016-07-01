@@ -10,9 +10,10 @@ if image, use imagemagick, if gif use giflib
 local http = require('socket.http')
 local sites = {'https://i.imgur.com/M3Anp1K.gif','http://i.imgur.com/4DDzfxar.jpg','https://j.gifs.com/Kr9OkM.gif'}
 
-local magick = require "imagick"
+local magick = require "magick"
 
-for k,v in pairs(sites) do
+--[[
+	for k,v in pairs(sites) do
 	local b, c, h = http.request(v)
 	if c ~= 200 then
 		break
@@ -24,12 +25,11 @@ for k,v in pairs(sites) do
 	img:write('out/'..imgName..'.jpg')
 
 end
+]]
 
 
-local img = magick.open("image2.gif")
-img:set_gravity(magick.gravity["NorthGravity"])
-img:smart_resize("100x100^")
-img:extent(100, 100)
-img:set_quality(90)
-img:strip()
-img:write("out.jpg")
+local img = assert(magick.load_image("out/test-frame-1.gif"))
+--img:smart_resize("100x100^")
+img:set_format('png')
+img:resize_and_crop(100,100)
+img:write("out/out.png")

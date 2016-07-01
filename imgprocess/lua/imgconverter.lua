@@ -3,9 +3,24 @@
 
 local magick = require 'magick'
 local redis = require 'redis'
-local red = redis.connect('redis-general', 6379)
+
 local http = require("socket.http")
 local ltn12 = require("ltn12")
+local giflib = require("giflib")
+
+--[[
+local redisURL = 'localhost'
+local redisPort = '16379'
+local imgHostURl = 'localhost'
+local imgHostPort = '81'
+--]]
+
+local redisURL = 'redis-general'
+local redisPort = '6379'
+local imgHostURl = 'imghost'
+local imgHostPort = '80'
+
+local red = redis.connect(redisURL, redisPort)
 
 
 local function LoadPost(postID)
@@ -52,7 +67,7 @@ end
 local function SendImage(finalImage, postID)
   local resp = {}
   local body,code,headers,status = http.request{
-  url = "http://imghost/upload",
+  url = "http://"..imgHostURl..':'..imgHostPort.."/upload",
   method = "POST",
   headers = {
 
@@ -80,12 +95,18 @@ local function GetPostIcon(postURL, postID)
     print(c, ' ', r)
   end
 
-  local imageLinks = GetImageLinks(res)
+  local imageLinks = {}
+  if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png  ') then
+    imageLinks = {{link = postURL}}
+  else
+    imageLinks = GetImageLinks(res)
+  end
 
   for _, imageInfo in pairs(imageLinks) do
 		local imageBlob = LoadImage(imageInfo)
 		imageInfo.size = 0
 		if imageBlob then
+        imageInfo.blob = imageBlob
 			local image = assert(magick.load_image_from_blob(imageBlob))
 
 			if image then
@@ -112,13 +133,30 @@ local function GetPostIcon(postURL, postID)
 	end
 
 	if finalImage.link:find('.gif') then
-		print('trying to coalesce')
-		finalImage.image:coalesce()
-	else
+    local tempGifLoc = '/lua/out/tempgif-'..postID..'.gif'
+    --finalImage.image:write(tempGifLoc)
+    local file = io.open(tempGifLoc, 'w+')
+    file:write(finalImage.blob)
+    file:close()
+    print('wrote gif')
+
+    local gif = assert(giflib.load_gif(tempGifLoc))
+    print('loaded gif')
+    gif:write_first_frame('/lua/out/processedgif-'..postID..'.gif')
+    print('load first frame')
+    gif:close()
+    finalImage.image = magick.load_image('/lua/out/processedgif-'..postID..'.gif')
+    finalImage.image:coalesce()
+    finalImage.image:set_format('png')
+    finalImage.image:write('/lua/out/p2-'..postID..'.png')
+    finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
+
+    finalImage.image:resize_and_crop(100,100)
+
+	end
+
     finalImage.image:resize_and_crop(100,100)
   	finalImage.image:set_format('png')
-  end
-
 
   SendImage(finalImage, postID)
   return true
@@ -151,11 +189,11 @@ local function GetNextPost()
     ok, err = ProcessPostIcon(postID)
     if ok then
       --remove from queue
-      ok, err = red:zrem(queueName, postID)
+      --ok, err = red:zrem(queueName, postID)
       if not ok then
-        print('cant remove from redis! ', err)
+      --  print('cant remove from redis! ', err)
       else
-        print('removed: '..postID..' from redis after processing')
+      --  print('removed: '..postID..' from redis after processing')
       end
     else
       -- add back into queue but later

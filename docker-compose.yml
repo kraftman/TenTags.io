@@ -22,6 +22,7 @@ services:
      - ./www:/var/www
     entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
   imgprocess:
+    privileged: true
     build: imgprocess/.
     volumes:
      - ./imgprocess/lua:/lua
@@ -32,6 +33,8 @@ services:
     build: redis
     volumes:
       - ./redis/general:/data
+    ports:
+      - '16379:6379'
   redis-comment:
     build: redis
     volumes:
