@@ -1,12 +1,12 @@
 
 
 <link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
-<!--
+
 <script src="/static/js/jquery-2.1.4.js"></script>
 <script src="/static/chosen/chosen.jquery.js"></script>
 <script src="/static/js/jquery.form.js"></script>
 <script src="/static/js/createpost.js"></script>
--->
+
 
 
 <form id='createpost' action='/post/new' method='post' accept-charset='UTF-8'>

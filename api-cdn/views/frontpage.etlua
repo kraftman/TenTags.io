@@ -1,6 +1,6 @@
 
-<!-- <script src="/static/js/mousetrap.min.js"  ></script> -->
-<!-- <script src="/static/js/frontpage.js"  ></script> -->
+ <script src="/static/js/mousetrap.min.js"  ></script>
+ <script src="/static/js/frontpage.js"  ></script>
 
 <div class = 'contents'>
   <input id='postID' type="hidden"value="Norway">
@@ -13,7 +13,7 @@
 
   <div id='posts'>
     <% for i, post in pairs(posts) do %>
-      <% render("views.st.postelement",{post = post}) %>
+      <% render(GetPostTemplate(),{post = post}) %>
     <% end %>
   </div>
   <a href="<%= url_for('home') %>?page=<%= pageNum+1 %>">Page <%= pageNum+1 %></a>
