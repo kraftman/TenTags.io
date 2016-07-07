@@ -148,12 +148,23 @@ function api:UpdateUser(userID, userToUpdate)
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
-
+	print('HIDING SEEN POSTS: ',userToUpdate.hideSeenPosts)
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
-		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0
+		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
+		username = userToUpdate.username
 	}
+
+
+	print('HIDING SEEN POSTS: ',userInfo.hideSeenPosts)
+
+	for k,v in pairs(userToUpdate) do
+		if k:find('^filterStyle:') then
+			k = k:sub(1,100)
+			userInfo[k] = v:sub(1,100)
+		end
+	end
 
 	return worker:UpdateUser(userInfo)
 end

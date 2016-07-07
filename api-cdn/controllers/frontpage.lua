@@ -3,27 +3,8 @@ local api = require 'api.api'
 
 local m = {}
 
-local postTemplates = {
-  default = 'views.st.postelement',
-  minimal = 'views.st.postelement-min'
-}
 
-local function GetPostTemplate(self)
 
-  local postStyle = 'default'
-  if self.session.userID then
-    postStyle = 'default'
-  else
-    postStyle = 'default'
-  end
-  postStyle = 'default'
-
-  if not postTemplates[postStyle] then
-    return postTemplates.default
-  end
-
-  return postTemplates[postStyle]
-end
 
 
 local function FrontPage(self)
@@ -39,6 +20,7 @@ local function FrontPage(self)
         v.hash = ngx.md5(v.id..self.session.userID)
       end
     end
+    self.userInfo = api:GetUserInfo(self.session.userID)
   end
 
   -- if empty and logged in then redirect to seen posts
@@ -48,7 +30,7 @@ local function FrontPage(self)
     end
   end
 
-  self.GetPostTemplate = GetPostTemplate
+
 
   return {render = 'frontpage'}
 end

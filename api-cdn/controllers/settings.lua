@@ -36,11 +36,44 @@ local function UpdateSettings(self)
 
 end
 
+local function UpdateFilterStyle(self)
+
+  local filterName = self.params.filterName
+  local filterStyle = self.params.styleselect
+
+  if not filterName or not filterStyle then
+    return 'error, missing arguments'
+  end
+
+  local user = api:GetUserInfo(self.session.userID)
+  for k,v in pairs(user) do
+    if type(v) == 'string' then
+      print(k,v)
+    end
+  end
+
+  user['filterStyle:'..filterName] = filterStyle
+  print ('setting filterstyle for filtername '..filterName..' to '..filterStyle)
+  api:UpdateUser(self.session.userID, user)
+
+  if filterName == 'frontPage' then
+    --return { redirect_to = self:url_for("home") }
+  else
+    --return { redirect_to = self:url_for("filter",{filterlabel = filterName}) }
+  end
+  return { redirect_to = ngx.var.http_referer }
+
+end
+
 
 function m:Register(app)
   app:match('usersettings','/settings', respond_to({
     GET = DisplaySettings,
     POST = UpdateSettings
+  }))
+
+  app:match('/settings/filterstyle',respond_to({
+    POST = UpdateFilterStyle
   }))
 end
 

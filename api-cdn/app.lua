@@ -19,6 +19,55 @@ local csrf = require("lapis.csrf")
 to_json = (require 'lapis.util').to_json
 from_json = (require 'lapis.util').from_json
 
+local filterStyles = {
+  default = 'views.st.postelement',
+  minimal = 'views.st.postelement-min',
+  HN = 'views.st.postelement-HN'
+}
+
+
+local function GetStyleSelected(self, styleName)
+  self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+
+  if not self.userInfo then
+    return ''
+  end
+
+  local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
+  print(filterName)
+  if self.userInfo['filterStyle:'..filterName] and self.userInfo['filterStyle:'..filterName] == styleName then
+    return 'selected="selected"'
+  else
+    print(' not found')
+    return ''
+  end
+
+end
+
+
+local function GetFilterTemplate(self)
+
+  local filterStyle = 'default'
+  local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
+  if self.session.userID then
+    self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+
+
+    if self.userInfo then
+      --print('getting filter style for name: '..filterName,', ', self.userInfo['filterStyle:'..filterName])
+      filterStyle = self.userInfo['filterStyle:'..filterName] or 'default'
+    end
+  else
+    filterStyle = 'default'
+  end
+
+  if not filterStyles[filterStyle] then
+    print('filter style not found: ',filterStyle)
+    return filterStyles.default
+  end
+
+  return filterStyles[filterStyle]
+end
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
@@ -38,6 +87,12 @@ app:before_filter(function(self)
 
   self.csrf_token = csrf.generate_token(self,self.session.userID)
   self.userFilters = api:GetUserFilters(self.session.userID or 'default') or {}
+
+  self.GetFilterTemplate = GetFilterTemplate
+  self.GetStyleSelected = GetStyleSelected
+  self.filterStyles = filterStyles
+
+
 end)
 
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec

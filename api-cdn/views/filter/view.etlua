@@ -1,13 +1,22 @@
 <div class = 'contents'>
 
-  <% if session.userID == thisfilter.createdBy then %>
+  <% if thisfilter and session.userID == thisfilter.createdBy then %>
     <div>
       <a href="<%= url_for("updatefilter",{filterlabel = thisfilter.title}) %>">Filter Settings</a>
     </div>
-  <% end %>
+  <% end %>Style:
+  <form id ='filterStyleSelect' action="/settings/filterstyle" method="POST">
+    <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
+    <select name='styleselect' id='styleselect' style="width:150px;" onchange="this.form.submit()">
+      <% for styleName,_ in pairs(filterStyles) do %>
+       <option name='option["<%= styleName -%>"]' value = "<%= styleName -%>" <%- GetStyleSelected(styleName, thisfilter) -%>><%= styleName -%>  </option>
+      <% end %>
+    </select>
+  </form>
+
   <div id='posts'>
     <% for i, post in pairs(posts) do %>
-      <% render("views.st.postelement",{post = post}) %>
+      <% render(GetFilterTemplate(),{post = post}) %>
     <% end %>
   </div>
 </div>

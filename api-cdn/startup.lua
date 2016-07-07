@@ -77,7 +77,7 @@ function worker:FlushUserSeen()
     sessionSeenPosts = self.userSessionSeenDict:get(userID)
     sessionSeenPosts = self.cjson.decode(sessionSeenPosts)
 
-    local ok = self.userWrite:AddSeenPosts(userID,sessionSeenPosts)
+    local ok = self.userwrite:AddSeenPosts(userID,sessionSeenPosts)
     if ok then
       self.userSessionSeenDict:delete(userID)
       self.userUpdateDict:delete(userID)

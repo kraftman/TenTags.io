@@ -89,6 +89,7 @@ local function DisplayFilter(self)
   filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy).username
 
   self.thisfilter = filter
+  print('added filter')
 
   self.posts = api:GetFilterPosts(filter)
   -- also load the list of mods
