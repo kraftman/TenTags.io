@@ -19,9 +19,9 @@ local rateDict = ngx.shared.ratelimit
 --arbitrary, needs adressing later
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
-local TAG_START_UPVOTES = 5
+local TAG_START_UPVOTES = 1
 local COMMENT_START_DOWNVOTES = 0
-local COMMENT_START_UPVOTES = 5
+local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 local POST_TITLE_LENGTH = 300
 --local permission = require 'userpermission'
@@ -685,6 +685,7 @@ function api:VotePost(userID, postID, direction)
 
 	-- get tags matching the users filters' tags
 	print('get matching tags')
+	-- do we want matching tags, or matching filters??
 	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
 	--print(to_json(matchingTags))
 
@@ -1114,7 +1115,7 @@ end
 
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
-	
+
   return cache:GetUserFrontPage(userID,filter,range)
 end
 

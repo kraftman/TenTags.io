@@ -43,6 +43,10 @@ services:
     build: redis
     volumes:
       - ./redis/user:/data
+  phantom:
+    image: cmfatih/phantomjs
+    volumes:
+      - ./phantom:/phantom
 
 networks:
   default:

@@ -52,19 +52,21 @@ end
 
 local function GetImageLinks(res)
   local imageLinks = {}
-
+  --print(res)
 	for imgTag in res:gmatch('<img.-src=[\'"](.-)[\'"].->') do
 		if imgTag:find('^//') then
 			imgTag = 'http:'..imgTag
       print('found: ',imgTag)
-		end
+		else
+      print(imgTag)
+    end
 		table.insert(imageLinks, {link = imgTag})
 	end
 
   return imageLinks
 end
 
-local function SendImage(finalImage, postID)
+local function SendImage(image, postID)
   local resp = {}
   local body,code,headers,status = http.request{
   url = "http://"..imgHostURl..':'..imgHostPort.."/upload",
@@ -74,7 +76,7 @@ local function SendImage(finalImage, postID)
     ["Transfer-Encoding"] = 'chunked',
     ['content-disposition'] = 'attachment; filename="'..postID..'.png"'
   },
-  source = ltn12.source.string(finalImage.image:get_blob()),
+  source = ltn12.source.string(image:get_blob()),
   sink = ltn12.sink.table(resp)
   }
   print(postID)
@@ -85,15 +87,44 @@ local function SendImage(finalImage, postID)
        print(k,v)
      end
   end
+  return true
+end
+
+local function ProcessImgur(postURL, postID)
+  local ok, err = os.execute('python pygur.py '..postURL..' '..postID)
+  if ok ~= 0 then
+    return nil, err
+  end
+
+  local image = magick.load_image('/lua/out/'..postID..'.jpg')
+  image:coalesce()
+  image:set_format('png')
+  --finalImage.image:write('/lua/out/p2-'..postID..'.png')
+  --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
+
+  image:resize_and_crop(100,100)
+  ok, err = SendImage(image,postID)
+  if ok then
+    os.remove('out/'..postID..'.jpg')
+  end
+
+  return ok, err
+
 end
 
 local function GetPostIcon(postURL, postID)
   print(postURL, postID)
+
+  if postURL:find('imgur.com') then
+    return ProcessImgur(postURL, postID)
+  end
+
   local res, c, h = http.request ( postURL )
 
   if c ~= 200 then
     print(c, ' ', r)
   end
+
 
   local imageLinks = {}
   if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png  ') then
@@ -152,13 +183,16 @@ local function GetPostIcon(postURL, postID)
     finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
 
     finalImage.image:resize_and_crop(100,100)
+    os.remove(tempGifLoc)
+    os.remove('/lua/out/processedgif-'..postID..'.gif')
+    os.remove('/lua/out/p2-'..postID..'.png')
 
 	end
 
     finalImage.image:resize_and_crop(100,100)
   	finalImage.image:set_format('png')
 
-  SendImage(finalImage, postID)
+  SendImage(finalImage.image, postID)
   return true
 
 end
@@ -189,14 +223,15 @@ local function GetNextPost()
     ok, err = ProcessPostIcon(postID)
     if ok then
       --remove from queue
-      --ok, err = red:zrem(queueName, postID)
+      ok, err = red:zrem(queueName, postID)
       if not ok then
       --  print('cant remove from redis! ', err)
       else
-      --  print('removed: '..postID..' from redis after processing')
+        print('removed: '..postID..' from redis after processing')
       end
     else
       -- add back into queue but later
+      print('couldnt process, requeueing')
       ok, err = red:zadd(queueName, os.time(), postID)
     end
  end

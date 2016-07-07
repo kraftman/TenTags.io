@@ -10,7 +10,7 @@ Tags
 - Can be upvoted and downvoted
 - If you add a tag you own it and its up/down votes
 - Only tags of a certain threshold are included in filters
-- Upvoting a post as a whole upvotes all tags shared between the post and the user
+- Upvoting a post as a whole upvotes all tags shared between the post and the filter that meant the user saw it - done
 
 Filters
 - Select posts with certain tags or without certain tags
@@ -23,8 +23,8 @@ Source
 Reposts
 - Automate where possible, check if the link exists/image has been posted
 - Allow anyone to add a parent post
-- Highest rated parent post gets marked as parent after certain threshold
-- Each user has a list of posts theyve seen, dont show them nodes from this list
+- Highest rated parent post gets marked as parent after certain threshold - needs high certainty
+- Each user has a list of posts theyve seen, dont show them nodes from this list - done
 - Optionally hide the posts theyve already seen after they click them or are served them
 
 
@@ -42,10 +42,10 @@ Other Ideas from reddit
 - other tags like NSFL, spoiler, etc - done
 - Vote out mods
 - Instead of deleted, mark as 'deleted by <name>' - mods cant delete posts
-- show related sub based on common user base
+- show related sub based on common user base -- run filter comparison to find common filters
 - Limit number of subs a mod can moderate
-- sub specific report reasons
-- sticky comments in a post
+- sub specific report reasons - wont do, allow any report reason?
+- sticky comments in a post -- per filter?
 - allow changing title within time duration - done
 
 
@@ -138,7 +138,7 @@ for when redis starts getting full
   remove posts tags list
   remove post info has
   remove post comments
-  render entire page out to file and dump on a file server
+  render entire page out to file and dump on a file server -good idea anyway for logged out users
 
 
 redis test
@@ -212,3 +212,11 @@ Short URLs
 - deferred processing, add short url
 - link to short url if generated, long url if not
 - store short url -> long url map in set, short url in hash once generated.
+
+
+
+TAG KARMA
+ - user is allowed to add X tags
+ - user receives karma for the tags
+ - limit number of tags based on tag karma
+ - profit

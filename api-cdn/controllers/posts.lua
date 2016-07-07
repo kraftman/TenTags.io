@@ -100,6 +100,58 @@ local function GetPost(self)
 
   self.post = post
 
+  self.GetColorForDepth =function(_,child, depth)
+    depth = depth or 1
+    if not child then
+      return ''
+    end
+
+    local username = child.username
+    local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
+    local sum = 0
+
+    for i = 1, #username do
+      sum = sum + (username:byte(i))
+    end
+
+    sum = sum % #colors + 1
+
+    if false then
+      return 'style="background: '..colors[sum]..';"'
+    end
+
+    function DEC_HEX(IN)
+      local B,K,OUT,I,D=16,"0123456789ABCDEF","",0
+      while IN>0 do
+          I=I+1
+          IN,D=math.floor(IN/B),(IN % B)+1
+          OUT=string.sub(K,D,D)..OUT
+      end
+      return OUT
+    end
+
+    depth = 4 + depth*2
+    depth = DEC_HEX(depth)
+    print(depth )
+    depth = '#'..depth..depth..depth..depth..depth..depth
+    return 'style="background: '..depth..';"'
+  end
+
+  self.GetColorForName = function(_,username)
+
+    local colors = { '#992244', '#442211', '#662288','darkpink','darkblue','darkyellow','darkgreen','darkred'};
+    local sum = 0
+
+    for i = 1, #username do
+      sum = sum + (username:byte(i))
+    end
+
+    sum = sum % #colors + 1
+
+      return 'style="color: '..colors[sum]..';"'
+
+  end
+
   return {render = 'post.view'}
 end
 

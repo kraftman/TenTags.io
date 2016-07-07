@@ -35,7 +35,7 @@ function Upvote(e) {
 }
 
 function Downvote(e) {
-
+  $(':focus').hide("slide", { direction: "left" }, 200);
 }
 
 Mousetrap.bind('tab', function(e) {

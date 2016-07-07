@@ -1,8 +1,8 @@
 
-<div class="comment" tabindex="0" >
+<div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
   <% if child then %>
-    <div class="commentBody <% for _,filter in pairs(child.filters) do %> filter_<%= filter.title -%><% end %>">
-      <div class="commentInfo">
+    <div class="commentBody <% for _,filter in pairs(child.filters) do %> filter_<%= filter.title -%><% end %>" >
+      <div class="commentInfo" >
 
         <% if not child.userHasVoted then %>
           <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
@@ -13,7 +13,7 @@
           <p>[deleted]</p>
         <% else %>
           <a href="<%= url_for('viewuser',{username = child.username}) %>">
-            <%= child.username -%>
+            <span <%- GetColorForName(child.username) %> ><%= child.username -%> </span>
             <% if userLabels and userLabels[child.createdBy] then %>
               <%= userLabels[child.createdBy] -%>
             <% end %>
@@ -46,7 +46,7 @@
       date: <%= child.createdAt -%>
     <% end %>
   </div>
-  <% for _,child in pairs(comments[key].children) do %>
-    <% render("views.st.postcomment", {child = child, key = child.id }) %>
+  <% for _,child in pairs(comments[key].children) do local depth = depth and depth+1 or 1 print(depth) %>
+    <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
   <% end %>
 </div>

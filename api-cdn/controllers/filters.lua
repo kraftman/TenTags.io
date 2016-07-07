@@ -105,6 +105,9 @@ local function LoadAllFilters(self)
     self.isAdmin = true
   end
 
+  --TODO: also get all user filters
+  -- so we can change 'subscribe'  to 'unsubscribe'
+
   self.filters = api:GetFiltersBySubs()
   --print(to_json(self.filters))
 
