@@ -184,7 +184,7 @@ end
 function userread:GetUnseenPosts(baseKey, elements)
   local red = util:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()
-  
+
   red:init_pipeline()
 
 
@@ -246,6 +246,7 @@ function userread:GetUserFilterIDs(userID)
   else
     return ok
   end
+  
 end
 
 

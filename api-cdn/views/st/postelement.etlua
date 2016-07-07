@@ -15,6 +15,8 @@
     <% end %>
 
 
+
+
   <div class = 'postBody'>
     <a class ='postLink' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
     </br>
@@ -22,5 +24,7 @@
     <% for _,filter in pairs(post.filters) do %>
         <a class ='filterIcon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
     <% end %>
+
   </div>
+
 </div>

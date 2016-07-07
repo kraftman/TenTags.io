@@ -22,7 +22,8 @@ from_json = (require 'lapis.util').from_json
 local filterStyles = {
   default = 'views.st.postelement',
   minimal = 'views.st.postelement-min',
-  HN = 'views.st.postelement-HN'
+  HN = 'views.st.postelement-HN',
+  full = 'views.st.postelement-full'
 }
 
 

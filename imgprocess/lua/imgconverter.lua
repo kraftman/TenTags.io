@@ -90,11 +90,22 @@ local function SendImage(image, postID)
   return true
 end
 
+local function AddImgURLToPost(postID, imgURL)
+  red:hset('post:'..postID,'imgURL', imgURL)
+
+
+end
+
 local function ProcessImgur(postURL, postID)
-  local ok, err = os.execute('python pygur.py '..postURL..' '..postID)
-  if ok ~= 0 then
-    return nil, err
-  end
+  local handle = io.popen('python pygur.py '..postURL..' '..postID)
+  local imgURL = handle:read("*a")
+  imgURL = imgURL:gsub('\n','')
+  imgURL = imgURL:gsub('\r','')
+  imgURL = imgURL:gsub(' ','')
+  handle:close()
+  print('adding ',imgURL,' to post')
+  AddImgURLToPost(postID, imgURL)
+
 
   local image = magick.load_image('/lua/out/'..postID..'.jpg')
   image:coalesce()
@@ -192,9 +203,12 @@ local function GetPostIcon(postURL, postID)
     finalImage.image:resize_and_crop(100,100)
   	finalImage.image:set_format('png')
 
-  SendImage(finalImage.image, postID)
-  return true
 
+  AddImgURLToPost(postID, finalImage.link)
+
+  SendImage(finalImage.image, postID)
+
+  return true
 end
 
 local function ProcessPostIcon(postID)

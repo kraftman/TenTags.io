@@ -175,6 +175,10 @@ div {
   text-decoration:none;
 }
 
+.linkImg {
+  max-width:100%;
+}
+
 .post {
   display: flex;
   margin: 5px;
