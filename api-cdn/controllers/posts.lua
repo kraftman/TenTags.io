@@ -199,7 +199,7 @@ local function UpvotePost(self)
   end
   local ok, err = api:VotePost(self.session.userID, self.params.postID, 'up')
   if ok then
-    return 'success!'
+    return { redirect_to = self:url_for("home") }
   else
     return 'fail: ', err
   end
@@ -213,7 +213,7 @@ local function DownvotePost(self)
   end
   local ok, err = api:VotePost(self.session.userID, self.params.postID,'down')
   if ok then
-    return 'success!'
+    return { redirect_to = self:url_for("home") }
   else
     return 'fail: ', err
   end
