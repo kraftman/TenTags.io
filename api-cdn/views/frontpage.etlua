@@ -1,6 +1,7 @@
 
-<script src="/static/js/mousetrap.min.js"  ></script>
-<script src="/static/js/frontpage.js"  ></script>
+<!-- <script src="/static/js/mousetrap.min.js"  ></script> -->
+<!-- <script src="/static/js/frontpage.js"  ></script> -->
+
 <div class = 'contents'>
   <input id='postID' type="hidden"value="Norway">
   <div>
