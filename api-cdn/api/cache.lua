@@ -468,7 +468,6 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
   local freshPosts,filteredPosts = {},{}
   local postID,filterID
   local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
-  --print(to_json(userFilterIDs))
 
   local filterFunction
   if filter == 'new' then
@@ -480,17 +479,18 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
   else
     filterFunction = 'GetAllFreshPosts'
   end
-  --ngx.log(ngx.ERR,'filter:',filter,filterFunction)
 
   while #freshPosts < 100 do
 
     local allPostIDs
+
+    -- grab 1000 post IDs
     if filter == 'seen' then
       allPostIDs = userRead[filterFunction](userRead,userID,startRange,endRange)
-      ngx.log(ngx.ERR,'posts:',#allPostIDs)
     else
       allPostIDs = redisread[filterFunction](redisread,startRange,endRange)
     end
+
     -- if weve hit the end then return regardless
     if #allPostIDs == 0 then
       break
@@ -574,61 +574,75 @@ function cache:GetUserPostVotes(userID)
 
 end
 
+function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
+  --check if its seen this session, add it
+  if sessionSeenPosts[postID] then
+    return
+  end
+  sessionSeenPosts[postID] = true
+
+  --
+  local post = self:GetPost(postID)
+  if post.id ~= post.parentID then
+    if sessionSeenPosts[post.parentID] then
+      return
+    end
+    local unseenPosts = userRead:GetUnseenPosts(userID,{self:ConvertShortURL(post.parentID)})
+    if not next(unseenPosts) then
+      print('parent id was seen already')
+      return
+    end
+  end
+
+  tinsert(newPosts, post)
+end
+
 function cache:GetUserFrontPage(userID,filter,range)
   range = range or 0
 
-  --also need to check the posts nodeID
   local user = self:GetUserInfo(userID)
 
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
   local freshPosts = cache:GetFreshUserPosts(userID,filter)
-  print(to_json(freshPosts))
-  --ngx.log(ngx.ERR, 'freshposts: ',#freshPosts)
 
-  local newPostIDs = {}
+  local newPosts = {}
 
   if filter ~= 'seen' and userID ~= 'default' then
     for _,postID in pairs(freshPosts) do
-      if not sessionSeenPosts[postID] then
-        sessionSeenPosts[postID] = true
-        tinsert(newPostIDs,postID)
-      end
-      -- stop when we have a page worth
-      if #newPostIDs > 10 then
+      self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
+
+      -- stop when we hace a page worth
+      if #newPosts > 10 then
         break
       end
     end
-    --print(to_json(user))
     if user.hideSeenPosts == '1' then
-      print('hiding seen posts!')
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else
     for i = range, range+10 do
       if freshPosts[i] then
-        tinsert(newPostIDs,freshPosts[i])
+        tinsert(newPosts,self:GetPost(freshPosts[i]))
       end
     end
   end
 
 
 
-  local postsWithInfo = {}
+
   local userVotedPosts = self:GetUserPostVotes(userID)
 
-  for _,postID in pairs(newPostIDs) do
+  for _,post in pairs(newPosts) do
 
-    local post = self:GetPost(postID)
-    post.filters = self:GetFilterInfo(post.filters) or {}
-    if userVotedPosts[postID] then
+      post.filters = self:GetFilterInfo(post.filters) or {}
+    if userVotedPosts[post.id] then
       post.userHasVoted = true
     end
-    tinsert(postsWithInfo, post)
   end
 
-  return postsWithInfo
+  return newPosts
 end
 
 
