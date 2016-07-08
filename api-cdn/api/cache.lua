@@ -596,7 +596,11 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
     if sessionSeenPosts[post.parentID] then
       return
     end
-    local unseenPosts = userRead:GetUnseenPosts(userID,{self:ConvertShortURL(post.parentID)})
+    local parentID = post.parentID
+    if parentID:len() < 10 then
+      parentID = self:ConvertShortURL(parentID)
+    end
+    local unseenPosts = userRead:GetUnseenPosts(userID,{parentID})
     if not next(unseenPosts) then
       return
     end

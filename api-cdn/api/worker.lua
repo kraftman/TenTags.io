@@ -85,6 +85,11 @@ function worker:CreatePost(post)
     return ok, err
   end
 
+  ok,err = self:QueueJob('CheckReposts', post.id)
+  if not ok then
+    return ok, err
+  end
+
   ok, err = rediswrite:CreatePost(post)
   if ok then
     return post

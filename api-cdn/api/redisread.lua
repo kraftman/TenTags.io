@@ -495,6 +495,16 @@ function read:GetTag(tagName)
   return tagInfo
 end
 
+function read:GetTagPosts(tagID)
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:smembers('tagPosts:'..tagID)
+  if not ok then
+    return nil, err
+  end
+
+  return ok
+end
+
 
 
 
