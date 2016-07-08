@@ -442,6 +442,15 @@ function cache:GetUserSessionSeenPosts(userID)
   return indexedSeen
 end
 
+function cache:AddSeenPost(userID, postID)
+  if postID:len() < 10 then
+    postID = self:ConvertShortURL(postID)
+  end
+  local seenPosts = self:GetUserSessionSeenPosts(userID)
+  seenPosts[postID] = postID
+  self:UpdateUserSessionSeenPosts(userID, seenPosts)
+end
+
 function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
   local flatSeen = {}
   for k,_ in pairs(indexedSeenPosts) do
@@ -589,7 +598,6 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
     end
     local unseenPosts = userRead:GetUnseenPosts(userID,{self:ConvertShortURL(post.parentID)})
     if not next(unseenPosts) then
-      print('parent id was seen already')
       return
     end
   end

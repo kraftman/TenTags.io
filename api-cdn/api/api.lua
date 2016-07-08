@@ -155,6 +155,8 @@ function api:UpdateUser(userID, userToUpdate)
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
 		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
+		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
+		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		username = userToUpdate.username
 	}
 
@@ -691,10 +693,20 @@ function api:VotePost(userID, postID, direction)
 	if not post then
 		return nil, 'post not found'
 	end
-	--local user = cache:GetUserInfo(userID)
-	--if self:UserHasVotedPost(userID, postID) then
-	--	return nil, 'already voted'
-	--end
+
+	local user = cache:GetUserInfo(userID)
+	if self:UserHasVotedPost(userID, postID) then
+		if UNLIMITED_VOTING and user.role == 'admin' then
+
+		else
+			return nil, 'already voted'
+		end
+	end
+	print(user.hideVotedPosts)
+	if tonumber(user.hideVotedPosts) == 1 then
+		print('hiding voted post')
+		cache:AddSeenPost(userID, postID)
+	end
 
 	-- get tags matching the users filters' tags
 	print('get matching tags')
@@ -952,6 +964,12 @@ function api:GetPost(userID, postID)
 	end
 
 	local userVotedTags = cache:GetUserTagVotes(userID)
+
+	local user = cache:GetUserInfo(userID)
+
+	if user.hideClickedPosts == '1' then
+		cache:AddSeenPost(userID, postID)
+	end
 
 	for _,tag in pairs(post.tags) do
 		if userVotedTags[postID..':'..tag.id] then

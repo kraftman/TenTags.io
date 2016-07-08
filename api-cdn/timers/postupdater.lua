@@ -168,7 +168,7 @@ function config:GetJob(jobName)
   end
 
   local ok, err = redisWrite:DeleteJob(jobName,postID)
-  print(to_json(ok))
+  --print(to_json(ok))
   if ok ~= 1 then
     if err then
       ngx.log(ngx.ERR, 'error deleting job: ',err)
@@ -302,15 +302,15 @@ function config:UpdatePostFilters()
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
 
-  print(to_json(post.filters))
+  --print(to_json(post.filters))
 	for _,filterID in pairs(post.filters) do
 		if not newFilters[filterID] then
 			purgeFilterIDs[filterID] = filterID
 		end
 	end
 
-  print('removing from: '..to_json(purgeFilterIDs))
-  print('adding to: '..to_json(newFilters))
+  --print('removing from: '..to_json(purgeFilterIDs))
+  --print('adding to: '..to_json(newFilters))
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
