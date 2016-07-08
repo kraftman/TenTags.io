@@ -23,7 +23,8 @@ local filterStyles = {
   default = 'views.st.postelement',
   minimal = 'views.st.postelement-min',
   HN = 'views.st.postelement-HN',
-  full = 'views.st.postelement-full'
+  full = 'views.st.postelement-full',
+  filtta = 'views.st.postelement-filtta'
 }
 
 

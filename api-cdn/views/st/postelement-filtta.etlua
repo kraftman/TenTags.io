@@ -1,0 +1,34 @@
+
+<div class='post' tabindex = "0" >
+  <div class = 'voteButtons'>
+    <% if not post.userHasVoted then %>
+      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
+      </br>
+      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
+    <% end %>
+  </div>
+
+    <% if post.icon then %>
+      <img class = 'linkIcon' src="/icons/<%= post.id %>.png" height="40" width="40">
+    <% else %>
+      <img class = 'linkIcon' src="/icons/<%= post.id %>.png" height="40" width="40">
+    <% end %>
+
+
+
+
+  <div class = 'postBody'>
+    <a class ='postLink' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+    </br>
+    <a class='commentLink' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+    <% for _,filter in pairs(post.filters) do %>
+        <a class ='filterIcon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+    <% end %>
+
+  </div>
+
+  <% if post.topComment then %>
+    <div class='postTopComment'><%= post.topComment.text %></div>
+  <% end %>
+
+</div>

@@ -98,7 +98,7 @@ div {
 }
 
 #filterbar {
-  width: 310px;
+  width: 150px;
   height: 100%;
   float:left;
   margin: 5px;
@@ -181,11 +181,22 @@ div {
 
 .post {
   display: flex;
+  flex-wrap: wrap;
   margin: 5px;
   padding:5px;
   background: #fff;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.postTopComment {
+  font-size: 10px;
+  margin: 5px;
+  padding:5px;
+  background: lightblue;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  display: block;
 }
 
 .post:focus {

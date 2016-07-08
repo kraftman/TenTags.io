@@ -14,6 +14,17 @@ local function FrontPage(self)
 
   self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
 
+  if self:GetFilterTemplate():find('filtta') then
+    for _,post in pairs(self.posts) do
+      local comments =api:GetPostComments(self.session.userID, post.id, 'best')
+      _, post.topComment = next(comments[post.id].children)
+
+      if post.topComment then
+        print(post.topComment.text)
+      end
+    end
+  end
+
   if self.session.userID then
     for _,v in pairs(self.posts) do
       if v.id then
@@ -25,7 +36,7 @@ local function FrontPage(self)
 
   -- if empty and logged in then redirect to seen posts
   if not self.posts or #self.posts == 0 then
-    if filter ~= 'seen' then
+    if filter ~= 'seen' then -- prevent loop
       --return { redirect_to = self:url_for("seen") }
     end
   end
