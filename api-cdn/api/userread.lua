@@ -187,15 +187,15 @@ function userread:GetUnseenPosts(baseKey, elements)
 
   red:init_pipeline()
 
+  for _,v in pairs(elements) do
+    red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
+  end
 
-    for _,v in pairs(elements) do
-      red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
-    end
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
   if err then
-    ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
+    ngx.log(ngx.ERR, 'unable to check for elements: ',err)
     return {}
   end
 
@@ -246,7 +246,7 @@ function userread:GetUserFilterIDs(userID)
   else
     return ok
   end
-  
+
 end
 
 

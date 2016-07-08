@@ -564,7 +564,7 @@ function write:UpdatePostTags(post)
   end
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
-  print('update: ',err)
+  
   if err then
     ngx.log(ngx.ERR, 'unable to update post tags: ',err)
   end

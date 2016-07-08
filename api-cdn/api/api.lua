@@ -24,6 +24,8 @@ local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 local POST_TITLE_LENGTH = 300
+local UNLIMITED_VOTING = true
+local SOURCE_POST_THRESHOLD = 0.75
 --local permission = require 'userpermission'
 
 local ENABLE_RATELIMIT = false
@@ -728,15 +730,12 @@ end
 
 function api:AddVoteToTag(tag,direction)
 	if direction == 'up' then
-		print('vote up')
 		tag.up = tag.up + 1
 	elseif direction == 'down' then
-		--print('vote down')
 		tag.down = tag.down + 1
 	end
 	-- recalculate the tag score
 	tag.score = self:GetScore(tag.up,tag.down)
-	print(tag.score)
 end
 
 function api:ConvertUserCommentToComment(userID, comment)
@@ -1376,6 +1375,28 @@ function api:GetDomain(url)
   return url:match('^%w+://([^/]+)')
 end
 
+local function CheckPostParent(post)
+	local sourceTags = {}
+	for _, tag in pairs(post.tags) do
+		if tag.name:find('^meta:sourcePost:') then
+			tinsert(sourceTags, tag)
+		end
+	end
+
+	-- set a new parentID for the post if the source is over the threshold
+	table.sort(sourceTags, function(a,b) return a.score > b.score end)
+	print('new score ',sourceTags[1].score)
+	if sourceTags[1] and sourceTags[1].score > SOURCE_POST_THRESHOLD then
+		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
+		print(parentID, ' test ', post.parentID)
+		if parentID and post.parentID ~= parentID then
+			post.parentID = parentID
+			print('setting new parent to: ',parentID)
+			worker:UpdatePostParentID(post)
+		end
+	end
+end
+
 function api:VoteTag(userID, postID, tagID, direction)
 
 	local ok, err = RateLimit('VoteTag:', userID, 5, 30)
@@ -1387,64 +1408,56 @@ function api:VoteTag(userID, postID, tagID, direction)
 		return nil, 'no direction'
 	end
 
-	-- check post for existing vote
-	-- check tag for existing vote
 
-	--if self:UserHasVotedPost(userID, postID) then
-		--return nil, 'already voted'
-	--end
+	-- check they can vote again
+	if self:UserHasVotedTag(userID, postID, tagID) and (not UNLIMITED_VOTING) then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'admin' then
+			return nil, 'already voted on tag'
+		end
+	end
 
 	local post = cache:GetPost(postID)
 
-	--if self:UserHasVotedTag(userID, postID, tagID) then
-	--	return nil, 'already voted on tag'
-	--end
-	local sourceTags = {}
 	local thisTag
 	for _, tag in pairs(post.tags) do
-		if tag.name:find('^meta:sourcePost:') then
-			tinsert(sourceTags, tag)
-		end
 		if tag.id == tagID then
 			thisTag = tag
 			self:AddVoteToTag(tag, direction)
 		end
 	end
+ print('cechking post parent')
+	CheckPostParent(post)
 
-	table.sort(sourceTags, function(a,b) return a.score > b.score end)
-	if sourceTags[1] and sourceTags[1].score > TAG_BOUNDARY then
-		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
-		if parentID and post.parentID ~= parentID then
-			post.parentID = parentID
-			worker:UpdatePostParentID(post)
-		end
-	end
 
-	-- list of tags user has voted on
+	-- mark tag as voted on by user
 	ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
 	if not ok then
 		return ok, err
 	end
 
+	-- increment how many tags the user has voted on
 	if direction == 'up' then
 		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
 	else
 		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
 	end
 
+	-- Is this a meaningful stat?
+
 	for _,tag in pairs(post.tags) do
 		if tag.name:find('meta:self') then
 			if direction == 'up' then
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selfvoteup',1)
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
 			else
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selfvotedown',1)
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
 			end
-			break
+			break -- stop as soon as we know what kind of post it is
 		elseif tag.name:find('meta:link') then
 			if direction == 'up' then
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linkvoteup',1)
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
 			else
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linkvotedown',1)
+				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
 			end
 			break
 		end
@@ -1846,6 +1859,16 @@ function api:DeletePost(userID, postID)
 
 end
 
+local function UserCanAddSource(tags, userID)
+	for _,tag in pairs(tags) do
+		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
+			print('found: ',tag.name, ' user id: ',userID)
+			return false
+		end
+	end
+	return true
+end
+
 function api:AddSource(userID, postID, sourceURL)
 	-- rate limit them
 	-- check existing sources by this user
@@ -1855,6 +1878,7 @@ function api:AddSource(userID, postID, sourceURL)
 	if not ok then
 		return ok, err
 	end
+
 	print(sourceURL)
 	local sourcePostID = sourceURL:match('/post/(%w+)')
 	print(sourcePostID)
@@ -1865,11 +1889,8 @@ function api:AddSource(userID, postID, sourceURL)
 	local post = cache:GetPost(postID)
 
 
-	for _,tag in pairs(post.tags) do
-		--print(tag.name)
-		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
-			--return nil, 'cannot add more than one source to a post'
-		end
+	if UserCanAddSource(post.tags, userID) == false then
+		return nil,  'you cannot add more than one source to a post'
 	end
 
 	local tagName = 'meta:sourcePost:'..sourcePostID
@@ -1886,11 +1907,6 @@ function api:AddSource(userID, postID, sourceURL)
 	if not ok then
 		return ok,err
 	end
-
-	-- add the tag to the post
-	-- recalculate which filters this post belongs to
-	-- remove post from filters it shouldnt be in
-	-- add post to filters it should be in
 
 	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
