@@ -1679,15 +1679,18 @@ function api:CreatePost(userID, postInfo)
 	self:GeneratePostTags(newPost)
 
   if newPost.link then
-		ok, err = worker:QueueJob('GeneratePostIcon', newPost.id)
-		if not ok then
-			return ok, err
-		end
+
     local domain  = self:GetDomain(newPost.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
+
+		ok, err = worker:QueueJob('GeneratePostIcon', newPost.id)
+		if not ok then
+			return ok, err
+		end
+		
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)
     tinsert(newPost.tags,'meta:domain:'..domain)

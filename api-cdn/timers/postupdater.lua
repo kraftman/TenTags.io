@@ -5,6 +5,7 @@ local config = {}
 config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
+
 local redisRead = require 'api.redisread'
 local redisWrite = require 'api.rediswrite'
 local commentWrite = require 'api.commentwrite'
@@ -33,6 +34,7 @@ function config.Run(_,self)
   self:UpdatePostShortURL()
   self:AddCommentShortURL()
   self:UpdatePostFilters()
+  self:CheckReposts()
 
 end
 
@@ -168,7 +170,7 @@ function config:GetJob(jobName)
   end
 
   local ok, err = redisWrite:DeleteJob(jobName,postID)
-  --print(to_json(ok))
+
   if ok ~= 1 then
     if err then
       ngx.log(ngx.ERR, 'error deleting job: ',err)
@@ -329,6 +331,62 @@ function config:UpdatePostFilters()
 
   redisWrite:CreatePost(post)
 	return
+end
+
+function config:CheckReposts()
+
+  --[[]]
+
+  local postID = redisRead:GetOldestJob('CheckReposts')
+  if not postID then
+    return
+  end
+
+  local ok, err = redisWrite:GetLock('CheckReposts:'..postID,10)
+  if ok == ngx.null then
+    return
+  end
+  print('checking repost')
+  local post = redisRead:GetPost(postID)
+
+  local postLink = post.link
+  local linkTag
+  for _,tag in pairs(post.tags) do
+    if tag.name == 'meta:link:'..postLink:lower() then
+      linkTag = tag
+      break
+    end
+  end
+  if not linkTag then
+    print('cant find link tag')
+    return
+  end
+
+  local posts, err = redisRead:GetTagPosts(linkTag.id)
+  if not posts then
+    print(err)
+  end
+  if not next(posts) then
+    print('no posts found')
+    return
+  end
+
+
+  for k,postID in pairs(posts) do
+    posts[k] = redisRead:GetPost(postID)
+  end
+
+
+	table.sort(posts, function(a,b) return a.createdAt < b.createdAt end)
+
+  local parentPost = posts[1]
+  post.parentID = parentPost.id
+  --updating parent ID
+  redisWrite:UpdatePostParentID(post)
+
+
+
+
 end
 
 
