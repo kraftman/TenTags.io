@@ -36,11 +36,10 @@ local function GetStyleSelected(self, styleName)
   end
 
   local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
-  print(filterName)
+
   if self.userInfo['filterStyle:'..filterName] and self.userInfo['filterStyle:'..filterName] == styleName then
     return 'selected="selected"'
   else
-    print(' not found')
     return ''
   end
 

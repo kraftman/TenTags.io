@@ -15,6 +15,8 @@ local function DisplaySettings(self)
 
   self.enablePM = user.enablePM == '1' and 'checked' or ''
   self.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
+  self.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
+  self.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
 
   ngx.log(ngx.ERR, user.enablePM)
   return {render = 'user.subsettings'}
@@ -29,7 +31,11 @@ local function UpdateSettings(self)
   self.enablePM = self.params.EnablePM and 'checked' or ''
   user.hideSeenPosts = self.params.hideSeenPosts and 1 or 0
   self.hideSeenPosts = self.params.hideSeenPosts and 'checked' or ''
-  ngx.log(ngx.ERR, user.enablePM)
+  user.hideVotedPosts = self.params.hideVotedPosts and 1 or 0
+  self.hideVotedPosts = self.params.hideVotedPosts and 'checked' or ''
+  user.hideClickedPosts = self.params.hideClickedPosts and 1 or 0
+  self.hideClickedPosts = self.params.hideClickedPosts and 'checked' or ''
+
   api:UpdateUser(self.session.userID, user)
 
   return {render = 'user.subsettings'}

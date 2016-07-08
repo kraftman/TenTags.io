@@ -31,7 +31,7 @@
     <div class='postTopComment'><%= post.topComment.text %></div>
   <% end %>
   <% if post.parentID then %>
-    parentID: <%= post.parentID:sub(1,10) %>
+    parentID: <%= post.parentID %>
   <% end %>
 
 </div>
