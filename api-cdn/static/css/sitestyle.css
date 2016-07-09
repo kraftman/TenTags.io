@@ -74,6 +74,11 @@ div {
 
 }
 
+.togglefilter-selected {
+  border-style: solid;
+  border-width: 1px;
+}
+
 .filterIcon {
   display:inline-block;
   background-color: lightblue;

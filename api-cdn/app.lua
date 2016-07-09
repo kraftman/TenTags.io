@@ -45,6 +45,20 @@ local function GetStyleSelected(self, styleName)
 
 end
 
+local function CalculateColor(name)
+  local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
+  local sum = 0
+
+  for i = 1, #name do
+    sum = sum + (name:byte(i))
+  end
+
+  sum = sum % #colors + 1
+
+  return 'style="background: '..colors[sum]..';"'
+
+end
+
 
 local function GetFilterTemplate(self)
 
@@ -92,6 +106,7 @@ app:before_filter(function(self)
   self.GetFilterTemplate = GetFilterTemplate
   self.GetStyleSelected = GetStyleSelected
   self.filterStyles = filterStyles
+  self.CalculateColor = CalculateColor
 
 
 end)

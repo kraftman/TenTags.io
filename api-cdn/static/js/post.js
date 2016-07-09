@@ -9,6 +9,14 @@ $(function() {
     console.log($(this).html())
     $('.filter_' + $(this).html()).toggle()
   })
+
+  $(document).on('click', '.togglefiltercomment', function() {
+    $(this).toggleClass('togglefilter-selected');
+    var className = '.'+$(this).attr('data-filterID')
+    console.log(className);
+    $(className).toggle();
+  });
+
 })
 
 function ChangeFocus(value) {
