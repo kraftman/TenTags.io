@@ -34,11 +34,12 @@
         <% if child.deleted then %>
           <p>[deleted]</p>
         <% else %>
-          <%= child.text -%>
+          <p class="comment-text <% for _,filter in pairs(child.filters) do %><%= filter.id -%> <% end %> "><%= child.text -%></p>
         <% end %>
       </div>
-      <% for _,filter in pairs(child.filters) do %>
-        filter: <%= filter.title -%>
+      filters:
+      <% for _,filter in pairs(child.filters) do print(filter.title)%>
+        <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
       <% end %>
       up: <%= child.up -%>
       down: <%= child.down -%>

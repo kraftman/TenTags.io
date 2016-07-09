@@ -106,6 +106,12 @@
       <% end %>
   >Top</option>
   </select>
+  <div>
+    <% for _,filter in pairs(filters) do print(filter.title)%>
+      <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
+    <% end %>
+  </div>
+
   <div id = "comments">
     <% render("views.st.postcomment", { key = post.id }) %>
   </div>
