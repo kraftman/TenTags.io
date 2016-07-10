@@ -293,7 +293,7 @@ local function EditPost(self)
 
   local ok,err = api:EditPost(self.session.userID, post)
   if ok then
-    return 'success'
+    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
   else
     return 'fail: '..err
   end

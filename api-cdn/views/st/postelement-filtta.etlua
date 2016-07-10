@@ -8,14 +8,7 @@
     <% end %>
   </div>
 
-    <% if post.icon then %>
-      <img class = 'linkIcon' src="/icons/<%= post.id %>.png" height="40" width="40">
-    <% else %>
-      <img class = 'linkIcon' src="/icons/<%= post.id %>.png" height="40" width="40">
-    <% end %>
-
-
-
+  <% render("views.post.icon",{post = post}) %>
 
   <div class = 'postBody'>
     <a class ='postLink' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
