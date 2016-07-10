@@ -2,7 +2,8 @@
 <div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
   <% if child then %>
     <div class="commentBody <% for _,filter in pairs(child.filters) do %> filter_<%= filter.title -%><% end %>" >
-      <div class="commentInfo" >
+      <div class="commentTitle" >
+        <a href='#' class='comment-collapse' >-</a>
 
         <% if not child.userHasVoted then %>
           <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
@@ -30,24 +31,28 @@
           <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>">delete</a>
         <% end %>
       </div>
+
       <div class="commentInfo">
         <% if child.deleted then %>
           <p>[deleted]</p>
         <% else %>
           <p class="comment-text <% for _,filter in pairs(child.filters) do %><%= filter.id -%> <% end %> "><%= child.text -%></p>
         <% end %>
+
+        filters:
+        <% for _,filter in pairs(child.filters) do print(filter.title)%>
+          <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
+        <% end %>
+          up: <%= child.up -%>
+          down: <%= child.down -%>
+          score: <%= child.score -%>
+          date: <%= child.createdAt -%>
+        <% end %>
+
+        <% for _,child in pairs(comments[key].children) do local depth = depth and depth+1 or 1 print(depth) %>
+          <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
+        <% end %>
       </div>
-      filters:
-      <% for _,filter in pairs(child.filters) do print(filter.title)%>
-        <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
-      <% end %>
-      up: <%= child.up -%>
-      down: <%= child.down -%>
-      score: <%= child.score -%>
-      date: <%= child.createdAt -%>
-    <% end %>
   </div>
-  <% for _,child in pairs(comments[key].children) do local depth = depth and depth+1 or 1 print(depth) %>
-    <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
-  <% end %>
+
 </div>
