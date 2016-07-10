@@ -6,8 +6,15 @@ var currentParent
 
 $(function() {
   $('.filtername').click( function(e) {
-    console.log($(this).html())
+
     $('.filter_' + $(this).html()).toggle()
+    e.preventDefault();
+  })
+
+  $('.comment-collapse').click( function(e) {
+    console.log('hid comment')
+    $(this).parent().parent().children('.commentInfo').toggle()
+    e.preventDefault();
   })
 
   $(document).on('click', '.togglefiltercomment', function() {
@@ -15,6 +22,7 @@ $(function() {
     var className = '.'+$(this).attr('data-filterID')
     console.log(className);
     $(className).toggle();
+    e.preventDefault();
   });
 
 })
