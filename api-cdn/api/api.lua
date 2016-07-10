@@ -32,6 +32,8 @@ local ENABLE_RATELIMIT = false
 local MAX_ALLOWED_TAG_COUNT = 20
 
 
+
+
 local function AverageTagScore(filterRequiredTagIDs,postTags)
 
 	local score = 0
@@ -157,6 +159,7 @@ function api:UpdateUser(userID, userToUpdate)
 		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
 		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
+		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username
 	}
 
@@ -1318,7 +1321,7 @@ function api:AddPostTag(userID, postID, tagName)
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
-	print(post.id)
+
 	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
@@ -1403,53 +1406,59 @@ local function CheckPostParent(post)
 
 	-- set a new parentID for the post if the source is over the threshold
 	table.sort(sourceTags, function(a,b) return a.score > b.score end)
-	print('new score ',sourceTags[1].score)
+
 	if sourceTags[1] and sourceTags[1].score > SOURCE_POST_THRESHOLD then
 		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
-		print(parentID, ' test ', post.parentID)
+
 		if parentID and post.parentID ~= parentID then
 			post.parentID = parentID
-			print('setting new parent to: ',parentID)
 			worker:UpdatePostParentID(post)
+		end
+	end
+end
+
+function api:UserCanVoteTag(userID, postID, tagID)
+	if self:UserHasVotedTag(userID, postID, tagID) and (not UNLIMITED_VOTING) then
+		local user = cache:GetUserInfo(userID)
+		if user.role ~= 'admin' then
+			return false
+		end
+	end
+	return true
+end
+
+function api:FindPostTag(post, tagID)
+	for _, tag in pairs(post.tags) do
+		if tag.id == tagID then
+			return tag
 		end
 	end
 end
 
 function api:VoteTag(userID, postID, tagID, direction)
 
-	local ok, err = RateLimit('VoteTag:', userID, 5, 30)
-	if not ok then
-		return ok, err
+	if not RateLimit('VoteTag:', userID, 5, 30) then
+		return nil, 'rate limited'
 	end
 
-	if not direction then
-		return nil, 'no direction'
-	end
-
-
-	-- check they can vote again
-	if self:UserHasVotedTag(userID, postID, tagID) and (not UNLIMITED_VOTING) then
-		local user = cache:GetUserInfo(userID)
-		if user.role ~= 'admin' then
-			return nil, 'already voted on tag'
-		end
+	if not self:UserCanVoteTag(userID, postID, tagID) then
+		return nil, 'cannot vote again!'
 	end
 
 	local post = cache:GetPost(postID)
 
-	local thisTag
-	for _, tag in pairs(post.tags) do
-		if tag.id == tagID then
-			thisTag = tag
-			self:AddVoteToTag(tag, direction)
-		end
+	local thisTag = self:FindPostTag(post, tagID)
+	if not thisTag then
+		return nil, 'unable to find tag'
 	end
- print('cechking post parent')
+
+	self:AddVoteToTag(thisTag, direction)
+
+	--needs renaming, finds the parent of the post from source tag
 	CheckPostParent(post)
 
-
 	-- mark tag as voted on by user
-	ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
+	local ok, err = worker:AddUserTagVotes(userID, postID, {tagID})
 	if not ok then
 		return ok, err
 	end
@@ -1462,7 +1471,6 @@ function api:VoteTag(userID, postID, tagID, direction)
 	end
 
 	-- Is this a meaningful stat?
-
 	for _,tag in pairs(post.tags) do
 		if tag.name:find('meta:self') then
 			if direction == 'up' then
@@ -1690,7 +1698,7 @@ function api:CreatePost(userID, postInfo)
 		if not ok then
 			return ok, err
 		end
-		
+
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)
     tinsert(newPost.tags,'meta:domain:'..domain)

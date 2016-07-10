@@ -15,6 +15,10 @@ local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
 local SEED = 1
 
+local SPECIAL_TAGS = {
+	nsfw = 'nsfw'
+}
+
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
@@ -311,6 +315,24 @@ function config:UpdatePostFilters()
 		end
 	end
 
+  local specialTagFound = {}
+
+  for _,tag in pairs(post.tags) do
+    if SPECIAL_TAGS[tag.name] then
+      specialTagFound[SPECIAL_TAGS[tag.name]] = true
+    end
+  end
+
+  for k,v in pairs(SPECIAL_TAGS) do
+    if specialTagFound[k] then
+      post['specialTag:'..v] = 'true'
+
+    else
+      post['specialTag:'..v] = 'false'
+    end
+    print ('added specialTag:'..v)
+  end
+
   --print('removing from: '..to_json(purgeFilterIDs))
   --print('adding to: '..to_json(newFilters))
 
@@ -346,10 +368,14 @@ function config:CheckReposts()
   if ok == ngx.null then
     return
   end
-  print('checking repost')
+
   local post = redisRead:GetPost(postID)
 
   local postLink = post.link
+  if not postLink then
+    return
+  end
+
   local linkTag
   for _,tag in pairs(post.tags) do
     if tag.name == 'meta:link:'..postLink:lower() then
@@ -383,6 +409,9 @@ function config:CheckReposts()
   post.parentID = parentPost.id
   --updating parent ID
   redisWrite:UpdatePostParentID(post)
+
+
+  ok, err = redisWrite:DeleteJob('CheckReposts',postID)
 
 
 

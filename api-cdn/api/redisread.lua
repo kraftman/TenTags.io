@@ -367,7 +367,7 @@ function read:GetPost(postID)
   post.viewers = {}
   post.filters = {}
 
-  for k,_ in pairs(post) do
+  for k,v in pairs(post) do
     if k:find('^viewer:') then
       local viewerID = k:match('^viewer:(%w+)')
       tinsert(post.viewers, viewerID)
@@ -376,6 +376,8 @@ function read:GetPost(postID)
       local filterID = k:match('^filter:(%w+)')
       tinsert(post.filters, filterID)
       post[k] = nil
+    elseif k:find('^specialTag:') then
+      post[k] = v == 'true' and true or nil
     end
   end
 

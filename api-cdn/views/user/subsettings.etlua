@@ -6,6 +6,7 @@
     <input type="checkbox" name="hideSeenPosts" <%= hideSeenPosts -%>>Hide Seen Posts<br>
     <input type="checkbox" name="hideVotedPosts" <%= hideVotedPosts -%>>Hide Voted Posts<br>
     <input type="checkbox" name="hideClickedPosts" <%= hideClickedPosts -%>>Hide Clicked Posts<br>
+    <input type="checkbox" name="showNSFW" <%= showNSFW -%>>Show NSFW<br>
     <input type="submit" value="Submit">
   </form>
 </div>
