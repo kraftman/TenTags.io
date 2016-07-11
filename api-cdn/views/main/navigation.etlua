@@ -1,6 +1,6 @@
 
 
-<div id='titleBox'>
+<div class='title-box'>
   <a href="<%= url_for('home') %>">Filtta</a>
 
   <% if session.username then %>

@@ -13,7 +13,7 @@
   <script src="/static/js/site.js"  ></script>
 </head>
 <body>
-  <div class='centerPage'>
+  <div class='center-page'>
     <% render("views.main.navigation") %>
     <% render("views.main.filterbar") %>
     <% content_for("inner") %>

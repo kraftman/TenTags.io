@@ -1,11 +1,11 @@
 
-<div id='filterbar'>
-  <div class='tabButtons'>
+<div id='filter-bar'>
+  <div class='tab-buttons'>
     <a id='infoBoxLink' href="#box-one">Info</a>
     <a id='filterBoxLink' href="#box-two">Filters</a>
   </div>
   <div class='box-wrap'>
-    <div id="box-one" class='infoBox'>
+    <div id="box-one" class='info-box'>
 
       <a class='filterbarelement' href="<%= url_for('newmessage') %>">New Message</a>
       <a class='filterbarelement' href="<%= url_for('newpost') %>">New Post</a>
@@ -39,7 +39,7 @@
       <% end %>
   	</div>
 
-    <div id="box-two" class='infoBox'>
+    <div id="box-two" class='info-box'>
 
       <ul>
         <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
