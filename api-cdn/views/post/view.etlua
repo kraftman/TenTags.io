@@ -27,7 +27,7 @@
       <legend>Edit Post</legend>
 
       <label for='posttitle' >Post Title:</label>
-      <input type='text' name='posttitle' id='posttitle' maxlength="50" value="<%= post.title -%>"/>
+      <input type='text' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
       </br>
       <label for='posttext' >Post text</label>
       <input type='text' name='posttext' id='posttext' maxlength="50" value="<%= post.text -%>"/>

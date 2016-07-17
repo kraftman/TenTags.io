@@ -255,8 +255,48 @@ local function TestRate()
 end
 
 
+local function TestGenerate(self)
+  for i = 1, 100 do
+    local info ={
+      title = 'test title'..i,
+      name= 'testname'..i ,
+      description = 'testdescription'..i,
+      createdAt = ngx.time(),
+      ownerID = self.session.userID,
+      createdBy = self.session.userID,
+    }
+    info.bannedTags = {}
+    info.requiredTags = {}
+    for j = 1, 30 do
+      info.requiredTags[j] = 'requiredtag'..j
+      info.bannedTags[j] = 'bannedtag'..j
+    end
+
+
+    local ok, err = api:CreateFilter(self.session.userID, info)
+    print(ok, err)
+  end
+
+  for i = 1, 100 do
+    local info ={
+      title = 'newpost'..i,
+      text = 'newpostbody'..i,
+      createdBy = self.session.userID,
+      tags = {}
+    }
+    for j = 1, 30 do
+      info.tags[j] = 'requiredtag'..j
+    end
+    local ok, err = api:CreatePost(self.session.userID, info)
+  end
+
+
+end
+
 
 function m:Register(app)
+
+  app:get('/test/generaterandom', TestGenerate)
   app:get('/test/rate',TestRate)
   app:get('/test/posts',TestPosting)
   app:get('/test/comments',TestCommentDict)

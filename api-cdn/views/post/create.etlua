@@ -17,7 +17,7 @@
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
     <label for='posttitle' >Post Title:</label>
-    <input type='text' name='posttitle' id='posttitle' maxlength="50" />
+    <input type='text' name='posttitle' id='posttitle' maxlength="300" />
     </br>
 
     <label for='postlink' >Post Link</label>
