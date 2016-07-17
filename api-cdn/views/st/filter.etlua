@@ -1,6 +1,6 @@
 <li class='post'>
 
-  <a class='postLink' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+  <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
   <p class = 'filterDescription'>
@@ -17,7 +17,7 @@
   </form>
 <% end %>
 
-  
+
   <form action="/f/<%= filter.title -%>" method="post">
     <input type="hidden" name="subscribe" value="true">
     <input type="hidden" name="filterID" value="<%= filter.id -%>">
@@ -25,6 +25,6 @@
   </form>
 
   <% if isAdmin then %>
-    <a class='postLink' href="<%= url_for('updatefilter',{filterlabel = filter.name}) %>">Settings</a>
+    <a class='post-link' href="<%= url_for('updatefilter',{filterlabel = filter.name}) %>">Settings</a>
   <% end %>
 </li>
