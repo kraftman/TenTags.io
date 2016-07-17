@@ -1,5 +1,5 @@
 
-<div id='filter-bar'>
+<div class='filter-bar'>
   <div class='tab-buttons'>
     <a id='infoBoxLink' href="#box-one">Info</a>
     <a id='filterBoxLink' href="#box-two">Filters</a>
