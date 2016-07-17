@@ -16,7 +16,7 @@ function commentwrite:ConvertListToTable(list)
 end
 
 function commentwrite:UpdateCommentField(postID,commentID,field,newValue)
-  print(postID, commentID)
+  --print(postID, commentID)
   --get the comment, update, rediswrite
   local red = util:GetCommentWriteConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
@@ -60,7 +60,7 @@ function commentwrite:CreateComment(commentInfo)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to write comment info: ',err)
-    return false
+    return false, err
   end
   return true
 end

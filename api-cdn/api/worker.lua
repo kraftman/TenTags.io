@@ -128,6 +128,8 @@ function worker:CreateComment(commentInfo)
     return ok, err
   end
 
+  return true
+
 end
 
 function worker:UpdateUser(user)

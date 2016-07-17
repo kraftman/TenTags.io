@@ -950,6 +950,7 @@ function api:CreateComment(userID, userComment)
 
 	worker:UpdatePostField(newComment.postID, 'commentCount',post.commentCount+1)
 
+
 	return true
 
 end

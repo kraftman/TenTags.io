@@ -35,11 +35,13 @@ local function CreateComment(self)
     createdBy = self.session.userID,
     text = self.params.commentText,
   }
-  ngx.log(ngx.ERR, to_json(self.params))
+  --ngx.log(ngx.ERR, to_json(self.params))
   local ok = api:CreateComment(self.session.userID, commentInfo)
   if ok then
+    print('created')
     return 'created!'
   else
+    print('failed')
     return 'failed!'
   end
 
