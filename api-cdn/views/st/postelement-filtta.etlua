@@ -1,5 +1,5 @@
 
-<div class='post' tabindex = "0" >
+<div class='post panel panel-default' tabindex = "0" >
   <div class='post-line-1' >
     <div class = 'vote-container'>
       <% if not post.userHasVoted then %>

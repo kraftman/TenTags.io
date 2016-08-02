@@ -1,5 +1,5 @@
 
-<div class='filter-bar'>
+<div class='panel panel-default filter-bar'>
   <div class='tab-buttons'>
     <a id='infoBoxLink' href="#box-one">Info</a>
     <a id='filterBoxLink' href="#box-two">Filters</a>
@@ -7,9 +7,6 @@
   <div class='box-wrap'>
     <div id="box-one" class='info-box'>
 
-      <a class='filterbarelement' href="<%= url_for('newmessage') %>">New Message</a>
-      <a class='filterbarelement' href="<%= url_for('newpost') %>">New Post</a>
-      <a class='filterbarelement' href="<%= url_for('newfilter') %>">New Filter</a>
 
       <% if enableAds then %>
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
