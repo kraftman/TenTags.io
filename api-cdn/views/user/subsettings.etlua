@@ -1,12 +1,23 @@
 
-<div class = 'contents'>
+<div class = 'contents panel panel-default'>
   <a href="<%= url_for('newsubuser') %>">Add User</a>
   <form action="<%= url_for('usersettings') %>" method = 'POST'>
-    <input type="checkbox" name="EnablePM" <%= enablePM -%>>Enable PM's<br>
-    <input type="checkbox" name="hideSeenPosts" <%= hideSeenPosts -%>>Hide Seen Posts<br>
-    <input type="checkbox" name="hideVotedPosts" <%= hideVotedPosts -%>>Hide Voted Posts<br>
-    <input type="checkbox" name="hideClickedPosts" <%= hideClickedPosts -%>>Hide Clicked Posts<br>
-    <input type="checkbox" name="showNSFW" <%= showNSFW -%>>Show NSFW<br>
-    <input type="submit" value="Submit">
+    <div class="checkbox">
+      <label><input type="checkbox" <%= enablePM -%>>Enable PM's</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideSeenPosts -%>>Hide Seen Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideVotedPosts -%>>Hide Voted Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideClickedPosts -%>>Hide Clicked Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= showNSFW -%>>Show NSFW</label>
+    </div>
+
+    <button class='btn btn-default' type="submit" value="Submit">submit</button>
   </form>
 </div>
