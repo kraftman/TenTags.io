@@ -2,6 +2,21 @@
 var index = 0
 var hasFocus = false
 
+$(function() {
+  $('.post-controls').hide();
+  $( ".post" ).focus(function() {
+    var postControls = $(this).find('.post-controls')
+    $(postControls).show()
+    console.log('showing');
+  });
+  $( ".post" ).focusout(function() {
+    var postControls = $(this).find('.post-controls')
+    $(postControls).hide();
+  });
+})
+
+
+
 function ChangeFocus(value) {
 
   index = index + value;

@@ -1,30 +1,32 @@
 
-<div class='post panel panel-default' tabindex = "0" >
-  <div class='post-line-1' >
-    <div class = 'vote-container'>
-      <% if not post.userHasVoted then %>
-        <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
+<div class='panel panel-default post' tabindex = "0" >
+  <div class='post-details'>
+    <div class='post-line-1' >
+
+      <% render("views.post.icon",{post = post}) %>
+
+      <div class = 'post-body'>
+        <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
         </br>
-        <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
-      <% end %>
-    </div>
 
+        <% for _,filter in pairs(post.filters) do %>
+            <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+        <% end %>
 
-    <% render("views.post.icon",{post = post}) %>
-
-    <div class = 'post-body'>
-      <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
-      </br>
-
-      <% for _,filter in pairs(post.filters) do %>
-          <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
-      <% end %>
+      </div>
 
     </div>
-
+    <div>
+      <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+      <div class='postTopComment'><%= post.topComment and post.topComment.text or '' %></div>
+    </div>
   </div>
-  <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
-  <div class='postTopComment'><%= post.topComment and post.topComment.text or '' %></div>
+
+  <div class="btn-group btn-group-xs post-controls" role="group" aria-label="...">
+    <button type="button" class="btn btn-default">Up</button>
+    <button type="button" class="btn btn-default">Down</button>
+    <button type="button" class="btn btn-default">Save</button>
+  </div>
 
 
 </div>

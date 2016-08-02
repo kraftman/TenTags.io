@@ -34,7 +34,7 @@
     </ul>
   </div>
 
-  <div id='panel panel-default'>
+  <div id='posts'>
     <% for i, post in pairs(posts) do %>
       <% render(GetFilterTemplate(),{post = post}) %>
     <% end %>

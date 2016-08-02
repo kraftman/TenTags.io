@@ -6,7 +6,6 @@
   <meta charset="UTF-8">
   <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
   <title><%= page_title or "Filtta" %></title>
-  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
   <script src="/static/js/jquery-2.1.4.js" ></script>
   <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
   <script src="/static/chosen/chosen.jquery.js"  ></script>
@@ -24,6 +23,8 @@
 
   <!-- (Optional) Latest compiled and minified JavaScript translation files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/i18n/defaults-*.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
 </head>
 <body>
