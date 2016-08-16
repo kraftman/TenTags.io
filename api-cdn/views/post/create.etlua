@@ -1,0 +1,43 @@
+
+
+<link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
+
+<script src="/static/js/jquery-2.1.4.js"></script>
+<script src="/static/chosen/chosen.jquery.js"></script>
+<script src="/static/js/jquery.form.js"></script>
+<script src="/static/js/createpost.js"></script>
+
+
+<div class = 'contents'>
+  <form class="panel panel-default" id='createpost' action='/post/new' method='post' accept-charset='UTF-8'>
+
+
+      <div id="submitError"></div>
+      <legend>Create Post</legend>
+      <input type='hidden' name='submitted' id='submitted' value='1'/>
+
+
+
+      <div class="input-group">
+        <input type="text" class="form-control" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" aria-describedby="basic-addon1">
+      </div>
+      <div class="input-group">
+        <input type="text" class="form-control" name='postlink' id='postlink' maxlength="50" placeholder="Link" aria-describedby="basic-addon1">
+      </div>
+      <div class="input-group">
+        <input type="text" class="form-control" name='posttext' id='posttext' maxlength="50" placeholder="Text" aria-describedby="basic-addon1">
+      </div>
+
+
+
+      <select name='tagselect' id='test2select' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
+        <% for i, tag in pairs(tags) do %>
+         <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
+        <% end %>
+      </select>
+
+
+      <input class='btn btn-default' id='submitButton' type='submit' name='Submit' value='Submit' />
+
+  </form>
+</div>

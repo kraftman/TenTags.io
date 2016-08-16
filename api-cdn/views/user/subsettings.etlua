@@ -1,0 +1,23 @@
+
+<div class = 'contents panel panel-default'>
+  <a href="<%= url_for('newsubuser') %>">Add User</a>
+  <form action="<%= url_for('usersettings') %>" method = 'POST'>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= enablePM -%>>Enable PM's</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideSeenPosts -%>>Hide Seen Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideVotedPosts -%>>Hide Voted Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= hideClickedPosts -%>>Hide Clicked Posts</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" <%= showNSFW -%>>Show NSFW</label>
+    </div>
+
+    <button class='btn btn-default' type="submit" value="Submit">submit</button>
+  </form>
+</div>

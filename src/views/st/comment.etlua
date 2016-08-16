@@ -1,5 +1,0 @@
-<div>
-  <p> <%= comment.text -%></p>
-  <p> <%= comment.username -%></p>
-
-</div>

@@ -1,0 +1,18 @@
+
+<div class='post' tabindex = "0" >
+  <div class = 'vote-container'>
+    <% if not post.userHasVoted then %>
+      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">▴</a>
+      </br>
+      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">▾</a>
+    <% end %>
+  </div>
+
+
+  <div class = 'post-body'>
+    <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+    </br>
+    <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+
+  </div>
+</div>

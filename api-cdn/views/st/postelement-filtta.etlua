@@ -1,0 +1,32 @@
+
+<div class='panel panel-default post' tabindex = "0" >
+  <div class='post-details'>
+    <div class='post-line-1' >
+
+      <% render("views.post.icon",{post = post}) %>
+
+      <div class = 'post-body'>
+        <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+        </br>
+
+        <% for _,filter in pairs(post.filters) do %>
+            <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+        <% end %>
+
+      </div>
+
+    </div>
+    <div>
+      <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+      <div class='postTopComment'><%= post.topComment and post.topComment.text or '' %></div>
+    </div>
+  </div>
+
+  <div class="btn-group btn-group-xs post-controls" role="group" aria-label="...">
+    <button type="button" class="btn btn-default">Up</button>
+    <button type="button" class="btn btn-default">Down</button>
+    <button type="button" class="btn btn-default">Save</button>
+  </div>
+
+
+</div>

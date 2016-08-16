@@ -1,1 +1,3 @@
 src/logs/*
+src/cache/*
+src/nginx.conf.compiled

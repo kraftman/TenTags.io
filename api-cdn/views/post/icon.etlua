@@ -1,0 +1,10 @@
+<% if post['specialTag:nsfw'] then %>
+  <% if userInfo.showNSFW then print('true') %>
+    <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
+  <% else %>
+    <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="40" width="40">
+  <% end %>
+<% else %>
+  <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
+
+<% end %>

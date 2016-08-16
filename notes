@@ -10,7 +10,7 @@ Tags
 - Can be upvoted and downvoted
 - If you add a tag you own it and its up/down votes
 - Only tags of a certain threshold are included in filters
-- Upvoting a post as a whole upvotes all tags shared between the post and the user
+- Upvoting a post as a whole upvotes all tags shared between the post and the filter that meant the user saw it - done
 
 Filters
 - Select posts with certain tags or without certain tags
@@ -23,8 +23,8 @@ Source
 Reposts
 - Automate where possible, check if the link exists/image has been posted
 - Allow anyone to add a parent post
-- Highest rated parent post gets marked as parent after certain threshold
-- Each user has a list of posts theyve seen, dont show them nodes from this list
+- Highest rated parent post gets marked as parent after certain threshold - needs high certainty
+- Each user has a list of posts theyve seen, dont show them nodes from this list - done
 - Optionally hide the posts theyve already seen after they click them or are served them
 
 
@@ -36,17 +36,17 @@ Vote Weighting
 - weight votes depending on wether the person is subscribed, wehter they viewed the link, etc
 
 Other Ideas from reddit
-- Option to turn of PM's
+- Option to turn of PM's - done
 - Add optional link to credit/original source
-- Rank posts based on discussion (number of comments, length of comments etc)
-- other tags like NSFL, spoiler, etc
+- Rank posts based on discussion (number of comments, length of comments etc) - wont do
+- other tags like NSFL, spoiler, etc - done
 - Vote out mods
-- Instead of deleted, mark as 'deleted by <name>'
-- show related sub based on common user base
+- Instead of deleted, mark as 'deleted by <name>' - mods cant delete posts
+- show related sub based on common user base -- run filter comparison to find common filters
 - Limit number of subs a mod can moderate
-- sub specific report reasons
-- sticky comments in a post
-- allow changing title within time duration
+- sub specific report reasons - wont do, allow any report reason?
+- sticky comments in a post -- per filter?
+- allow changing title within time duration - done
 
 
 Nodes
@@ -138,7 +138,7 @@ for when redis starts getting full
   remove posts tags list
   remove post info has
   remove post comments
-  render entire page out to file and dump on a file server
+  render entire page out to file and dump on a file server -good idea anyway for logged out users
 
 
 redis test
@@ -148,3 +148,75 @@ redis test
   - int: 27.42
 
 so 10% diff, not entirely worth it for the sake of having to constantly ask the reddit master for new ints, or for having ugly binary keys
+
+
+
+populating new filters with existing posts.
+- we dont want to iterate over every post thats ever been made to see if we want to add it
+- for each post tag we add the post ID in a settings
+- sinterstore every filter tag into a new settings
+- diff the new set against the unwanted filter tags
+- the result should be a list of applicable posts
+
+
+
+caching and offloading
+creating a post
+- only the user needs to see the post immediately
+- add the post to the cache as soon as its verified, so they can see it
+- add it to the work for deferred processing
+
+
+Shared Dict Numbers
+with the current setup:
+100mb shared dict can hold one of
+- 200k users with info
+- 400k userID -> username maps
+- 100k posts
+- 100k comments
+- 400k rate limit keys
+
+
+reddit has 200m unique visitors per month, 15% of which are logged in
+https://www.quora.com/What-percentage-of-Reddits-traffic-is-by-registered-users
+80% are lurkers and dont post:
+https://www.reddit.com/r/AskReddit/comments/bg7b8/what_percentage_of_redditors_are_lurkers/c0mm7yy
+
+
+Voting
+store list of recently voted posts/comments
+write list to bloom filter after X
+
+
+install on api:
+apt-get install -y lua5.1 luajit luarocks libpcre3-dev
+sudo apt-get install libssl-dev
+sudo luarocks install luasec OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
+luarocks install lapis
+
+git clone https://github.com/duhoobo/lua-resty-smtp.git
+luarocks install --local rockspec/resty.smtp-0.0.3-1.rockspec
+
+wget http://download.redis.io/redis-stable.tar.gz
+tar xvzf redis-stable.tar.gz
+cd redis-stable
+make
+
+luarocks install magick
+cp src/lib/scrypt.so /usr/local/scrypt.so
+sudo apt-get install libmagickwand-dev
+
+
+Short URLs
+- create post with full url
+- deferred processing, add short url
+- link to short url if generated, long url if not
+- store short url -> long url map in set, short url in hash once generated.
+
+
+
+TAG KARMA
+ - user is allowed to add X tags
+ - user receives karma for the tags
+ - limit number of tags based on tag karma
+ - profit
