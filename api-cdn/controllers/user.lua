@@ -184,6 +184,11 @@ local function ChangePassword(self)
 
 end
 
+local function Register(self)
+  -- basically just send the email through to the api
+  local ok, err = api:Register(self.params.emailAddr)
+end
+
 function m:Register(app)
 
   app:match('newuser','/user/new', respond_to({

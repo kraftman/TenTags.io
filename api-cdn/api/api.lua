@@ -1205,7 +1205,7 @@ function api:GetMasterUsers(userID, masterID)
   return users
 end
 
-function api:ConvertUserMasterToMaster(master)
+function api:SanitizeMasterUser(master)
 
 
 	if not master.username then
@@ -1245,10 +1245,54 @@ function api:ConvertUserMasterToMaster(master)
 
 end
 
+function api:SanitiseSession(session)
+	local newSession = {
+		ip = session.ip,
+		userAgent = session.userAgent,
+		createdAt = ngx.time(),
+		activated = false,
+		validUntil = ngx.time()+5184000,
+		activationTime = ngx.time() + 1800,
+		id = session.id
+	}
+
+	return newSession
+end
+
+function api:CreateNewAccount(emailHash)
+	local account = {
+		id = emailHash,
+		createdAt = ngx.time(),
+		lastLogin = ngx.time(),
+		users = {},
+		sessions = {}
+	}
+	return account
+end
+
+function api:Register(session)
+	local emailHash = ngx.sha1_bin(session.email)
+	local account = cache:GetAccountByEmail(emailHash)
+	if not account then
+		account = self:CreateNewAccount(email)
+		worker:CreateAccount(account)
+	end
+
+	-- create a session
+	session = self:SanitiseSession(session)
+	local key = ngx.sha1_bin(session.ip)
+  -- add session to the account
+
+	--email the key to the user
+	local ok, err = worker:SendLoginEmail(session.email, key)
+
+		--
+end
+
 function api:CreateMasterUser(confirmURL, userInfo)
 	local ok, err,newMaster
 
-	newMaster,err = api:ConvertUserMasterToMaster(userInfo)
+	newMaster,err = api:SanitizeMasterUser(userInfo)
 	if not newMaster then
 		return newMaster, err
 	end
