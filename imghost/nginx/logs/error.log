@@ -125,3 +125,5 @@
 2016/07/17 03:36:24 [alert] 1#0: lua_code_cache is off; this will hurt performance in /imghost/nginx/conf/nginx.conf:41
 2016/07/17 04:18:17 [alert] 1#0: lua_code_cache is off; this will hurt performance in /imghost/nginx/conf/nginx.conf:41
 2016/07/17 07:54:03 [alert] 1#0: lua_code_cache is off; this will hurt performance in /imghost/nginx/conf/nginx.conf:41
+2016/09/29 22:04:50 [alert] 1#0: lua_code_cache is off; this will hurt performance in /imghost/nginx/conf/nginx.conf:41
+2016/09/29 22:09:53 [alert] 1#0: lua_code_cache is off; this will hurt performance in /imghost/nginx/conf/nginx.conf:41

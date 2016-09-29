@@ -12,6 +12,11 @@ function worker:CreateTag(tagInfo)
   return rediswrite:CreateTag(tagInfo)
 end
 
+function worker:RegisterAccount(session)
+  return self:QueueJob('RegisterAccount',session)
+  
+end
+
 function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
