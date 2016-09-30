@@ -31,10 +31,10 @@ function m:SendMessage(subject, body, recipient)
 end
 
 function m:IsValidEmail(str)
-  if str == nil then return nil end
+  if str == nil then return nil, 'no email' end
   if (type(str) ~= 'string') then
     error("Expected string")
-    return nil
+    return nil, 'no email'
   end
   local lastAt = str:find("[^%@]+$")
   local localPart = str:sub(1, (lastAt - 2)) -- Returns the substring before '@' symbol

@@ -55,18 +55,6 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
-function userwrite:LogSuccessfulLogin(masterID, loginInfo)
-  local red = util:GetUserWriteConnection()
-  local hash = ngx.md5(loginInfo.userIP..loginInfo.userAgent)
-
-  print('logging login: ',loginInfo.userAgent, loginInfo.userIP,hash)
-  local ok, err = red:hset('master:'..masterID, 'login:'..hash, to_json(loginInfo))
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to set login info: ',err)
-  end
-  return ok, err
-
-end
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = util:GetUserWriteConnection()
@@ -109,16 +97,29 @@ function userwrite:AddComment(commentInfo)
   end
 end
 
-function userwrite:ResetMasterPassword(masterID, passwordHash)
+function userwrite:CreateAccount(account)
+
+
   local red = util:GetUserWriteConnection()
-  print(masterID, ' setting to password hash ',passwordHash)
+  local ok, err = red:del('account:'..account.id)
 
-  local ok ,err = red:hset('master:'..masterID, 'passwordHash', passwordHash)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to reset password: ',err)
+
+  local users = account.users
+  local sessions = account.sessions
+  account.sessions = nil
+  account.users = nil
+
+  for k,v in pairs(users) do
+    account['user:'..v] = v
   end
+  for k,session in pairs(sessions) do
+    account['session:'..session.id] = to_json(session)
+  end
+  local ok, err = red:del('account:'..account.id)
+  local ok, err = red:hmset('account:'..account.id,account)
 
-  return ok , err
+  return ok, err
+
 end
 
 function userwrite:CreateMasterUser(masterInfo)

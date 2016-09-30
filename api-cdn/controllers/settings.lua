@@ -9,6 +9,9 @@ local to_json = (require 'lapis.util').to_json
 
 local function DisplaySettings(self)
   local user = api:GetUserInfo(self.session.userID)
+  if not user then
+    return 'unknown user'
+  end
   for k,v in pairs(user) do
     ngx.log(ngx.ERR, k,to_json(v))
   end

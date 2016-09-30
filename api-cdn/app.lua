@@ -89,12 +89,18 @@ app:before_filter(function(self)
 
   self.enableAds = false
 
-  if self.session.userID and self.session.masterID then
+  if self.session.accountID then
+    print('this')
+    self.otherUsers = api:GetAccountUsers(self.session.accountID, self.session.accountID)
+    
+  end
+
+  if self.session.userID then
     if api:UserHasAlerts(self.session.userID) then
       self.userHasAlerts = true
     end
-    self.otherUsers = api:GetMasterUsers(self.session.userID, self.session.masterID)
   end
+
   if not self.otherUsers then
     self.otherUsers = {}
   end

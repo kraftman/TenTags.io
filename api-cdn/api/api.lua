@@ -1119,27 +1119,90 @@ function api:SendPasswordReset(url, email)
 
 end
 
+function api:GetHash(values)
+  local str = require 'resty.string'
+  local resty_sha1 = require 'resty.sha1'
+  local sha1 = resty_sha1:new()
+
+  local ok, err = sha1:update(values)
+
+  local digest = sha1:final()
+
+  return str.to_hex(digest)
+end
+
 function api:SanitiseSession(session)
 
 	local newSession = {
 		ip = session.ip,
 		userAgent = session.userAgent,
-		id = uuid.generate_random(),
-		email = session.email:lower()
+		id = self:GetHash(ngx.time()..session.email..session.ip),
+		email = session.email:lower(),
+		createdAt = ngx.time(),
+		activated = false,
+		validUntil = ngx.time()+5184000,
+		activationTime = ngx.time() + 1800,
 	}
 	return newSession
 end
 
-function api:RegisterAccount(session)
+
+
+function api:ConfirmLogin(userSession, key)
+
+	local sessionID, accountID = key:match('(.+)%-(%w+)')
+	if not key then
+		print('no key')
+		return nil, 'bad key'
+	end
+	local account = cache:GetAccount(accountID)
+	if not account then
+		print('no account')
+		return nil, 'no account'
+	end
+
+	local accountSession = account.sessions[sessionID]
+	if not accountSession then
+		print('bad session')
+		return nil, 'bad session'
+	end
+
+
+	if accountSession.activated then
+		print('invalid session')
+		--return nil, 'invalid session'
+	end
+	if accountSession.validUntil < ngx.time() then
+		print('expired session')
+		--return nil, 'expired'
+	end
+
+	-- maybe check useragent/ip?
+
+	accountSession.lastSeen = ngx.time()
+	accountSession.activated = true
+	account.lastSeen = ngx.time()
+	worker:UpdateAccount(account)
+
+	return account, accountSession.id
+
+end
+
+
+function api:RegisterAccount(session, confirmURL)
 	-- TODO rate limit
-	session = to_json(session)
+	session = self:SanitiseSession(session)
+	session.confirmURL = confirmURL
 	local emailLib = require 'email'
-	if not emailLib:IsValidEmail(session.email) then
-		ngx.log(ngx.ERR, 'invalid email: ',session.email)
+	local ok, err = emailLib:IsValidEmail(session.email)
+	if not ok then
+		ngx.log(ngx.ERR, 'invalid email: ',session.email, ' ',err)
 		return false, 'Email provided is invalid'
 	end
 
-	local ok, err = worker:RegisterAccount(session)
+	session = to_json(session)
+	print(session)
+	ok, err = worker:RegisterAccount(session)
 	return ok, err
 end
 
@@ -1148,26 +1211,6 @@ function api:CreateActivationKey(masterInfo)
   return key:match('.+(........)$')
 end
 
-function api:ActivateAccount(email, key)
-  email = email and email:lower() or ''
-  if email == '' then
-    return nil, 'email is blank!'
-  end
-
-  local userInfo = cache:GetMasterUserByEmail(email)
-  if not userInfo then
-    return nil, 'could not find account with this email'
-  end
-
-  local realKey = self:CreateActivationKey(userInfo)
-  if key == realKey then
-    --cache:UpdateUserInfo(userInfo)
-    worker:ActivateAccount(userInfo.id)
-    return true
-  else
-    return nil, 'activation key incorrect'
-  end
-end
 
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
@@ -1175,14 +1218,13 @@ function api:GetUserFrontPage(userID,filter,range)
   return cache:GetUserFrontPage(userID,filter,range)
 end
 
-
-function api:CreateSubUser(masterID, username)
+function api:CreateSubUser(accountID, username)
 
   local subUser = {
     id = uuid.generate(),
     username = SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
-    parentID = SanitiseHTML(masterID,50),
+    parentID = accountID,
     enablePM = 1
   }
 
@@ -1191,45 +1233,64 @@ function api:CreateSubUser(masterID, username)
 		return nil, 'username is taken'
 	end
 
-  local master = cache:GetMasterUserInfo(masterID)
-
-  tinsert(master.users,subUser.id)
-
-  worker:CreateMasterUser(master)
-
-  return worker:CreateSubUser(subUser)
-
+	local account = cache:GetAccount(accountID)
+	tinsert(account.users, subUser.id)
+	account.userCount = account.userCount + 1
+	local ok, err = worker:UpdateAccount(account)
+	if not ok then
+		return ok, err
+	end
+  local ok, err = worker:CreateSubUser(subUser)
+	if ok then
+		return subUser
+	else
+		return ok, err
+	end
 end
 
-function api:GetMasterUsers(userID, masterID)
-  local master = cache:GetMasterUserInfo(masterID)
-  local users = {}
-  local user = cache:GetUserInfo(userID)
+function api:GetAccountUsers(userAccountID, accountID)
+	local userAccount = cache:GetAccount(userAccountID)
 
-	if user.role ~= 'Admin' then
-		local found = nil
-		for _,subUserID in pairs(master.users) do
-			if userID == subUserID then
-				found = true
-				break
-			end
-		end
-		if not found then
-			return nil, 'must be admin to view other users'
-		end
+	if userAccount.role ~= 'Admin' and userAccountID ~= accountID then
+		return nil, 'must be admin to view other users'
 	end
 
+	local queryAccount = cache:GetAccount(accountID)
+	if not queryAccount then
+		return nil, 'account not found'
+	end
+
+	local users = {}
 	local subUser
-  for _, subUserID in pairs(master.users) do
-      subUser = cache:GetUserInfo(subUserID)
-      if user then
-        tinsert(users, subUser)
-      end
+  for _, subUserID in pairs(queryAccount.users) do
+    subUser = cache:GetUserInfo(subUserID)
+    if subUser then
+      tinsert(users, subUser)
+    end
   end
+	print(to_json(users))
   return users
 end
 
-function api:ConvertUserMasterToMaster(master)
+function api:SwitchUser(accountID, userID)
+	local account = cache:GetAccount(accountID)
+	local user = cache:GetUserInfo(userID)
+
+	if user.parentID ~= accountID and account.role ~= 'admin' then
+		return nil, 'noooope'
+	end
+
+	account.currentUser = user.userID
+	account.currentUsername = user.username
+	local ok, err = worker:UpdateAccount(account)
+	if not ok then
+		return ok, err
+	end
+
+	return user
+end
+
+function api:SanitizeMasterUser(master)
 
 
 	if not master.username then
@@ -1269,10 +1330,13 @@ function api:ConvertUserMasterToMaster(master)
 
 end
 
+
+
+
 function api:CreateMasterUser(confirmURL, userInfo)
 	local ok, err,newMaster
 
-	newMaster,err = api:ConvertUserMasterToMaster(userInfo)
+	newMaster,err = api:SanitizeMasterUser(userInfo)
 	if not newMaster then
 		return newMaster, err
 	end

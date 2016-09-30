@@ -11,6 +11,8 @@ local redis = require "resty.redis"
 local checkKey = require 'redisscripts.checkkey'
 local userread = {}
 local util = require 'util'
+local from_json = (require 'lapis.util').from_json
+local to_json = (require 'lapis.util').to_json
 
 
 
@@ -48,6 +50,36 @@ function userread:GetUserCommentVotes(userID)
     return ok
   end
 end
+
+function userread:GetAccount(accountID)
+  local red = util:GetUserReadConnection()
+  local ok, err = red:hgetall('account:'..accountID)
+  if not ok or ok == ngx.null then
+    return nil
+  end
+
+  local account = self:ConvertListToTable(ok)
+
+  account.sessions = {}
+  account.users = {}
+
+  for k,v in pairs(account) do
+
+    if k:find('^user:') then
+      table.insert(account.users, v)
+      account[k] = nil
+    elseif k:find('^session:') then
+      local session = from_json(v)
+      account.sessions[session.id] = session
+      account[k] = nil
+    end
+  end
+
+
+  return account
+
+end
+
 
 function userread:GetUserTagVotes(userID)
   local red = util:GetUserReadConnection()
@@ -138,31 +170,6 @@ function userread:GetUserComments(userID)
   else
     return ok
   end
-end
-
-function userread:GetMasterUserInfo(masterID)
-
-  local red = util:GetUserReadConnection()
-  local ok, err = red:hgetall('master:'..masterID)
-
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get user info:',err)
-  end
-  local master
-  if ok == ngx.null then
-    return nil
-  else
-    master = self:ConvertListToTable(ok)
-  end
-
-  ok, err = red:smembers('masterusers:'..masterID)
-  util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get master users:',err)
-  end
-  master.users = ok
-
-  return master
 end
 
 function userread:GetMasterUserByEmail(email)

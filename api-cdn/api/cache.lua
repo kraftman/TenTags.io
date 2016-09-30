@@ -35,29 +35,7 @@ local DEFAULT_CACHE_TIME = 30
 
 local ENABLE_CACHE = false
 
-function cache:GetMasterUserInfo(masterID)
 
-  if ENABLE_CACHE then
-    local ok, err = userInfo:get(masterID)
-    if err then
-      ngx.log(ngx.ERR, 'unable to get userinfo: ',err)
-    end
-    if ok then
-      return from_json(ok)
-    end
-  end
-
-  local masterInfo, err = userRead:GetMasterUserInfo(masterID, DEFAULT_CACHE_TIME)
-  if err then
-    return masterInfo, err
-  end
-  ok, err = userInfo:set(masterID, to_json(masterInfo))
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to set master info: ',err)
-  end
-
-  return masterInfo
-end
 
 function cache:GetThread(threadID)
   return redisread:GetThreadInfo(threadID)
@@ -99,6 +77,29 @@ end
 
 function cache:GetCommentIDFromURL(commentURL)
   return commentRead:GetCommentIDFromURL(commentURL)
+end
+
+function cache:GetAccount(accountID)
+    if ENABLE_CACHE then
+      local ok, err = userInfo:get(accountID)
+      if err then
+        ngx.log(ngx.ERR, 'unable to get account: ',err)
+      end
+      if ok then
+        return from_json(ok)
+      end
+    end
+
+    local account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+    if err then
+      return account, err
+    end
+    local ok, err = userInfo:set(accountID, to_json(account))
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to set master info: ',err)
+    end
+
+    return account
 end
 
 function cache:VerifyReset(emailAddr, key)

@@ -220,3 +220,21 @@ TAG KARMA
  - user receives karma for the tags
  - limit number of tags based on tag karma
  - profit
+
+
+login:
+take email, hash it, look up account (use email hash as key?)
+if it doesnt exist, create a new account with userID, etc
+create a new session with a token, a login expiry time, and a session expire time
+create a login token
+email link with emailhash + login token
+user clicks email:
+  - lookup the account with the emailhash + logintoken
+  - activate the session
+  - invalidate the login token
+  - add the user ip/browser info to the cookie
+  - store ip, browser info in the session info
+
+per request:
+  - check the user session is still valid
+  - check the user browser info matches
