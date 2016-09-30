@@ -24,9 +24,6 @@ function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
 
-function worker:LogSuccessfulLogin(masterID, IP)
-  return userWrite:LogSuccessfulLogin(masterID, IP)
-end
 
 function worker:AddUserTagVotes(userID, postID, tagIDs)
   return userWrite:AddUserTagVotes(userID, postID, tagIDs)
@@ -241,10 +238,6 @@ function worker:SendActivationEmail(url,emailAddr)
   end
 
   return true
-end
-
-function worker:ResetMasterPassword(masterID, passwordHash)
-  return userWrite:ResetMasterPassword(masterID, passwordHash)
 end
 
 function worker:DeletePost(postID)

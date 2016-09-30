@@ -1184,7 +1184,7 @@ function api:ConfirmLogin(userSession, key)
 	account.lastSeen = ngx.time()
 	worker:UpdateAccount(account)
 
-	return {accountID = account.id}
+	return account, accountSession.id
 
 end
 
@@ -1251,8 +1251,6 @@ end
 function api:GetAccountUsers(userAccountID, accountID)
 	local userAccount = cache:GetAccount(userAccountID)
 
-
-
 	if userAccount.role ~= 'Admin' and userAccountID ~= accountID then
 		return nil, 'must be admin to view other users'
 	end
@@ -1265,13 +1263,31 @@ function api:GetAccountUsers(userAccountID, accountID)
 	local users = {}
 	local subUser
   for _, subUserID in pairs(queryAccount.users) do
-      subUser = cache:GetUserInfo(subUserID)
-      if user then
-        tinsert(users, subUser)
-      end
+    subUser = cache:GetUserInfo(subUserID)
+    if subUser then
+      tinsert(users, subUser)
+    end
   end
 	print(to_json(users))
   return users
+end
+
+function api:SwitchUser(accountID, userID)
+	local account = cache:GetAccount(accountID)
+	local user = cache:GetUserInfo(userID)
+
+	if user.parentID ~= accountID and account.role ~= 'admin' then
+		return nil, 'noooope'
+	end
+
+	account.currentUser = user.userID
+	account.currentUsername = user.username
+	local ok, err = worker:UpdateAccount(account)
+	if not ok then
+		return ok, err
+	end
+
+	return user
 end
 
 function api:SanitizeMasterUser(master)

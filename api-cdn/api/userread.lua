@@ -172,31 +172,6 @@ function userread:GetUserComments(userID)
   end
 end
 
-function userread:GetMasterUserInfo(masterID)
-
-  local red = util:GetUserReadConnection()
-  local ok, err = red:hgetall('master:'..masterID)
-
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get user info:',err)
-  end
-  local master
-  if ok == ngx.null then
-    return nil
-  else
-    master = self:ConvertListToTable(ok)
-  end
-
-  ok, err = red:smembers('masterusers:'..masterID)
-  util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get master users:',err)
-  end
-  master.users = ok
-
-  return master
-end
-
 function userread:GetMasterUserByEmail(email)
   local red = util:GetUserReadConnection()
   local ok, err = red:hget('useremails',email)

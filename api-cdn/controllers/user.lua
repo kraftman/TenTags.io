@@ -8,28 +8,6 @@ local api = require 'api.api'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 
-local function NewUserForm(self)
-  return {render = 'user.creatmaster'}
-end
-
-
-local function CreateNewUser(self)
-  local info = {}
-  info.username = self.params.username
-  info.password = self.params.password
-  info.email = self.params.email
-
-  local confirmURL = self:build_url()..self:url_for("confirmemail")
-  local ok,err  = api:CreateMasterUser(confirmURL, info)
-
-  if ok then
-    return 'Success, please activate your account via email!'
-  else
-    return 'Unable to create account: '..err
-  end
-
-end
-
 local function LogOut(self)
   self.session.username = nil
   self.session.userID = nil
@@ -70,12 +48,14 @@ end
 
 
 local function SwitchUser(self)
-  local user = api:GetUserInfo(self.params.userID)
-  if user.parentID == self.session.masterID then
-    self.session.userID = user.id
-    self.session.username = user.username
-    return { redirect_to = self:url_for("home") }
+  local newUser = api:SwitchUser(self.session.accountID, self.params.userID)
+  if not newUser then
+    return 'error switching user:'
   end
+  self.session.userID = newUser.userID
+  self.session.username = newUser.username
+
+  return { redirect_to = self:url_for("home") }
 
 end
 
@@ -115,54 +95,41 @@ local function ConfirmLogin(self)
     userAgent = ngx.var.http_user_agent,
     email = self.params.email
   }
-  local user, err = api:ConfirmLogin(self.params, self.params.key)
-  print(to_json(user))
-  if user then
+  local account, sessionID = api:ConfirmLogin(session, self.params.key)
 
-    self.session.accountID = user.accountID
-
-    if not user.username then
-      return { redirect_to = self:url_for("newsubuser") }
-    end
-
-    self.session.userID = user.id
-    self.session.username = user.username
-    self.session.accountID = user.accountID
-  end
-
-  if user then
-    return { redirect_to = self:url_for("home") }
-  else
+  if not account then
     -- TODO: change this to a custom failure page
     return { redirect_to = self:url_for("home") }
   end
+  
+  self.session.accountID = account.id
+  self.session.userID = account.currentUserID
+  self.session.username = account.currentUsername
+  self.sessionID = sessionID
+
+  if not account.currentUsername then
+    return { redirect_to = self:url_for("newsubuser") }
+  end
+
+  return { redirect_to = self:url_for("home") }
 
 end
 
 function m:Register(app)
 
-  app:match('newuser','/user/new', respond_to({
-    GET = NewUserForm,
-    POST = CreateNewUser
-  }))
+
   app:match('newsubuser','/sub/new', respond_to({
     GET = NewSubUser,
     POST = CreateSubUser
   }))
 
-  app:match('resetpasswordlink','/passwordreset', respond_to({
-    GET = ResetPasswordLink,
-    POST = ChangePassword
-  }))
 
   app:post('login','/login',NewLogin)
   app:get('confirmLogin', '/confirmlogin', ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', TagUser)
   app:get('viewuser','/user/:username',ViewUser)
   app:get('logout','/logout',LogOut)
-  app:get('confirmemail','/confirmemail',ConfirmEmail)
   app:get('switchuser','/user/switch/:userID',SwitchUser)
-  app:get('test', '/test',function() return ngx.encode_base64(ngx.sha1_bin('test')) end)
 
 end
 
