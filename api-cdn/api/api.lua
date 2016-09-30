@@ -30,6 +30,7 @@ local SOURCE_POST_THRESHOLD = 0.75
 
 local ENABLE_RATELIMIT = false
 local MAX_ALLOWED_TAG_COUNT = 20
+local MAX_MOD_COUNT = 3
 
 
 
@@ -1182,6 +1183,7 @@ function api:ConfirmLogin(userSession, key)
 	accountSession.lastSeen = ngx.time()
 	accountSession.activated = true
 	account.lastSeen = ngx.time()
+	account.active = true
 	worker:UpdateAccount(account)
 
 	return account, accountSession.id
@@ -1268,7 +1270,6 @@ function api:GetAccountUsers(userAccountID, accountID)
       tinsert(users, subUser)
     end
   end
-	print(to_json(users))
   return users
 end
 
@@ -1280,7 +1281,7 @@ function api:SwitchUser(accountID, userID)
 		return nil, 'noooope'
 	end
 
-	account.currentUser = user.userID
+	account.currentUserID = user.userID
 	account.currentUsername = user.username
 	local ok, err = worker:UpdateAccount(account)
 	if not ok then
@@ -1834,10 +1835,14 @@ function api:DelMod(userID, filterID, modID)
 			break
 		end
 	end
+
 	if not found then
 		return nil, 'user is not a mod of this filter'
 	end
-
+	local user = cache:GetUserInfo(modID)
+	local account = cache:GetAccount(user.parentID)
+	account.modCount = account.modCount - 1
+	worker:UpdateAccount(account)
 	return worker:DelMod(filterID, modID)
 
 end
@@ -1860,6 +1865,14 @@ function api:AddMod(userID, filterID, newModName)
 
 	-- check they arent there already
 	-- check they can be made mod of this sub
+	local newMod = cache:GetUserInfo(newModID)
+	local account = cache:GetAccount(newMod.parentID)
+	if account.modCount >= MAX_MOD_COUNT and account.role ~= 'admin' then
+		return nil, 'mod of too many filters'
+	end
+
+	account.modCount = account.modCount + 1
+	worker:UpdateAccount(account)
 
 	local modInfo = {
 		id = newModID,
@@ -1906,18 +1919,30 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 end
 
 function api:CreateFilter(userID, filterInfo)
+
 	local newFilter, err, ok
 
+	--[[
 	ok, err = RateLimit('CreateFilter:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
+	]]
+
+
+	local user = cache:GetUserInfo(userID)
+	local account = cache:GetAccount(user.parentID)
+	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
+		return nil, 'you cant mod any more subs!'
+	end
+	account.modCount = account.modCount + 1
+	worker:UpdateAccount(account)
+
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
 	if not newFilter then
 		return newFilter, err
 	end
-
 
   local tags = {}
 	if type(filterInfo.requiredTags) ~= 'table' then

@@ -52,7 +52,7 @@ local function SwitchUser(self)
   if not newUser then
     return 'error switching user:'
   end
-  self.session.userID = newUser.userID
+  self.session.userID = newUser.id
   self.session.username = newUser.username
 
   return { redirect_to = self:url_for("home") }
@@ -101,7 +101,7 @@ local function ConfirmLogin(self)
     -- TODO: change this to a custom failure page
     return { redirect_to = self:url_for("home") }
   end
-  
+
   self.session.accountID = account.id
   self.session.userID = account.currentUserID
   self.session.username = account.currentUsername

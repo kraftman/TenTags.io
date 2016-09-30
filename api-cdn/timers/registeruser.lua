@@ -71,6 +71,7 @@ function config:CreateAccount(accountID, session)
     users = {},
     userCount = 0,
     active = 0,
+		modCount = 0
   }
   return account
 end

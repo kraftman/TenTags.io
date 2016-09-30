@@ -54,10 +54,12 @@ local function NewFilter(self)
 
   local ok, err = api:CreateFilter(self.session.userID, info)
   if ok then
+    print('thisssss')
     return { json = ok }
   else
     ngx.log(ngx.ERR, 'error creating filter: ',err)
-    return {status = 500}
+    print('tairesnti')
+    return {}
   end
 end
 
