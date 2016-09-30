@@ -1119,6 +1119,30 @@ function api:SendPasswordReset(url, email)
 
 end
 
+function api:SanitiseSession(session)
+
+	local newSession = {
+		ip = session.ip,
+		userAgent = session.userAgent,
+		id = uuid.generate_random(),
+		email = session.email:lower()
+	}
+	return newSession
+end
+
+function api:RegisterAccount(session)
+	-- TODO rate limit
+	session = to_json(session)
+	local emailLib = require 'email'
+	if not emailLib:IsValidEmail(session.email) then
+		ngx.log(ngx.ERR, 'invalid email: ',session.email)
+		return false, 'Email provided is invalid'
+	end
+
+	local ok, err = worker:RegisterAccount(session)
+	return ok, err
+end
+
 function api:CreateActivationKey(masterInfo)
   local key = ngx.md5(masterInfo.id..masterInfo.email..salt)
   return key:match('.+(........)$')

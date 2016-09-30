@@ -184,9 +184,19 @@ local function ChangePassword(self)
 
 end
 
-local function Register(self)
-  -- basically just send the email through to the api
-  local ok, err = api:Register(self.params.emailAddr)
+
+local function NewLogin(self)
+  local session = {
+    ip = ngx.var.remote_addr,
+    userAgent = ngx.var.http_user_agent,
+    email = self.params.email
+  }
+  local ok, err = api:RegisterAccount(session)
+  if not ok then
+    return 'There was an error registering you, please try again later'
+  else
+    return "Thanks, we've sent you a login email, please check it to log in."
+  end
 end
 
 function m:Register(app)
@@ -209,11 +219,13 @@ function m:Register(app)
   app:post('resetpassword', '/user/reset', ResetUser)
   app:post('login','/login',LoginUser)
   app:get('login','/login',LoginUser)
+  app:post('login2','/login2',NewLogin)
   app:post('taguser', '/user/tag/:userID', TagUser)
   app:get('viewuser','/user/:username',ViewUser)
   app:get('logout','/logout',LogOut)
   app:get('confirmemail','/confirmemail',ConfirmEmail)
   app:get('switchuser','/user/switch/:userID',SwitchUser)
+  app:get('test', '/test',function() return ngx.encode_base64(ngx.sha1_bin('test')) end)
 
 end
 
