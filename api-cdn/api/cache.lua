@@ -101,6 +101,10 @@ function cache:GetCommentIDFromURL(commentURL)
   return commentRead:GetCommentIDFromURL(commentURL)
 end
 
+function cache:GetAccount(accountID)
+  return userRead:GetAccount(accountID)
+end
+
 function cache:VerifyReset(emailAddr, key)
   return redisread:VerifyReset(emailAddr, key)
 end

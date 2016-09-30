@@ -21,6 +21,7 @@ function worker:New()
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
   w.postUpdater = (require 'timers.postupdater'):New(w.util)
+  w.registerUser = (require 'timers.registeruser'):New(w.util)
 
   return w
 end
@@ -57,6 +58,7 @@ function worker.OnServerStart(_,self)
 
   self.emailer.Run(_,self.emailer)
   self.postUpdater.Run(_,self.postUpdater)
+  self.registerUser.Run(_,self.registerUser)
 
   if not self.util:GetLock('l:ServerStart', 5) then
     return

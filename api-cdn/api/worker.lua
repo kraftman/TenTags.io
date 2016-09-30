@@ -12,9 +12,12 @@ function worker:CreateTag(tagInfo)
   return rediswrite:CreateTag(tagInfo)
 end
 
+function worker:UpdateAccount(account)
+  return userWrite:CreateAccount(account)
+end
+
 function worker:RegisterAccount(session)
   return self:QueueJob('RegisterAccount',session)
-  
 end
 
 function worker:IncrementUserStat(userID, statName, value)
@@ -220,8 +223,6 @@ function worker:CreateMessage(message)
 end
 
 function worker:SendActivationEmail(url,emailAddr)
-
-  print('sending email')
 
   local email = {}
   email.body =

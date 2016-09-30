@@ -121,6 +121,31 @@ function userwrite:ResetMasterPassword(masterID, passwordHash)
   return ok , err
 end
 
+function userwrite:CreateAccount(account)
+
+
+  local red = util:GetUserWriteConnection()
+  local ok, err = red:del('account:'..account.id)
+
+
+  local users = account.users
+  local sessions = account.sessions
+  account.sessions = nil
+  account.users = nil
+
+  for k,v in pairs(users) do
+    account['user:'..v] = v
+  end
+  for k,session in pairs(sessions) do
+    account['session:'..session.id] = to_json(session)
+  end
+  local ok, err = red:del('account:'..account.id)
+  local ok, err = red:hmset('account:'..account.id,account)
+  
+  return ok, err
+
+end
+
 function userwrite:CreateMasterUser(masterInfo)
   -- pipeline
   local red = util:GetUserWriteConnection()
