@@ -293,7 +293,6 @@ local function TestGenerate(self)
 
 end
 
-
 function m:Register(app)
 
   app:get('/test/generaterandom', TestGenerate)

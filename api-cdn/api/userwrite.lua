@@ -210,7 +210,7 @@ function userwrite:ActivateAccount(userID)
 end
 
 function userwrite:SubscribeToFilter(userID,filterID)
-  local userID = userID or 'default'
+  userID = userID or 'default'
   local red = util:GetUserWriteConnection()
   print('adding filter ',filterID, ' to ',userID)
   local ok, err = red:sadd('userfilters:'..userID, filterID)

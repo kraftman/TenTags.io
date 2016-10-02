@@ -74,6 +74,7 @@ function userread:GetAccount(accountID)
       account[k] = nil
     end
   end
+  account.userCount = tonumber(account.userCount or 0)
   account.modCount = tonumber(account.modCount or 0)
 
 

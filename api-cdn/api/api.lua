@@ -186,8 +186,10 @@ function api:GetUserFilters(userID)
     userID = 'default'
   end
   local filterIDs = cache:GetUserFilterIDs(userID)
-
-  return cache:GetFilterInfo(filterIDs)
+	print(to_json(filterIDs))
+	local filters = cache:GetFilterInfo(filterIDs)
+	print(to_json(filters))
+	return filters
 end
 
 function api:ConvertShortURL(shortURL)
@@ -1320,6 +1322,8 @@ function api:CreateSubUser(accountID, username)
 	local account = cache:GetAccount(accountID)
 	tinsert(account.users, subUser.id)
 	account.userCount = account.userCount + 1
+	account.currentUsername = subUser.username
+	account.currentUserID = subUser.id
 	local ok, err = worker:UpdateAccount(account)
 	if not ok then
 		return ok, err
