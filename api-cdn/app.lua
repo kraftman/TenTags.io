@@ -90,9 +90,7 @@ app:before_filter(function(self)
   self.enableAds = false
 
   if self.session.accountID then
-    print('this')
     self.otherUsers = api:GetAccountUsers(self.session.accountID, self.session.accountID)
-    
   end
 
   if self.session.userID then

@@ -6,9 +6,6 @@ local to_json = (require 'lapis.util').to_json
 local addKey = require 'redisscripts.addkey'
 local util = require 'util'
 
-
-
-
 function userwrite:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -35,8 +32,8 @@ function userwrite:AddUserTagVotes(userID, postID, tagIDs)
   for k,v in pairs(tagIDs) do
     tagIDs[k] = postID..':'..v
   end
-  --print(to_json(tagIDs))
-  local ok, err = red:sadd('userTagVotes:'..userID, unpack(tagIDs))
+
+  local ok, err = red:sadd('userTagVotes:'..userID, tagIDs)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)
@@ -99,20 +96,18 @@ end
 
 function userwrite:CreateAccount(account)
 
-
   local red = util:GetUserWriteConnection()
   local ok, err = red:del('account:'..account.id)
-
 
   local users = account.users
   local sessions = account.sessions
   account.sessions = nil
   account.users = nil
 
-  for k,v in pairs(users) do
+  for _,v in pairs(users) do
     account['user:'..v] = v
   end
-  for k,session in pairs(sessions) do
+  for _,session in pairs(sessions) do
     account['session:'..session.id] = to_json(session)
   end
   local ok, err = red:del('account:'..account.id)

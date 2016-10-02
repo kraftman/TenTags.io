@@ -24,7 +24,6 @@ function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
 
-
 function worker:AddUserTagVotes(userID, postID, tagIDs)
   return userWrite:AddUserTagVotes(userID, postID, tagIDs)
 end

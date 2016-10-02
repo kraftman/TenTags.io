@@ -31,9 +31,7 @@ local SOURCE_POST_THRESHOLD = 0.75
 local ENABLE_RATELIMIT = false
 local MAX_ALLOWED_TAG_COUNT = 20
 local MAX_MOD_COUNT = 3
-
-
-
+local RATELIMIT_ENABLED = false
 
 local function AverageTagScore(filterRequiredTagIDs,postTags)
 
@@ -60,7 +58,11 @@ local function AverageTagScore(filterRequiredTagIDs,postTags)
 	return score / count
 end
 
-local function RateLimit(action,userID, limit,duration)
+local function RateLimit(action, userID, limit, duration)
+	if not RATELIMIT_ENABLED then
+		return true
+	end
+
 	if not userID then
 		return nil, 'you must be logged in to do that'
 	end
@@ -265,6 +267,85 @@ function api:FilterBanUser(userID, filterID, banInfo)
 
 	banInfo.bannedAt = ngx.time()
 	return worker:FilterBanUser(filterID, banInfo)
+end
+
+function api:FilterUnbanPost(userID, filterID, postID)
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
+
+	local tagName = 'meta:filterban:'..filterID
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post doesnt exist'
+	end
+
+	local newTag = self:CreateTag(userID, tagName)
+	local found = false
+	for _,postTag in pairs(post.tags) do
+		if postTag.id == newTag.id then
+			found = true
+			break
+		end
+	end
+	if not found then
+		return nil, 'not banned'
+	end
+
+
+	newTag.up = 0
+	newTag.down = -100
+	newTag.score = self:GetScore(newTag.up, newTag.down)
+	newTag.active = true
+
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	if not ok then
+		return ok, err
+	end
+
+	ok, err = worker:UpdatePostTags(post)
+	return ok, err
+
+end
+
+function api:FilterBanPost(userID, filterID, postID)
+
+	local ok, err = self:UserCanEditFilter(userID, filterID)
+	if not ok then
+		return ok, err
+	end
+
+	local tagName = 'meta:filterban:'..filterID
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
+	local newTag = self:CreateTag(userID, tagName)
+
+	for _,postTag in pairs(post.tags) do
+		if postTag.id == newTag.id then
+			return nil, 'tag already exists'
+		end
+	end
+
+	newTag.up = 100
+	newTag.down = 0
+	newTag.score = self:GetScore(newTag.up, newTag.down)
+	newTag.active = true
+	newTag.createdBy = userID
+
+	tinsert(post.tags, newTag)
+
+	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	if not ok then
+		return ok, err
+	end
+
+	ok, err = worker:UpdatePostTags(post)
+	return ok, err
 end
 
 function api:FilterUnbanDomain(userID, filterID, domainName)
@@ -591,7 +672,7 @@ function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 				--print('found matching: ',userFilterID)
 				matchedFilter = cache:GetFilterByID(userFilterID)
 				for _,tagID in pairs(matchedFilter.requiredTags) do
-					print('adding tag: ',tagID)
+					--print('adding tag: ',tagID)
 					-- prevent duplicates
 					matchingTags[tagID] = tagID
 				end
@@ -602,7 +683,7 @@ function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 end
 
 function api:GetUnvotedTags(user,postID, tagIDs)
-	if user.role == 'admin' then
+	if user.role == 'Admin' then
 		return tagIDs
 	end
 
@@ -700,20 +781,20 @@ function api:VotePost(userID, postID, direction)
 
 	local user = cache:GetUserInfo(userID)
 	if self:UserHasVotedPost(userID, postID) then
-		if UNLIMITED_VOTING and user.role == 'admin' then
+		if UNLIMITED_VOTING and user.role == 'Admin' then
 
 		else
-			return nil, 'already voted'
+			--return nil, 'already voted'
 		end
 	end
-	print(user.hideVotedPosts)
+	--print(user.hideVotedPosts)
 	if tonumber(user.hideVotedPosts) == 1 then
-		print('hiding voted post')
+		--print('hiding voted post')
 		cache:AddSeenPost(userID, postID)
 	end
 
 	-- get tags matching the users filters' tags
-	print('get matching tags')
+--	print('get matching tags')
 	-- do we want matching tags, or matching filters??
 	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
 	--print(to_json(matchingTags))
@@ -736,7 +817,7 @@ function api:VotePost(userID, postID, direction)
 	end
 	worker:UpdatePostTags(post)
 
-	worker:AddUserTagVotes(userID,postID, matchingTags)
+	worker:AddUserTagVotes(userID, postID, matchingTags)
 	worker:AddUserPostVotes(userID, postID)
 
 	return true
@@ -1281,8 +1362,9 @@ function api:SwitchUser(accountID, userID)
 		return nil, 'noooope'
 	end
 
-	account.currentUserID = user.userID
+	account.currentUserID = user.id
 	account.currentUsername = user.username
+
 	local ok, err = worker:UpdateAccount(account)
 	if not ok then
 		return ok, err
@@ -1922,18 +2004,15 @@ function api:CreateFilter(userID, filterInfo)
 
 	local newFilter, err, ok
 
-	--[[
 	ok, err = RateLimit('CreateFilter:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
-	]]
-
 
 	local user = cache:GetUserInfo(userID)
 	local account = cache:GetAccount(user.parentID)
 	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
-		return nil, 'you cant mod any more subs!'
+		--return nil, 'you cant mod any more subs!'
 	end
 	account.modCount = account.modCount + 1
 	worker:UpdateAccount(account)
@@ -1966,6 +2045,8 @@ function api:CreateFilter(userID, filterInfo)
 		filterInfo.bannedTags = {}
 	end
 
+	table.insert(filterInfo.bannedTags, 'meta:filterban:'..newFilter.id)
+
   for _,tagName in pairs(filterInfo.bannedTags) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)
 		tagName = self:SanitiseUserInput(tagName, 100)
@@ -1983,7 +2064,6 @@ function api:CreateFilter(userID, filterInfo)
   worker:CreateFilter(newFilter)
 
 	UpdateFilterTags(newFilter, newFilter.requiredTags, newFilter.bannedTags)
-
 
   return true
 end

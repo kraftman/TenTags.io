@@ -105,9 +105,13 @@ local function ConfirmLogin(self)
   self.session.accountID = account.id
   self.session.userID = account.currentUserID
   self.session.username = account.currentUsername
-  self.sessionID = sessionID
+  self.session.sessionID = sessionID
 
   if not account.currentUsername then
+    return { redirect_to = self:url_for("newsubuser") }
+  end
+
+  if not self.session.userID then
     return { redirect_to = self:url_for("newsubuser") }
   end
 

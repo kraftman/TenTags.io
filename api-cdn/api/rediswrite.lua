@@ -297,7 +297,7 @@ end
 function write:QueueJob(queueName,value)
   local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
-  print(realQName, value)
+  --print(realQName, value)
   local ok, err = red:zadd(realQName,'NX', ngx.time(), value)
   util:SetKeepalive(red)
   if not ok then
@@ -564,7 +564,7 @@ function write:UpdatePostTags(post)
   end
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
-  
+
   if err then
     ngx.log(ngx.ERR, 'unable to update post tags: ',err)
   end

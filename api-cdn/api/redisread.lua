@@ -91,10 +91,10 @@ function read:GetFilterIDsByTags(tags)
 
   local red = util:GetRedisReadConnection()
   red:init_pipeline()
-  for _,v in pairs(tags) do
-    --print('tag:filters:'..v.id)
-    red:hgetall('tag:filters:'..v.id)
-  end
+    for _,v in pairs(tags) do
+      --print('tag:filters:'..v.id)
+      red:hgetall('tag:filters:'..v.id)
+    end
   local results, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
@@ -324,9 +324,6 @@ function read:GetFilter(filterID)
       tinsert(filter.mods, from_json(v))
     end
   end
-
-
-  --print(to_json(filter))
 
   ok, err = red:smembers('filter:bannedtags:'..filterID)
   if not ok then

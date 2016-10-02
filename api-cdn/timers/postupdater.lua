@@ -135,10 +135,10 @@ function config:CalculatePostFilters(post)
     end
   end
 
-
   local chosenFilters = {}
   -- if a filter doesnt want any of the tags, remove it
   -- else load it
+	--print('this')
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
       if filterType ~= 'banned' then
@@ -146,6 +146,15 @@ function config:CalculatePostFilters(post)
         if not chosenFilters[filterID] then
           ngx.log(ngx.ERR,'filter not found: ',filterID)
         end
+      end
+    end
+  end
+	
+	--remove banned
+	for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+      if filterType == 'banned' then
+        chosenFilters[filterID] = nil
       end
     end
   end
@@ -308,7 +317,6 @@ function config:UpdatePostFilters()
 	local newFilters = self:CalculatePostFilters(post)
 	local purgeFilterIDs = {}
 
-  --print(to_json(post.filters))
 	for _,filterID in pairs(post.filters) do
 		if not newFilters[filterID] then
 			purgeFilterIDs[filterID] = filterID
@@ -326,11 +334,9 @@ function config:UpdatePostFilters()
   for k,v in pairs(SPECIAL_TAGS) do
     if specialTagFound[k] then
       post['specialTag:'..v] = 'true'
-
     else
       post['specialTag:'..v] = 'false'
     end
-    print ('added specialTag:'..v)
   end
 
   --print('removing from: '..to_json(purgeFilterIDs))
@@ -410,11 +416,7 @@ function config:CheckReposts()
   --updating parent ID
   redisWrite:UpdatePostParentID(post)
 
-
   ok, err = redisWrite:DeleteJob('CheckReposts',postID)
-
-
-
 
 end
 

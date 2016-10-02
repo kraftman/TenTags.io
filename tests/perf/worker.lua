@@ -11,7 +11,7 @@ local url = "http://localhost:8080"
 local function GetHeader()
   local t = {}
   local r, c, h = http.request(
-    url.."/login?email=crtanner@gmail.com&password=thegr8est1"
+    url.."/login?email=&password="
     )
 
   local cookie = h['set-cookie']

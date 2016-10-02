@@ -66,6 +66,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, postID)
+  print(to_json(post))
 
   if not post then
     if type(err) == 'number' then
@@ -184,6 +185,7 @@ local function DownvoteTag(self)
 end
 
 local function HashIsValid(self)
+  --print(self.params.postID, self.session.userID)
   local realHash = ngx.md5(self.params.postID..self.session.userID)
   if realHash ~= self.params.hash then
     ngx.log(ngx.ERR, 'hashes dont match!')

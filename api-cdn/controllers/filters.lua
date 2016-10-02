@@ -36,7 +36,6 @@ local function NewFilter(self)
     return ToggleDefault(self)
   end
 
-
   local requiredTags = from_json(self.params.requiredTags)
   local bannedTags = from_json(self.params.bannedTags)
 
@@ -54,11 +53,9 @@ local function NewFilter(self)
 
   local ok, err = api:CreateFilter(self.session.userID, info)
   if ok then
-    print('thisssss')
     return { json = ok }
   else
     ngx.log(ngx.ERR, 'error creating filter: ',err)
-    print('tairesnti')
     return {}
   end
 end
@@ -66,6 +63,7 @@ end
 
 local function CreateFilter(self)
   if not self.session.userID then
+    print('no user id')
     return { redirect_to = self:url_for("login") }
   end
   self.tags = api:GetAllTags()
@@ -91,9 +89,13 @@ local function DisplayFilter(self)
   filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy).username
 
   self.thisfilter = filter
-  print('added filter')
+  self.isMod = api:UserCanEditFilter(self.session.userID, filter.id)
 
   self.posts = api:GetFilterPosts(filter)
+  for k,v in pairs(self.posts) do
+    print('user id: ' ,self.session.userID)
+    v.hash = ngx.md5(v.id..self.session.userID)
+  end
   -- also load the list of mods
   -- check if the current user is on the list of mods
   -- display settings if they are
@@ -330,6 +332,20 @@ local function UnbanDomain(self)
   end
 end
 
+local function BanPost(self)
+  local filter = api:GetFilterByName(self.params.filterlabel)
+  if not filter then
+    return 'filter not found'
+  end
+
+  local ok, err = api:FilterBanPost(self.session.userID, filter.id, self.params.postID)
+  if ok then
+    return 'ok'
+  else
+    return err
+  end
+end
+
 function M:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = DisplayFilter,POST = NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
@@ -337,6 +353,7 @@ function M:Register(app)
   app:get('allfilters','/f',LoadAllFilters)
   app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',UnbanUser)
   app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',UnbanDomain)
+  app:get('banpost', '/filters/:filterlabel/banpost/:postID', BanPost)
 
 end
 
