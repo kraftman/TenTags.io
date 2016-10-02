@@ -264,3 +264,4 @@
 2016/10/02 20:32:55 [alert] 21#0: lua_code_cache is off; this will hurt performance in /opt/openresty/nginx/conf/nginx.conf.compiled:58
 2016/10/02 20:38:01 [alert] 22#0: lua_code_cache is off; this will hurt performance in /opt/openresty/nginx/conf/nginx.conf.compiled:58
 2016/10/02 21:05:32 [alert] 22#0: lua_code_cache is off; this will hurt performance in /opt/openresty/nginx/conf/nginx.conf.compiled:58
+2016/10/02 23:26:42 [alert] 22#0: lua_code_cache is off; this will hurt performance in /opt/openresty/nginx/conf/nginx.conf.compiled:58

@@ -48,7 +48,7 @@ function cache:GetThreads(userID)
   return threads
 end
 
-function cache:GetUserInfo(userID)
+function cache:GetUser(userID)
   local ok, err
 
   if ENABLE_CACHE then
@@ -61,7 +61,7 @@ function cache:GetUserInfo(userID)
     end
   end
 
-  local user, err = userRead:GetUserInfo(userID)
+  local user, err = userRead:GetUser(userID)
   if not user then
     return user, err
   end
@@ -107,7 +107,7 @@ function cache:VerifyReset(emailAddr, key)
 end
 
 function cache:GetUserAlerts(userID)
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
   if not user.alertCheck then
     user.alertCheck = 0
   end
@@ -197,7 +197,7 @@ end
 
 function cache:GetUsername(userID)
 
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
   if user then
     return user.username
   end
@@ -613,7 +613,7 @@ end
 function cache:GetUserFrontPage(userID,filter,range)
   range = range or 0
 
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
 
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 

@@ -31,7 +31,7 @@ local function FrontPage(self)
         v.hash = ngx.md5(v.id..self.session.userID)
       end
     end
-    self.userInfo = api:GetUserInfo(self.session.userID)
+    self.userInfo = api:GetUser(self.session.userID)
   end
 
   -- if empty and logged in then redirect to seen posts

@@ -112,7 +112,7 @@ function userread:GetUserPostVotes(userID)
   end
 end
 
-function userread:GetUserInfo(userID)
+function userread:GetUser(userID)
   local red = util:GetUserReadConnection()
   local ok, err = red:hgetall('user:'..userID)
   util:SetKeepalive(red)

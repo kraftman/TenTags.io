@@ -96,7 +96,7 @@ local function GetPost(self)
   if self.session.userID then
     post.hash = ngx.md5(post.id..self.session.userID)
     post.userHasVoted = api:UserHasVotedPost(self.session.userID, post.id)
-    self.userLabels = api:GetUserInfo(self.session.userID).userLabels
+    self.userLabels = api:GetUser(self.session.userID).userLabels
   end
 
   self.post = post

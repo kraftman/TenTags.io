@@ -21,7 +21,7 @@ local function ViewAlerts(self)
     elseif v:find('postComment:') then
       local postID, commentID = v:match('postComment:(%w+):(%w+)')
       local comment = api:GetComment(postID, commentID)
-      comment.username = api:GetUserInfo(comment.createdBy).username
+      comment.username = api:GetUser(comment.createdBy).username
       
       tinsert(self.alerts,{alertType = 'comment', data = comment})
     end

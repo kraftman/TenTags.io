@@ -115,7 +115,7 @@ function api:DeleteComment(userID, postID, commentID)
 
 	local post = cache:GetPost(postID)
 	if userID ~= post.createdBy then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'cannot delete other users posts'
 		end
@@ -150,7 +150,7 @@ function api:UpdateUser(userID, userToUpdate)
 	end
 
 	if userID ~= userToUpdate.id then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin to edit a users details'
 		end
@@ -242,7 +242,7 @@ function api:UserHasAlerts(userID)
 end
 
 function api:UserCanEditFilter(userID, filterID)
-	local user = cache:GetUserInfo(userID)
+	local user = cache:GetUser(userID)
 
 	if not user then
 		return nil, 'userID not found'
@@ -576,13 +576,13 @@ end
 
 function api:GetUserComments(userID, targetUserID)
 	-- check if they allow it
-	local targetUser = cache:GetUserInfo(targetUserID)
+	local targetUser = cache:GetUser(targetUserID)
 	if not targetUser then
 		return nil, 'could not find user by ID '..targetUserID
 	end
 
 	if targetUser.hideComments then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if not user.role == 'Admin' then
 			return nil, 'user has disabled comment viewing'
 		end
@@ -718,6 +718,20 @@ local function UpdateFilterTags(filter, newRequiredTags,newBannedTags)
 	  for _, newPost in pairs(newPosts) do
 	    newPost.score = AverageTagScore(newRequiredTags, newPost.tags)
 	  end
+	  -- TODO: could make this more efficient by adding/removing just the effected filterID
+		-- instead of recaculating lal filters'
+		for k,v in pairs(newPosts) do
+			ok, err = worker:QueueJob('UpdatePostFilters', v.id)
+			if not ok then
+				return ok, err
+			end
+		end
+		for k,v in pairs(oldPostIDs) do
+			ok, err = worker:QueueJob('UpdatePostFilters', v)
+			if not ok then
+				return ok, err
+			end
+		end
 
 	  ok , err = worker:AddPostsToFilter(filter, newPosts)
 		if not ok then
@@ -840,7 +854,7 @@ function api:VotePost(userID, postID, direction)
 		return nil, 'post not found'
 	end
 
-	local user = cache:GetUserInfo(userID)
+	local user = cache:GetUser(userID)
 	if self:UserHasVotedPost(userID, postID) then
 		if UNLIMITED_VOTING and user.role == 'Admin' then
 
@@ -900,7 +914,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
 	if comment.createdBy ~= userID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you cannot create a comment on behalf of someone else'
 		end
@@ -932,7 +946,7 @@ function api:EditPost(userID, userPost)
 
 	if post.createdBy ~= userID then
 		print(userPost)
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
 			return nil, 'you cannot edit other users posts'
 		end
@@ -967,7 +981,7 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 	end
 
 	if userID ~= filter.ownerID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin or filter owner to add mods'
 		end
@@ -991,7 +1005,7 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 	end
 
 	if userID ~= filter.ownerID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin or filter owner to add mods'
 		end
@@ -1019,7 +1033,7 @@ function api:EditComment(userID, userComment)
 	end
 
 	if comment.createdBy ~= userID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
 			return nil, 'you cannot edit other users comments'
 		end
@@ -1113,7 +1127,7 @@ function api:GetPost(userID, postID)
 	local userVotedTags = cache:GetUserTagVotes(userID)
 
 	if userID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 
 		if user.hideClickedPosts == '1' then
 			cache:AddSeenPost(userID, postID)
@@ -1141,7 +1155,7 @@ function api:SubscribeToFilter(userID,userToSubID, filterID)
   local filterIDs = cache:GetUserFilterIDs(userID)
 
 	if userID ~= userToSubID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin to do that'
 		end
@@ -1159,13 +1173,13 @@ function api:SubscribeToFilter(userID,userToSubID, filterID)
 
 end
 
-function api:GetUserInfo(userID)
+function api:GetUser(userID)
 	-- can only get own for now
 	if not userID or userID == '' then
 		return nil
 	end
 
-	local userInfo  = cache:GetUserInfo(userID)
+	local userInfo  = cache:GetUser(userID)
 
 	return userInfo
 end
@@ -1410,7 +1424,7 @@ function api:GetAccountUsers(userAccountID, accountID)
 	local users = {}
 	local subUser
   for _, subUserID in pairs(queryAccount.users) do
-    subUser = cache:GetUserInfo(subUserID)
+    subUser = cache:GetUser(subUserID)
     if subUser then
       tinsert(users, subUser)
     end
@@ -1420,7 +1434,7 @@ end
 
 function api:SwitchUser(accountID, userID)
 	local account = cache:GetAccount(accountID)
-	local user = cache:GetUserInfo(userID)
+	local user = cache:GetUser(userID)
 
 	if user.parentID ~= accountID and account.role ~= 'admin' then
 		return nil, 'noooope'
@@ -1570,7 +1584,7 @@ end
 
 function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 	if userID ~= subscriberID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin to change another users subscriptions'
 		end
@@ -1655,7 +1669,7 @@ end
 
 function api:UserCanVoteTag(userID, postID, tagID)
 	if self:UserHasVotedTag(userID, postID, tagID) and (not UNLIMITED_VOTING) then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'admin' then
 			return false
 		end
@@ -1853,7 +1867,7 @@ function api:ConvertUserPostToPost(userID, post)
 
 	post.createdBy = post.createdBy or userID
 	if userID ~= post.createdBy then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			post.createdBy = userID
 		end
@@ -1986,7 +2000,7 @@ function api:DelMod(userID, filterID, modID)
 	if not found then
 		return nil, 'user is not a mod of this filter'
 	end
-	local user = cache:GetUserInfo(modID)
+	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
 	worker:UpdateAccount(account)
@@ -1998,7 +2012,7 @@ function api:AddMod(userID, filterID, newModName)
 	local filter = cache:GetFilterByID(filterID)
 
 	if userID ~= filter.ownerID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin or filter owner to add mods'
 		end
@@ -2012,7 +2026,7 @@ function api:AddMod(userID, filterID, newModName)
 
 	-- check they arent there already
 	-- check they can be made mod of this sub
-	local newMod = cache:GetUserInfo(newModID)
+	local newMod = cache:GetUser(newModID)
 	local account = cache:GetAccount(newMod.parentID)
 	if account.modCount >= MAX_MOD_COUNT and account.role ~= 'admin' then
 		return nil, 'mod of too many filters'
@@ -2035,7 +2049,7 @@ end
 function api:ConvertUserFilterToFilter(userID, userFilter)
 	userFilter.createdBy = userFilter.createdBy or userID
 	if userID ~= userFilter.createdBy then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			userFilter.createdBy = userID
 		end
@@ -2074,7 +2088,7 @@ function api:CreateFilter(userID, filterInfo)
 		return ok, err
 	end
 
-	local user = cache:GetUserInfo(userID)
+	local user = cache:GetUser(userID)
 	local account = cache:GetAccount(user.parentID)
 	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
 		--return nil, 'you cant mod any more subs!'
@@ -2137,7 +2151,7 @@ function api:DeletePost(userID, postID)
 
 	local post = cache:GetPost(postID)
 	if post.createdby ~= userID then
-		local user = cache:GetUserInfo(userID)
+		local user = cache:GetUser(userID)
 		if user.Role ~= 'Admin' then
 			return nil, 'you cannot delete other peoples posts'
 		end

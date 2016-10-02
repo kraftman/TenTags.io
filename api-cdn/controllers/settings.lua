@@ -8,7 +8,7 @@ local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
 local function DisplaySettings(self)
-  local user = api:GetUserInfo(self.session.userID)
+  local user = api:GetUser(self.session.userID)
   if not user then
     return 'unknown user'
   end
@@ -29,7 +29,7 @@ end
 
 local function UpdateSettings(self)
 
-  local user = api:GetUserInfo(self.session.userID)
+  local user = api:GetUser(self.session.userID)
   ngx.log(ngx.ERR, self.params.EnablePM)
   user.enablePM = self.params.EnablePM and 1 or 0
   self.enablePM = self.params.EnablePM and 'checked' or ''
@@ -57,7 +57,7 @@ local function UpdateFilterStyle(self)
     return 'error, missing arguments'
   end
 
-  local user = api:GetUserInfo(self.session.userID)
+  local user = api:GetUser(self.session.userID)
   for k,v in pairs(user) do
     if type(v) == 'string' then
       print(k,v)

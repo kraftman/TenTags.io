@@ -81,12 +81,12 @@ local function DisplayFilter(self)
   end
 
   for _,v in pairs(filter.mods) do
-    local user = api:GetUserInfo(v.id)
+    local user = api:GetUser(v.id)
     print(to_json(user))
     v.username = user.username
   end
 
-  filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy).username
+  filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
   print('test', to_json(filter.relatedFilters))
   self.thisfilter = filter
@@ -106,7 +106,7 @@ local function DisplayFilter(self)
 end
 
 local function LoadAllFilters(self)
-  local user = api:GetUserInfo(self.session.userID)
+  local user = api:GetUser(self.session.userID)
   if user and user.role == 'Admin' then
     self.isAdmin = true
   end
@@ -256,7 +256,7 @@ local function ViewFilterSettings(self)
     return 'error!'
   end
   print(to_json(filter))
-  local user = api:GetUserInfo(self.session.userID)
+  local user = api:GetUser(self.session.userID)
 
   if user.role ~= 'Admin' then
     if filter.ownerID ~= self.session.userID then
@@ -291,12 +291,12 @@ local function ViewFilterSettings(self)
   self.bannedUsernames = {}
   local userInfo
   for _,v in pairs(filter.bannedUsers) do
-    userInfo= api:GetUserInfo(v.userID)
+    userInfo= api:GetUser(v.userID)
     self.bannedUsernames[v.userID] = userInfo.username
   end
 
   for _,v in pairs(filter.mods) do
-    local user = api:GetUserInfo(v.id)
+    local user = api:GetUser(v.id)
     print(to_json(user))
     v.username = user.username
   end

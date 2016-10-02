@@ -35,7 +35,7 @@ local filterStyles = {
 
 
 local function GetStyleSelected(self, styleName)
-  self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+  self.userInfo = self.userInfo or api:GetUser(self.session.userID)
 
   if not self.userInfo then
     return ''
@@ -71,7 +71,7 @@ local function GetFilterTemplate(self)
   local filterStyle = 'default'
   local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
   if self.session.userID then
-    self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+    self.userInfo = self.userInfo or api:GetUser(self.session.userID)
 
 
     if self.userInfo then

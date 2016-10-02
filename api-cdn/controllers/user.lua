@@ -17,11 +17,11 @@ end
 
 local function ViewUser(self)
   self.userID = api:GetUserID(self.params.username)
-  self.userInfo = api:GetUserInfo(self.userID)
+  self.userInfo = api:GetUser(self.userID)
   print(to_json(self.userInfo))
   self.comments = api:GetUserComments(self.session.userID, self.userID)
   for _,v in pairs(self.comments) do
-    v.username = api:GetUserInfo(v.createdBy).username
+    v.username = api:GetUser(v.createdBy).username
   end
 
   return {render = 'user.viewsub'}

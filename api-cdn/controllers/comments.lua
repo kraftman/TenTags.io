@@ -11,7 +11,7 @@ local m = {}
 local function ViewComment(self)
   self.commentInfo = api:GetComment(self.params.postID,self.params.commentID)
 
-  self.commentInfo.username = api:GetUserInfo(self.commentInfo.createdBy).username
+  self.commentInfo.username = api:GetUser(self.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(self.commentInfo))
   return {render = 'viewcomment'}
 
@@ -19,7 +19,7 @@ end
 
 local function ViewShortURLComment(self)
   self.commentInfo = api:GetComment(self.params.commentShortURL)
-  self.commentInfo.username = api:GetUserInfo(self.commentInfo.createdBy).username
+  self.commentInfo.username = api:GetUser(self.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(self.commentInfo))
   return {render = 'viewcomment'}
 
