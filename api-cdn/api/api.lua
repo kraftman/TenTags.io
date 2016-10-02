@@ -1065,7 +1065,6 @@ function api:GetPost(userID, postID)
 		end
 	end
 
-
   return post
 end
 
@@ -1833,6 +1832,7 @@ function api:GeneratePostTags(post)
 	if not post.link or trim(post.link) == '' then
     tinsert(post.tags,'meta:self')
   end
+	tinsert(post.tags, 'meta:all')
 
   tinsert(post.tags,'meta:createdBy:'..post.createdBy)
 end
