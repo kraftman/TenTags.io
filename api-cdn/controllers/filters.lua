@@ -87,7 +87,8 @@ local function DisplayFilter(self)
   end
 
   filter.ownerName = api:GetUserInfo(filter.ownerID or filter.createdBy).username
-
+  filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
+  print('test', to_json(filter.relatedFilters))
   self.thisfilter = filter
   self.isMod = api:UserCanEditFilter(self.session.userID, filter.id)
 
@@ -154,12 +155,12 @@ local function BanDomain(self,filter)
 end
 
 local function UpdateFilterTags(self,filter)
-  print(self.params.requiredTags)
   local requiredTags = from_json(self.params.requiredTags)
   local bannedTags = from_json(self.params.bannedTags)
   local userID = self.session.userID
 
-
+  --print(to_json(filter))
+  --print(filter.id)
   local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTags, bannedTags)
   if ok then
     return 'ok'
@@ -209,8 +210,10 @@ end
 
 
 local function UpdateFilter(self)
+  --print(self.params.filterlabel)
   local filter = api:GetFilterByName(self.params.filterlabel)
   if not filter then
+    print('filter not found')
     return CreateFilter(self)
   end
   self.selectedFilter = filter

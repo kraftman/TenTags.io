@@ -33,6 +33,13 @@
         <% for _,mod in pairs(thisfilter.mods) do %>
           <%= mod.username -%>
         <% end %>
+        Related Filters:
+          </br>
+          <% for _,filter in pairs(thisfilter.relatedFilters) do %>
+          <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+            <%= filter.name -%>
+          </a>
+          <% end %>
       <% end %>
   	</div>
 

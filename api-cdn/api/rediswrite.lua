@@ -178,11 +178,11 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
     red:del('filter:requiredtags:'..filter.id)
     red:del('filter:bannedtags:'..filter.id)
     -- remove the filter from all tags
-    for _,tag in pairs(filter.requiredTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
+    for _,tagID in pairs(filter.requiredTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
     end
-    for _,tag in pairs(filter.bannedTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
+    for _,tagID in pairs(filter.bannedTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
     end
 
     -- add the new tags
@@ -192,6 +192,7 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
   if err then
     ngx.log(ngx.ERR, 'unable to update filter tags: ',err)
   end
+
 
   return res, err
 
@@ -221,6 +222,19 @@ function write:AddMod(filterID, mod)
     ngx.log(ngx.ERR, 'unable to add mod: ',err)
   end
   return ok, err
+end
+
+function write:UpdateRelatedFilters(filter, relatedFilters)
+  local red = util:GetRedisWriteConnection()
+
+  for k,v in pairs(filter.relatedFilterIDs) do
+    red:del('filter:'..filter.id, 'relatedFilter:'..v)
+  end
+
+  for k,v in pairs(relatedFilters) do
+    red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
+  end
+
 end
 
 function write:CreateFilter(filterInfo)
@@ -319,7 +333,13 @@ function write:AddPostToFilters(post, filters)
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
   end
-  return results
+
+  if not results and not err then
+    return true
+  else
+    return nil, err
+  end
+
 end
 
 function write:RemoveFilterPostInfo(red, filterID,postID)
@@ -386,6 +406,10 @@ function write:DeleteKey(key)
 
 end
 
+function write:LogChange()
+
+end
+
 function write:RemovePostsFromFilter(filterID, postIDs)
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
@@ -415,6 +439,7 @@ function write:AddPostsToFilter(filterInfo,posts)
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
   end
+  --print('pipeline: ',err, err)
   return results
 end
 
@@ -434,16 +459,16 @@ function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   local requiredTags = {}
   local bannedTags = {}
 
-  for _,tag in pairs(requiredTagIDs) do
-    tinsert(requiredTags,'tagPosts:'..tag.id)
+  for _,tagID in pairs(requiredTagIDs) do
+    tinsert(requiredTags,'tagPosts:'..tagID)
   end
 
-  for _,tag in pairs(bannedTagIDs) do
-    tinsert(bannedTags,'tagPosts:'..tag.id)
+  for _,tagID in pairs(bannedTagIDs) do
+    tinsert(bannedTags,'tagPosts:'..tagID)
   end
 
   local tempRequiredPostsKey = tempKey..':required'
-  print(tempRequiredPostsKey)
+  --print(tempRequiredPostsKey)
 
   local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTags))
   if not ok then

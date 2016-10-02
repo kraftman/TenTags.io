@@ -296,6 +296,7 @@ end
 
 
 function read:GetFilter(filterID)
+  --print(to_json(filterID))
   local red = util:GetRedisReadConnection()
   local ok, err = red:hgetall('filter:'..filterID)
   if not ok then
@@ -309,19 +310,25 @@ function read:GetFilter(filterID)
   filter.bannedUsers = {}
   filter.bannedDomains = {}
   filter.mods = {}
+  filter.relatedFilterIDs = {}
   local banInfo
   for k, v in pairs(filter) do
-    if k:find('^bannedUser:') then
-      banInfo = from_json(v)
-      filter.bannedUsers[banInfo.userID] = banInfo
-      filter[k] = nil
-    elseif k:find('^bannedDomain:') then
-      tinsert(filter.bannedDomains, from_json(v))
-      banInfo = from_json(v)
-      filter.bannedDomains[banInfo.domainName] = banInfo
-      filter[k] = nil
-    elseif k:find('mod:') then
-      tinsert(filter.mods, from_json(v))
+    if type(k) == 'string' then
+      if k:find('^bannedUser:') then
+        banInfo = from_json(v)
+        filter.bannedUsers[banInfo.userID] = banInfo
+        filter[k] = nil
+      elseif k:find('^bannedDomain:') then
+        tinsert(filter.bannedDomains, from_json(v))
+        banInfo = from_json(v)
+        filter.bannedDomains[banInfo.domainName] = banInfo
+        filter[k] = nil
+      elseif k:find('mod:') then
+        tinsert(filter.mods, from_json(v))
+        filter[k] = nil
+      elseif k:find('^relatedFilter:') then
+        tinsert(filter.relatedFilterIDs, v)
+      end
     end
   end
 

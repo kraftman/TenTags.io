@@ -179,6 +179,14 @@ function api:UpdateUser(userID, userToUpdate)
 	return worker:UpdateUser(userInfo)
 end
 
+function api:GetFilters(filterIDs)
+	local filters = {}
+	for k,v in pairs(filterIDs) do
+		table.insert(filters, cache:GetFilterByID(v))
+	end
+	return filters
+end
+
 
 function api:GetUserFilters(userID)
 	-- can only get your own filters
@@ -186,9 +194,9 @@ function api:GetUserFilters(userID)
     userID = 'default'
   end
   local filterIDs = cache:GetUserFilterIDs(userID)
-	print(to_json(filterIDs))
+	--print(to_json(filterIDs))
 	local filters = cache:GetFilterInfo(filterIDs)
-	print(to_json(filters))
+	--print(to_json(filters))
 	return filters
 end
 
@@ -721,13 +729,59 @@ local function UpdateFilterTags(filter, newRequiredTags,newBannedTags)
 			return ok, err
 		end
 
-
 	  return worker:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
 
 end
 
-function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
+function api:GetRelatedFilters(filter, requiredTags)
 
+	-- for each tag, get filters that also have that tag
+	local tagIDs = {}
+	for k,v in pairs(requiredTags) do
+		table.insert(tagIDs, {id = v})
+	end
+
+	--print(to_json(tagIDs))
+	local filterIDs = cache:GetFilterIDsByTags(tagIDs)
+	local filters = {}
+	for _,v in pairs(filterIDs) do
+		for filterID,filterType in pairs(v) do
+			if filterID ~= filter.id then
+				table.insert(filters, cache:GetFilterByID(filterID))
+			end
+			--print(filterID)
+		end
+	end
+
+--	print('this: ',to_json(filters))
+	for _,filter in pairs(filters) do
+		local count = 0
+		for _,relatedTagID in pairs(requiredTags) do
+			for _, filterTagID in pairs(filterIDs) do
+				if relatedTagID == filterTagID then
+					count = count + 1
+				end
+			end
+		end
+		filter.relatedTagsCount = count
+	end
+
+	table.sort(filters, function(a,b) return a.relatedTagsCount > b.relatedTagsCount end)
+
+	local finalFilters = {}
+	for i = 1, math.min(5, #filters) do
+		table.insert(finalFilters, filters[i].id)
+	end
+
+	return finalFilters
+
+end
+
+function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
+	--print(filterID)
+	if not filterID then
+		--return nil, 'no filter id!'
+	end
 	local ok, err = self:UserCanEditFilter(userID,filterID)
 	if not ok then
 		return ok, err
@@ -748,10 +802,15 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
 	local filter = cache:GetFilterByID(filterID)
 
-	ok, err =  UpdateFilterTags(filter, requiredTags, bannedTags)
+	ok, err = UpdateFilterTags(filter, requiredTags, bannedTags)
+
 	if not ok then
+		print('failed: ',err)
 		return ok, err
 	end
+
+	local relatedFilters = self:GetRelatedFilters(filter, requiredTags)
+	ok, err = worker:UpdateRelatedFilters(filter, relatedFilters)
 
 	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
