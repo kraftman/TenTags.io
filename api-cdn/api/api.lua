@@ -1051,10 +1051,12 @@ function api:GetPost(userID, postID)
 
 	local userVotedTags = cache:GetUserTagVotes(userID)
 
-	local user = cache:GetUserInfo(userID)
+	if userID then
+		local user = cache:GetUserInfo(userID)
 
-	if user.hideClickedPosts == '1' then
-		cache:AddSeenPost(userID, postID)
+		if user.hideClickedPosts == '1' then
+			cache:AddSeenPost(userID, postID)
+		end
 	end
 
 	for _,tag in pairs(post.tags) do
