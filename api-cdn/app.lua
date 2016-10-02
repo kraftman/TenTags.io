@@ -9,10 +9,16 @@
 local lapis = require("lapis")
 local app = lapis.Application()
 local api = require 'api.api'
+local date = require("date")
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
 local csrf = require("lapis.csrf")
+
+app.cookie_attributes = function(self)
+  local expires = date(true):adddays(365):fmt("${http}")
+  return "Expires=" .. expires .. "; Path=/; HttpOnly"
+end
 
 
 -- DEV ONLY
