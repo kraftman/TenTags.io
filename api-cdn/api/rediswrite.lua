@@ -148,7 +148,7 @@ function write:FilterUnbanUser(filterID, userID)
   return ok, err
 end
 
-function write:AddTagsToFilter(red, filterID, requiredTags, bannedTags)
+function write:AddTagIDsToFilter(red, filterID, requiredTags, bannedTags)
 
     -- add list of required tags
     for _, tagID in pairs(requiredTags) do
@@ -172,21 +172,25 @@ end
 
 function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
   local red = util:GetRedisWriteConnection()
+  local requiredTagIDs, bannedTagIDs= {},{}
 
   red:init_pipeline()
     -- remove all existing tags from the filter
     red:del('filter:requiredtags:'..filter.id)
     red:del('filter:bannedtags:'..filter.id)
     -- remove the filter from all tags
-    for _,tagID in pairs(filter.requiredTags) do
-      red:hdel('tag:filters:'..tagID, filter.id)
+
+    for _,tag in pairs(filter.requiredTags) do
+      red:hdel('tag:filters:'..tag.id, filter.id)
+      tinsert(requiredTagIDs, tag.id)
     end
-    for _,tagID in pairs(filter.bannedTags) do
-      red:hdel('tag:filters:'..tagID, filter.id)
+    for _,tag in pairs(filter.bannedTags) do
+      red:hdel('tag:filters:'..tag.id, filter.id)
+      tinsert(bannedTagIDs, tag.id)
     end
 
     -- add the new tags
-    self:AddTagsToFilter(red, filter.id, newRequiredTags, newBannedTags)
+    self:AddTagIDsToFilter(red, filter.id, requiredTagIDs, bannedTagIDs)
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
   if err then
@@ -239,14 +243,14 @@ end
 
 function write:CreateFilter(filterInfo)
   local tempRequiredTags, tempBannedTags = filterInfo.requiredTags, filterInfo.bannedTags
-  local requiredTags = {}
-  local bannedTags = {}
+  local requiredTagIDs = {}
+  local bannedTagIDs = {}
 
   for _,v in pairs( filterInfo.requiredTags) do
-    tinsert(requiredTags, v.id)
+    tinsert(requiredTagIDs, v.id)
   end
   for _,v in pairs( filterInfo.bannedTags) do
-    tinsert(bannedTags, v.id)
+    tinsert(bannedTagIDs, v.id)
   end
 
   for _,mod in pairs(filterInfo.mods) do
@@ -287,7 +291,7 @@ function write:CreateFilter(filterInfo)
   -- add all filter info
   red:hmset('filter:'..filterInfo.id, filterInfo)
 
-  self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
+  self:AddTagIDsToFilter(red, filterInfo.id, requiredTagIDs, bannedTagIDs)
   filterInfo.requiredTags = tempRequiredTags
   filterInfo.bannedTags = tempBannedTags
   local results, err = red:commit_pipeline()
@@ -326,6 +330,9 @@ function write:AddPostToFilters(post, filters)
   local red = util:GetRedisWriteConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
+
+        print(to_json(filterInfo))
+        print(to_json(post))
       self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
@@ -460,10 +467,16 @@ function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   local bannedTags = {}
 
   for _,tagID in pairs(requiredTagIDs) do
+    if type(tagID) == 'table'then
+      tagID = tagID.id
+    end
     tinsert(requiredTags,'tagPosts:'..tagID)
   end
 
   for _,tagID in pairs(bannedTagIDs) do
+    if type(tagID) == 'table'then
+      tagID = tagID.id
+    end
     tinsert(bannedTags,'tagPosts:'..tagID)
   end
 

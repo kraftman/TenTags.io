@@ -246,7 +246,7 @@ local function GetNextPost()
     else
       -- add back into queue but later
       print('couldnt process, requeueing')
-      ok, err = red:zadd(queueName, os.time(), postID)
+      --ok, err = red:zadd(queueName, os.time(), postID)
     end
  end
 end

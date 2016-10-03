@@ -149,7 +149,7 @@ function config:CalculatePostFilters(post)
       end
     end
   end
-	
+
 	--remove banned
 	for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
@@ -346,6 +346,8 @@ function config:UpdatePostFilters()
 	if not ok then
 		return ok, err
 	end
+--	print(to_json(post))
+	--print(to_json(newFilters))
 	ok, err = redisWrite:AddPostToFilters(post, newFilters)
 	if not ok then
 		return ok, err
