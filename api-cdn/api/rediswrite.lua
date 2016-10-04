@@ -45,6 +45,14 @@ function write:AddPasswordReset(emailAddr, uuid)
   return ok, err
 end
 
+function write:InvalidateKey(keyType, id)
+  local timeInvalidated = ngx.now()
+  local red = util:GetRedisWriteConnection()
+  local data = to_json({keyType = keyType, id = id})
+  local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+  return ok, err
+end
+
 function write:LoadScript(script)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:script('load',script)

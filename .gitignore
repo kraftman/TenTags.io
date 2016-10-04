@@ -1,3 +1,6 @@
 src/logs/*
 src/cache/*
 src/nginx.conf.compiled
+redis/comment/dump.rdb
+redis/general/dump.rdb
+redis/user/dump.rdb

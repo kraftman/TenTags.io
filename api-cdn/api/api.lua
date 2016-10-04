@@ -1305,6 +1305,9 @@ function api:SanitiseSession(session)
 end
 
 function api:ValidateSession(accountID, sessionID)
+	if not accountID or not sessionID then
+		return nil, 'need to provide accountID and sessionID'
+	end
 	local account = cache:GetAccount(accountID)
 	if not account then
 		return nil, 'account not found'
@@ -1342,7 +1345,7 @@ function api:KillSession(accountID, sessionID)
 	end
 
 	session.killed = true
-	local ok, err = worker:UpdateAccount(account)
+	local ok, err = worker:KillSession(account)
 	return ok, err
 
 end

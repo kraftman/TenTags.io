@@ -81,6 +81,7 @@ function cache:PurgeKey(keyInfo)
     if PRECACHE_INVALID then
       userInfo:delete(keyInfo.id)
     else
+      print('re-caching account: ')
       self:GetAccount(keyInfo.id)
     end
   end

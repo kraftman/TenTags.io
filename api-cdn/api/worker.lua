@@ -12,6 +12,12 @@ function worker:CreateTag(tagInfo)
   return rediswrite:CreateTag(tagInfo)
 end
 
+function worker:KillSession(account)
+  --same as update account but we force a purge
+  local ok, err = rediswrite:InvalidateKey('account', account.id)
+  return userWrite:CreateAccount(account)
+end
+
 function worker:UpdateAccount(account)
   return userWrite:CreateAccount(account)
 end

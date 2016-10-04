@@ -40,28 +40,6 @@ function config.Run(_,self)
 
 end
 
-function config:GetJob(jobName)
-  local postID = redisRead:GetOldestJob(jobName)
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:DeleteJob(jobName,postID)
-
-  if ok ~= 1 then
-    if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
-    end
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-  if not post then
-    return
-  end
-  return post
-end
-
 function config:InvalidateCache()
   -- we want this to run on all workers so dont use locks
 

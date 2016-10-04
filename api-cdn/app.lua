@@ -65,6 +65,12 @@ local function CalculateColor(name)
 
 end
 
+local function RemoveSession(self)
+  self.session.accountID = nil
+  self.session.userID = nil
+  self.session.sessionID = nil
+end
+
 local function SignOut(self)
   -- kill the session with the api so it cant be reused
   -- delete everything in the session
@@ -72,18 +78,21 @@ local function SignOut(self)
   if not ok then
     print('error killing session: ',err)
   end
+  RemoveSession(self)
+  return {redirect_to = self:url_for('home')}
 end
+
 
 local function ValidateSession(self)
   if self.session.accountID then
-    local account,err = api:ValidateSession()
-    if not account then
-      print('invalid session: ',err)
-      self.session.accountID = nil
-      self.session.userID = nil
-      self.session.sessionID = nil
-      return {redirect_to = self:url_for('home')}
+    local account,err = api:ValidateSession(self.session.accountID)
+    if account then
+      return
     end
+    
+    print('invalid session: ',err)
+    RemoveSession(self)
+    return {redirect_to = self:url_for('home')}
 
   end
 end
