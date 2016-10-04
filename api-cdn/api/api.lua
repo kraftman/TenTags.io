@@ -1304,6 +1304,48 @@ function api:SanitiseSession(session)
 	return newSession
 end
 
+function api:ValidateSession(accountID, sessionID)
+	local account = cache:GetAccount(accountID)
+	if not account then
+		return nil, 'account not found'
+	end
+	local session = account.sessions[sessionID]
+	if not session then
+		return nil, 'session not found'
+	end
+
+	if not session.activated then
+		return nil, 'session not validated yet'
+	end
+	if session.validUntil < ngx.time() then
+		return nil, 'session has expired'
+	end
+	if session.killed then
+		return nil, 'session has been killed'
+	end
+
+	session.lastSeen = ngx.time()
+
+	return account
+
+end
+
+function api:KillSession(accountID, sessionID)
+	local account = api:GetAccount(accountID)
+	if not account then
+		return nil, 'no account'
+	end
+
+	local session = account.sessions[sessionID]
+	if session then
+		return nil, 'no session'
+	end
+
+	session.killed = true
+	local ok, err = worker:UpdateAccount(account)
+	return ok, err
+
+end
 
 
 function api:ConfirmLogin(userSession, key)
@@ -1333,6 +1375,10 @@ function api:ConfirmLogin(userSession, key)
 	if accountSession.validUntil < ngx.time() then
 		print('expired session')
 		--return nil, 'expired'
+	end
+
+	if accountSession.activationTime > ngx.time() then
+		print('expired login time ')
 	end
 
 	-- maybe check useragent/ip?

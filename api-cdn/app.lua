@@ -68,12 +68,24 @@ end
 local function SignOut(self)
   -- kill the session with the api so it cant be reused
   -- delete everything in the session
+  local ok, err = api:KillSession(self.session.accountID, self.session.sessionID)
+  if not ok then
+    print('error killing session: ',err)
+  end
 end
 
 local function ValidateSession(self)
-  -- send the session info to the api
-  -- get back if it is valid or not
-  -- if it is invalid, SignOut()
+  if self.session.accountID then
+    local account,err = api:ValidateSession()
+    if not account then
+      print('invalid session: ',err)
+      self.session.accountID = nil
+      self.session.userID = nil
+      self.session.sessionID = nil
+      return {redirect_to = self:url_for('home')}
+    end
+
+  end
 end
 
 

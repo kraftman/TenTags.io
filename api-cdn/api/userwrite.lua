@@ -97,21 +97,27 @@ end
 function userwrite:CreateAccount(account)
 
   local red = util:GetUserWriteConnection()
-  local ok, err = red:del('account:'..account.id)
 
-  local users = account.users
-  local sessions = account.sessions
-  account.sessions = nil
-  account.users = nil
+  local hashedAccount = {}
+  hashedAccount.sessions = {}
+  hashedAccount.users = {}
+  for k,v in pairs(account) do
+    if k == 'sessions' then
+      for _,session in pairs(v) do
+        hashedAccount['session:'..session.id] = to_json(session)
+      end
+    elseif k == 'users' then
+      for _,userID in pairs(v) do
+        hashedAccount['user:'..userID] = userID
+      end
+    else
+      hashedAccount[k] = v
+    end
+  end
 
-  for _,v in pairs(users) do
-    account['user:'..v] = v
-  end
-  for _,session in pairs(sessions) do
-    account['session:'..session.id] = to_json(session)
-  end
-  local ok, err = red:del('account:'..account.id)
-  local ok, err = red:hmset('account:'..account.id,account)
+
+  local ok, err = red:del('account:'..hashedAccount.id)
+   ok, err = red:hmset('account:'..hashedAccount.id,hashedAccount)
 
   return ok, err
 
