@@ -64,7 +64,6 @@ function userread:GetAccount(accountID)
   account.users = {}
 
   for k,v in pairs(account) do
-
     if k:find('^user:') then
       table.insert(account.users, v)
       account[k] = nil
@@ -74,7 +73,7 @@ function userread:GetAccount(accountID)
       account[k] = nil
     end
   end
-  account.userCount = tonumber(account.userCount or 0)
+  
   account.modCount = tonumber(account.modCount or 0)
 
 

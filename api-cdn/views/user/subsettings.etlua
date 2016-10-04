@@ -19,5 +19,11 @@
     </div>
 
     <button class='btn btn-default' type="submit" value="Submit">submit</button>
+
   </form>
+
 </div>
+
+<% for k,accountSession in pairs(account.sessions) do %>
+  <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+<% end %>

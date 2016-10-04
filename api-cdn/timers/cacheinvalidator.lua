@@ -54,10 +54,7 @@ function config:InvalidateCache()
     cache:PurgeKey(v)
   end
 
-
-
   self.lastUpdate = timeNow
-
 
 end
 

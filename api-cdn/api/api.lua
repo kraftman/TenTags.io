@@ -1305,9 +1305,13 @@ function api:SanitiseSession(session)
 end
 
 function api:ValidateSession(accountID, sessionID)
-	if not accountID or not sessionID then
-		return nil, 'need to provide accountID and sessionID'
+	if not accountID then
+		return nil, 'no account id!'
 	end
+	if not sessionID then
+		return nil, 'no sessionID!'
+	end
+
 	local account = cache:GetAccount(accountID)
 	if not account then
 		return nil, 'account not found'
@@ -1334,13 +1338,17 @@ function api:ValidateSession(accountID, sessionID)
 end
 
 function api:KillSession(accountID, sessionID)
-	local account = api:GetAccount(accountID)
+	local account = cache:GetAccount(accountID)
 	if not account then
 		return nil, 'no account'
 	end
+	print(sessionID)
+	for k,v in pairs(account.sessions) do
+		print(k)
+	end
 
 	local session = account.sessions[sessionID]
-	if session then
+	if not session then
 		return nil, 'no session'
 	end
 
@@ -1380,7 +1388,7 @@ function api:ConfirmLogin(userSession, key)
 		--return nil, 'expired'
 	end
 
-	if accountSession.activationTime > ngx.time() then
+	if accountSession.activationTime < ngx.time() then
 		print('expired login time ')
 	end
 
@@ -1456,6 +1464,20 @@ function api:CreateSubUser(accountID, username)
 	else
 		return ok, err
 	end
+end
+
+function api:GetAccount(userAccountID, targetAccountID)
+	if userAccountID ~= targetAccountID then
+		return nil, 'not available yet'
+	end
+
+	if not targetAccountID then
+		return nil, 'no target accountID'
+	end
+
+	local account,err = cache:GetAccount(targetAccountID)
+	return account, err
+
 end
 
 function api:GetAccountUsers(userAccountID, accountID)

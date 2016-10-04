@@ -80,6 +80,8 @@ local function NewLogin(self)
     userAgent = ngx.var.http_user_agent,
     email = self.params.email
   }
+  print(ngx.var.http_user_agent)
+  print(ngx.var.remote_addr)
   local confirmURL = self:build_url("confirmlogin")
   local ok, err = api:RegisterAccount(session, confirmURL)
   if not ok then
@@ -96,12 +98,15 @@ local function ConfirmLogin(self)
     email = self.params.email
   }
   local account, sessionID = api:ConfirmLogin(session, self.params.key)
+  print()
 
   if not account then
     -- TODO: change this to a custom failure page
     return { redirect_to = self:url_for("home") }
   end
 
+  print(to_json(account))
+  print(sessionID)
   self.session.accountID = account.id
   self.session.userID = account.currentUserID
   self.session.username = account.currentUsername

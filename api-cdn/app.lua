@@ -69,6 +69,7 @@ local function RemoveSession(self)
   self.session.accountID = nil
   self.session.userID = nil
   self.session.sessionID = nil
+  self.session.username = nil
 end
 
 local function SignOut(self)
@@ -85,11 +86,11 @@ end
 
 local function ValidateSession(self)
   if self.session.accountID then
-    local account,err = api:ValidateSession(self.session.accountID)
+    local account,err = api:ValidateSession(self.session.accountID, self.session.sessionID)
     if account then
       return
     end
-    
+
     print('invalid session: ',err)
     RemoveSession(self)
     return {redirect_to = self:url_for('home')}

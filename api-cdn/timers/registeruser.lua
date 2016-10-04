@@ -95,7 +95,6 @@ function config:RegisterAccount()
   if not session then
     return
   end
-
   session = from_json(session)
 	local emailAddr = session.email
 	session.email = nil

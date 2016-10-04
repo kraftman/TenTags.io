@@ -8,12 +8,22 @@ local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
 local function DisplaySettings(self)
+  print(self.session.userID, self.session.accountID, self.session.username)
   local user = api:GetUser(self.session.userID)
   if not user then
     return 'unknown user'
   end
   for k,v in pairs(user) do
     ngx.log(ngx.ERR, k,to_json(v))
+  end
+
+  self.account = api:GetAccount(self.session.accountID, self.session.accountID)
+  if self.account then
+    for k,v in pairs(self.account.sessions) do
+      if not v.activated then
+        self.account.sessions[k] = nil
+      end
+    end
   end
 
   self.enablePM = user.enablePM == '1' and 'checked' or ''
@@ -77,6 +87,17 @@ local function UpdateFilterStyle(self)
 
 end
 
+local function KillSession(self)
+
+  local ok, err = api:KillSession(self.session.accountID, self.params.sessionID)
+  if ok then
+    return 'killed!'
+  else
+    print(err)
+    return 'not killed!'
+  end
+end
+
 
 function m:Register(app)
   app:match('usersettings','/settings', respond_to({
@@ -87,6 +108,8 @@ function m:Register(app)
   app:match('/settings/filterstyle',respond_to({
     POST = UpdateFilterStyle
   }))
+
+  app:get('killsession', '/sessions/:sessionID/kill', KillSession)
 end
 
 
