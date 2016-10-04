@@ -30,6 +30,7 @@ local tinsert = table.insert
 local userInfo = ngx.shared.userInfo
 local commentInfo = ngx.shared.comments
 local voteInfo = ngx.shared.userVotes
+local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
@@ -73,6 +74,16 @@ function cache:GetUser(userID)
   end
   return user
 
+end
+
+function cache:PurgeKey(keyInfo)
+  if keyInfo.keyType == 'account' then
+    if PRECACHE_INVALID then
+      userInfo:delete(keyInfo.id)
+    else
+      self:GetAccount(keyInfo.id)
+    end
+  end
 end
 
 function cache:GetCommentIDFromURL(commentURL)

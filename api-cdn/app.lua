@@ -65,6 +65,17 @@ local function CalculateColor(name)
 
 end
 
+local function SignOut(self)
+  -- kill the session with the api so it cant be reused
+  -- delete everything in the session
+end
+
+local function ValidateSession(self)
+  -- send the session info to the api
+  -- get back if it is valid or not
+  -- if it is invalid, SignOut()
+end
+
 
 local function GetFilterTemplate(self)
 
@@ -94,6 +105,8 @@ app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
 
   self.enableAds = false
+
+  ValidateSession(self)
 
   if self.session.accountID then
     self.otherUsers = api:GetAccountUsers(self.session.accountID, self.session.accountID)

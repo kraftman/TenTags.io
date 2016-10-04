@@ -87,6 +87,20 @@ function read:ConvertShortURL(shortURL)
   return ok, err
 end
 
+function read:GetInvalidationRequests(startTime, endTime)
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zrangebyscore('invalidationRequests', startTime, endTime)
+  red:close()
+  if ok == ngx.null then
+    return nil
+  end
+  if err then
+    ngx.log(ngx.ERR, 'unable to get invalidation requests: ',err)
+  end
+  return ok,err
+
+end
+
 function read:GetFilterIDsByTags(tags)
 
   local red = util:GetRedisReadConnection()
