@@ -326,6 +326,7 @@ function config:UpdatePostFilters()
   local specialTagFound = {}
 
   for _,tag in pairs(post.tags) do
+		print(tag.name)
     if SPECIAL_TAGS[tag.name] then
       specialTagFound[SPECIAL_TAGS[tag.name]] = true
     end
@@ -333,23 +334,27 @@ function config:UpdatePostFilters()
 
   for k,v in pairs(SPECIAL_TAGS) do
     if specialTagFound[k] then
+			print('found special tag: ',v)
       post['specialTag:'..v] = 'true'
     else
       post['specialTag:'..v] = 'false'
     end
   end
+	print(to_json(post))
 
   --print('removing from: '..to_json(purgeFilterIDs))
   --print('adding to: '..to_json(newFilters))
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
+		print('couldnt remove post from filters: ',err)
 		return ok, err
 	end
 --	print(to_json(post))
 	--print(to_json(newFilters))
 	ok, err = redisWrite:AddPostToFilters(post, newFilters)
 	if not ok then
+		print('couldnt add post to filters',ok, '|',err)
 		return ok, err
 	end
 
@@ -359,7 +364,10 @@ function config:UpdatePostFilters()
     tinsert(post.filters,filter.id)
   end
 
-  redisWrite:CreatePost(post)
+  ok, err = redisWrite:CreatePost(post)
+	if not ok then
+		print(err)
+	end
 	return
 end
 

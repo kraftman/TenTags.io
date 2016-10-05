@@ -14,7 +14,7 @@ local function DisplaySettings(self)
     return 'unknown user'
   end
   for k,v in pairs(user) do
-    ngx.log(ngx.ERR, k,to_json(v))
+    --ngx.log(ngx.ERR, k,to_json(v))
   end
 
   self.account = api:GetAccount(self.session.accountID, self.session.accountID)
@@ -25,6 +25,8 @@ local function DisplaySettings(self)
       end
     end
   end
+  print(to_json(user))
+
 
   self.enablePM = user.enablePM == '1' and 'checked' or ''
   self.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
@@ -42,19 +44,17 @@ local function UpdateSettings(self)
   local user = api:GetUser(self.session.userID)
   ngx.log(ngx.ERR, self.params.EnablePM)
   user.enablePM = self.params.EnablePM and 1 or 0
-  self.enablePM = self.params.EnablePM and 'checked' or ''
   user.hideSeenPosts = self.params.hideSeenPosts and 1 or 0
-  self.hideSeenPosts = self.params.hideSeenPosts and 'checked' or ''
   user.hideVotedPosts = self.params.hideVotedPosts and 1 or 0
-  self.hideVotedPosts = self.params.hideVotedPosts and 'checked' or ''
   user.hideClickedPosts = self.params.hideClickedPosts and 1 or 0
-  self.hideClickedPosts = self.params.hideClickedPosts and 'checked' or ''
   user.showNSFW = self.params.showNSFW and 1 or 0
-  self.showNSFW = self.params.showNSFW and 'checked' or ''
-
-  api:UpdateUser(self.session.userID, user)
-
-  return {render = 'user.subsettings'}
+  print 'this'
+  local ok, err = api:UpdateUser(self.session.userID, user)
+  if not ok then
+    print(err)
+    return 'eek'
+  end
+  return {redirect_to = self:url_for('usersettings')}
 
 end
 

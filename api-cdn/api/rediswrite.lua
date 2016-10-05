@@ -9,11 +9,6 @@ local SCORE_FACTOR = 43200
 local util = require 'util'
 
 
-
-
-
-
-
 function write:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -352,7 +347,7 @@ function write:AddPostToFilters(post, filters)
   if not results and not err then
     return true
   else
-    return nil, err
+    return results, err
   end
 
 end
@@ -676,8 +671,8 @@ function write:CreatePost(postInfo)
     red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
 
     -- add post info
-    red:hmset('post:'..postInfo.id,postInfo)
-
+  print(to_json(postInfo))
+  red:hmset('post:'..postInfo.id,postInfo)
   local results,err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to create post:',err)

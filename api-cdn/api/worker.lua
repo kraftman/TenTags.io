@@ -143,7 +143,7 @@ function worker:CreateComment(commentInfo)
 end
 
 function worker:UpdateUser(user)
-  userWrite:CreateSubUser(user)
+  return userWrite:CreateSubUser(user)
 end
 
 function worker:AddPostsToFilter(filter, posts)

@@ -143,7 +143,7 @@ function api:LabelUser(userID, targetUserID, label)
 end
 
 function api:UpdateUser(userID, userToUpdate)
-
+	print('this')
 	local ok, err = RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
@@ -166,6 +166,7 @@ function api:UpdateUser(userID, userToUpdate)
 		username = userToUpdate.username
 	}
 
+	print(to_json(userInfo))
 
 	print('HIDING SEEN POSTS: ',userInfo.hideSeenPosts)
 
@@ -1826,10 +1827,10 @@ end
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
+		print(tagName)
 
 		tagName = trim(tagName:lower())
 		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, tagName)
-
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -1957,6 +1958,9 @@ function api:ConvertUserPostToPost(userID, post)
 		createdAt = ngx.time(),
 		filters = {}
 	}
+	if newPost.link:gsub(' ','') == '' then
+		newPost.link = nil
+	end
 
 	newPost.tags = {}
 	if post.tags == ngx.null then
@@ -1978,6 +1982,7 @@ end
 
 function api:GeneratePostTags(post)
 	if not post.link or trim(post.link) == '' then
+		post.postType = 'self'
     tinsert(post.tags,'meta:self')
   end
 	tinsert(post.tags, 'meta:all')

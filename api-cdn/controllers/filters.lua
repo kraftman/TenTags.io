@@ -93,8 +93,9 @@ local function DisplayFilter(self)
   self.isMod = api:UserCanEditFilter(self.session.userID, filter.id)
 
   self.posts = api:GetFilterPosts(filter)
+  --(to_json(self.posts))
   for k,v in pairs(self.posts) do
-    print('user id: ' ,self.session.userID)
+    --print('user id: ' ,self.session.userID)
     v.hash = ngx.md5(v.id..self.session.userID)
   end
   -- also load the list of mods
