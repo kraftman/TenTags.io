@@ -1,0 +1,15 @@
+<div class = 'contents panel panel-default'>
+  Session:
+  <br>
+  Created At: <%= os.date('%c',accountSession.createdAt) -%>
+  <br>
+  Last accessed: <%= os.date('%c',accountSession.lastSeen) -%>
+  <br>
+  Device: <%= accountSession.userAgent -%>
+  <br>
+  IP: <%= accountSession.ip -%>
+  <br>
+  Killed: <%= accountSession.killed and 'yes' or 'no' -%>
+  <br>
+  <a href="<%= url_for('killsession',{sessionID = accountSession.id}) %>">Kill</a>
+</div>
