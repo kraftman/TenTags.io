@@ -112,6 +112,7 @@ function config:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
 
 end
 
+
 function config:UpdateFilterPosts()
 
   local filter = self:GetJob('UpdateFilterTags')
