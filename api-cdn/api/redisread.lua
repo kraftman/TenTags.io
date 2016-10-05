@@ -395,7 +395,6 @@ function read:GetPost(postID)
       tinsert(post.filters, filterID)
       post[k] = nil
     elseif k:find('^specialTag:') then
-      print(v)
       post[k] = v == 'true' and true or nil
     end
   end

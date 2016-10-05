@@ -232,6 +232,7 @@ function userwrite:SubscribeToFilter(userID,filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)
   end
+  return ok, err 
 
 end
 

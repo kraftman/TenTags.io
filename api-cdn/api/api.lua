@@ -249,23 +249,22 @@ function api:UserCanEditFilter(userID, filterID)
 		return nil, 'userID not found'
 	end
 
+	local filter = cache:GetFilterByID(filterID)
 	if user.role == 'Admin' then
-		return true
+		return filter
 	end
 
-	local filter = cache:GetFilterByID(filterID)
-
 	if filter.ownerID == userID then
-		return true
+		return filter
 	end
 
 	for _,mod in pairs(filter.mods) do
 		if mod.id == userID then
-			return true
+			return filter
 		end
 	end
 
-	return false, 'you must be admin or mod to edit filters'
+	return nil, 'you must be admin or mod to edit filters'
 end
 
 
@@ -710,44 +709,6 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
-local function UpdateFilterTags(filter, newRequiredTags,newBannedTags)
-
-		local ok, err
-		local newPosts, oldPostIDs = worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
-
-	  -- filter needs to have a score per post
-	  for _, newPost in pairs(newPosts) do
-	    newPost.score = AverageTagScore(newRequiredTags, newPost.tags)
-	  end
-	  -- TODO: could make this more efficient by adding/removing just the effected filterID
-		-- instead of recaculating lal filters'
-		for k,v in pairs(newPosts) do
-			ok, err = worker:QueueJob('UpdatePostFilters', v.id)
-			if not ok then
-				return ok, err
-			end
-		end
-		for k,v in pairs(oldPostIDs) do
-			ok, err = worker:QueueJob('UpdatePostFilters', v)
-			if not ok then
-				return ok, err
-			end
-		end
-
-	  ok , err = worker:AddPostsToFilter(filter, newPosts)
-		if not ok then
-			return ok, err
-		end
-
-	  ok, err = worker:RemovePostsFromFilter(filter.id, oldPostIDs)
-		if not ok then
-			return ok, err
-		end
-
-	  return worker:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
-
-end
-
 function api:GetRelatedFilters(filter, requiredTags)
 
 	-- for each tag, get filters that also have that tag
@@ -793,20 +754,21 @@ function api:GetRelatedFilters(filter, requiredTags)
 end
 
 function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
-	--print(filterID)
+
 	if not filterID then
-		--return nil, 'no filter id!'
+		return nil, 'no filter id!'
 	end
-	local ok, err = self:UserCanEditFilter(userID,filterID)
-	if not ok then
-		return ok, err
+	local filter, err = self:UserCanEditFilter(userID,filterID)
+	if not filter then
+		return filter, err
 	end
 
-	-- get the actual tag from the tagID
 
+	--generate actual tags
+	local requiredTagIDs, bannedTagIDs = {}, {}
 	for k,v in pairs(requiredTags) do
 		if v ~= '' then
-			requiredTags[k] = self:CreateTag(userID, v).id
+			requiredTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
 	for k,v in pairs(bannedTags) do
@@ -815,22 +777,25 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 		end
 	end
 
-	local filter = cache:GetFilterByID(filterID)
 
-	ok, err = UpdateFilterTags(filter, requiredTags, bannedTags)
 
+	local ok, err = worker:UpdateFilterTags(filter, requiredTagIDs, bannedTagIDs)
+	print('dons')
 	if not ok then
-		print('failed: ',err)
 		return ok, err
 	end
 
-	local relatedFilters = self:GetRelatedFilters(filter, requiredTags)
+	--move to worker
+	local relatedFilters = self:GetRelatedFilters(filter, requiredTagIDs)
 	ok, err = worker:UpdateRelatedFilters(filter, relatedFilters)
+	print('meep')
 
 	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
 		return ok,err
 	end
+
+	return true
 
 end
 
@@ -1430,7 +1395,15 @@ end
 
 
 function api:GetUserFrontPage(userID,filter,range)
+	print(userID, filter, range)
 	-- can only get own
+	if not userID then
+		return nil, 'no userID'
+	end
+	if not range then
+		return nil, 'no range'
+	end
+
 
   return cache:GetUserFrontPage(userID,filter,range)
 end
@@ -2216,10 +2189,15 @@ function api:CreateFilter(userID, filterInfo)
   end
   newFilter.tags = tags
 
-  worker:CreateFilter(newFilter)
+  local ok,err = worker:CreateFilter(newFilter)
+	if not ok then
+		return ok, err
+	end
 
-	UpdateFilterTags(newFilter, newFilter.requiredTags, newFilter.bannedTags)
-
+	ok, err = worker:UpdateFilterTags(newFilter, newFilter.requiredTags, newFilter.bannedTags)
+	if not ok then
+		return ok,err
+	end
   return true
 end
 

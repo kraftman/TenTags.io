@@ -21,6 +21,7 @@ function worker:New()
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
   w.postUpdater = (require 'timers.postupdater'):New(w.util)
+  w.filterUpdater = (require 'timers.filterupdater'):New(w.util)
   w.registerUser = (require 'timers.registeruser'):New(w.util)
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)
 
@@ -59,6 +60,7 @@ function worker.OnServerStart(_,self)
 
   self.emailer.Run(_,self.emailer)
   self.postUpdater.Run(_,self.postUpdater)
+  self.filterUpdater.Run(_,self.filterUpdater)
   self.registerUser.Run(_,self.registerUser)
   self.invalidateCache.Run(_,self.invalidateCache)
 

@@ -13,6 +13,7 @@ local function FrontPage(self)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
 
   self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
+
   --print(to_json(self.posts))
 
   --defer until we need it

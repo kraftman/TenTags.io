@@ -75,7 +75,7 @@ local function DisplayFilter(self)
 
   -- does the filter exist? if not then lets make it
   local filter = api:GetFilterByName(self.params.filterlabel)
-
+  print(to_json(filter))
   if not filter then
     return CreateFilter(self)
   end
@@ -88,7 +88,6 @@ local function DisplayFilter(self)
 
   filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
-  print('test', to_json(filter.relatedFilters))
   self.thisfilter = filter
   self.isMod = api:UserCanEditFilter(self.session.userID, filter.id)
 
@@ -164,8 +163,10 @@ local function UpdateFilterTags(self,filter)
   --print(filter.id)
   local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTags, bannedTags)
   if ok then
+    print('done')
     return 'ok'
   else
+    print('o shit:',err)
     return 'not ok, ',err
   end
 end

@@ -604,6 +604,7 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   sessionSeenPosts[postID] = true
 
   --
+  print(to_json(postID))
   local post = self:GetPost(postID)
   if post.id ~= post.parentID then
     if sessionSeenPosts[post.parentID] then

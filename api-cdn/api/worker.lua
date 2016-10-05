@@ -108,6 +108,7 @@ function worker:CreatePost(post)
   end
 end
 
+
 function worker:FilterBanDomain(filterID, banInfo)
   return rediswrite:FilterBanDomain(filterID, banInfo)
 end
@@ -155,33 +156,24 @@ function worker:UpdateRelatedFilters(filters, relatedFilters)
 end
 
 
-function worker:UpdateFilterTags(filter, requiredTags, bannedTags)
-  return rediswrite:UpdateFilterTags(filter, requiredTags, bannedTags)
+function worker:UpdateFilterTags(filter, requiredTagIDs, bannedTagIDs)
+
+
+  local ok, err = rediswrite:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
+  if not ok then
+    return ok, err
+  end
+
+  -- filter HAS to be updated firstUser
+  -- or the job wont use the new tags
+
+  return self:QueueJob('UpdateFilterTags',filter.id)
 end
 
 function worker:RemovePostsFromFilter(filterID, postIDs)
   return rediswrite:RemovePostsFromFilter(filterID, postIDs)
 end
 
-function worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
-
-  local newPostsKey = filter.id..':tempPosts'
-  local ok, err = rediswrite:CreateTempFilterPosts(newPostsKey, newRequiredTags, newBannedTags)
-  if not ok then
-    return ok, err
-  end
-
-  local oldPostsKey = 'filterposts:'..filter.id
-  local oldPostIDs = rediswrite:GetSetDiff(oldPostsKey, newPostsKey)
-  --print('old posts:'..to_json(oldPostIDs))
-  local newPostIDs = rediswrite:GetSetDiff(newPostsKey, oldPostsKey)
-  --print('new posts:'..to_json(newPostIDs))
-
-  local newPosts = cache:GetPosts(newPostIDs)
-  rediswrite:DeleteKey(newPostsKey)
-  return newPosts, oldPostIDs
-
-end
 
 function worker:UpdatePostParentID(post)
   return rediswrite:UpdatePostParentID(post)
@@ -197,16 +189,19 @@ function worker:CreateFilter(filterInfo)
 
   --local postIDs = self:FindPostsForFilter(filterInfo)
   --local posts = cache:GetPosts(postIDs)
-  rediswrite:CreateFilter(filterInfo)
+  local ok, err = rediswrite:CreateFilter(filterInfo)
+  if not ok then
+    return ok, err
+  end
   -- we need to get scores per post :(
 
   --self:AddPostsToFilter(filterInfo, posts)
-  self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
+  return self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
 
 end
 
 function worker:SubscribeToFilter(userID,filterID)
-  userWrite:SubscribeToFilter(userID, filterID)
+  return userWrite:SubscribeToFilter(userID, filterID)
 end
 
 function worker:UnsubscribeFromFilter(username,filterID)

@@ -173,9 +173,8 @@ function write:AddTagIDsToFilter(red, filterID, requiredTags, bannedTags)
     end
 end
 
-function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
+function write:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
   local red = util:GetRedisWriteConnection()
-  local requiredTagIDs, bannedTagIDs= {},{}
 
   red:init_pipeline()
     -- remove all existing tags from the filter
@@ -183,13 +182,11 @@ function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
     red:del('filter:bannedtags:'..filter.id)
     -- remove the filter from all tags
 
-    for _,tag in pairs(filter.requiredTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
-      tinsert(requiredTagIDs, tag.id)
+    for _,tagID in pairs(filter.requiredTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
     end
-    for _,tag in pairs(filter.bannedTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
-      tinsert(bannedTagIDs, tag.id)
+    for _,tagID in pairs(filter.bannedTags) do
+      red:hdel('tag:filters:'..tagID, filter.id)
     end
 
     -- add the new tags
@@ -417,7 +414,7 @@ function write:DeleteKey(key)
 end
 
 function write:LogChange()
-
+  return true
 end
 
 function write:RemovePostsFromFilter(filterID, postIDs)
@@ -464,6 +461,13 @@ end
 function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   -- hacky duplicate of FindPostsForFilter, my bannedTagIDs
   -- TODO: merge back together later
+
+  --[[
+    so we get list of every post that matches all the tags we want
+    then we remove every post that has a tag we dont want,
+    then store this list temporarily
+
+  ]]
 
   local red = util:GetRedisWriteConnection()
   local requiredTags = {}
@@ -670,8 +674,7 @@ function write:CreatePost(postInfo)
 
     red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
 
-    -- add post info
-  print(to_json(postInfo))
+    -- add post inf
   red:hmset('post:'..postInfo.id,postInfo)
   local results,err = red:commit_pipeline()
   if err then
