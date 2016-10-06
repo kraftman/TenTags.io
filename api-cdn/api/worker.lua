@@ -151,9 +151,6 @@ function worker:AddPostsToFilter(filter, posts)
   return rediswrite:AddPostsToFilter(filter, posts)
 end
 
-function worker:UpdateRelatedFilters(filters, relatedFilters)
-  return rediswrite:UpdateRelatedFilters(filters, relatedFilters)
-end
 
 
 function worker:UpdateFilterTags(filter, requiredTagIDs, bannedTagIDs)

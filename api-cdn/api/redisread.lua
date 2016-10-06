@@ -351,9 +351,9 @@ function read:GetFilter(filterID)
     ngx.log(ngx.ERR, 'unable to load banned tags: ',err)
   end
   if ok == ngx.null then
-    filter.bannedTags = {}
+    filter.bannedTagIDs = {}
   else
-    filter.bannedTags = ok
+    filter.bannedTagIDs = ok
   end
 
   ok, err = red:smembers('filter:requiredtags:'..filterID)
@@ -361,9 +361,9 @@ function read:GetFilter(filterID)
     ngx.log(ngx.ERR, 'unable to load required tags: ',err)
   end
   if ok == ngx.null then
-    filter.requiredTags = {}
+    filter.requiredTagIDs = {}
   else
-    filter.requiredTags = ok
+    filter.requiredTagIDs = ok
   end
   return filter
 
