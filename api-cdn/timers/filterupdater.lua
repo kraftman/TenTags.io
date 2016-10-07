@@ -113,6 +113,50 @@ function config:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
 end
 
 
+function config:GetRelatedFilters(filter)
+
+	-- for each tag, get filters that also have that tag
+	local tagIDs = {}
+	for _,v in pairs(filter.requiredTags) do
+		table.insert(tagIDs, {id = v})
+	end
+
+	--print(to_json(tagIDs))
+	local filterIDs = cache:GetFilterIDsByTags(tagIDs)
+	local filters = {}
+	for _,v in pairs(filterIDs) do
+		for filterID,_ in pairs(v) do
+			if filterID ~= filter.id then
+				table.insert(filters, cache:GetFilterByID(filterID))
+			end
+		end
+	end
+
+--	print('this: ',to_json(filters))
+	for _,relatedFilter in pairs(filters) do
+		local count = 0
+		for _,relatedTagID in pairs(relatedFilter.requiredTags) do
+			for _, filterTagID in pairs(filterIDs) do
+				if relatedTagID == filterTagID then
+					count = count + 1
+				end
+			end
+		end
+		relatedFilter.relatedTagsCount = count
+	end
+
+	table.sort(filters, function(a,b) return a.relatedTagsCount > b.relatedTagsCount end)
+
+	local finalFilters = {}
+	for i = 1, math.min(5, #filters) do
+		table.insert(finalFilters, filters[i].id)
+	end
+
+	return finalFilters
+
+end
+
+
 function config:UpdateFilterPosts()
 
   local filter = self:GetJob('UpdateFilterTags')
@@ -160,7 +204,11 @@ function config:UpdateFilterPosts()
 		return ok, err
 	end
 
-	print('done')
+	local relatedFilters = self:GetRelatedFilters(filter)
+	ok, err = redisWrite:UpdateRelatedFilters(filter, relatedFilters)
+	if not ok then
+		print(ok, err)
+	end
 
 
 end

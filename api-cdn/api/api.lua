@@ -681,7 +681,7 @@ function api:GetMatchingTags(userFilterIDs, postFilterIDs)
 			if userFilterID == postFilterID then
 				--print('found matching: ',userFilterID)
 				matchedFilter = cache:GetFilterByID(userFilterID)
-				for _,tagID in pairs(matchedFilter.requiredTags) do
+				for _,tagID in pairs(matchedFilter.requiredTagIDs) do
 					--print('adding tag: ',tagID)
 					-- prevent duplicates
 					matchingTags[tagID] = tagID
@@ -709,49 +709,6 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 
 end
 
-function api:GetRelatedFilters(filter, requiredTags)
-
-	-- for each tag, get filters that also have that tag
-	local tagIDs = {}
-	for k,v in pairs(requiredTags) do
-		table.insert(tagIDs, {id = v})
-	end
-
-	--print(to_json(tagIDs))
-	local filterIDs = cache:GetFilterIDsByTags(tagIDs)
-	local filters = {}
-	for _,v in pairs(filterIDs) do
-		for filterID,filterType in pairs(v) do
-			if filterID ~= filter.id then
-				table.insert(filters, cache:GetFilterByID(filterID))
-			end
-			--print(filterID)
-		end
-	end
-
---	print('this: ',to_json(filters))
-	for _,filter in pairs(filters) do
-		local count = 0
-		for _,relatedTagID in pairs(requiredTags) do
-			for _, filterTagID in pairs(filterIDs) do
-				if relatedTagID == filterTagID then
-					count = count + 1
-				end
-			end
-		end
-		filter.relatedTagsCount = count
-	end
-
-	table.sort(filters, function(a,b) return a.relatedTagsCount > b.relatedTagsCount end)
-
-	local finalFilters = {}
-	for i = 1, math.min(5, #filters) do
-		table.insert(finalFilters, filters[i].id)
-	end
-
-	return finalFilters
-
-end
 
 function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
@@ -784,11 +741,6 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 	if not ok then
 		return ok, err
 	end
-
-	--move to worker
-	local relatedFilters = self:GetRelatedFilters(filter, requiredTagIDs)
-	ok, err = worker:UpdateRelatedFilters(filter, relatedFilters)
-	print('meep')
 
 	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
@@ -2113,8 +2065,8 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		title = self:SanitiseUserInput(userFilter.name, 200),
 		subs = 1,
 		mods = {},
-		requiredTags = {},
-		bannedTags = {},
+		requiredTagIDs = {},
+		bannedTagIDs = {},
 		ownerID = self:SanitiseUserInput(userFilter.ownerID,50),
 		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
@@ -2152,13 +2104,16 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
   local tags = {}
-	if type(filterInfo.requiredTags) ~= 'table' then
+	if type(filterInfo.requiredTagIDs) ~= 'table' then
 		return nil, 'required tags not provided'
 	end
 
-  for _,tagName in pairs(filterInfo.requiredTags) do
+  for _,tagName in pairs(filterInfo.requiredTagIDs) do
 		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = self:CreateTag(newFilter.createdBy,tagName)
+		if tag then
+			tinsert(newFilter.requiredTagIDs, tag)
+		end
     if tag and tagName ~= '' then
       tag.filterID = newFilter.id
       tag.filterType = 'required'
@@ -2175,7 +2130,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	table.insert(filterInfo.bannedTags, 'meta:filterban:'..newFilter.id)
 
-  for _,tagName in pairs(filterInfo.bannedTags) do
+  for _,tagName in pairs(filterInfo.bannedTagIDs) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)
 		tagName = self:SanitiseUserInput(tagName, 100)
     if tag and tagName ~= '' then

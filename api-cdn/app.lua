@@ -96,6 +96,9 @@ local function ValidateSession(self)
     return {redirect_to = self:url_for('home')}
 
   end
+  if self.session.username or self.session.userID then
+    RemoveSession()
+  end
 end
 
 

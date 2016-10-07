@@ -151,26 +151,22 @@ function write:FilterUnbanUser(filterID, userID)
   return ok, err
 end
 
-function write:AddTagIDsToFilter(red, filterID, requiredTags, bannedTags)
+function write:AddTagIDsToFilter(red, filter)
 
     -- add list of required tags
-    for _, tagID in pairs(requiredTags) do
-      red:sadd('filter:requiredtags:'..filterID,tagID)
+    for _, tagID in pairs(filter.requiredTagIDs) do
+      if type(tagID) == 'table' then tagID = tagID.id end
+      red:sadd('filter:requiredtags:'..filter.id,tagID)
+      red:hset('tag:filters:'..tagID, filter.id, 'required')
     end
 
     -- add list of banned tags
-    for _, tagID in pairs(bannedTags) do
-      red:sadd('filter:bannedtags:'..filterID, tagID)
+    for _, tagID in pairs(filter.bannedTagIDs) do
+      if type(tagID) == 'table' then tagID = tagID.id end
+      red:sadd('filter:bannedtags:'..filter.id, tagID)
+      red:hset('tag:filters:'..tagID, filter.id, 'banned')
     end
 
-    -- add filter to required tag
-    for _, tagID in pairs(requiredTags) do
-      red:hset('tag:filters:'..tagID, filterID, 'required')
-    end
-    -- add filter to banned tag
-    for _, tagID in pairs(bannedTags) do
-      red:hset('tag:filters:'..tagID, filterID, 'banned')
-    end
 end
 
 function write:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
@@ -182,10 +178,12 @@ function write:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
     red:del('filter:bannedtags:'..filter.id)
     -- remove the filter from all tags
 
-    for _,tagID in pairs(filter.requiredTags) do
+    for _,tagID in pairs(filter.requiredTagIDs) do
+      if type(tagID) == 'table' then tagID = tagID.id end
       red:hdel('tag:filters:'..tagID, filter.id)
     end
-    for _,tagID in pairs(filter.bannedTags) do
+    for _,tagID in pairs(filter.bannedTagIDs) do
+      if type(tagID) == 'table' then tagID = tagID.id end
       red:hdel('tag:filters:'..tagID, filter.id)
     end
 
@@ -241,59 +239,46 @@ function write:UpdateRelatedFilters(filter, relatedFilters)
 
 end
 
-function write:CreateFilter(filterInfo)
-  local tempRequiredTags, tempBannedTags = filterInfo.requiredTags, filterInfo.bannedTags
-  local requiredTagIDs = {}
-  local bannedTagIDs = {}
+function write:CreateFilter(filter)
 
-  for _,v in pairs( filterInfo.requiredTags) do
-    tinsert(requiredTagIDs, v.id)
-  end
-  for _,v in pairs( filterInfo.bannedTags) do
-    tinsert(bannedTagIDs, v.id)
-  end
+  local hashFilter = {}
 
-  for _,mod in pairs(filterInfo.mods) do
-    filterInfo['mod:'..mod] = to_json(mod)
-  end
-  filterInfo.mods = nil
-
-  filterInfo.bannedTags = nil
-  filterInfo.requiredTags = nil
-
-  if filterInfo.bannedUsers then
-    for _, banInfo in pairs(filterInfo.bannedUsers) do
-      tinsert(filterInfo, 'bannedUser:'..banInfo.userID,to_json(banInfo))
+  for k, v in pairs(filter) do
+    if k == mods then
+      for _,mod in pairs(v) do
+        hashFilter['mod:'..mod.id] = to_json(mod)
+      end
+    elseif k == 'bannedUsers' then
+      for _,banInfo in pairs(v) do
+        hashFilter['bannedUser'..banInfo.userID] = to_json(banInfo)
+      end
+    elseif k == 'bannedDomains' then
+      for _,banInfo in pairs(v) do
+        hashFilter['bannedDomains:'..banInfo.domainName] = to_json(banInfo)
+      end
+    elseif type(v) == 'string' then
+      hashFilter[k] = v
     end
-    filterInfo.bannedUsers = nil
-  end
-
-  if filterInfo.bannedDomains then
-    for _,banInfo in pairs(filterInfo.bannedDomains) do
-      tinsert(filterInfo, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
-    end
-    filterInfo.bannedDomains = nil
   end
 
 
   -- add id to name conversion table
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
-  red:set('filterid:'..filterInfo.name,filterInfo.id)
+  red:set('filterid:'..hashFilter.name,hashFilter.id)
 
 
   -- add to list ranked by subs
-  red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
+  red:zadd('filtersubs',hashFilter.subs, hashFilter.id)
 
   -- add to list of filters
-  red:zadd('filters',filterInfo.createdAt,filterInfo.id)
+  red:zadd('filters',hashFilter.createdAt,hashFilter.id)
 
   -- add all filter info
-  red:hmset('filter:'..filterInfo.id, filterInfo)
+  red:hmset('filter:'..hashFilter.id, hashFilter)
 
-  self:AddTagIDsToFilter(red, filterInfo.id, requiredTagIDs, bannedTagIDs)
-  filterInfo.requiredTags = tempRequiredTags
-  filterInfo.bannedTags = tempBannedTags
+  self:AddTagIDsToFilter(red, filter)
+
   local results, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)

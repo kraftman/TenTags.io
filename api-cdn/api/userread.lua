@@ -63,17 +63,19 @@ function userread:GetAccount(accountID)
   account.sessions = {}
   account.users = {}
 
+  account.userCount = 0
   for k,v in pairs(account) do
     if k:find('^user:') then
       table.insert(account.users, v)
       account[k] = nil
+      account.userCount = account.userCount +1
     elseif k:find('^session:') then
       local session = from_json(v)
       account.sessions[session.id] = session
       account[k] = nil
     end
   end
-  
+
   account.modCount = tonumber(account.modCount or 0)
 
 
