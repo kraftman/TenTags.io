@@ -270,6 +270,7 @@ function write:CreateFilter(filter)
 
   -- add to list of filters
   red:zadd('filters',hashFilter.createdAt,hashFilter.id)
+  red:sadd('filterNames',hashFilter.name)
 
   -- add all filter info
   red:hmset('filter:'..hashFilter.id, hashFilter)

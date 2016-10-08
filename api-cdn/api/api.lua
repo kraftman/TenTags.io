@@ -259,6 +259,18 @@ function api:UserCanEditFilter(userID, filterID)
 	return nil, 'you must be admin or mod to edit filters'
 end
 
+function api:SearchFilters(userID, searchString)
+	local ok, err = RateLimit('SearchFilters:',userID, 20, 10)
+	if not ok then
+		return ok, err
+	end
+	searchString = self:SanitiseUserInput(searchString, 100)
+	if searchString:len() < 4 then
+		return nil, 'string too short'
+	end
+	local ok, err = cache:SearchFilters(searchString)
+	return ok,err
+end
 
 function api:FilterBanUser(userID, filterID, banInfo)
 
