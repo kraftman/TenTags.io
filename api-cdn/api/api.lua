@@ -139,7 +139,6 @@ function api:LabelUser(userID, targetUserID, label)
 end
 
 function api:UpdateUser(userID, userToUpdate)
-	print('this')
 	local ok, err = RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
@@ -151,7 +150,6 @@ function api:UpdateUser(userID, userToUpdate)
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
-	print('HIDING SEEN POSTS: ',userToUpdate.hideSeenPosts)
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
@@ -162,9 +160,7 @@ function api:UpdateUser(userID, userToUpdate)
 		username = userToUpdate.username
 	}
 
-	print(to_json(userInfo))
 
-	print('HIDING SEEN POSTS: ',userInfo.hideSeenPosts)
 
 	for k,v in pairs(userToUpdate) do
 		if k:find('^filterStyle:') then
@@ -470,7 +466,6 @@ function api:CreateThread(userID, messageInfo)
 
 	local ok, err = self:VerifyMessageSender(userID, messageInfo)
 	if not ok then
-		print(ok,err)
 		return err
 	end
 
@@ -509,7 +504,7 @@ function api:CreateThread(userID, messageInfo)
     createdAt = ngx.time(),
     threadID = thread.id
   }
-	print('create thread2')
+
   ok, err = worker:CreateThread(thread)
 	if not ok then
 		return ok, err
@@ -721,7 +716,6 @@ function api:UpdateFilterTags(userID, filterID, requiredTagIDs, bannedTagIDs)
 	local newRequiredTagIDs, newBannedTagIDs = {}, {}
 	for k,v in pairs(requiredTagIDs) do
 		if v:gsub(' ', '') ~= '' then
-			print(v)
 			newRequiredTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
@@ -734,7 +728,6 @@ function api:UpdateFilterTags(userID, filterID, requiredTagIDs, bannedTagIDs)
 
 
 	local ok, err = worker:UpdateFilterTags(filter, newRequiredTagIDs, newBannedTagIDs)
-	print('dons')
 	if not ok then
 		return ok, err
 	end
@@ -860,7 +853,6 @@ function api:EditPost(userID, userPost)
 	local post = cache:GetPost(userPost.id)
 
 	if post.createdBy ~= userID then
-		print(userPost)
 		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
 			return nil, 'you cannot edit other users posts'
@@ -1136,7 +1128,6 @@ function api:ResetPassword(email, key, password)
 	end
 
 	local master = cache:GetMasterUserByEmail(email)
-	print('new password:',password)
 	local passwordHash = scrypt.crypt(password)
 	ok = worker:ResetMasterPassword(master.id, passwordHash)
 	if not ok then
@@ -1151,14 +1142,12 @@ function api:ValidateMaster(userCredentials)
   local masterInfo = cache:GetMasterUserByEmail(userCredentials.email)
 
   if not masterInfo then
-		print('master not found')
     return nil, 'error getting profile'
   end
 
   if masterInfo.active == 0 then
     return nil,true
   end
-	print(userCredentials.password, ' =',masterInfo.passwordHash, '=')
   local valid = scrypt.check(userCredentials.password,masterInfo.passwordHash)
 
 	if not valid then
@@ -1257,10 +1246,6 @@ function api:KillSession(accountID, sessionID)
 	if not account then
 		return nil, 'no account'
 	end
-	print(sessionID)
-	for k,v in pairs(account.sessions) do
-		print(k)
-	end
 
 	local session = account.sessions[sessionID]
 	if not session then
@@ -1278,24 +1263,20 @@ function api:ConfirmLogin(userSession, key)
 
 	local sessionID, accountID = key:match('(.+)%-(%w+)')
 	if not key then
-		print('no key')
 		return nil, 'bad key'
 	end
 	local account = cache:GetAccount(accountID)
 	if not account then
-		print('no account')
 		return nil, 'no account'
 	end
 
 	local accountSession = account.sessions[sessionID]
 	if not accountSession then
-		print('bad session')
 		return nil, 'bad session'
 	end
 
 
 	if accountSession.activated then
-		print('invalid session')
 		--return nil, 'invalid session'
 	end
 	if accountSession.validUntil < ngx.time() then
@@ -2057,7 +2038,7 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		name = self:SanitiseUserInput(userFilter.name, 30),
 		description = self:SanitiseUserInput(userFilter.name, 2000),
 		title = self:SanitiseUserInput(userFilter.name, 200),
-		subs = 1,
+		subs = 0,
 		mods = {},
 		requiredTagIDs = {},
 		bannedTagIDs = {},
@@ -2153,7 +2134,6 @@ end
 local function UserCanAddSource(tags, userID)
 	for _,tag in pairs(tags) do
 		if tag.name:find('^meta:sourcePost:') and tag.createdBy == userID then
-			print('found: ',tag.name, ' user id: ',userID)
 			return false
 		end
 	end
@@ -2170,9 +2150,7 @@ function api:AddSource(userID, postID, sourceURL)
 		return ok, err
 	end
 
-	print(sourceURL)
 	local sourcePostID = sourceURL:match('/post/(%w+)')
-	print(sourcePostID)
 	if not sourcePostID then
 		return nil, 'source must be a post from this site!'
 	end
@@ -2186,7 +2164,6 @@ function api:AddSource(userID, postID, sourceURL)
 
 	local tagName = 'meta:sourcePost:'..sourcePostID
 	local newTag = self:CreateTag(userID, tagName)
-	print(newTag.name)
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
 	newTag.score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)

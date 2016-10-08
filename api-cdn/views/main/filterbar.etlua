@@ -21,6 +21,8 @@
       <% end %>
 
       <% if thisfilter then %>
+        Subs:
+        <%= thisfilter.subs-%>
         Description:
         </br>
         <%= thisfilter.description -%>

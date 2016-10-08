@@ -189,20 +189,31 @@ function worker:CreateFilter(filter)
   --local posts = cache:GetPosts(postIDs)
   local ok, err = rediswrite:CreateFilter(filter)
   if not ok then
+    print('error creating filter')
     return ok, err
   end
   -- we need to get scores per post :(
 
-  --self:AddPostsToFilter(filterInfo, posts)
+  --self:AddPostsToFilter(filterInfo, posts)X
   return self:SubscribeToFilter(filter.createdBy, filter.id)
 
 end
 
 function worker:SubscribeToFilter(userID,filterID)
+  print('adding ', userID, ' to ', filterID)
+  local ok, err = rediswrite:IncrementFilterSubs(filterID, 1)
+  if not ok then
+    print(err)
+    return ok, err
+  end
   return userWrite:SubscribeToFilter(userID, filterID)
 end
 
 function worker:UnsubscribeFromFilter(username,filterID)
+  local ok, err = rediswrite:IncrementFilterSubs(filterID, -1)
+  if not ok then
+    return ok, err
+  end
   rediswrite:UnsubscribeFromFilter(username,filterID)
 end
 

@@ -218,7 +218,7 @@ end
 function userwrite:SubscribeToFilter(userID,filterID)
   userID = userID or 'default'
   local red = util:GetUserWriteConnection()
-  print('adding filter ',filterID, ' to ',userID)
+  --print('adding filter ',filterID, ' to ',userID)
   local ok, err = red:sadd('userfilters:'..userID, filterID)
 
   if not ok then
@@ -227,12 +227,9 @@ function userwrite:SubscribeToFilter(userID,filterID)
     return
   end
 
-  ok, err = red:hincrby('filter:'..filterID,'subs',1)
+
   util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
-  end
-  return ok, err 
+  return ok, err
 
 end
 
@@ -245,7 +242,6 @@ function userwrite:UnsubscribeFromFilter(userID, filterID)
     return
   end
 
-  ok, err = red:hincrby('filter:'..filterID,'subs',-1)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)

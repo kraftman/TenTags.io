@@ -80,7 +80,6 @@ function cache:PurgeKey(keyInfo)
     if PRECACHE_INVALID then
       userInfo:delete(keyInfo.id)
     else
-      print('re-caching account: ')
       self:GetAccount(keyInfo.id)
     end
   end
@@ -358,7 +357,6 @@ end
 
 function cache:GetFilterByName(filterName)
   local filterID = self:GetFilterID(filterName)
-  print(filterID)
   if not filterID then
     return nil
   end
@@ -417,8 +415,10 @@ function cache:GetFiltersBySubs(startAt,endAt)
 
   local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
   if not filterIDs then
+    print('none found')
     return {}
   end
+  print(to_json(filterIDs))
   return self:GetFilterInfo(filterIDs)
 end
 
@@ -593,7 +593,6 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   sessionSeenPosts[postID] = true
 
   --
-  print(to_json(postID))
   local post = self:GetPost(postID)
   if post.id ~= post.parentID then
     if sessionSeenPosts[post.parentID] then
