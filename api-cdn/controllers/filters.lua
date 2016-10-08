@@ -73,19 +73,18 @@ end
 
 local function DisplayFilter(self)
 
-  -- does the filter exist? if not then lets make it
+  -- does the filter exist? if not then let them make it
   local filter = api:GetFilterByName(self.params.filterlabel)
-  print(to_json(filter))
+
   if not filter then
     return CreateFilter(self)
   end
 
   for _,v in pairs(filter.mods) do
     local user = api:GetUser(v.id)
-    print(to_json(user))
     v.username = user.username
   end
-  print(to_json(filter))
+
   filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
   self.thisfilter = filter
@@ -94,12 +93,8 @@ local function DisplayFilter(self)
   self.posts = api:GetFilterPosts(filter)
   --(to_json(self.posts))
   for k,v in pairs(self.posts) do
-    --print('user id: ' ,self.session.userID)
     v.hash = ngx.md5(v.id..self.session.userID)
   end
-  -- also load the list of mods
-  -- check if the current user is on the list of mods
-  -- display settings if they are
 
   return {render = 'filter.view'}
 

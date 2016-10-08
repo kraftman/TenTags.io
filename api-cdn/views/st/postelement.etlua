@@ -14,8 +14,13 @@
     <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
     </br>
     <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
-    <% for _,filter in pairs(post.filters) do %>
-        <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+    <% for i =1, 5  do
+      local filter = post.filters[i]
+      if not filter then
+        break
+      end
+    %>
+        <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %> <%= filter.subs %></a>
     <% end %>
 
   </div>

@@ -295,6 +295,22 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
 end
 
+function write:IncrementFilterSubs(filterID, value)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:hincrby('filter:'..filterID, 'subs', value)
+  if not ok then
+    util:SetKeepalive(red)
+    print('error updating subcount ', err)
+    return ok, err
+  end
+  print('adding ',ok,' to filtersubs')
+  ok,err = red:zadd('filtersubs',ok, filterID)
+  if not ok then
+    print('moop : ',err)
+  end
+  return ok,err
+end
+
 function write:RemoveInvalidations(cutOff)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:zremrangebyscore('invalidationRequests', 0, cutOff)
@@ -568,7 +584,6 @@ function write:CreateTag(tagInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get tag: ',err)
   end
-  print('got tag: ', to_json(ok))
 
   if ok ~= ngx.null and next(ok) then
     return self:ConvertListToTable(ok)

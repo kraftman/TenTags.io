@@ -80,7 +80,6 @@ function cache:PurgeKey(keyInfo)
     if PRECACHE_INVALID then
       userInfo:delete(keyInfo.id)
     else
-      print('re-caching account: ')
       self:GetAccount(keyInfo.id)
     end
   end
@@ -336,6 +335,7 @@ function cache:GetPost(postID)
 end
 
 function cache:GetFilterPosts(filter)
+  print('this')
 
   local filterIDs = redisread:GetFilterPosts(filter)
   local posts = {}
@@ -343,6 +343,7 @@ function cache:GetFilterPosts(filter)
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
+    table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
   end
 
@@ -358,7 +359,6 @@ end
 
 function cache:GetFilterByName(filterName)
   local filterID = self:GetFilterID(filterName)
-  print(filterID)
   if not filterID then
     return nil
   end
@@ -417,8 +417,10 @@ function cache:GetFiltersBySubs(startAt,endAt)
 
   local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
   if not filterIDs then
+    print('none found')
     return {}
   end
+  print(to_json(filterIDs))
   return self:GetFilterInfo(filterIDs)
 end
 
@@ -593,7 +595,6 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   sessionSeenPosts[postID] = true
 
   --
-  print(to_json(postID))
   local post = self:GetPost(postID)
   if post.id ~= post.parentID then
     if sessionSeenPosts[post.parentID] then
@@ -652,6 +653,8 @@ function cache:GetUserFrontPage(userID,filter,range)
   for _,post in pairs(newPosts) do
 
       post.filters = self:GetFilterInfo(post.filters) or {}
+
+      table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     if userVotedPosts[post.id] then
       post.userHasVoted = true
     end
