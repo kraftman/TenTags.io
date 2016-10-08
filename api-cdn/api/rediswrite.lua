@@ -151,20 +151,18 @@ function write:FilterUnbanUser(filterID, userID)
   return ok, err
 end
 
-function write:AddTagIDsToFilter(red, filter)
+function write:AddTagIDsToFilter(red, filterID, requiredTagIDs, bannedTagIDs)
 
     -- add list of required tags
-    for _, tagID in pairs(filter.requiredTagIDs) do
-      if type(tagID) == 'table' then tagID = tagID.id end
-      red:sadd('filter:requiredtags:'..filter.id,tagID)
-      red:hset('tag:filters:'..tagID, filter.id, 'required')
+    for _, tagID in pairs(requiredTagIDs) do
+      red:sadd('filter:requiredTagIDs:'..filterID,tagID)
+      red:hset('tag:filters:'..tagID, filterID, 'required')
     end
 
     -- add list of banned tags
-    for _, tagID in pairs(filter.bannedTagIDs) do
-      if type(tagID) == 'table' then tagID = tagID.id end
-      red:sadd('filter:bannedtags:'..filter.id, tagID)
-      red:hset('tag:filters:'..tagID, filter.id, 'banned')
+    for _, tagID in pairs(bannedTagIDs) do
+      red:sadd('filter:bannedTagIDs:'..filterID, tagID)
+      red:hset('tag:filters:'..tagID, filterID, 'banned')
     end
 
 end
@@ -174,8 +172,8 @@ function write:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
 
   red:init_pipeline()
     -- remove all existing tags from the filter
-    red:del('filter:requiredtags:'..filter.id)
-    red:del('filter:bannedtags:'..filter.id)
+    red:del('filter:requiredTagIDs:'..filter.id)
+    red:del('filter:bannedTagIDs:'..filter.id)
     -- remove the filter from all tags
 
     for _,tagID in pairs(filter.requiredTagIDs) do
@@ -244,7 +242,7 @@ function write:CreateFilter(filter)
   local hashFilter = {}
 
   for k, v in pairs(filter) do
-    if k == mods then
+    if k == 'mods' then
       for _,mod in pairs(v) do
         hashFilter['mod:'..mod.id] = to_json(mod)
       end
@@ -277,7 +275,7 @@ function write:CreateFilter(filter)
   -- add all filter info
   red:hmset('filter:'..hashFilter.id, hashFilter)
 
-  self:AddTagIDsToFilter(red, filter)
+  self:AddTagIDsToFilter(red, filter.id, filter.requiredTagIDs, filter.bannedTagIDs)
 
   local results, err = red:commit_pipeline()
   if err then
@@ -455,34 +453,34 @@ function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   ]]
 
   local red = util:GetRedisWriteConnection()
-  local requiredTags = {}
-  local bannedTags = {}
+  local requiredTagIDs = {}
+  local bannedTagIDs = {}
 
   for _,tagID in pairs(requiredTagIDs) do
     if type(tagID) == 'table'then
       tagID = tagID.id
     end
-    tinsert(requiredTags,'tagPosts:'..tagID)
+    tinsert(requiredTagIDs,'tagPosts:'..tagID)
   end
 
   for _,tagID in pairs(bannedTagIDs) do
     if type(tagID) == 'table'then
       tagID = tagID.id
     end
-    tinsert(bannedTags,'tagPosts:'..tagID)
+    tinsert(bannedTagIDs,'tagPosts:'..tagID)
   end
 
   local tempRequiredPostsKey = tempKey..':required'
   --print(tempRequiredPostsKey)
 
-  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTags))
+  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempRequiredPostsKey)
     util:SetKeepalive(red)
     return nil
   end
-  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(bannedTags))
+  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(bannedTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)
@@ -515,25 +513,25 @@ function write:FindPostsForFilter(filterID, requiredTagIDs, bannedTagIDs)
   -- we may want to store the diff and iterate through it in chunks
   local red = util:GetRedisWriteConnection()
   local matchingPostIDs
-  local requiredTags = {}
-  local bannedTags = {}
+  local requiredTagIDs = {}
+  local bannedTagIDs = {}
   for _,v in pairs(requiredTagIDs) do
-    tinsert(requiredTags,'tagPosts:'..v.id)
+    tinsert(requiredTagIDs,'tagPosts:'..v.id)
   end
   for _,v in pairs(bannedTagIDs) do
-    tinsert(bannedTags,'tagPosts:'..v.id)
+    tinsert(bannedTagIDs,'tagPosts:'..v.id)
   end
 
   local tempKey = filterID..':tempPosts'
 
-  local ok, err = red:sinterstore(tempKey, unpack(requiredTags))
+  local ok, err = red:sinterstore(tempKey, unpack(requiredTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempKey)
     util:SetKeepalive(red)
     return nil
   end
-  matchingPostIDs, err = red:sdiff(tempKey, unpack(bannedTags))
+  matchingPostIDs, err = red:sdiff(tempKey, unpack(bannedTagIDs))
   if not matchingPostIDs then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)

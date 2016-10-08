@@ -73,7 +73,7 @@ function config:GetValidFilters(filter, post)
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
 
-	filter.score = AverageTagScore(filter.requiredTags, post.tags)
+	filter.score = AverageTagScore(filter.requiredTagIDs, post.tags)
 
 	if (filter.bannedUsers[post.createdBy]) then
 		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
@@ -89,7 +89,7 @@ end
 function config:TagsMatch(filter, post)
   -- the post needs to have all of the tags that the filter has in order to be valid
   local found
-  for _,filterTagID in pairs(filter.requiredTags) do
+  for _,filterTagID in pairs(filter.requiredTagIDs) do
     found = false
 
     for _,postTag in pairs(post.tags) do

@@ -710,7 +710,7 @@ function api:GetUnvotedTags(user,postID, tagIDs)
 end
 
 
-function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
+function api:UpdateFilterTags(userID, filterID, requiredTagIDs, bannedTagIDs)
 
 	if not filterID then
 		return nil, 'no filter id!'
@@ -723,14 +723,14 @@ function api:UpdateFilterTags(userID, filterID, requiredTags, bannedTags)
 
 	--generate actual tags
 	local requiredTagIDs, bannedTagIDs = {}, {}
-	for k,v in pairs(requiredTags) do
+	for k,v in pairs(requiredTagIDs) do
 		if v ~= '' then
 			requiredTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
-	for k,v in pairs(bannedTags) do
+	for k,v in pairs(bannedTagIDs) do
 		if v ~= '' then
-			bannedTags[k] = self:CreateTag(userID, v).id
+			bannedTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
 
@@ -1630,7 +1630,6 @@ function api:CreateTag(userID, tagName)
   local existingTag, err = worker:CreateTag(tagInfo)
 	-- tag might exist but not be in cache
 	if existingTag and existingTag ~= true then
-		print('tag exists: ',to_json(existingTag))
 		return existingTag
 	end
 
@@ -2056,8 +2055,6 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		end
 	end
 
-
-
 	local newFilter = {
 		id = uuid.generate_random(),
 		name = self:SanitiseUserInput(userFilter.name, 30),
@@ -2112,44 +2109,29 @@ function api:CreateFilter(userID, filterInfo)
 		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = self:CreateTag(newFilter.createdBy,tagName)
 		if tag then
-			tinsert(newFilter.requiredTagIDs, tag)
+			tinsert(newFilter.requiredTagIDs, tag.id)
 		end
-    if tag and tagName ~= '' then
-      tag.filterID = newFilter.id
-      tag.filterType = 'required'
-      tag.createdBy = newFilter.createdBy
-      tag.createdAt = newFilter.createdAt
-      tinsert(tags,tag)
-      tinsert(newFilter.requiredTags, tag)
-    end
   end
 
-	if type(filterInfo.bannedTags) ~= 'table' then
-		filterInfo.bannedTags = {}
+	if type(filterInfo.bannedTagIDs) ~= 'table' then
+		filterInfo.bannedTagIDs = {}
 	end
 
-	table.insert(filterInfo.bannedTags, 'meta:filterban:'..newFilter.id)
+	table.insert(filterInfo.bannedTagIDs, 'meta:filterban:'..newFilter.id)
 
   for _,tagName in pairs(filterInfo.bannedTagIDs) do
     local tag = self:CreateTag(newFilter.createdBy,tagName)
-		tagName = self:SanitiseUserInput(tagName, 100)
-    if tag and tagName ~= '' then
-      tag.filterID = newFilter.id
-      tag.filterType = 'banned'
-      tag.createdBy = newFilter.createdBy
-      tag.createdAt = newFilter.createdAt
-      tinsert(tags,tag)
-      tinsert(newFilter.bannedTags, tag)
-    end
+		if tag then
+    	tinsert(newFilter.bannedTagIDs, tag.id)
+		end
   end
-  newFilter.tags = tags
 
   local ok,err = worker:CreateFilter(newFilter)
 	if not ok then
 		return ok, err
 	end
-
-	ok, err = worker:UpdateFilterTags(newFilter, newFilter.requiredTags, newFilter.bannedTags)
+	-- cant combine, due to other uses of function
+	ok, err = worker:UpdateFilterTags(newFilter, newFilter.requiredTagIDs, newFilter.bannedTagIDs)
 	if not ok then
 		return ok,err
 	end

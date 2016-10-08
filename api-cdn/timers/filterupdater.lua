@@ -117,8 +117,8 @@ function config:GetRelatedFilters(filter)
 
 	-- for each tag, get filters that also have that tag
 	local tagIDs = {}
-	for _,v in pairs(filter.requiredTags) do
-		table.insert(tagIDs, {id = v})
+	for _,tagID in pairs(filter.requiredTagIDs) do
+		table.insert(tagIDs, {id = tagID})
 	end
 
 	--print(to_json(tagIDs))
@@ -135,7 +135,7 @@ function config:GetRelatedFilters(filter)
 --	print('this: ',to_json(filters))
 	for _,relatedFilter in pairs(filters) do
 		local count = 0
-		for _,relatedTagID in pairs(relatedFilter.requiredTags) do
+		for _,relatedTagID in pairs(relatedFilter.requiredTagIDs) do
 			for _, filterTagID in pairs(filterIDs) do
 				if relatedTagID == filterTagID then
 					count = count + 1
@@ -168,8 +168,8 @@ function config:UpdateFilterPosts()
 
 
 	local ok, err
-	local requiredTagIDs = filter.requiredTags
-	local bannedTagIDs = filter.bannedTags
+	local requiredTagIDs = filter.requiredTagIDs
+	local bannedTagIDs = filter.bannedTagIDs
 
 	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
 

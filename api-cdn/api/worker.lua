@@ -179,21 +179,21 @@ end
 
 function worker:FindPostsForFilter(filter)
   -- has to use write as it uses sinterstore
-  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTags, filter.bannedTags)
+  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTagIDs, filter.bannedTagIDs)
 end
 
-function worker:CreateFilter(filterInfo)
+function worker:CreateFilter(filter)
 
   --local postIDs = self:FindPostsForFilter(filterInfo)
   --local posts = cache:GetPosts(postIDs)
-  local ok, err = rediswrite:CreateFilter(filterInfo)
+  local ok, err = rediswrite:CreateFilter(filter)
   if not ok then
     return ok, err
   end
   -- we need to get scores per post :(
 
   --self:AddPostsToFilter(filterInfo, posts)
-  return self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
+  return self:SubscribeToFilter(filter.createdBy, filter.id)
 
 end
 

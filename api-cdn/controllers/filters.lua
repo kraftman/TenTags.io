@@ -36,8 +36,8 @@ local function NewFilter(self)
     return ToggleDefault(self)
   end
 
-  local requiredTags = from_json(self.params.requiredTags)
-  local bannedTags = from_json(self.params.bannedTags)
+  local requiredTagIDs = from_json(self.params.requiredTagIDs)
+  local bannedTagIDs = from_json(self.params.bannedTagIDs)
 
   local info ={
     title = self.params.title,
@@ -48,8 +48,8 @@ local function NewFilter(self)
     ownerID = self.session.userID
   }
 
-  info.bannedTags = bannedTags
-  info.requiredTags = requiredTags
+  info.bannedTagIDs = bannedTagIDs
+  info.requiredTagIDs = requiredTagIDs
 
   local ok, err = api:CreateFilter(self.session.userID, info)
   if ok then
@@ -155,13 +155,13 @@ local function BanDomain(self,filter)
 end
 
 local function UpdateFilterTags(self,filter)
-  local requiredTags = from_json(self.params.requiredTags)
-  local bannedTags = from_json(self.params.bannedTags)
+  local requiredTagIDs = from_json(self.params.requiredTagIDs)
+  local bannedTagIDs = from_json(self.params.bannedTagIDs)
   local userID = self.session.userID
 
   --print(to_json(filter))
   --print(filter.id)
-  local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTags, bannedTags)
+  local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTagIDs, bannedTagIDs)
   if ok then
     print('done')
     return 'ok'
@@ -233,7 +233,7 @@ local function UpdateFilter(self)
      return BanDomain(self,filter)
   end
 
-  if self.params.requiredTags then
+  if self.params.requiredTagIDs then
      return UpdateFilterTags(self,filter)
   end
 
@@ -279,13 +279,13 @@ local function ViewFilterSettings(self)
 
   -- get key indexed tags
   self.requiredTagKeys = {}
-  for k, v in pairs(filter.requiredTags) do
+  for k, v in pairs(filter.requiredTagIDs) do
     self.requiredTagKeys[v] = true
   end
   print(to_json(self.requiredTagKeys))
 
   self.bannedTagKeys = {}
-  for k,v in pairs(filter.bannedTags) do
+  for k,v in pairs(filter.bannedTagIDs) do
     self.bannedTagKeys[v] = true
   end
 

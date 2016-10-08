@@ -265,11 +265,11 @@ local function TestGenerate(self)
       ownerID = self.session.userID,
       createdBy = self.session.userID,
     }
-    info.bannedTags = {}
-    info.requiredTags = {}
+    info.bannedTagIDs = {}
+    info.requiredTagIDs = {}
     for j = 1, 30 do
-      info.requiredTags[j] = 'requiredtag'..j
-      info.bannedTags[j] = 'bannedtag'..j
+      info.requiredTagIDs[j] = 'requiredtag'..j
+      info.bannedTagIDs[j] = 'bannedtag'..j
     end
 
 
