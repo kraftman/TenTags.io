@@ -1060,6 +1060,7 @@ end
 function api:SubscribeToFilter(userID,userToSubID, filterID)
 
   local filterIDs = cache:GetUserFilterIDs(userID)
+	print(to_json(filterIDs))
 
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
@@ -1070,7 +1071,7 @@ function api:SubscribeToFilter(userID,userToSubID, filterID)
 
 
   for _, v in pairs(filterIDs) do
-    if v == userToSubID then
+    if v == filterID then
       -- they are already subbed
       return nil, userToSubID..' is already subbed!'
     end
