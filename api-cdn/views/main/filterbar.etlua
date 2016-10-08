@@ -7,7 +7,6 @@
   <div class='box-wrap'>
     <div id="box-one" class='info-box'>
 
-
       <% if enableAds then %>
         <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
         <!-- SideBar -->
@@ -46,13 +45,17 @@
   	</div>
 
     <div id="box-two" class='info-box'>
-
+      <% if session.userID then %>
+        <input class='form-control' type='text' name='email' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+      <% end %>
       <ul>
         <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
       </ul>
-      <% for i, filter in pairs(userFilters) do %>
-        <% render("views.st.filterbarelement",{filter = filter}) %>
-      <% end %>
+      <div class='filterContainer'>
+        <% for i, filter in pairs(userFilters) do %>
+          <% render("views.st.filterbarelement",{filter = filter}) %>
+        <% end %>
+      </div>
   	</div>
   </div>
 

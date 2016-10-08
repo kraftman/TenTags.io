@@ -372,6 +372,18 @@ function read:GetFilter(filterID)
 
 end
 
+function read:SearchFilters(searchString)
+  searchString = '*'..searchString..'*'
+  local red = util:GetRedisReadConnection()
+  print(searchString)
+  local ok,err = red:sscan('filterNames', 0, 'match', searchString)
+  print(to_json(ok))
+  if ok then
+    return ok[2]
+  end
+  return ok,err
+end
+
 function read:GetPost(postID)
   local red = util:GetRedisReadConnection()
   local ok, err = red:hgetall('post:'..postID)

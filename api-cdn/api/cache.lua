@@ -194,6 +194,15 @@ function cache:AddChildren(parentID,flat)
   return t
 end
 
+function cache:SearchFilters(searchString)
+  local filterNames = redisread:SearchFilters(searchString)
+  local filters = {}
+  for _,filterName in pairs(filterNames) do
+    tinsert(filters, self:GetFilterByName(filterName))
+  end
+  return filters
+end
+
 function cache:GetUsername(userID)
 
   local user = self:GetUser(userID)
