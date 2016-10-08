@@ -85,7 +85,7 @@ local function DisplayFilter(self)
     print(to_json(user))
     v.username = user.username
   end
-
+  print(to_json(filter))
   filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
   self.thisfilter = filter

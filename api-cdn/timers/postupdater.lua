@@ -315,6 +315,7 @@ function config:UpdatePostFilters()
   end
 
 	local newFilters = self:CalculatePostFilters(post)
+	print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
 	for _,filterID in pairs(post.filters) do
@@ -340,10 +341,9 @@ function config:UpdatePostFilters()
       post['specialTag:'..v] = 'false'
     end
   end
-	print(to_json(post))
 
   --print('removing from: '..to_json(purgeFilterIDs))
-  --print('adding to: '..to_json(newFilters))
+  print('adding to: '..to_json(newFilters))
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then

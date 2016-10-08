@@ -169,6 +169,7 @@ function config:UpdateFilterPosts()
 
 	local ok, err
 	local requiredTagIDs = filter.requiredTagIDs
+	print(to_json(requiredTagIDs))
 	local bannedTagIDs = filter.bannedTagIDs
 
 	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)

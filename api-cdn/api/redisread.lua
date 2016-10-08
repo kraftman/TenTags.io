@@ -320,6 +320,7 @@ function read:GetFilter(filterID)
     return nil
   end
   local filter = self:ConvertListToTable(ok)
+  --error()
 
   filter.bannedUsers = {}
   filter.bannedDomains = {}
@@ -342,6 +343,7 @@ function read:GetFilter(filterID)
         filter[k] = nil
       elseif k:find('^relatedFilter:') then
         tinsert(filter.relatedFilterIDs, v)
+        filter[k] = nil
       end
     end
   end

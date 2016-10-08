@@ -2,7 +2,6 @@
 
 local write = {}
 
-local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
 local tinsert = table.insert
 local SCORE_FACTOR = 43200
@@ -227,11 +226,11 @@ end
 function write:UpdateRelatedFilters(filter, relatedFilters)
   local red = util:GetRedisWriteConnection()
 
-  for k,v in pairs(filter.relatedFilterIDs) do
-    red:del('filter:'..filter.id, 'relatedFilter:'..v)
+  for _,v in pairs(filter.relatedFilterIDs) do
+    red:hdel('filter:'..filter.id, 'relatedFilter:'..v)
   end
 
-  for k,v in pairs(relatedFilters) do
+  for _,v in pairs(relatedFilters) do
     red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
   end
 
@@ -286,6 +285,7 @@ end
 
 function write:CreateFilterPostInfo(red, filter,postInfo)
   --print('updating filter '..filter.title..'with new score: '..filter.score)
+  print(filter.id, postInfo.id)
   red:sadd('filterposts:'..filter.id, postInfo.id)
   red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
   red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
@@ -313,7 +313,6 @@ function write:AddPostToFilters(post, filters)
   local red = util:GetRedisWriteConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
-
         print(to_json(filterInfo))
         print(to_json(post))
       self:CreateFilterPostInfo(red,filterInfo,post)
@@ -453,38 +452,38 @@ function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
   ]]
 
   local red = util:GetRedisWriteConnection()
-  local requiredTagIDs = {}
-  local bannedTagIDs = {}
+  local labelledRequiredTagIDs = {}
+  local labelledBannedTagIDs = {}
 
   for _,tagID in pairs(requiredTagIDs) do
     if type(tagID) == 'table'then
       tagID = tagID.id
     end
-    tinsert(requiredTagIDs,'tagPosts:'..tagID)
+    tinsert(labelledRequiredTagIDs,'tagPosts:'..tagID)
   end
 
   for _,tagID in pairs(bannedTagIDs) do
     if type(tagID) == 'table'then
       tagID = tagID.id
     end
-    tinsert(bannedTagIDs,'tagPosts:'..tagID)
+    tinsert(labelledBannedTagIDs,'tagPosts:'..tagID)
   end
 
   local tempRequiredPostsKey = tempKey..':required'
   --print(tempRequiredPostsKey)
 
-  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTagIDs))
+  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(labelledRequiredTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempRequiredPostsKey)
     util:SetKeepalive(red)
-    return nil
+    return nil, err
   end
-  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(bannedTagIDs))
+  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(labelledBannedTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)
-    return nil
+    return nil, err
   end
 
   ok, err = red:del(tempRequiredPostsKey)
@@ -513,10 +512,10 @@ function write:FindPostsForFilter(filterID, requiredTagIDs, bannedTagIDs)
   -- we may want to store the diff and iterate through it in chunks
   local red = util:GetRedisWriteConnection()
   local matchingPostIDs
-  local requiredTagIDs = {}
-  local bannedTagIDs = {}
+  local labelledRequiredTagIDs = {}
+  local labelledBannedTagIDs = {}
   for _,v in pairs(requiredTagIDs) do
-    tinsert(requiredTagIDs,'tagPosts:'..v.id)
+    tinsert(labelledRequiredTagIDs,'tagPosts:'..v.id)
   end
   for _,v in pairs(bannedTagIDs) do
     tinsert(bannedTagIDs,'tagPosts:'..v.id)
@@ -524,14 +523,14 @@ function write:FindPostsForFilter(filterID, requiredTagIDs, bannedTagIDs)
 
   local tempKey = filterID..':tempPosts'
 
-  local ok, err = red:sinterstore(tempKey, unpack(requiredTagIDs))
+  local ok, err = red:sinterstore(tempKey, unpack(labelledRequiredTagIDs))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempKey)
     util:SetKeepalive(red)
     return nil
   end
-  matchingPostIDs, err = red:sdiff(tempKey, unpack(bannedTagIDs))
+  matchingPostIDs, err = red:sdiff(tempKey, unpack(labelledBannedTagIDs))
   if not matchingPostIDs then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)

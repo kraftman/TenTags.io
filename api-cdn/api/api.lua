@@ -722,21 +722,22 @@ function api:UpdateFilterTags(userID, filterID, requiredTagIDs, bannedTagIDs)
 
 
 	--generate actual tags
-	local requiredTagIDs, bannedTagIDs = {}, {}
+	local newRequiredTagIDs, newBannedTagIDs = {}, {}
 	for k,v in pairs(requiredTagIDs) do
-		if v ~= '' then
-			requiredTagIDs[k] = self:CreateTag(userID, v).id
+		if v:gsub(' ', '') ~= '' then
+			print(v)
+			newRequiredTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
 	for k,v in pairs(bannedTagIDs) do
 		if v ~= '' then
-			bannedTagIDs[k] = self:CreateTag(userID, v).id
+			newBannedTagIDs[k] = self:CreateTag(userID, v).id
 		end
 	end
 
 
 
-	local ok, err = worker:UpdateFilterTags(filter, requiredTagIDs, bannedTagIDs)
+	local ok, err = worker:UpdateFilterTags(filter, newRequiredTagIDs, newBannedTagIDs)
 	print('dons')
 	if not ok then
 		return ok, err
@@ -2096,6 +2097,7 @@ function api:CreateFilter(userID, filterInfo)
 
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
+	print(to_json(newFilter))
 	if not newFilter then
 		return newFilter, err
 	end

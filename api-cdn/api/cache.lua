@@ -370,6 +370,7 @@ end
 
 function cache:GetFilterByName(filterName)
   local filterID = self:GetFilterID(filterName)
+  print(filterID)
   if not filterID then
     return nil
   end
