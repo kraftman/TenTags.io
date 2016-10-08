@@ -1325,7 +1325,6 @@ end
 
 
 function api:GetUserFrontPage(userID,filter,range)
-	print(userID, filter, range)
 	-- can only get own
 	if not userID then
 		return nil, 'no userID'

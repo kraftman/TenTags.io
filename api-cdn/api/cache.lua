@@ -335,6 +335,7 @@ function cache:GetPost(postID)
 end
 
 function cache:GetFilterPosts(filter)
+  print('this')
 
   local filterIDs = redisread:GetFilterPosts(filter)
   local posts = {}
@@ -342,6 +343,7 @@ function cache:GetFilterPosts(filter)
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
+    table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
   end
 
@@ -651,6 +653,8 @@ function cache:GetUserFrontPage(userID,filter,range)
   for _,post in pairs(newPosts) do
 
       post.filters = self:GetFilterInfo(post.filters) or {}
+
+      table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     if userVotedPosts[post.id] then
       post.userHasVoted = true
     end
