@@ -1,6 +1,7 @@
 
 var index = 0
 var hasFocus = false
+var hidden = {}
 
 $(function() {
   $('.post-controls').hide();
@@ -44,15 +45,22 @@ function OpenComments(e) {
 }
 
 function Upvote(e) {
-  if ($(':focus').find(".postLink").length) {
-    var currentPost = $(':focus')
-  }
+  $(':focus').slideUp('fast')
+  ChangeFocus(1);
+  e.preventDefault();
 }
 
 function Downvote(e) {
   $(':focus').slideUp('fast')
   ChangeFocus(1);
   e.preventDefault();
+  var currentPost = $(':focus')[0]
+  var postID = $(currentPost).children('.postID')[0].value()
+  console.log(postID)
+
+  console.log(currentPost)
+
+  hidden.push(postID);
 }
 
 Mousetrap.bind('tab', function(e) {
