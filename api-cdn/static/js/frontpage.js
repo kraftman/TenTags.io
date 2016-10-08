@@ -50,7 +50,9 @@ function Upvote(e) {
 }
 
 function Downvote(e) {
-  $(':focus').hide("slide", { direction: "left" }, 200);
+  $(':focus').slideUp('fast')
+  ChangeFocus(1);
+  e.preventDefault();
 }
 
 Mousetrap.bind('tab', function(e) {
