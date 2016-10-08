@@ -80,6 +80,7 @@ function worker:UpdateFilterTitle(filter)
 end
 
 function worker:QueueJob(jobName, value)
+  --doesnt update existing elements
   return rediswrite:QueueJob(jobName, value)
 end
 

@@ -8,16 +8,11 @@ config.cjson = require 'cjson'
 
 local redisRead = require 'api.redisread'
 local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
 local cache = require 'api.cache'
 local tinsert = table.insert
-local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local SEED = 1
+local from_json = (require 'lapis.util').from_json
 
-local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
-}
 
 function config:New(util)
   local c = setmetatable({},self)
@@ -37,13 +32,32 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
   self:InvalidateCache()
+	self:TrimInvalidations()
 
+end
+
+function config:MilliSecondTime()
+	return ngx.now()*1000 --milliseconds
+end
+
+function config:TrimInvalidations()
+	--delete invalidations older than time - 10 minutes
+	local ok, err = self.util:GetLock('TrimCacheInvalidations', 100)
+	if not ok then
+		print('couldnt get lock: ',err)
+		return
+	end
+	local cutOff = self:MilliSecondTime() - 10*60*1000
+	ok, err = redisWrite:RemoveInvalidations(cutOff)
+	if not ok then
+		print('error trimming: ',err)
+	end
 end
 
 function config:InvalidateCache()
   -- we want this to run on all workers so dont use locks
 
-  local timeNow = ngx.now()*1000 --milliseconds
+  local timeNow = self:MilliSecondTime()
 
   local ok, err = redisRead:GetInvalidationRequests(self.lastUpdate, timeNow)
   if not ok then
