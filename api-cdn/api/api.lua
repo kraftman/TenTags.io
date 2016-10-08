@@ -262,9 +262,9 @@ end
 
 function api:FilterBanUser(userID, filterID, banInfo)
 
-	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
+	local filter, err = self:UserCanEditFilter(userID, filterID)
+	if not filter then
+		return filter, err
 	end
 
 	banInfo.bannedAt = ngx.time()
