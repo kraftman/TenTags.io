@@ -34,8 +34,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = false
-
+local DISABLE_CACHE = os.getenv('DISABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -52,7 +51,7 @@ end
 function cache:GetUser(userID)
   local ok, err
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
      ok, err = userInfo:get(userID)
     if ok then
       return from_json(ok)
@@ -92,7 +91,7 @@ function cache:GetCommentIDFromURL(commentURL)
 end
 
 function cache:GetAccount(accountID)
-    if ENABLE_CACHE then
+    if not DISABLE_CACHE then
       local ok, err = userInfo:get(accountID)
       if err then
         ngx.log(ngx.ERR, 'unable to get account: ',err)
@@ -128,17 +127,6 @@ function cache:GetUserAlerts(userID)
   return alerts
 end
 
-function cache:GetMasterUserByEmail(email)
-  email = email:lower()
-  local userID = userRead:GetMasterUserByEmail(email)
-  if not userID then
-    return
-  end
-
-  local userInfo = self:GetMasterUserInfo(userID)
-  return userInfo
-
-end
 
 function cache:GetUserTagVotes(userID)
   if not userID then
@@ -219,7 +207,7 @@ function cache:GetPostComments(postID)
 
   local ok, err,flatComments
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = commentInfo:get(postID)
     if err then
       ngx.log(ngx.ERR, 'could not get post comments: ',err)
@@ -323,7 +311,7 @@ function cache:GetPost(postID)
     postID = self:ConvertShortURL(postID)
   end
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = postInfo:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -380,7 +368,7 @@ end
 function cache:GetFilterByID(filterID)
   local ok, err, result
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = filterDict:get(filterID)
 
     if err then
@@ -560,7 +548,7 @@ function cache:GetUserCommentVotes(userID)
 
   local ok, err, commentVotes
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
 
     ok, err = voteInfo:get('commentVotes:'..userID)
 
@@ -687,7 +675,7 @@ end
 function cache:GetUserFilterIDs(userID)
   local ok, err, res
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = userFilterIDs:get(userID)
     if err then
       ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)

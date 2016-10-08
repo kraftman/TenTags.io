@@ -24,14 +24,13 @@ local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 local POST_TITLE_LENGTH = 300
-local UNLIMITED_VOTING = true
+local UNLIMITED_VOTING = os.getenv('UNLIMITED_VOTING')
 local SOURCE_POST_THRESHOLD = 0.75
 --local permission = require 'userpermission'
 
-local ENABLE_RATELIMIT = false
 local MAX_ALLOWED_TAG_COUNT = 20
 local MAX_MOD_COUNT = 3
-local RATELIMIT_ENABLED = false
+local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 
 local function AverageTagScore(filterRequiredTagIDs,postTags)
 
@@ -59,7 +58,7 @@ local function AverageTagScore(filterRequiredTagIDs,postTags)
 end
 
 local function RateLimit(action, userID, limit, duration)
-	if not RATELIMIT_ENABLED then
+	if DISABLE_RATELIMIT then
 		return true
 	end
 
@@ -67,9 +66,6 @@ local function RateLimit(action, userID, limit, duration)
 		return nil, 'you must be logged in to do that'
 	end
 	local key = action..userID
-	if not ENABLE_RATELIMIT then
-		return true
-	end
 
 	local ok, err = rateDict:get(key)
 	if err then

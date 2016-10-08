@@ -44,7 +44,6 @@ function config:TrimInvalidations()
 	--delete invalidations older than time - 10 minutes
 	local ok, err = self.util:GetLock('TrimCacheInvalidations', 100)
 	if not ok then
-		print('couldnt get lock: ',err)
 		return
 	end
 	local cutOff = self:MilliSecondTime() - 10*60*1000
