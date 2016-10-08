@@ -12,6 +12,10 @@ services:
       - ./api-cdn:/opt/openresty/nginx/conf
     entrypoint: ""
     command:  bash -c "lapis server"
+    environment:
+      - DISABLE_CACHE=true
+      - DISABLE_RATELIMIT=true
+      - UNLIMITED_VOTING=true
 
   imghost:
     image: tenstartups/openresty
