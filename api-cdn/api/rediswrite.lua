@@ -295,6 +295,12 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
 end
 
+function write:RemoveInvalidations(cutOff)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:zremrangebyscore('invalidationRequests', 0, cutOff)
+  return ok, err
+end
+
 function write:QueueJob(queueName,value)
   local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
