@@ -193,6 +193,20 @@ function api:GetUserFilters(userID)
 	return filters
 end
 
+function api:GetUserSettings(userID)
+	local ok, err = RateLimit('GetUserSettings', 5, 1)
+	if not ok then
+		return nil, "you're doing that too much"
+	end
+	if not userID or userID:gsub(' ', '') == '' then
+		return nil, 'no userID given'
+	end
+
+	local user, err = cache:GetUser(userID)
+	return user, err
+
+end
+
 function api:ConvertShortURL(shortURL)
 	return cache:ConvertShortURL(shortURL)
 end
@@ -782,9 +796,9 @@ function api:VotePost(userID, postID, direction)
 			--return nil, 'already voted'
 		end
 	end
-	--print(user.hideVotedPosts)
+	print(user.hideVotedPosts)
 	if tonumber(user.hideVotedPosts) == 1 then
-		--print('hiding voted post')
+		print('hiding voted post')
 		cache:AddSeenPost(userID, postID)
 	end
 
@@ -816,7 +830,6 @@ function api:VotePost(userID, postID, direction)
 	worker:AddUserPostVotes(userID, postID)
 
 	return true
-
 
 end
 
@@ -1263,17 +1276,24 @@ function api:RegisterAccount(session, confirmURL)
 	return ok, err
 end
 
-function api:GetUserFrontPage(userID,filter,range)
+function api:GetUserFrontPage(userID,filter,startAt, endAt)
 	-- can only get own
 	if not userID then
 		return nil, 'no userID'
 	end
-	if not range then
+	startAt,endAt = tonumber(startAt), tonumber(endAt)
+	if not startAt or not endAt then
 		return nil, 'no range'
+	end
+	if startAt >= endAt then
+		return nil, 'start must be lower than end'
+	end
+	if (endAt - startAt) > 100 then
+		return nil, 'cannot requset range > 100'
 	end
 
 
-  return cache:GetUserFrontPage(userID,filter,range)
+  return cache:GetUserFrontPage(userID,filter,startAt, endAt)
 end
 
 function api:CreateSubUser(accountID, username)
@@ -1588,7 +1608,7 @@ end
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
-		print(tagName)
+		--print(tagName)
 
 		tagName = trim(tagName:lower())
 		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, tagName)

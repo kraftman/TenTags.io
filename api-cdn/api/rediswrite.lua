@@ -271,7 +271,7 @@ function write:CreateFilter(filter)
 
     -- add to list of filters
     red:zadd('filters',hashFilter.createdAt,hashFilter.id)
-    red:sadd('filterNamefs',hashFilter.name)
+    red:sadd('filterNames',hashFilter.name)
 
     -- add all filter info
     red:hmset('filter:'..hashFilter.id, hashFilter)
@@ -287,7 +287,7 @@ end
 
 function write:CreateFilterPostInfo(red, filter,postInfo)
   --print('updating filter '..filter.title..'with new score: '..filter.score)
-  print(filter.id, postInfo.id)
+  --print(filter.id, postInfo.id)
   red:sadd('filterposts:'..filter.id, postInfo.id)
   red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
   red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
@@ -337,8 +337,8 @@ function write:AddPostToFilters(post, filters)
   local red = util:GetRedisWriteConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
-        print(to_json(filterInfo))
-        print(to_json(post))
+        --print(to_json(filterInfo))
+        --print(to_json(post))
       self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
@@ -657,7 +657,7 @@ function write:CreatePost(post)
 
   for k,v in pairs(post) do
     if k == 'viewers' then
-      for _,viewerID in pars(v) do
+      for _,viewerID in pairs(v) do
         hashedPost['viewer:'..viewerID] = 'true'
       end
     elseif k == 'filters' then

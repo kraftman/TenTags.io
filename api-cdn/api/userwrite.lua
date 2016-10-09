@@ -172,6 +172,7 @@ function userwrite:CreateSubUser(user)
   end
 
   local red = util:GetUserWriteConnection()
+  user.filters = user.filters or {}
 
   red:init_pipeline()
     red:hmset('user:'..hashedUser.id, hashedUser)

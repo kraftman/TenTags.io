@@ -12,7 +12,7 @@ local function FrontPage(self)
   local range = 10*(self.pageNum-1)
   local filter = self.req.parsed_url.path:match('/(%w+)$')
 
-  self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range)
+  self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range, range+10)
 
   --print(to_json(self.posts))
 

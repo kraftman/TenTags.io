@@ -73,9 +73,30 @@ function m:AutoContent(app)
 
 end
 
+local function CreatePosts(self)
+  local userID = self.session.userID
+
+  for i = 1, 100 do
+    local info = {
+      title = 'post:'..i,
+      text = 'text:'..i,
+      createdBy = userID,
+      tags = {'123'}
+    }
+
+    local ok, err = api:CreatePost(userID, info)
+
+    if not ok then
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      return {json = err}
+    end
+  end
+
+end
 
 function m:Register(app)
   app:get('/auto/all', function(appInst) return self:AutoContent(appInst) end)
+  app:get('/auto/posts', CreatePosts)
 end
 
 return m

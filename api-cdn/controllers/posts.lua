@@ -13,7 +13,7 @@ local trim = util.trim
 
 
 local function CreatePost(self)
-  print(self.params.selectedtags)
+  --print(self.params.selectedtags)
   local selectedTags = from_json(self.params.selectedtags)
 
   if trim(self.params.link) == '' then
@@ -66,7 +66,7 @@ local function GetPost(self)
   self.comments = comments
 
   local post,err = api:GetPost(self.session.userID, postID)
-  print(to_json(post))
+  --print(to_json(post))
 
   if not post then
     if type(err) == 'number' then
