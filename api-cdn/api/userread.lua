@@ -175,22 +175,6 @@ function userread:GetUserComments(userID)
   end
 end
 
-function userread:GetMasterUserByEmail(email)
-  local red = util:GetUserReadConnection()
-  local ok, err = red:hget('useremails',email)
-  util:SetKeepalive(red)
-
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get user info:',err)
-  end
-
-  if ok == ngx.null then
-    return
-  else
-    return ok
-  end
-end
-
 function userread:GetUnseenPosts(baseKey, elements)
   local red = util:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()

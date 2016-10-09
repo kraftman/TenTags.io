@@ -123,28 +123,6 @@ function userwrite:CreateAccount(account)
 
 end
 
-function userwrite:CreateMasterUser(masterInfo)
-  -- pipeline
-  local red = util:GetUserWriteConnection()
-  local users = masterInfo.users
-  masterInfo.users = nil
-  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master info:',err)
-    return false
-  end
-
-  red:hset('useremails',masterInfo.email,masterInfo.id)
-
-  for k, v in pairs(users) do
-    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
-  end
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master user: ',err)
-  end
-
-end
-
 function userwrite:AddSeenPosts(userID,seenPosts)
   local red = util:GetUserWriteConnection()
   local addKeySHA1 = addKey:GetSHA1()
@@ -204,15 +182,6 @@ function userwrite:CreateSubUser(userInfo)
   end
   return true
 
-end
-
-function userwrite:ActivateAccount(userID)
-  local red = util:GetUserWriteConnection()
-  local ok, err = red:hset('master:'..userID,'active',1)
-  util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to activate account:',err)
-  end
 end
 
 function userwrite:SubscribeToFilter(userID,filterID)
