@@ -158,21 +158,27 @@ function userwrite:IncrementUserStat(userID, statName, value)
   return ok, err
 end
 
-function userwrite:CreateSubUser(userInfo)
-  local red = util:GetUserWriteConnection()
-  local filters = userInfo.filters or {}
-  userInfo.filters = nil
+function userwrite:CreateSubUser(user)
 
-  for k,v in pairs(userInfo) do
-    ngx.log(ngx.ERR, k, to_json(v))
+  local hashedUser = {}
+  hashedUser.filters = {}
+
+  for k,v in pairs(user) do
+    if k == 'filters' then
+      --do nothing for now, might add the hash later
+    else
+      hashedUser[k] = v
+    end
   end
 
+  local red = util:GetUserWriteConnection()
+
   red:init_pipeline()
-    red:hmset('user:'..userInfo.id,userInfo)
-    for _,filterID in pairs(filters) do
-      red:sadd('userfilters:'..userInfo.id,filterID)
+    red:hmset('user:'..hashedUser.id, hashedUser)
+    for _,filterID in pairs(user.filters) do
+      red:sadd('userfilters:'..hashedUser.id,filterID)
     end
-    red:hset('userToID',userInfo.username:lower(),userInfo.id)
+    red:hset('userToID',hashedUser.username:lower(),hashedUser.id)
   local results, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
