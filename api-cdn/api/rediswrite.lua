@@ -66,10 +66,10 @@ function write:AddKey(addSHA,baseKey,newElement)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add key: ',err)
   end
-  return ok
+  return ok, err
 end
 
-
+--[[
 function write:CreateComment(postID,commentID, comment)
   local red = util:GetRedisWriteConnection()
   local ok , err = red:hmset(postID,commentID,comment)
@@ -88,6 +88,7 @@ function write:GetComments(postID)
   util:SetKeepalive(red)
   return self:ConvertListToTable(ok)
 end
+--]]
 
 
 function write:ConvertListToTable(list)
@@ -262,20 +263,20 @@ function write:CreateFilter(filter)
   -- add id to name conversion table
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
-  red:set('filterid:'..hashFilter.name,hashFilter.id)
+    red:set('filterid:'..hashFilter.name,hashFilter.id)
 
 
-  -- add to list ranked by subs
-  red:zadd('filtersubs',hashFilter.subs, hashFilter.id)
+    -- add to list ranked by subs
+    red:zadd('filtersubs',hashFilter.subs, hashFilter.id)
 
-  -- add to list of filters
-  red:zadd('filters',hashFilter.createdAt,hashFilter.id)
-  red:sadd('filterNames',hashFilter.name)
+    -- add to list of filters
+    red:zadd('filters',hashFilter.createdAt,hashFilter.id)
+    red:sadd('filterNamefs',hashFilter.name)
 
-  -- add all filter info
-  red:hmset('filter:'..hashFilter.id, hashFilter)
+    -- add all filter info
+    red:hmset('filter:'..hashFilter.id, hashFilter)
 
-  self:AddTagIDsToFilter(red, filter.id, filter.requiredTagIDs, filter.bannedTagIDs)
+    self:AddTagIDsToFilter(red, filter.id, filter.requiredTagIDs, filter.bannedTagIDs)
 
   local results, err = red:commit_pipeline()
   if err then
@@ -648,38 +649,47 @@ function write:UpdateFilterTitle(filter)
   end
 end
 
-function write:CreatePost(postInfo)
+function write:CreatePost(post)
+
+  local hashedPost = {}
+  hashedPost.viewers = {}
+  hashedPost.filters = {}
+
+  for k,v in pairs(post) do
+    if k == 'viewers' then
+      for _,viewerID in pars(v) do
+        hashedPost['viewer:'..viewerID] = 'true'
+      end
+    elseif k == 'filters' then
+      for _,filterID in pairs(v) do
+        hashedPost['filter:'..filterID] = 'true'
+      end
+    elseif k == 'tags' then
+      --leave tags seperate for now as we do more with them
+    else
+      hashedPost[k] = v
+    end
+   end
+
   local red = util:GetRedisWriteConnection()
-  local tags = postInfo.tags
-  postInfo.tags = nil
-
-  for _,viewerID in pairs(postInfo.viewers) do
-    postInfo['viewer:'..viewerID] = 'true'
-  end
-  postInfo.viewers = nil
-
-  for _,filterID in pairs(postInfo.filters) do
-    postInfo['filter:'..filterID] = 'true'
-  end
-  postInfo.filters = nil
 
   red:init_pipeline()
 
-    red:del('post:'..postInfo.id)
+    red:del('post:'..hashedPost.id)
 
     -- collect tag ids and add taginfo to hash
-    for _,tag in pairs(tags) do
-      red:sadd('tagPosts:'..tag.id, postInfo.id)
-      red:sadd('post:tagIDs:'..postInfo.id,tag.id)
-      red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
+    for _,tag in pairs(post.tags) do
+      red:sadd('tagPosts:'..tag.id, hashedPost.id)
+      red:sadd('post:tagIDs:'..hashedPost.id,tag.id)
+      red:hmset('posttags:'..hashedPost.id..':'..tag.id,tag)
     end
 
     -- add to /f/all
 
-    red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
+    red:zadd('allposts:date',hashedPost.createdAt,hashedPost.id)
 
     -- add post inf
-  red:hmset('post:'..postInfo.id,postInfo)
+    red:hmset('post:'..hashedPost.id,hashedPost)
   local results,err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to create post:',err)
@@ -691,19 +701,24 @@ end
 
 
 function write:CreateThread(thread)
-  local red = util:GetRedisWriteConnection()
-  local viewers = thread.viewers
-  thread.viewers = nil
 
-  -- there wont be many viewers ever so lets not waste a set
-  for _,userID in pairs(viewers) do
-    ngx.log(ngx.ERR, 'adding user: ',userID)
-    thread['viewer:'..userID] = 1
+  local hashedThread = {}
+  hashedThread.viewers = {}
+  for k,v in pairs(thread) do
+    if k == 'viewers' then
+      for _,userID in pairs(v) do
+        hashedThread['viewer:'..userID] = 1
+      end
+    else
+      hashedThread[k] = v
+    end
   end
 
+  local red = util:GetRedisWriteConnection()
+
   red:init_pipeline()
-    red:hmset('Thread:'..thread.id,thread)
-    for _,userID in pairs(viewers) do
+    red:hmset('Thread:'..hashedThread.id,hashedThread)
+    for _,userID in pairs(thread.viewers) do
       red:zadd('UserThreads:'..userID,thread.lastUpdated,thread.id)
     end
   local res, err = red:commit_pipeline()

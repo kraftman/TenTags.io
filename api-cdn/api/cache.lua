@@ -106,14 +106,10 @@ function cache:GetAccount(accountID)
     end
     local ok, err = userInfo:set(accountID, to_json(account))
     if not ok then
-      ngx.log(ngx.ERR, 'unable to set master info: ',err)
+      ngx.log(ngx.ERR, 'unable to set account info: ',err)
     end
 
     return account
-end
-
-function cache:VerifyReset(emailAddr, key)
-  return redisread:VerifyReset(emailAddr, key)
 end
 
 function cache:GetUserAlerts(userID)

@@ -1125,74 +1125,6 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 end
 
 
-function api:VerifyReset(emailAddr, resetKey)
-  return cache:VerifyReset(emailAddr, resetKey)
-end
-
-function api:ResetPassword(email, key, password)
-	local ok, err
-	ok = cache:VerifyReset(email, key)
-	if not ok then
-		return nil, 'validation failed'
-	end
-
-	if password < 8 then
-		return nil, 'password must be at least 8 characters!'
-	end
-
-	local master = cache:GetMasterUserByEmail(email)
-	local passwordHash = scrypt.crypt(password)
-	ok = worker:ResetMasterPassword(master.id, passwordHash)
-	if not ok then
-		return nil, 'validation failed'
-	end
-	ok, err = worker:DeleteResetKey(email)
-	return ok, err
-	-- can set new password
-end
-
-function api:ValidateMaster(userCredentials)
-  local masterInfo = cache:GetMasterUserByEmail(userCredentials.email)
-
-  if not masterInfo then
-    return nil, 'error getting profile'
-  end
-
-  if masterInfo.active == 0 then
-    return nil,true
-  end
-  local valid = scrypt.check(userCredentials.password,masterInfo.passwordHash)
-
-	if not valid then
-		return nil
-	end
-
-	local loginInfo = {
-		userIP = ngx.var.host,
-		userAgent = ngx.var.http_user_agent,
-		loginTime = ngx.time()
-	}
-
-	worker:LogSuccessfulLogin(masterInfo.id, loginInfo)
-
-  masterInfo.passwordHash = nil
-  return masterInfo
-
-end
-
-function api:SendPasswordReset(url, email)
-
-	email = self:SanitiseUserInput(email, 200)
-
-	local masterInfo = cache:GetMasterUserByEmail(email)
-	if not masterInfo then
-		return true
-	end
-
-	local resetKey = uuid.generate_random()
-	return worker:SendPasswordReset(url, email, resetKey)
-
-end
 
 function api:GetHash(values)
   local str = require 'resty.string'
@@ -1331,12 +1263,6 @@ function api:RegisterAccount(session, confirmURL)
 	return ok, err
 end
 
-function api:CreateActivationKey(masterInfo)
-  local key = ngx.md5(masterInfo.id..masterInfo.email..salt)
-  return key:match('.+(........)$')
-end
-
-
 function api:GetUserFrontPage(userID,filter,range)
 	-- can only get own
 	if not userID then
@@ -1438,86 +1364,7 @@ function api:SwitchUser(accountID, userID)
 	return user
 end
 
-function api:SanitizeMasterUser(master)
 
-
-	if not master.username then
-		return nil, 'no username given'
-	end
-
-	if not master.password then
-		return nil, 'no password given'
-	end
-
-	if not master.email then
-		return nil, 'no email given'
-	end
-
-	master.username = master.username:gsub(' ','')
-	master.password = master.password:gsub(' ','')
-	master.email = master.email:gsub(' ','')
-
-	if #master.password > 200 then
-		return nil, 'password must be shorter than 200 chars'
-	end
-	if #master.password < 8 then
-		return nil, 'password must be longer than 8 chars'
-	end
-
-	local newMaster = {
-		username = self:SanitiseUserInput(master.username, 20),
-		email = self:SanitiseUserInput(master.email),
-		passwordHash = scrypt.crypt(master.password),
-		id = uuid.generate_random(),
-		active = 0,
-		userCount = 1,
-		users = {}
-	}
-
-	return newMaster
-
-end
-
-
-
-
-function api:CreateMasterUser(confirmURL, userInfo)
-	local ok, err,newMaster
-
-	newMaster,err = api:SanitizeMasterUser(userInfo)
-	if not newMaster then
-		return newMaster, err
-	end
-
-  local firstUser = {
-    id = uuid.generate_random(),
-    username = newMaster.username,
-    filters = cache:GetUserFilterIDs('default'),
-    parentID = newMaster.id
-  }
-
-	local existingUserID = cache:GetUserID(newMaster.username)
-	if existingUserID then
-		return nil, 'username is taken'
-	end
-
-
-  tinsert(newMaster.users,firstUser.id)
-  newMaster.currentUserID = firstUser.id
-
-  local activateKey = self:CreateActivationKey(newMaster)
-  local url = confirmURL..'?email='..userInfo.email..'&activateKey='..activateKey
-
-	ok, err = worker:SendActivationEmail(url, userInfo.email)
-	if err then
-		return ok, err
-	end
-
-  worker:CreateMasterUser(newMaster)
-  worker:CreateSubUser(firstUser)
-  return true
-
-end
 
 function api:AddPostTag(userID, postID, tagName)
 

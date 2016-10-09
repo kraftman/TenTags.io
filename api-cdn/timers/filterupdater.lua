@@ -169,7 +169,7 @@ function config:UpdateFilterPosts()
 
 	local ok, err
 	local requiredTagIDs = filter.requiredTagIDs
-	print(to_json(requiredTagIDs))
+	--print(to_json(requiredTagIDs))
 	local bannedTagIDs = filter.bannedTagIDs
 
 	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
@@ -207,9 +207,7 @@ function config:UpdateFilterPosts()
 
 	local relatedFilters = self:GetRelatedFilters(filter)
 	ok, err = redisWrite:UpdateRelatedFilters(filter, relatedFilters)
-	if not ok then
-		print(ok, err)
-	end
+
 
 
 end

@@ -123,28 +123,6 @@ function userwrite:CreateAccount(account)
 
 end
 
-function userwrite:CreateMasterUser(masterInfo)
-  -- pipeline
-  local red = util:GetUserWriteConnection()
-  local users = masterInfo.users
-  masterInfo.users = nil
-  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master info:',err)
-    return false
-  end
-
-  red:hset('useremails',masterInfo.email,masterInfo.id)
-
-  for k, v in pairs(users) do
-    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
-  end
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master user: ',err)
-  end
-
-end
-
 function userwrite:AddSeenPosts(userID,seenPosts)
   local red = util:GetUserWriteConnection()
   local addKeySHA1 = addKey:GetSHA1()
@@ -180,21 +158,27 @@ function userwrite:IncrementUserStat(userID, statName, value)
   return ok, err
 end
 
-function userwrite:CreateSubUser(userInfo)
-  local red = util:GetUserWriteConnection()
-  local filters = userInfo.filters or {}
-  userInfo.filters = nil
+function userwrite:CreateSubUser(user)
 
-  for k,v in pairs(userInfo) do
-    ngx.log(ngx.ERR, k, to_json(v))
+  local hashedUser = {}
+  hashedUser.filters = {}
+
+  for k,v in pairs(user) do
+    if k == 'filters' then
+      --do nothing for now, might add the hash later
+    else
+      hashedUser[k] = v
+    end
   end
 
+  local red = util:GetUserWriteConnection()
+
   red:init_pipeline()
-    red:hmset('user:'..userInfo.id,userInfo)
-    for _,filterID in pairs(filters) do
-      red:sadd('userfilters:'..userInfo.id,filterID)
+    red:hmset('user:'..hashedUser.id, hashedUser)
+    for _,filterID in pairs(user.filters) do
+      red:sadd('userfilters:'..hashedUser.id,filterID)
     end
-    red:hset('userToID',userInfo.username:lower(),userInfo.id)
+    red:hset('userToID',hashedUser.username:lower(),hashedUser.id)
   local results, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
@@ -204,15 +188,6 @@ function userwrite:CreateSubUser(userInfo)
   end
   return true
 
-end
-
-function userwrite:ActivateAccount(userID)
-  local red = util:GetUserWriteConnection()
-  local ok, err = red:hset('master:'..userID,'active',1)
-  util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to activate account:',err)
-  end
 end
 
 function userwrite:SubscribeToFilter(userID,filterID)
