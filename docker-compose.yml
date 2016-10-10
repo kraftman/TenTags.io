@@ -2,8 +2,8 @@ version: '2'
 services:
   filtta:
     build: api-cdn/.
-    expose:
-      - "8080"
+    ports:
+      - "8084:8080"
     links:
       - imghost
       - redis-general
