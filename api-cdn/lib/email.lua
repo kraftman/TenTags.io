@@ -19,7 +19,7 @@ function m:SendMessage(subject, body, recipient)
         rcpt = '<'..recipient..'>',
         source = smtp.message(msg),
         user = 'admin@filtta.com',
-        password = '*n7NvY[Oh9K8$',
+        password = os.getenv('EMAIL_CREDENTIALS'),
         server = 'mail.privateemail.com',
         port = 465,
         ssl = {enable = true}

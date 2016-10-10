@@ -17,6 +17,7 @@ services:
       - DISABLE_CACHE=true
       - DISABLE_RATELIMIT=true
       - UNLIMITED_VOTING=true
+      - EMAIL_CREDENTIALS='5@6lf17#omJ9'
 
   imghost:
     image: tenstartups/openresty
