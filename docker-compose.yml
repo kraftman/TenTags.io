@@ -4,7 +4,6 @@ services:
     build: api-cdn/.
     expose:
       - "80"
-      - "443"
       - "8080"
     links:
       - imghost
