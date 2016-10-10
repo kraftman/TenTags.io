@@ -9,6 +9,8 @@
 local lapis = require("lapis")
 local app = lapis.Application()
 local api = require 'api.api'
+print(package.path)
+print(package.cpath)
 local date = require("date")
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
