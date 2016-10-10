@@ -7,9 +7,9 @@ local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
-local function DisplaySettings(self)
-  print(self.session.userID, self.session.accountID, self.session.username)
-  local user = api:GetUser(self.session.userID)
+function m.DisplaySettings(request)
+  print(request.session.userID, request.session.accountID, request.session.username)
+  local user = api:GetUser(request.session.userID)
   if not user then
     return 'unknown user'
   end
@@ -17,57 +17,57 @@ local function DisplaySettings(self)
     --ngx.log(ngx.ERR, k,to_json(v))
   end
 
-  self.account = api:GetAccount(self.session.accountID, self.session.accountID)
-  if self.account then
-    for k,v in pairs(self.account.sessions) do
+  request.account = api:GetAccount(request.session.accountID, request.session.accountID)
+  if request.account then
+    for k,v in pairs(request.account.sessions) do
       if not v.activated then
-        self.account.sessions[k] = nil
+        request.account.sessions[k] = nil
       end
     end
   end
   print(to_json(user))
 
 
-  self.enablePM = user.enablePM == '1' and 'checked' or ''
-  self.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
-  self.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
-  self.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
-  self.showNSFW = user.showNSFW == '1' and 'checked' or ''
+  request.enablePM = user.enablePM == '1' and 'checked' or ''
+  request.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
+  request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
+  request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
+  request.showNSFW = user.showNSFW == '1' and 'checked' or ''
 
   ngx.log(ngx.ERR, user.enablePM)
   return {render = 'user.subsettings'}
 end
 
 
-local function UpdateSettings(self)
+function m.UpdateSettings(request)
 
-  local user = api:GetUser(self.session.userID)
-  ngx.log(ngx.ERR, self.params.EnablePM)
-  user.enablePM = self.params.EnablePM and 1 or 0
-  user.hideSeenPosts = self.params.hideSeenPosts and 1 or 0
-  user.hideVotedPosts = self.params.hideVotedPosts and 1 or 0
-  user.hideClickedPosts = self.params.hideClickedPosts and 1 or 0
-  user.showNSFW = self.params.showNSFW and 1 or 0
+  local user = api:GetUser(request.session.userID)
+  ngx.log(ngx.ERR, request.params.EnablePM)
+  user.enablePM = request.params.EnablePM and 1 or 0
+  user.hideSeenPosts = request.params.hideSeenPosts and 1 or 0
+  user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
+  user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
+  user.showNSFW = request.params.showNSFW and 1 or 0
   print 'this'
-  local ok, err = api:UpdateUser(self.session.userID, user)
+  local ok, err = api:UpdateUser(request.session.userID, user)
   if not ok then
     print(err)
     return 'eek'
   end
-  return {redirect_to = self:url_for('usersettings')}
+  return {redirect_to = request:url_for('usersettings')}
 
 end
 
-local function UpdateFilterStyle(self)
+function m.UpdateFilterStyle(request)
 
-  local filterName = self.params.filterName
-  local filterStyle = self.params.styleselect
+  local filterName = request.params.filterName
+  local filterStyle = request.params.styleselect
 
   if not filterName or not filterStyle then
     return 'error, missing arguments'
   end
 
-  local user = api:GetUser(self.session.userID)
+  local user = api:GetUser(request.session.userID)
   for k,v in pairs(user) do
     if type(v) == 'string' then
       print(k,v)
@@ -76,20 +76,20 @@ local function UpdateFilterStyle(self)
 
   user['filterStyle:'..filterName] = filterStyle
   print ('setting filterstyle for filtername '..filterName..' to '..filterStyle)
-  api:UpdateUser(self.session.userID, user)
+  api:UpdateUser(request.session.userID, user)
 
   if filterName == 'frontPage' then
-    --return { redirect_to = self:url_for("home") }
+    --return { redirect_to = request:url_for("home") }
   else
-    --return { redirect_to = self:url_for("filter",{filterlabel = filterName}) }
+    --return { redirect_to = request:url_for("filter",{filterlabel = filterName}) }
   end
   return { redirect_to = ngx.var.http_referer }
 
 end
 
-local function KillSession(self)
+function m.KillSession(request)
 
-  local ok, err = api:KillSession(self.session.accountID, self.params.sessionID)
+  local ok, err = api:KillSession(request.session.accountID, request.params.sessionID)
   if ok then
     return 'killed!'
   else
@@ -101,15 +101,15 @@ end
 
 function m:Register(app)
   app:match('usersettings','/settings', respond_to({
-    GET = DisplaySettings,
-    POST = UpdateSettings
+    GET = self.DisplaySettings,
+    POST = self.UpdateSettings
   }))
 
   app:match('/settings/filterstyle',respond_to({
-    POST = UpdateFilterStyle
+    POST = self.UpdateFilterStyle
   }))
 
-  app:get('killsession', '/sessions/:sessionID/kill', KillSession)
+  app:get('killsession', '/sessions/:sessionID/kill', self.KillSession)
 end
 
 

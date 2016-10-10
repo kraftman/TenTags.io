@@ -7,19 +7,19 @@ local m = {}
 
 
 
-local function FrontPage(self)
-  self.pageNum = self.params.page or 1
-  local range = 10*(self.pageNum-1)
-  local filter = self.req.parsed_url.path:match('/(%w+)$')
+function m.FrontPage(request)
+  request.pageNum = request.params.page or 1
+  local range = 10*(request.pageNum-1)
+  local filter = request.req.parsed_url.path:match('/(%w+)$')
 
-  self.posts = api:GetUserFrontPage(self.session.userID or 'default',filter,range, range+10)
+  request.posts = api:GetUserFrontPage(request.session.userID or 'default',filter,range, range+10)
 
-  --print(to_json(self.posts))
+  --print(to_json(request.posts))
 
   --defer until we need it
-  if self:GetFilterTemplate():find('filtta') then
-    for _,post in pairs(self.posts) do
-      local comments =api:GetPostComments(self.session.userID, post.id, 'best')
+  if request:GetFilterTemplate():find('filtta') then
+    for _,post in pairs(request.posts) do
+      local comments =api:GetPostComments(request.session.userID, post.id, 'best')
       _, post.topComment = next(comments[post.id].children)
 
       if post.topComment then
@@ -28,19 +28,19 @@ local function FrontPage(self)
     end
   end
 
-  if self.session.userID then
-    for _,v in pairs(self.posts) do
+  if request.session.userID then
+    for _,v in pairs(request.posts) do
       if v.id then
-        v.hash = ngx.md5(v.id..self.session.userID)
+        v.hash = ngx.md5(v.id..request.session.userID)
       end
     end
-    self.userInfo = api:GetUser(self.session.userID)
+    request.userInfo = api:GetUser(request.session.userID)
   end
 
   -- if empty and logged in then redirect to seen posts
-  if not self.posts or #self.posts == 0 then
+  if not request.posts or #request.posts == 0 then
     if filter ~= 'seen' then -- prevent loop
-      --return { redirect_to = self:url_for("seen") }
+      --return { redirect_to = request:url_for("seen") }
     end
   end
 
@@ -50,10 +50,10 @@ local function FrontPage(self)
 end
 
 function m:Register(app)
-  app:get('home','/',FrontPage)
-  app:get('new','/new',FrontPage)
-  app:get('best','/best',FrontPage)
-  app:get('seen','/seen',FrontPage)
+  app:get('home','/',self.FrontPage)
+  app:get('new','/new',self.FrontPage)
+  app:get('best','/best',self.FrontPage)
+  app:get('seen','/seen',self.FrontPage)
 end
 
 return m

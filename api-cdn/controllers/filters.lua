@@ -1,6 +1,6 @@
 
 
-local M = {}
+local m = {}
 
 local api = require 'api.api'
 
@@ -11,47 +11,47 @@ local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
 
-local function ToggleDefault(self)
-  if not self.session.userID then
-    return { redirect_to = self:url_for("login") }
+function m.ToggleDefault(request)
+  if not request.session.userID then
+    return { redirect_to = request:url_for("login") }
   end
 
-  if self.params.setdefault == 'true' then
+  if request.params.setdefault == 'true' then
     print('this')
-    return api:SubscribeToFilter(self.session.userID, 'default',self.params.filterID)
-  elseif self.params.setdefault == 'false' then
-    return api:UnsubscribeFromFilter(self.session.userID,'default',self.params.filterID)
+    return api:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
+  elseif request.params.setdefault == 'false' then
+    return api:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
   end
 
-  if self.params.subscribe == 'true' then
-    return api:SubscribeToFilter(self.session.userID, self.session.userID,self.params.filterID)
-  elseif self.params.setdefault == 'false' then
-    return api:UnsubscribeFromFilter(self.session.userID, self.session.userID,self.params.filterID)
+  if request.params.subscribe == 'true' then
+    return api:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
+  elseif request.params.setdefault == 'false' then
+    return api:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
   end
 end
 
-local function NewFilter(self)
+function m.NewFilter(request)
 
-  if self.params.setdefault or self.params.subscribe then
-    return ToggleDefault(self)
+  if request.params.setdefault or request.params.subscribe then
+    return ToggleDefault(request)
   end
 
-  local requiredTagIDs = from_json(self.params.requiredTagIDs)
-  local bannedTagIDs = from_json(self.params.bannedTagIDs)
+  local requiredTagIDs = from_json(request.params.requiredTagIDs)
+  local bannedTagIDs = from_json(request.params.bannedTagIDs)
 
   local info ={
-    title = self.params.title,
-    name= self.params.label:gsub(' ','') ,
-    description = self.params.description,
+    title = request.params.title,
+    name= request.params.label:gsub(' ','') ,
+    description = request.params.description,
     createdAt = ngx.time(),
-    createdBy = self.session.userID,
-    ownerID = self.session.userID
+    createdBy = request.session.userID,
+    ownerID = request.session.userID
   }
 
   info.bannedTagIDs = bannedTagIDs
   info.requiredTagIDs = requiredTagIDs
 
-  local ok, err = api:CreateFilter(self.session.userID, info)
+  local ok, err = api:CreateFilter(request.session.userID, info)
   if ok then
     return { json = ok }
   else
@@ -61,23 +61,23 @@ local function NewFilter(self)
 end
 
 
-local function CreateFilter(self)
-  if not self.session.userID then
+function m.CreateFilter(request)
+  if not request.session.userID then
     print('no user id')
-    return { redirect_to = self:url_for("login") }
+    return { redirect_to = request:url_for("login") }
   end
-  self.tags = api:GetAllTags()
+  request.tags = api:GetAllTags()
   return {render = 'filter.create'}
 end
 
 
-local function DisplayFilter(self)
+function m.DisplayFilter(request)
 
   -- does the filter exist? if not then let them make it
-  local filter = api:GetFilterByName(self.params.filterlabel)
+  local filter = api:GetFilterByName(request.params.filterlabel)
 
   if not filter then
-    return CreateFilter(self)
+    return CreateFilter(request)
   end
 
   for _,v in pairs(filter.mods) do
@@ -87,46 +87,46 @@ local function DisplayFilter(self)
 
   filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
-  self.thisfilter = filter
-  self.isMod = api:UserCanEditFilter(self.session.userID, filter.id)
+  request.thisfilter = filter
+  request.isMod = api:UserCanEditFilter(request.session.userID, filter.id)
 
-  self.posts = api:GetFilterPosts(filter)
-  --(to_json(self.posts))
-  for k,v in pairs(self.posts) do
-    v.hash = ngx.md5(v.id..self.session.userID)
+  request.posts = api:GetFilterPosts(filter)
+  --(to_json(request.posts))
+  for k,v in pairs(request.posts) do
+    v.hash = ngx.md5(v.id..request.session.userID)
   end
 
   return {render = 'filter.view'}
 
 end
 
-local function LoadAllFilters(self)
-  local user = api:GetUser(self.session.userID)
+function m.LoadAllFilters(request)
+  local user = api:GetUser(request.session.userID)
   if user and user.role == 'Admin' then
-    self.isAdmin = true
+    request.isAdmin = true
   end
 
   --TODO: also get all user filters
   -- so we can change 'subscribe'  to 'unsubscribe'
 
-  self.filters = api:GetFiltersBySubs()
-  --print(to_json(self.filters))
+  request.filters = api:GetFiltersBySubs()
+  --print(to_json(request.filters))
 
   return {render = 'filter.all'}
 end
 
-local function BanUser(self,filter)
-  local userID = api:GetUserID(self.params.banuser)
+function m.BanUser(request,filter)
+  local userID = api:GetUserID(request.params.banuser)
   if not userID then
-    ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',self.params.banuser)
-    return 'user '..self.params.banuser..' does not exist'
+    ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',request.params.banuser)
+    return 'user '..request.params.banuser..' does not exist'
   end
   local banInfo = {
     userID = userID,
-    banReason = self.params.banUserReason or '',
-    bannedBy = self.session.userID
+    banReason = request.params.banUserReason or '',
+    bannedBy = request.session.userID
   }
-  local ok, err = api:FilterBanUser(self.session.userID, filter.id, banInfo)
+  local ok, err = api:FilterBanUser(request.session.userID, filter.id, banInfo)
   if ok then
     return 'success'
   else
@@ -134,14 +134,14 @@ local function BanUser(self,filter)
   end
 end
 
-local function BanDomain(self,filter)
+function m.BanDomain(request,filter)
 
   local banInfo = {
-    domainName = self.params.banDomain,
-    banReason = self.params.banDomainReason or '',
-    bannedBy = self.session.userID
+    domainName = request.params.banDomain,
+    banReason = request.params.banDomainReason or '',
+    bannedBy = request.session.userID
   }
-  local ok, err = api:FilterBanDomain(self.session.userID,filter.id, banInfo)
+  local ok, err = api:FilterBanDomain(request.session.userID,filter.id, banInfo)
   if ok then
     return 'success'
   else
@@ -149,10 +149,10 @@ local function BanDomain(self,filter)
   end
 end
 
-local function UpdateFilterTags(self,filter)
-  local requiredTagIDs = from_json(self.params.requiredTagIDs)
-  local bannedTagIDs = from_json(self.params.bannedTagIDs)
-  local userID = self.session.userID
+function m.UpdateFilterTags(request,filter)
+  local requiredTagIDs = from_json(request.params.requiredTagIDs)
+  local bannedTagIDs = from_json(request.params.bannedTagIDs)
+  local userID = request.session.userID
 
   --print(to_json(filter))
   --print(filter.id)
@@ -166,9 +166,9 @@ local function UpdateFilterTags(self,filter)
   end
 end
 
-local function AddMod(self, filter)
-  local modName = self.params.addmod
-  local ok, err = api:AddMod(self.session.userID, filter.id, modName)
+function m.AddMod(request, filter)
+  local modName = request.params.addmod
+  local ok, err = api:AddMod(request.session.userID, filter.id, modName)
   if ok then
     return 'success'
   else
@@ -176,9 +176,9 @@ local function AddMod(self, filter)
   end
 end
 
-local function DelMod(self, filter)
-  local modID = self.params.delmod
-  local ok, err = api:DelMod(self.session.userID, filter.id, modID)
+function m.DelMod(request, filter)
+  local modID = request.params.delmod
+  local ok, err = api:DelMod(request.session.userID, filter.id, modID)
   if ok then
     return 'success'
   else
@@ -186,17 +186,17 @@ local function DelMod(self, filter)
   end
 end
 
-local function UpdateTitle(self, filter)
-  local title = self.params.filtertitle
+function m.UpdateTitle(request, filter)
+  local title = request.params.filtertitle
 
-  local description = self.params.filterdescription
+  local description = request.params.filterdescription
 
-  local ok, err = api:UpdateFilterDescription(self.session.userID, filter.id,description)
+  local ok, err = api:UpdateFilterDescription(request.session.userID, filter.id,description)
   if not ok then
     return 'failed to update description: ',err
   end
 
-  ok, err = api:UpdateFilterTitle(self.session.userID, filter.id, title)
+  ok, err = api:UpdateFilterTitle(request.session.userID, filter.id, title)
   if not ok then
     return 'failed to update title: ',err
   else
@@ -206,38 +206,38 @@ local function UpdateTitle(self, filter)
 end
 
 
-local function UpdateFilter(self)
-  --print(self.params.filterlabel)
-  local filter = api:GetFilterByName(self.params.filterlabel)
+function m.UpdateFilter(request)
+  --print(request.params.filterlabel)
+  local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     print('filter not found')
-    return CreateFilter(self)
+    return CreateFilter(request)
   end
-  self.selectedFilter = filter
+  request.selectedFilter = filter
 
-  if self.params.filtertitle then
-    return UpdateTitle(self, filter)
-  end
-
-  if self.params.banuser then
-     return BanUser(self, filter)
+  if request.params.filtertitle then
+    return UpdateTitle(request, filter)
   end
 
-  if self.params.banDomain then
+  if request.params.banuser then
+     return BanUser(request, filter)
+  end
+
+  if request.params.banDomain then
     ngx.log(ngx.ERR, 'banning domain: ')
-     return BanDomain(self,filter)
+     return BanDomain(request,filter)
   end
 
-  if self.params.requiredTagIDs then
-     return UpdateFilterTags(self,filter)
+  if request.params.requiredTagIDs then
+     return UpdateFilterTags(request,filter)
   end
 
-  if self.params.addmod then
-    return AddMod(self, filter)
+  if request.params.addmod then
+    return AddMod(request, filter)
   end
 
-  if self.params.delmod then
-    return DelMod(self, filter)
+  if request.params.delmod then
+    return DelMod(request, filter)
   end
 
   return 'not found'
@@ -245,18 +245,18 @@ end
 
 
 
-local function ViewFilterSettings(self)
+function m.ViewFilterSettings(request)
 
-  local filter = api:GetFilterByName(self.params.filterlabel)
+  local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
     return 'error!'
   end
   print(to_json(filter))
-  local user = api:GetUser(self.session.userID)
+  local user = api:GetUser(request.session.userID)
 
   if user.role ~= 'Admin' then
-    if filter.ownerID ~= self.session.userID then
+    if filter.ownerID ~= request.session.userID then
       local found = nil
       for _,mod in pairs(filter.mods) do
         if mod.id == user.id then
@@ -270,26 +270,26 @@ local function ViewFilterSettings(self)
     end
   end
 
-  self.tags = api:GetAllTags()
+  request.tags = api:GetAllTags()
 
   -- get key indexed tags
-  self.requiredTagKeys = {}
+  request.requiredTagKeys = {}
   for k, v in pairs(filter.requiredTagIDs) do
-    self.requiredTagKeys[v] = true
+    request.requiredTagKeys[v] = true
   end
-  print(to_json(self.requiredTagKeys))
+  print(to_json(request.requiredTagKeys))
 
-  self.bannedTagKeys = {}
+  request.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTagIDs) do
-    self.bannedTagKeys[v] = true
+    request.bannedTagKeys[v] = true
   end
 
   -- add usernames to list of banned users
-  self.bannedUsernames = {}
+  request.bannedUsernames = {}
   local userInfo
   for _,v in pairs(filter.bannedUsers) do
     userInfo= api:GetUser(v.userID)
-    self.bannedUsernames[v.userID] = userInfo.username
+    request.bannedUsernames[v.userID] = userInfo.username
   end
 
   for _,v in pairs(filter.mods) do
@@ -299,17 +299,17 @@ local function ViewFilterSettings(self)
   end
 
 
-  self.selectedFilter = filter
+  request.selectedFilter = filter
   return {render = 'filter.edit'}
 end
 
-local function UnbanUser(self)
-  local filter = api:GetFilterByName(self.params.filterlabel)
+function m.UnbanUser(request)
+  local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
   end
 
-  local ok, err = api:FilterUnbanUser(filter.id, self.params.userID)
+  local ok, err = api:FilterUnbanUser(filter.id, request.params.userID)
   if ok then
     return 'success'
   else
@@ -318,13 +318,13 @@ local function UnbanUser(self)
 
 end
 
-local function UnbanDomain(self)
-  local filter = api:GetFilterByName(self.params.filterlabel)
+function m.UnbanDomain(request)
+  local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
   end
 
-  local ok, err = api:FilterUnbanDomain(self.session.userID, filter.id, self.params.domainName)
+  local ok, err = api:FilterUnbanDomain(request.session.userID, filter.id, request.params.domainName)
   if ok then
     return 'success'
   else
@@ -332,13 +332,13 @@ local function UnbanDomain(self)
   end
 end
 
-local function BanPost(self)
-  local filter = api:GetFilterByName(self.params.filterlabel)
+function m.BanPost(request)
+  local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     return 'filter not found'
   end
 
-  local ok, err = api:FilterBanPost(self.session.userID, filter.id, self.params.postID)
+  local ok, err = api:FilterBanPost(request.session.userID, filter.id, self.params.postID)
   if ok then
     return 'ok'
   else
@@ -346,15 +346,15 @@ local function BanPost(self)
   end
 end
 
-function M:Register(app)
-  app:match('filter','/f/:filterlabel',respond_to({GET = DisplayFilter,POST = NewFilter}))
-  app:match('newfilter','/filters/create',respond_to({GET = CreateFilter,POST = NewFilter}))
-  app:match('updatefilter','/filters/:filterlabel',respond_to({GET = ViewFilterSettings,POST = UpdateFilter}))
-  app:get('allfilters','/f',LoadAllFilters)
-  app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',UnbanUser)
-  app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',UnbanDomain)
-  app:get('banpost', '/filters/:filterlabel/banpost/:postID', BanPost)
+function m:Register(app)
+  app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
+  app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
+  app:match('updatefilter','/filters/:filterlabel',respond_to({GET = self.ViewFilterSettings,POST = self.UpdateFilter}))
+  app:get('allfilters','/f',self.LoadAllFilters)
+  app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',self.UnbanUser)
+  app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',self.UnbanDomain)
+  app:get('banpost', '/filters/:filterlabel/banpost/:postID', self.BanPost)
 
 end
 
-return M
+return m

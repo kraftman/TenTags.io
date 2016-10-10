@@ -23,8 +23,8 @@ local posts = {
 }
 
 
-function m:AutoContent(app)
-  local userID = app.session.userID
+function m.AutoContent(request)
+  local userID = request.session.userID
   if not userID then
     return 'no userID!'
   end
@@ -73,7 +73,7 @@ function m:AutoContent(app)
 
 end
 
-local function CreatePosts(self)
+function m.CreatePosts(self)
   local userID = self.session.userID
 
   for i = 1, 100 do
@@ -95,8 +95,8 @@ local function CreatePosts(self)
 end
 
 function m:Register(app)
-  app:get('/auto/all', function(appInst) return self:AutoContent(appInst) end)
-  app:get('/auto/posts', CreatePosts)
+  app:get('/auto/all', self.AutoContent)
+  app:get('/auto/posts', self.CreatePosts)
 end
 
 return m
