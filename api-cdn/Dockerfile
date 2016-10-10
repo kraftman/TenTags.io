@@ -1,7 +1,7 @@
 FROM erikcw/lapis:latest
 
 RUN apt-get install -y autossh uuid-dev #dnsmasq
-RUN luarocks install lua-resty-redis-connector
+RUN luarocks install lua-resty-redis-connector date
 #RUN echo "\n\n# Docker extra config \nuser=root\naddn-hosts=/etc/hosts\n" >> /etc/dnsmasq.conf
 
 
