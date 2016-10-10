@@ -1,6 +1,6 @@
 version: '2'
 services:
-  api-cdn:
+  fillta:
     build: api-cdn/.
     expose:
       - "80"
@@ -8,6 +8,9 @@ services:
       - "8080"
     links:
       - imghost
+      - redis-general
+      - redis-comment
+      - redis-user
     volumes:
       - ./api-cdn:/opt/openresty/nginx/conf
     entrypoint: ""
