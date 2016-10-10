@@ -99,11 +99,14 @@ function m:WriteChunkedUpload(fileInfo,fileDirectory)
   local file
 
   if memData then
+    print('writing memdata')
     file = io.open(saveLocation, 'w+')
     file:write(memData)
   else
+    print('copying file')
     local fileLocation = ngx.req.get_body_file()
     if fileLocation then
+      print('body file found')
       os.execute('cp '..fileLocation..' '..saveLocation)
       file = io.open(saveLocation, 'r')
     else
