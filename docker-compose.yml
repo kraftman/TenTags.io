@@ -2,10 +2,10 @@ version: '2'
 services:
   api-cdn:
     build: api-cdn/.
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+    expose:
+      - "80"
+      - "443"
+      - "8080"
     links:
       - imghost
     volumes:
@@ -37,8 +37,8 @@ services:
     build: redis
     volumes:
       - ./redis/general:/data
-    ports:
-      - '16379:6379'
+    expose:
+      - '6379'
   redis-comment:
     build: redis
     volumes:
@@ -55,4 +55,4 @@ services:
 networks:
   default:
     external:
-      name: taggr_net
+      name: webserver_default
