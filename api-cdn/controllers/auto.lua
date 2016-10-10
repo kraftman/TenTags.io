@@ -76,12 +76,12 @@ end
 function m.CreatePosts(self)
   local userID = self.session.userID
 
-  for i = 1, 100 do
+  for i = 1, 10 do
     local info = {
-      title = 'post:'..i,
+      title = 'post:456:'..i,
       text = 'text:'..i,
       createdBy = userID,
-      tags = {'123'}
+      tags = {'456'}
     }
 
     local ok, err = api:CreatePost(userID, info)

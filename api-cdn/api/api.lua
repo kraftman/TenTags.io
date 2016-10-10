@@ -793,7 +793,7 @@ function api:VotePost(userID, postID, direction)
 		if UNLIMITED_VOTING and user.role == 'Admin' then
 
 		else
-			--return nil, 'already voted'
+			return nil, 'already voted'
 		end
 	end
 	print(user.hideVotedPosts)

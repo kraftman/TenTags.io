@@ -184,7 +184,7 @@ function m.DownvoteTag(request)
 
 end
 
-function m.HashIsValid(request)
+function HashIsValid(request)
   --print(request.params.postID, request.session.userID)
   local realHash = ngx.md5(request.params.postID..request.session.userID)
   if realHash ~= request.params.hash then
@@ -280,11 +280,11 @@ end
 function m.EditPost(request)
 
   if request.params.sourceurl then
-    return AddSource(request)
+    return m.AddSource(request)
   end
 
   if request.params.addtag then
-    return AddTag(request)
+    return m.AddTag(request)
   end
 
   local post = {

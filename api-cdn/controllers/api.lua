@@ -32,7 +32,7 @@ local function GetUserRecentSeen()
 
 end
 
-function m.HashIsValid(request)
+local function HashIsValid(request)
   --print(request.params.postID, request.session.userID)
   local realHash = ngx.md5(request.params.postID..request.session.userID)
   if realHash ~= request.params.hash then
@@ -87,7 +87,14 @@ function m.GetUserFrontPage(request)
   else
     return {json = {status = 'error', message = err}}
   end
+end
 
+function m.GetFilterPosts(request)
+
+  local startAt = request.params.startAt or 1
+  local endAt = request.params.endAt or 100
+  local sortBy = request.params.sortby or 'fresh'
+  --local ok, err = api:GetFilterPosts(userID, self.params.filterName, )
 end
 
 function m:Register(app)
@@ -99,6 +106,7 @@ function m:Register(app)
   app:match('/api/post/:postID/downvote', self.DownvotePost)
   app:match('/api/user/:userID/settings', self.GetUserSettings)
   app:match('/api/user/:userID/frontpage', self.GetUserFrontPage)
+  app:match('/api/f/:filterName/posts', self.GetFilterPosts)
 end
 
 return m

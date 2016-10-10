@@ -14,7 +14,25 @@ $(function() {
   LoadKeybinds();
   LoadNewPosts();
   AddToSeenPosts();
+  AddFilterHandler();
 })
+
+function AddFilterHandler(){
+  // take over the loading of new filters
+  /*
+  $('.filterbarelement').click(function(e){
+    e.preventDefault();
+    var filterName = $(e.target).text())
+    $.getJSON('/api/f/'+filterName+'/posts?startat=1&endat=100',function(data){
+      console.log(data)
+      if (data.status == 'success'){
+        newPosts = data.data
+        console.log(newPosts.length+ ' new posts got from server')
+      }
+    })
+  })
+  */
+}
 
 function AddToSeenPosts(){
   $.each($('#posts').children(), function(k,v) {
@@ -183,7 +201,7 @@ function GetFreshPost(){
   var newPost = newPosts.shift()
   while ($.inArray(newPost.id, seenPosts) != -1){
 
-    console.log(newPost)
+    //console.log(newPost)
     if (newPost == null) {
       return
     }
@@ -201,10 +219,39 @@ function LoadMorePosts(template){
   if (postInfo == null) {
     return
   }
+  var postID
   newPost.find('.postID').val(postInfo.id)
   newPost.find('.post-link').text(postInfo.title)
-  $('#posts').append(newPost)
 
+  var postLink;
+  if (postInfo.link == null){
+    postLink = '/post/'+postInfo.shortURL || postInfo.id
+  } else {
+    postLink = postInfo.link
+  }
+
+  newPost.find('.comment-link').attr('href',postLink);
+  newPost.find('.comment-link').text(postInfo.commentCount+' comments')
+
+  if (postInfo.userHasVoted == null) {
+    newPost.find('.postUpvote').show()
+    newPost.find('.postDownvote').show()
+  } else {
+    newPost.find('.postUpvote').hide()
+    newPost.find('.postDownvote').hide()
+  }
+  var filterIcons = newPost.find('.filter-icon')
+  $.each(filterIcons, function(k,v){
+    $(v).hide()
+  })
+  $.each(postInfo.filters,function(k,v){
+    var filterIcon = $(filterIcons[k])
+    filterIcon.text(v.name)
+    filterIcon.attr('href','/f/'+v.name);
+    filterIcon.show()
+  })
+
+  $('#posts').append(newPost)
 }
 
 function VotePost(e){

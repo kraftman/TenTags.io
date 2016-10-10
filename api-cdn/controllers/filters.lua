@@ -77,7 +77,7 @@ function m.DisplayFilter(request)
   local filter = api:GetFilterByName(request.params.filterlabel)
 
   if not filter then
-    return CreateFilter(request)
+    return m.CreateFilter(request)
   end
 
   for _,v in pairs(filter.mods) do
@@ -211,33 +211,33 @@ function m.UpdateFilter(request)
   local filter = api:GetFilterByName(request.params.filterlabel)
   if not filter then
     print('filter not found')
-    return CreateFilter(request)
+    return m.CreateFilter(request)
   end
   request.selectedFilter = filter
 
   if request.params.filtertitle then
-    return UpdateTitle(request, filter)
+    return m.UpdateTitle(request, filter)
   end
 
   if request.params.banuser then
-     return BanUser(request, filter)
+     return m.BanUser(request, filter)
   end
 
   if request.params.banDomain then
     ngx.log(ngx.ERR, 'banning domain: ')
-     return BanDomain(request,filter)
+     return m.BanDomain(request,filter)
   end
 
   if request.params.requiredTagIDs then
-     return UpdateFilterTags(request,filter)
+     return m.UpdateFilterTags(request,filter)
   end
 
   if request.params.addmod then
-    return AddMod(request, filter)
+    return m.AddMod(request, filter)
   end
 
   if request.params.delmod then
-    return DelMod(request, filter)
+    return m.DelMod(request, filter)
   end
 
   return 'not found'
