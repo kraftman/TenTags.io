@@ -12,23 +12,23 @@ local respond_to = (require 'lapis.application').respond_to
 local trim = util.trim
 
 
-local function CreatePost(self)
-  print(self.params.selectedtags)
-  local selectedTags = from_json(self.params.selectedtags)
+function m.CreatePost(request)
+  --print(request.params.selectedtags)
+  local selectedTags = from_json(request.params.selectedtags)
 
-  if trim(self.params.link) == '' then
-    self.params.link = nil
+  if trim(request.params.link) == '' then
+    request.params.link = nil
   end
 
   local info ={
-    title = self.params.title,
-    link = self.params.link,
-    text = self.params.text,
-    createdBy = self.session.userID,
+    title = request.params.title,
+    link = request.params.link,
+    text = request.params.text,
+    createdBy = request.session.userID,
     tags = selectedTags
   }
 
-  local ok, err = api:CreatePost(self.session.userID, info)
+  local ok, err = api:CreatePost(request.session.userID, info)
 
   if ok then
     return {json = ok}
@@ -39,34 +39,34 @@ local function CreatePost(self)
 
 end
 
-local function GetPost(self)
-  local sortBy = self.params.sort or 'best'
+function m.GetPost(request)
+  local sortBy = request.params.sort or 'best'
   sortBy = sortBy:lower()
 
-  local postID = self.params.postID
+  local postID = request.params.postID
   if #postID < 10 then
     postID = api:ConvertShortURL(postID) or postID
   else
-    local post = api:GetPost(self.session.userID, postID)
+    local post = api:GetPost(request.session.userID, postID)
     if post.shortURL then
-      return { redirect_to = self:url_for("viewpost",{postID = post.shortURL}) }
+      return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
     end
   end
 
-  local comments = api:GetPostComments(self.session.userID, postID,sortBy)
+  local comments = api:GetPostComments(request.session.userID, postID,sortBy)
 
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
-    if v.id and self.session.userID then
-      v.commentHash = ngx.md5(v.id..self.session.userID)
+    if v.id and request.session.userID then
+      v.commentHash = ngx.md5(v.id..request.session.userID)
     end
   end
 
-  self.comments = comments
+  request.comments = comments
 
-  local post,err = api:GetPost(self.session.userID, postID)
-  print(to_json(post))
+  local post,err = api:GetPost(request.session.userID, postID)
+  --print(to_json(post))
 
   if not post then
     if type(err) == 'number' then
@@ -81,7 +81,7 @@ local function GetPost(self)
       local postID = v.name:match('meta:sourcePost:(%w+)')
       if postID then
         print(postID)
-        local parentPost = (api:GetPost(self.session.userID, postID))
+        local parentPost = (api:GetPost(request.session.userID, postID))
         print(to_json(parentPost))
         if v.name and parentPost.title then
           v.fakeName = parentPost.title
@@ -91,17 +91,17 @@ local function GetPost(self)
     end
   end
 
-  self.filters = api:GetFilterInfo(post.filters)
+  request.filters = api:GetFilterInfo(post.filters)
 
-  if self.session.userID then
-    post.hash = ngx.md5(post.id..self.session.userID)
-    post.userHasVoted = api:UserHasVotedPost(self.session.userID, post.id)
-    self.userLabels = api:GetUser(self.session.userID).userLabels
+  if request.session.userID then
+    post.hash = ngx.md5(post.id..request.session.userID)
+    post.userHasVoted = api:UserHasVotedPost(request.session.userID, post.id)
+    request.userLabels = api:GetUser(request.session.userID).userLabels
   end
 
-  self.post = post
+  request.post = post
 
-  self.GetColorForDepth =function(_,child, depth)
+  request.GetColorForDepth =function(_,child, depth)
     depth = depth or 1
     if not child then
       return ''
@@ -138,7 +138,7 @@ local function GetPost(self)
     return 'style="background: '..depth..';"'
   end
 
-  self.GetColorForName = function(_,username)
+  request.GetColorForName = function(_,username)
 
     local colors = { '#992244', '#442211', '#662288','darkpink','darkblue','darkyellow','darkgreen','darkred'};
     local sum = 0
@@ -156,14 +156,14 @@ local function GetPost(self)
   return {render = 'post.view'}
 end
 
-local function CreatePostForm(self)
-  if not self.session.userID then
-    return { redirect_to = self:url_for("login") }
+function m.CreatePostForm(request)
+  if not request.session.userID then
+    return { redirect_to = request:url_for("login") }
   end
 
   local tags = api.GetAllTags(api)
 
-  self.tags = tags
+  request.tags = tags
 
   return { render = 'post.create' }
 end
@@ -171,23 +171,23 @@ end
 
 
 
-local function UpvoteTag(self)
+function m.UpvoteTag(request)
 
-  api:VoteTag(self.session.userID, self.params.postID, self.params.tagID, 'up')
+  api:VoteTag(request.session.userID, request.params.postID, request.params.tagID, 'up')
   return 'meep'
 
 end
 
-local function DownvoteTag(self)
-  api:VoteTag(self.session.userID, self.params.postID, self.params.tagID, 'down')
+function m.DownvoteTag(request)
+  api:VoteTag(request.session.userID, request.params.postID, request.params.tagID, 'down')
   return 'meep'
 
 end
 
-local function HashIsValid(self)
-  --print(self.params.postID, self.session.userID)
-  local realHash = ngx.md5(self.params.postID..self.session.userID)
-  if realHash ~= self.params.hash then
+function HashIsValid(request)
+  --print(request.params.postID, request.session.userID)
+  local realHash = ngx.md5(request.params.postID..request.session.userID)
+  if realHash ~= request.params.hash then
     ngx.log(ngx.ERR, 'hashes dont match!')
     return false
   end
@@ -195,13 +195,13 @@ local function HashIsValid(self)
 end
 
 
-local function UpvotePost(self)
-  if not HashIsValid(self) then
+function m.UpvotePost(request)
+  if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(self.session.userID, self.params.postID, 'up')
+  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'up')
   if ok then
-    return { redirect_to = self:url_for("home") }
+    return { redirect_to = request:url_for("home") }
   else
     return 'fail: ', err
   end
@@ -209,51 +209,51 @@ end
 
 
 
-local function DownvotePost(self)
-  if not HashIsValid(self) then
+function m.DownvotePost(request)
+  if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(self.session.userID, self.params.postID,'down')
+  local ok, err = api:VotePost(request.session.userID, request.params.postID,'down')
   if ok then
-    return { redirect_to = self:url_for("home") }
+    return { redirect_to = request:url_for("home") }
   else
     return 'fail: ', err
   end
 end
 
-local function GetIcon(self)
-  if not self.params.postID then
+function m.GetIcon(request)
+  if not request.params.postID then
     return 'nil'
   end
 
-  local post = api:GetPost(self.params.postID)
+  local post = api:GetPost(request.params.postID)
   if not post.icon then
     return ''
   end
-  self.post = post
+  request.post = post
   if not type(post.icon) == 'string' then
     return ''
   end
   print(post.icon)
 
-  self.iconData = ngx.decode_base64(post.icon)
+  request.iconData = ngx.decode_base64(post.icon)
 
   return {layout = 'layout.blanklayout',content_type = 'image'}
 
 
 end
 
-local function AddSource(self)
+function m.AddSource(request)
   print('adding source')
-  local sourceURL = self.params.sourceurl
-  local userID = self.session.userID
+  local sourceURL = request.params.sourceurl
+  local userID = request.session.userID
   if not sourceURL then
     return 'no url given!'
   elseif not userID then
     return 'you must be logged in to do that!'
   end
 
-  local ok, err = api:AddSource(userID, self.params.postID, sourceURL)
+  local ok, err = api:AddSource(userID, request.params.postID, sourceURL)
   if ok then
     return 'success!'
   else
@@ -262,14 +262,14 @@ local function AddSource(self)
 
 end
 
-local function AddTag(self)
-  local tagName = self.params.addtag
-  local userID = self.session.userID
-  local postID = self.params.postID
+function m.AddTag(request)
+  local tagName = request.params.addtag
+  local userID = request.session.userID
+  local postID = request.params.postID
 
   local ok, err = api:AddPostTag(userID, postID, tagName)
   if ok then
-    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
     print('failed: ',err)
     return 'failed: '..err
@@ -277,25 +277,25 @@ local function AddTag(self)
 
 end
 
-local function EditPost(self)
+function m.EditPost(request)
 
-  if self.params.sourceurl then
-    return AddSource(self)
+  if request.params.sourceurl then
+    return m.AddSource(request)
   end
 
-  if self.params.addtag then
-    return AddTag(self)
+  if request.params.addtag then
+    return m.AddTag(request)
   end
 
   local post = {
-    id = self.params.postID,
-    title = self.params.posttitle,
-    text = self.params.posttext
+    id = request.params.postID,
+    title = request.params.posttitle,
+    text = request.params.posttext
   }
 
-  local ok,err = api:EditPost(self.session.userID, post)
+  local ok,err = api:EditPost(request.session.userID, post)
   if ok then
-    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
     return 'fail: '..err
   end
@@ -303,15 +303,15 @@ local function EditPost(self)
 
 end
 
-local function DeletePost(self)
-  local confirmed = self.params.confirmdelete
+function m.DeletePost(request)
+  local confirmed = request.params.confirmdelete
 
   if not confirmed then
     return {render = 'post.confirmdelete'}
   end
 
-  local postID = self.params.postID
-  local userID = self.params.userID
+  local postID = request.params.postID
+  local userID = request.params.userID
 
   local ok, err = api:DeletePost(userID, postID)
 
@@ -323,10 +323,10 @@ local function DeletePost(self)
 
 end
 
-local function SubscribePost(self)
-  local ok, err = api:SubscribePost(self.session.userID,self.params.postID)
+function m.SubscribePost(request)
+  local ok, err = api:SubscribePost(request.session.userID,request.params.postID)
   if ok then
-    return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
     return 'error subscribing: '..err
   end
@@ -334,24 +334,24 @@ end
 
 function m:Register(app)
   app:match('newpost','/post/new', respond_to({
-    GET = CreatePostForm,
-    POST = CreatePost
+    GET = self.CreatePostForm,
+    POST = self.CreatePost
   }))
   app:match('viewpost','/post/:postID', respond_to({
-    GET = GetPost,
-    POST = EditPost,
+    GET = self.GetPost,
+    POST = self.EditPost,
   }))
   app:match('deletepost','/post/delete/:postID', respond_to({
-    GET = DeletePost,
-    POST = DeletePost,
+    GET = self.DeletePost,
+    POST = self.DeletePost,
   }))
 
-  app:get('upvotetag','/post/upvotetag/:tagID/:postID',UpvoteTag)
-  app:get('downvotetag','/post/downvotetag/:tagID/:postID',DownvoteTag)
-  app:get('upvotepost','/post/:postID/upvote', UpvotePost)
-  app:get('downvotepost','/post/:postID/downvote', DownvotePost)
-  app:get('geticon', '/icon/:postID', GetIcon)
-  app:get('subscribepost', '/post/:postID/subscribe', SubscribePost)
+  app:get('upvotetag','/post/upvotetag/:tagID/:postID',self.UpvoteTag)
+  app:get('downvotetag','/post/downvotetag/:tagID/:postID',self.DownvoteTag)
+  app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
+  app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
+  app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
 
 end
 

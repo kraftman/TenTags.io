@@ -8,35 +8,35 @@ local respond_to = (require 'lapis.application').respond_to
 local m = {}
 
 
-local function ViewComment(self)
-  self.commentInfo = api:GetComment(self.params.postID,self.params.commentID)
+function m.ViewComment(request)
+  request.commentInfo = api:GetComment(request.params.postID,request.params.commentID)
 
-  self.commentInfo.username = api:GetUser(self.commentInfo.createdBy).username
-  ngx.log(ngx.ERR, to_json(self.commentInfo))
+  request.commentInfo.username = api:GetUser(request.commentInfo.createdBy).username
+  ngx.log(ngx.ERR, to_json(request.commentInfo))
   return {render = 'viewcomment'}
 
 end
 
-local function ViewShortURLComment(self)
-  self.commentInfo = api:GetComment(self.params.commentShortURL)
-  self.commentInfo.username = api:GetUser(self.commentInfo.createdBy).username
-  ngx.log(ngx.ERR, to_json(self.commentInfo))
+local function ViewShortURLComment(request)
+  request.commentInfo = api:GetComment(request.params.commentShortURL)
+  request.commentInfo.username = api:GetUser(request.commentInfo.createdBy).username
+  ngx.log(ngx.ERR, to_json(request.commentInfo))
   return {render = 'viewcomment'}
 
 end
 
 -- needs moving to comments controller
-local function CreateComment(self)
+function m.CreateComment(request)
 
 
   local commentInfo = {
-    parentID = self.params.parentID,
-    postID = self.params.postID,
-    createdBy = self.session.userID,
-    text = self.params.commentText,
+    parentID = request.params.parentID,
+    postID = request.params.postID,
+    createdBy = request.session.userID,
+    text = request.params.commentText,
   }
-  --ngx.log(ngx.ERR, to_json(self.params))
-  local ok = api:CreateComment(self.session.userID, commentInfo)
+  --ngx.log(ngx.ERR, to_json(request.params))
+  local ok = api:CreateComment(request.session.userID, commentInfo)
   if ok then
     print('created')
     return 'created!'
@@ -47,14 +47,14 @@ local function CreateComment(self)
 
 end
 
-local function EditComment(self)
+function m.EditComment(request)
   local commentInfo = {
-    postID = self.params.postID,
-    text = self.params.commentText,
-    id = self.params.commentID
+    postID = request.params.postID,
+    text = request.params.commentText,
+    id = request.params.commentID
   }
 
-  local ok,err = api:EditComment(self.session.userID, commentInfo)
+  local ok,err = api:EditComment(request.session.userID, commentInfo)
   if ok then
     return 'created!'
   else
@@ -62,27 +62,27 @@ local function EditComment(self)
   end
 end
 
-local function SubscribeComment(self)
-  api:SubscribeComment(self.session.userID,self.params.postID, self.params.commentID)
+function m.SubscribeComment(request)
+  api:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
-  return { redirect_to = self:url_for("viewpost",{postID = self.params.postID}) }
+  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
 
 end
 
-local function HashIsValid(self)
-  local realHash = ngx.md5(self.params.commentID..self.session.userID)
-  if realHash ~= self.params.commentHash then
+function m.HashIsValid(request)
+  local realHash = ngx.md5(request.params.commentID..request.session.userID)
+  if realHash ~= request.params.commentHash then
     ngx.log(ngx.ERR, 'hashes dont match!')
     return false
   end
   return true
 end
 
-local function UpvoteComment(self)
-  if not HashIsValid(self) then
+function m.UpvoteComment(request)
+  if not HashIsValid(request) then
     return 'hashes dont match'
   end
-  local ok, err = api:VoteComment(self.session.userID, self.params.postID, self.params.commentID,'up')
+  local ok, err = api:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
   if ok then
     return 'success!'
   else
@@ -90,12 +90,12 @@ local function UpvoteComment(self)
   end
 end
 
-local function DownVoteComment(self)
-  if not HashIsValid(self) then
+function m.DownVoteComment(request)
+  if not HashIsValid(request) then
     return 'hashes dont match'
   end
 
-  local ok, err = api:VoteComment(self.session.userID, self.params.postID, self.params.commentID,'down')
+  local ok, err = api:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
   if ok then
     return 'success'
   else
@@ -103,10 +103,10 @@ local function DownVoteComment(self)
   end
 end
 
-local function DeleteComment(self)
-  local postID = self.params.postID
-  local userID = self.session.userID
-  local commentID = self.params.commentID
+function m.DeleteComment(request)
+  local postID = request.params.postID
+  local userID = request.session.userID
+  local commentID = request.params.commentID
 
   local ok, err = api:DeleteComment(userID, postID, commentID)
   if ok then
@@ -118,20 +118,20 @@ end
 
 function m:Register(app)
   app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({
-    GET = DeleteComment,
-    POST = DeleteComment
+    GET = m.DeleteComment,
+    POST = m.DeleteComment
   }))
-  app:get('viewcomment','/comment/:postID/:commentID',ViewComment)
+  app:get('viewcomment','/comment/:postID/:commentID',m.ViewComment)
 
-  app:get('viewcommentshort','/comment/:commentShortURL',ViewShortURLComment)
-  app:get('subscribecomment','/comment/subscribe/:postID/:commentID',SubscribeComment)
-  app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', UpvoteComment)
-  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash',DownVoteComment)
-  app:post('newcomment','/comment/',CreateComment)
+  app:get('viewcommentshort','/comment/:commentShortURL',m.ViewShortURLComment)
+  app:get('subscribecomment','/comment/subscribe/:postID/:commentID',m.SubscribeComment)
+  app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
+  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash',m.DownVoteComment)
+  app:post('newcomment','/comment/',m.CreateComment)
 
   app:match('viewcomment','/comment/:postID/:commentID', respond_to({
-    GET = ViewComment,
-    POST = EditComment
+    GET = m.ViewComment,
+    POST = m.EditComment
   }))
 end
 

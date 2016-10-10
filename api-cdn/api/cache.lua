@@ -106,14 +106,10 @@ function cache:GetAccount(accountID)
     end
     local ok, err = userInfo:set(accountID, to_json(account))
     if not ok then
-      ngx.log(ngx.ERR, 'unable to set master info: ',err)
+      ngx.log(ngx.ERR, 'unable to set account info: ',err)
     end
 
     return account
-end
-
-function cache:VerifyReset(emailAddr, key)
-  return redisread:VerifyReset(emailAddr, key)
 end
 
 function cache:GetUserAlerts(userID)
@@ -622,8 +618,7 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   tinsert(newPosts, post)
 end
 
-function cache:GetUserFrontPage(userID,filter,range)
-  range = range or 0
+function cache:GetUserFrontPage(userID,filter,startAt, endAt)
 
   local user = self:GetUser(userID)
 
@@ -638,8 +633,8 @@ function cache:GetUserFrontPage(userID,filter,range)
     for _,postID in pairs(freshPosts) do
       self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
 
-      -- stop when we hace a page worth
-      if #newPosts > 10 then
+      -- stop when we have a page worth
+      if #newPosts > (endAt - startAt) then
         break
       end
     end
@@ -647,22 +642,17 @@ function cache:GetUserFrontPage(userID,filter,range)
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else
-    for i = range, range+10 do
+    for i = startAt, endAt do
       if freshPosts[i] then
         tinsert(newPosts,self:GetPost(freshPosts[i]))
       end
     end
   end
 
-
-
-
   local userVotedPosts = self:GetUserPostVotes(userID)
 
   for _,post in pairs(newPosts) do
-
       post.filters = self:GetFilterInfo(post.filters) or {}
-
       table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     if userVotedPosts[post.id] then
       post.userHasVoted = true

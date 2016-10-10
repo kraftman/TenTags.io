@@ -7,14 +7,14 @@ local respond_to = (require 'lapis.application').respond_to
 local api = require 'api.api'
 local tinsert = table.insert
 
-local function SearchFilter(self)
-  if not self.params.searchString then
+function m.SearchFilter(request)
+  if not request.params.searchString then
     return {json = {error = 'no searchString provided', data = {}}}
   end
-  if not self.session.userID then
+  if not request.session.userID then
     return {json = {error = 'you must be logged in!', data = {}}}
   end
-  local ok, err = api:SearchFilters(self.session.userID, self.params.searchString)
+  local ok, err = api:SearchFilters(request.session.userID, request.params.searchString)
   print(to_json(ok))
   if ok then
     return {json ={error = {}, data = ok} }
@@ -23,16 +23,90 @@ local function SearchFilter(self)
   end
 end
 
-local function GetUserFilters(self)
-  local ok, err = api:GetUserFilters(self.session.userID)
+function m.GetUserFilters(request)
+  local ok, err = api:GetUserFilters(request.session.userID)
   return {json = {error = {err}, data = ok or {}}}
 end
 
+local function GetUserRecentSeen()
+
+end
+
+local function HashIsValid(request)
+  --print(request.params.postID, request.session.userID)
+  local realHash = ngx.md5(request.params.postID..request.session.userID)
+  if realHash ~= request.params.hash then
+    ngx.log(ngx.ERR, 'hashes dont match!')
+    return false
+  end
+  return true
+end
+
+
+function m.UpvotePost(request)
+  if not HashIsValid(request) then
+    return 'invalid hash'
+  end
+  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'up')
+  if ok then
+    return { json = {status = 'success', data = {}} }
+  else
+    return { json = {status = "error" }}
+  end
+end
+
+function m.DownvotePost(request)
+  if not HashIsValid(request) then
+    return 'invalid hash'
+  end
+  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'down')
+  if ok then
+    return { json = {status = 'success', data = {}} }
+  else
+    return { json = {status = "error" }}
+  end
+end
+
+function m.GetUserSettings(request)
+  local ok, err = api:GetUserSettings(request.session.userID)
+  if ok then
+    return {json = {status = 'success', data = ok}}
+  else
+    return {json = {status = 'error', message = err}}
+  end
+end
+
+function m.GetUserFrontPage(request)
+  local startAt = request.params.startAt or 1
+  local endAt = request.params.endAt or 100
+  local sortBy = request.params.sortby or 'fresh'
+
+  local ok,err = api:GetUserFrontPage(request.session.userID or 'default',sortBy, startAt, endAt)
+  if ok then
+    return {json = {status = 'success', data = ok}}
+  else
+    return {json = {status = 'error', message = err}}
+  end
+end
+
+function m.GetFilterPosts(request)
+
+  local startAt = request.params.startAt or 1
+  local endAt = request.params.endAt or 100
+  local sortBy = request.params.sortby or 'fresh'
+  --local ok, err = api:GetFilterPosts(userID, self.params.filterName, )
+end
 
 function m:Register(app)
   --app:match('apilogin','/api/login',respond_to({POST = UserLogin}))
-  app:match('filtersearch', '/api/filter/search/:searchString', SearchFilter)
-  app:match('userfilters', '/api/user/filters', GetUserFilters)
+  app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
+  app:match('userfilters', '/api/user/filters', self.GetUserFilters)
+  app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
+  app:match('/api/post/:postID/upvote', self.UpvotePost)
+  app:match('/api/post/:postID/downvote', self.DownvotePost)
+  app:match('/api/user/:userID/settings', self.GetUserSettings)
+  app:match('/api/user/:userID/frontpage', self.GetUserFrontPage)
+  app:match('/api/f/:filterName/posts', self.GetFilterPosts)
 end
 
 return m

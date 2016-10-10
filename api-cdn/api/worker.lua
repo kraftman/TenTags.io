@@ -290,14 +290,6 @@ function worker:CreateSubUser(userInfo)
   return userWrite:CreateSubUser(userInfo)
 end
 
-function worker:CreateMasterUser(masterInfo)
-  return userWrite:CreateMasterUser(masterInfo)
-end
-
-function worker:ActivateAccount(userID)
-  return userWrite:ActivateAccount(userID)
-end
-
 function worker:AddUserAlert(userID, alert)
   return userWrite:AddUserAlert(ngx.time(),userID, alert)
 end

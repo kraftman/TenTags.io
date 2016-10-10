@@ -8,19 +8,19 @@ local api = require 'api.api'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 
-local function LogOut(self)
-  self.session.username = nil
-  self.session.userID = nil
-  self.session.accountID = nil
-  return { redirect_to = self:url_for("home") }
+function m.LogOut(request)
+  request.session.username = nil
+  request.session.userID = nil
+  request.session.accountID = nil
+  return { redirect_to = request:url_for("home") }
 end
 
-local function ViewUser(self)
-  self.userID = api:GetUserID(self.params.username)
-  self.userInfo = api:GetUser(self.userID)
-  print(to_json(self.userInfo))
-  self.comments = api:GetUserComments(self.session.userID, self.userID)
-  for _,v in pairs(self.comments) do
+function m.ViewUser(request)
+  request.userID = api:GetUserID(request.params.username)
+  request.userInfo = api:GetUser(request.userID)
+  print(to_json(request.userInfo))
+  request.comments = api:GetUserComments(request.session.userID, request.userID)
+  for _,v in pairs(request.comments) do
     v.username = api:GetUser(v.createdBy).username
   end
 
@@ -28,42 +28,42 @@ local function ViewUser(self)
 end
 
 
-local function NewSubUser(self)
+function m.NewSubUser(request)
   return {render = 'user.createsub'}
 end
 
-local function CreateSubUser(self)
-  if not self.params.username or trim(self.params.username) == '' then
+function m.CreateSubUser(request)
+  if not request.params.username or trim(request.params.username) == '' then
     return 'no username!'
   end
-  local succ,err = api:CreateSubUser(self.session.accountID,self.params.username)
+  local succ,err = api:CreateSubUser(request.session.accountID,request.params.username)
   if succ then
-    self.session.username = succ.username
-    self.session.userID = succ.id
-    return { redirect_to = self:url_for("usersettings") }
+    request.session.username = succ.username
+    request.session.userID = succ.id
+    return { redirect_to = request:url_for("usersettings") }
   else
     return 'fail: '..err
   end
 end
 
 
-local function SwitchUser(self)
-  local newUser = api:SwitchUser(self.session.accountID, self.params.userID)
+function m.SwitchUser(request)
+  local newUser = api:SwitchUser(request.session.accountID, request.params.userID)
   if not newUser then
     return 'error switching user:'
   end
-  self.session.userID = newUser.id
-  self.session.username = newUser.username
+  request.session.userID = newUser.id
+  request.session.username = newUser.username
 
-  return { redirect_to = self:url_for("home") }
+  return { redirect_to = request:url_for("home") }
 
 end
 
-local function TagUser(self)
+function m.TagUser(request)
 
-  local userTag = self.params.tagUser
+  local userTag = request.params.tagUser
 
-  local ok, err = api:LabelUser(self.session.userID, self.params.userID, userTag)
+  local ok, err = api:LabelUser(request.session.userID, request.params.userID, userTag)
   if ok then
     return 'success'
   else
@@ -74,15 +74,15 @@ end
 
 
 
-local function NewLogin(self)
+function m.NewLogin(request)
   local session = {
     ip = ngx.var.remote_addr,
     userAgent = ngx.var.http_user_agent,
-    email = self.params.email
+    email = request.params.email
   }
   print(ngx.var.http_user_agent)
   print(ngx.var.remote_addr)
-  local confirmURL = self:build_url("confirmlogin")
+  local confirmURL = request:build_url("confirmlogin")
   local ok, err = api:RegisterAccount(session, confirmURL)
   if not ok then
     return 'There was an error registering you, please try again later'
@@ -91,36 +91,36 @@ local function NewLogin(self)
   end
 end
 
-local function ConfirmLogin(self)
+function m.ConfirmLogin(request)
   local session = {
     ip = ngx.var.remote_addr,
     userAgent = ngx.var.http_user_agent,
-    email = self.params.email
+    email = request.params.email
   }
-  local account, sessionID = api:ConfirmLogin(session, self.params.key)
+  local account, sessionID = api:ConfirmLogin(session, request.params.key)
   print()
 
   if not account then
     -- TODO: change this to a custom failure page
-    return { redirect_to = self:url_for("home") }
+    return { redirect_to = request:url_for("home") }
   end
 
   print(to_json(account))
   print(sessionID)
-  self.session.accountID = account.id
-  self.session.userID = account.currentUserID
-  self.session.username = account.currentUsername
-  self.session.sessionID = sessionID
+  request.session.accountID = account.id
+  request.session.userID = account.currentUserID
+  request.session.username = account.currentUsername
+  request.session.sessionID = sessionID
 
   if not account.currentUsername then
-    return { redirect_to = self:url_for("newsubuser") }
+    return { redirect_to = request:url_for("newsubuser") }
   end
 
-  if not self.session.userID then
-    return { redirect_to = self:url_for("newsubuser") }
+  if not request.session.userID then
+    return { redirect_to = request:url_for("newsubuser") }
   end
 
-  return { redirect_to = self:url_for("home") }
+  return { redirect_to = request:url_for("home") }
 
 end
 
@@ -128,17 +128,17 @@ function m:Register(app)
 
 
   app:match('newsubuser','/sub/new', respond_to({
-    GET = NewSubUser,
-    POST = CreateSubUser
+    GET = self.NewSubUser,
+    POST = self.CreateSubUser
   }))
 
 
-  app:post('login','/login',NewLogin)
-  app:get('confirmLogin', '/confirmlogin', ConfirmLogin)
-  app:post('taguser', '/user/tag/:userID', TagUser)
-  app:get('viewuser','/user/:username',ViewUser)
-  app:get('logout','/logout',LogOut)
-  app:get('switchuser','/user/switch/:userID',SwitchUser)
+  app:post('login','/login',self.NewLogin)
+  app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
+  app:post('taguser', '/user/tag/:userID', self.TagUser)
+  app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('logout','/logout', self.LogOut)
+  app:get('switchuser','/user/switch/:userID', self.SwitchUser)
 
 end
 

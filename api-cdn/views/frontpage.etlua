@@ -1,12 +1,7 @@
 
- <script src="/static/js/mousetrap.min.js"  ></script>
- <script src="/static/js/frontpage.js"  ></script>
- <script type="text/javascript">
- $('.selectpicker').selectpicker({
-  style: 'btn-info',
-  size: 4
-});
-</script>
+
+
+
 
 
 

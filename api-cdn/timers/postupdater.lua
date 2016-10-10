@@ -13,7 +13,7 @@ local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local SEED = 1
+local SEED = 1879873
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -22,6 +22,8 @@ local SPECIAL_TAGS = {
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
+	math.randomseed(ngx.now()+ngx.worker.pid())
+	math.random()
 
   return c
 end
@@ -158,7 +160,7 @@ function config:CalculatePostFilters(post)
       end
     end
   end
-  print('potential filters: ',to_json(chosenFilters))
+  --print('potential filters: ',to_json(chosenFilters))
 
   --at this point we know that the filters want at least one tag
   --that the post has
@@ -198,10 +200,10 @@ function config:GetJob(jobName)
   return post
 end
 
-function config:CreateShortURL()
+function config:CreateShortURL(postID)
   local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
   SEED = SEED + 1
-  math.randomseed(ngx.time()+ngx.worker.pid()+SEED)
+
   local newURL = ''
   for _ = 1, 7 do
     local v = math.random(#urlChars)
@@ -226,7 +228,7 @@ function config:UpdatePostShortURL()
 
   local shortURL
   for i = 1, 5 do
-    shortURL = self:CreateShortURL()
+    shortURL = self:CreateShortURL(postID)
     ok, err = redisWrite:SetNX('shortURL:'..shortURL, postID)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
@@ -253,7 +255,7 @@ function config:UpdatePostShortURL()
 
   ok, err = redisWrite:DeleteJob('AddPostShortURL',postID)
 
-  ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
+  --ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
 
 end
 
@@ -315,7 +317,7 @@ function config:UpdatePostFilters()
   end
 
 	local newFilters = self:CalculatePostFilters(post)
-	print(to_json(newFilters))
+	--print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
 	for _,filterID in pairs(post.filters) do
@@ -327,7 +329,7 @@ function config:UpdatePostFilters()
   local specialTagFound = {}
 
   for _,tag in pairs(post.tags) do
-		print(tag.name)
+		--print(tag.name)
     if SPECIAL_TAGS[tag.name] then
       specialTagFound[SPECIAL_TAGS[tag.name]] = true
     end
@@ -343,7 +345,7 @@ function config:UpdatePostFilters()
   end
 
   --print('removing from: '..to_json(purgeFilterIDs))
-  print('adding to: '..to_json(newFilters))
+  --print('adding to: '..to_json(newFilters))
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then

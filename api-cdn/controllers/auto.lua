@@ -23,8 +23,8 @@ local posts = {
 }
 
 
-function m:AutoContent(app)
-  local userID = app.session.userID
+function m.AutoContent(request)
+  local userID = request.session.userID
   if not userID then
     return 'no userID!'
   end
@@ -73,9 +73,30 @@ function m:AutoContent(app)
 
 end
 
+function m.CreatePosts(self)
+  local userID = self.session.userID
+
+  for i = 1, 10 do
+    local info = {
+      title = 'post:456:'..i,
+      text = 'text:'..i,
+      createdBy = userID,
+      tags = {'456'}
+    }
+
+    local ok, err = api:CreatePost(userID, info)
+
+    if not ok then
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      return {json = err}
+    end
+  end
+
+end
 
 function m:Register(app)
-  app:get('/auto/all', function(appInst) return self:AutoContent(appInst) end)
+  app:get('/auto/all', self.AutoContent)
+  app:get('/auto/posts', self.CreatePosts)
 end
 
 return m
