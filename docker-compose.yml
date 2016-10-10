@@ -1,6 +1,6 @@
 version: '2'
 services:
-  fillta:
+  filtta:
     build: api-cdn/.
     expose:
       - "80"
