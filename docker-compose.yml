@@ -19,8 +19,8 @@ services:
 
   imghost:
     image: tenstartups/openresty
-    ports:
-      - "81:80"
+    expose:
+      - "80"
     volumes:
      - ./imghost:/imghost
      - ./www:/var/www
