@@ -117,6 +117,7 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
+		print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end

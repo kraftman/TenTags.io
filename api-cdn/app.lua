@@ -129,7 +129,7 @@ end
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
 
-  self.enableAds = false
+  self.enableAds = true
 
   ValidateSession(self)
 

@@ -5,7 +5,7 @@ $(function() {
   $("#tagselect").chosen();
   $('#filterselect').chosen();
   AddPostFilterSearch()
-  var tagSelectChosen = $('#tagselect_chosen')
+  var tagSelectChosen = $('#tagselect')
   tagSelectChosen.bind('keyup',function(e) {
     if(e.which === 13 || e.which === 32) {
       var newItem = $(e.target).val();
@@ -67,7 +67,7 @@ function AddFilterToTags(e,p){
     var tagSelectChosen = $('#tagselect')
     $.each(selectedFilter.requiredTagNames,function(k,v){
       console.log(k,v)
-      tagSelectChosen.append('<option selected="selected" value="'+v.name+'">'+v.name+'</option>');
+      tagSelectChosen.append('<option selected="selected" value="'+v+'">'+v+'</option>');
       tagSelectChosen.trigger("chosen:updated");
     })
   }
@@ -86,7 +86,7 @@ function AddFilterToTags(e,p){
       var tagName = $(tagElement).find('span').text()
       var found;
       $.each(filter.bannedTagNames, function(k,v){
-        if (v.name == tagName){
+        if (v == tagName){
           found = true;
         }
       })
