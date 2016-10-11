@@ -57,18 +57,54 @@ function UpdateFilterSelect(filters){
 }
 
 function AddFilterToTags(e,p){
+
+  var selectedFilter = $.grep(knownFilters, function(n,i){
+    console.log(n,i)
+    return n.name == p.selected
+  })[0]
+
   if (p.selected){
-    var filter = $.grep(knownFilters, function(n,i){
-      console.log(n,i)
-      return n.name == p.selected
-    })[0]
     var tagSelectChosen = $('#tagselect')
-    $.each(filter.requiredTags,function(k,v){
+    $.each(selectedFilter.requiredTags,function(k,v){
       console.log(k,v)
       tagSelectChosen.append('<option selected="selected" value="'+v.name+'">'+v.name+'</option>');
       tagSelectChosen.trigger("chosen:updated");
     })
   }
+
+  //update all the other filters
+  $.each($('#filterselect_chosen').find('li.search-choice'), function(k,filterElement){
+    var filterName = $(filterElement).find('span').text()
+    var filter = $.grep(knownFilters, function(n,i){
+      console.log(n,i)
+      return n.name == filterName
+    })[0]
+
+    var foundBannedTag;
+
+    $.each($('#tagselect_chosen').find('li.search-choice'), function(k,tagElement) {
+      var tagName = $(tagElement).find('span').text()
+      var found;
+      $.each(filter.bannedTags, function(k,v){
+        if (v.name == tagName){
+          found = true;
+        }
+      })
+      if (found == true) {
+        foundBannedTag == true
+        $(tagElement).addClass('banned');
+      } else {
+        $(tagElement).removeClass('banned');
+      }
+    })
+    if (foundBannedTag == true){
+      $(filterElement).addClass('banned');
+    } else {
+      $(filterElement).removeClass('banned');
+    }
+
+  })
+
 }
 
 function AddPostFilterSearch(){

@@ -17,21 +17,22 @@ function m.SearchFilter(request)
   local ok, err = api:SearchFilters(request.session.userID, request.params.searchString)
   print(to_json(ok))
 
-  if request.params.withTags then
-    for k,v in pairs(ok) do
-      v.requiredTags = {}
-      for i,j in pairs(v.requiredTagIDs) do
-        print(j)
-        v.requiredTags[i] = api:GetTagByID(j)
-        print(to_json(j))
-      end
-      v.bannedTags = {}
-      for i,j in pairs(v.bannedTagIDs) do
-        v.bannedTags[i] = api:GetTagByID(j)
+
+  if ok then
+    if request.params.withTags then
+      for k,v in pairs(ok) do
+        v.requiredTags = {}
+        for i,j in pairs(v.requiredTagIDs) do
+          print(j)
+          v.requiredTags[i] = api:GetTagByID(j)
+          print(to_json(j))
+        end
+        v.bannedTags = {}
+        for i,j in pairs(v.bannedTagIDs) do
+          v.bannedTags[i] = api:GetTagByID(j)
+        end
       end
     end
-  end
-  if ok then
     return {json ={error = {}, data = ok} }
   else
     return {json = {error = {err}, data = {}}}
