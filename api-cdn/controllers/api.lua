@@ -76,14 +76,15 @@ function m.GetUserSettings(request)
   end
 end
 
-function m.GetUserFrontPage(request)
+function m.GetFrontPage(request)
   local startAt = request.params.startAt or 1
   local endAt = request.params.endAt or 100
   local sortBy = request.params.sortby or 'fresh'
+  local userID = request.session.userID or 'default'
 
-  local ok,err = api:GetUserFrontPage(request.session.userID or 'default',sortBy, startAt, endAt)
+  local ok,err = api:GetUserFrontPage(userID, sortBy, startAt, endAt)
   if ok then
-    return {json = {status = 'success', data = ok}}
+    return {json = {status = 'success', data = ok or {}}}
   else
     return {json = {status = 'error', message = err}}
   end
@@ -98,14 +99,13 @@ function m.GetFilterPosts(request)
 end
 
 function m:Register(app)
-  --app:match('apilogin','/api/login',respond_to({POST = UserLogin}))
   app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
   app:match('userfilters', '/api/user/filters', self.GetUserFilters)
   app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
   app:match('/api/post/:postID/upvote', self.UpvotePost)
   app:match('/api/post/:postID/downvote', self.DownvotePost)
   app:match('/api/user/:userID/settings', self.GetUserSettings)
-  app:match('/api/user/:userID/frontpage', self.GetUserFrontPage)
+  app:match('/api/frontpage', self.GetFrontPage)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
 end
 

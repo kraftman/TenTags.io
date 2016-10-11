@@ -158,7 +158,7 @@ end
 
 function m.CreatePostForm(request)
   if not request.session.userID then
-    return { redirect_to = request:url_for("login") }
+    return { render = 'pleaselogin' }
   end
 
   local tags = api.GetAllTags(api)

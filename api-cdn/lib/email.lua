@@ -37,6 +37,10 @@ function m:IsValidEmail(str)
     error("Expected string")
     return nil, 'no email'
   end
+  str = str:gsub(' ','')
+  if str == '' then
+    return nil, 'blank email'
+  end
   local lastAt = str:find("[^%@]+$")
   local localPart = str:sub(1, (lastAt - 2)) -- Returns the substring before '@' symbol
   local domainPart = str:sub(lastAt, #str) -- Returns the substring after '@' symbol

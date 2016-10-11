@@ -44,7 +44,9 @@ function AddToSeenPosts(){
 }
 
 function LoadNewPosts(startAt = 0, endAt = 100){
-  $.getJSON('/api/user/'+userID+'/frontpage?startat=1&endat=100',function(data){
+  var uri = '/api/frontpage?startat=1&endat=100'
+
+  $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
       newPosts = data.data

@@ -13,7 +13,7 @@ local respond_to = (require 'lapis.application').respond_to
 
 function m.ToggleDefault(request)
   if not request.session.userID then
-    return { redirect_to = request:url_for("login") }
+    return { render = 'pleaselogin' }
   end
 
   if request.params.setdefault == 'true' then
@@ -64,7 +64,7 @@ end
 function m.CreateFilter(request)
   if not request.session.userID then
     print('no user id')
-    return { redirect_to = request:url_for("login") }
+    return { render = 'pleaselogin' }
   end
   request.tags = api:GetAllTags()
   return {render = 'filter.create'}
@@ -88,13 +88,16 @@ function m.DisplayFilter(request)
   filter.ownerName = api:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = api:GetFilters(filter.relatedFilterIDs)
   request.thisfilter = filter
-  request.isMod = api:UserCanEditFilter(request.session.userID, filter.id)
-
+  if request.session.userID then
+    request.isMod = api:UserCanEditFilter(request.session.userID, filter.id)
+  end
   local sortBy = request.params.sortBy or 'fresh'
   request.posts = api:GetFilterPosts(userID, filter, sortBy)
   --(to_json(request.posts))
-  for k,v in pairs(request.posts) do
-    v.hash = ngx.md5(v.id..request.session.userID)
+  if request.session.userID then
+    for k,v in pairs(request.posts) do
+      v.hash = ngx.md5(v.id..request.session.userID)
+    end
   end
 
   return {render = 'filter.view'}
