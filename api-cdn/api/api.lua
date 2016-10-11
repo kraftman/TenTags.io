@@ -1462,6 +1462,10 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 
 end
 
+function api:GetTagByID(tagID)
+	return cache:GetTagByID(tagID)
+end
+
 function api:CreateTag(userID, tagName)
 
 	tagName = tagName:gsub(' ','')

@@ -672,6 +672,16 @@ function cache:GetTag(tagName)
   return
 end
 
+function cache:GetTagByID(tagID)
+  local tags = self:GetAllTags()
+  for _,v in pairs(tags) do
+    if v.id == tagID then
+      return v
+    end
+  end
+  return
+end
+
 
 function cache:GetUserFilterIDs(userID)
   local ok, err, res
