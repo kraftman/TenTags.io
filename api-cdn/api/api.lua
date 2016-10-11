@@ -1911,6 +1911,12 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 			userFilter.createdBy = userID
 		end
 	end
+	userFilter.name = userFilter.name:gsub(' ','')
+	userFilter.name = userFilter.name:gsub('%W','')
+	if userFilter.name == '' then
+		return nil, 'filter name cannot be blank or special characters'
+	end
+
 
 	local newFilter = {
 		id = uuid.generate_random(),

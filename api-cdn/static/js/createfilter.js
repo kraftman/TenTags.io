@@ -46,11 +46,16 @@ $("#bannedSelect_chosen").bind('keyup',function(e) {
     }
     $.ajax({
       type: "POST",
-      url: '/filters/create',
+      url: '/api/filters/create',
       data: form,
       success: function(data) {
-        console.log('redirecting')
-        window.location.replace('/');
+        if (data.status == 'success'){
+          console.log('redirecting')
+          window.location.replace('/');
+        } else {
+          $('.warningText').text(data.error)
+          console.log('failed: '+data.error)
+        }
       },
       error: function(data) {
         console.log('failed');

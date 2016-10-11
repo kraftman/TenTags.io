@@ -98,6 +98,37 @@ function m.GetFilterPosts(request)
   --local ok, err = api:GetFilterPosts(userID, self.params.filterName, )
 end
 
+
+function m.CreateFilter(request)
+
+  if request.params.setdefault or request.params.subscribe then
+    return ToggleDefault(request)
+  end
+
+  local requiredTagIDs = from_json(request.params.requiredTagIDs)
+  local bannedTagIDs = from_json(request.params.bannedTagIDs)
+
+  local info ={
+    title = request.params.title,
+    name= request.params.label:gsub(' ','') ,
+    description = request.params.description,
+    createdAt = ngx.time(),
+    createdBy = request.session.userID,
+    ownerID = request.session.userID
+  }
+
+  info.bannedTagIDs = bannedTagIDs
+  info.requiredTagIDs = requiredTagIDs
+
+  local ok, err = api:CreateFilter(request.session.userID, info)
+  if ok then
+    return { json = {status = 'success', data = ok }}
+  else
+    ngx.log(ngx.ERR, 'error creating filter: ',err)
+    return {json = {status = 'error', error = err}}
+  end
+end
+
 function m:Register(app)
   app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
   app:match('userfilters', '/api/user/filters', self.GetUserFilters)
@@ -107,6 +138,7 @@ function m:Register(app)
   app:match('/api/user/:userID/settings', self.GetUserSettings)
   app:match('/api/frontpage', self.GetFrontPage)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
+  app:match('/api/filters/create', self.CreateFilter)
 end
 
 return m

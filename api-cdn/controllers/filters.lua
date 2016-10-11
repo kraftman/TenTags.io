@@ -32,32 +32,6 @@ end
 
 function m.NewFilter(request)
 
-  if request.params.setdefault or request.params.subscribe then
-    return ToggleDefault(request)
-  end
-
-  local requiredTagIDs = from_json(request.params.requiredTagIDs)
-  local bannedTagIDs = from_json(request.params.bannedTagIDs)
-
-  local info ={
-    title = request.params.title,
-    name= request.params.label:gsub(' ','') ,
-    description = request.params.description,
-    createdAt = ngx.time(),
-    createdBy = request.session.userID,
-    ownerID = request.session.userID
-  }
-
-  info.bannedTagIDs = bannedTagIDs
-  info.requiredTagIDs = requiredTagIDs
-
-  local ok, err = api:CreateFilter(request.session.userID, info)
-  if ok then
-    return { json = ok }
-  else
-    ngx.log(ngx.ERR, 'error creating filter: ',err)
-    return {}
-  end
 end
 
 
