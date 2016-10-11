@@ -3,6 +3,7 @@ var newPosts = {};
 var maxPosts = 10;
 var seenPosts = [];
 var userID;
+var postIndex = 0;
 
 $(function() {
   userID = $('#userID').val()
@@ -202,8 +203,9 @@ function GetFreshPost(){
   while ($.inArray(newPost.id, seenPosts) != -1){
 
     //console.log(newPost)
-    if (newPost == null) {
-      return
+    if (newPost == undefined) {
+      postIndex = postIndex + 100
+      LoadNewPosts(postIndex,postIndex+100)
     }
     newPost = newPosts.shift()
   }
