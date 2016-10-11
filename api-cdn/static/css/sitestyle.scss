@@ -132,6 +132,10 @@ a {
   position: relative;
 }
 
+#box-one {
+  padding: 10px;
+}
+
 #box-one:target, #box-two:target {
   z-index: 1;
 }

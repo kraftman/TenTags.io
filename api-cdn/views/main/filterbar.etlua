@@ -41,6 +41,8 @@
             <%= filter.name -%>
           </a>
           <% end %>
+      <% else %>
+        Welcome to filter! 
       <% end %>
   	</div>
 
