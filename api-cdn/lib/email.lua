@@ -5,6 +5,7 @@ local ltn12 = require 'resty.smtp.ltn12'
 local m = {}
 
 function m:SendMessage(subject, body, recipient)
+  local password =os.getenv('EMAIL_CREDENTIALS')
     local msg = {
         headers = {
             to = '<'..recipient..'>',
@@ -19,7 +20,7 @@ function m:SendMessage(subject, body, recipient)
         rcpt = '<'..recipient..'>',
         source = smtp.message(msg),
         user = 'admin@filtta.com',
-        password = os.getenv('EMAIL_CREDENTIALS'),
+        password = password,
         server = 'mail.privateemail.com',
         port = 465,
         ssl = {enable = true}

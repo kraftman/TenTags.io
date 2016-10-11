@@ -90,7 +90,8 @@ function m.DisplayFilter(request)
   request.thisfilter = filter
   request.isMod = api:UserCanEditFilter(request.session.userID, filter.id)
 
-  request.posts = api:GetFilterPosts(filter)
+  local sortBy = request.params.sortBy or 'fresh'
+  request.posts = api:GetFilterPosts(userID, filter, sortBy)
   --(to_json(request.posts))
   for k,v in pairs(request.posts) do
     v.hash = ngx.md5(v.id..request.session.userID)

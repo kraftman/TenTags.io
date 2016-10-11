@@ -339,10 +339,9 @@ function cache:GetPost(postID)
 
 end
 
-function cache:GetFilterPosts(filter)
-  print('this')
+function cache:GetFilterPosts(userID, filter, sortBy)
 
-  local filterIDs = redisread:GetFilterPosts(filter)
+  local filterIDs = redisread:GetFilterPosts(filter, sortBy)
   local posts = {}
   local post
   for _,v in pairs(filterIDs) do
@@ -618,18 +617,18 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   tinsert(newPosts, post)
 end
 
-function cache:GetUserFrontPage(userID,filter,startAt, endAt)
+function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
 
   local user = self:GetUser(userID)
 
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetFreshUserPosts(userID,filter)
+  local freshPosts = cache:GetFreshUserPosts(userID,sortBy)
 
   local newPosts = {}
 
-  if filter ~= 'seen' and userID ~= 'default' then
+  if sortBy ~= 'seen' and userID ~= 'default' then
     for _,postID in pairs(freshPosts) do
       self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
 

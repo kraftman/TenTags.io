@@ -1821,8 +1821,8 @@ end
 
 
 
-function api:GetFilterPosts(filter)
-  return cache:GetFilterPosts(filter)
+function api:GetFilterPosts(userID, filter, sortBy)
+  return cache:GetFilterPosts(userID, filter, sortBy)
 end
 
 function api:GetFilterByName(filterName)

@@ -451,9 +451,17 @@ function read:GetPost(postID)
   return post
 end
 
-function read:GetFilterPosts(filter)
+function read:GetFilterPosts(filter, sortBy)
+  local key = 'filterposts:score:'
+  if sortBy == 'fresh' then
+    key = 'filterposts:datescore:'
+  elseif sortBy == 'new' then
+    key = 'filterposts:date:'
+  elseif sortBy == 'best' then
+    key = 'filterposts:score:'
+  end
   local red = util:GetRedisReadConnection()
-  local ok, err = red:zrange('filterposts:score:'..filter.id,0,50)
+  local ok, err = red:zrevrange(key..filter.id,0,50)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter posts ',err)
   end
