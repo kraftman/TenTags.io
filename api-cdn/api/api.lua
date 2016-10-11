@@ -279,7 +279,7 @@ function api:SearchFilters(userID, searchString)
 		return ok, err
 	end
 	searchString = self:SanitiseUserInput(searchString, 100)
-	if searchString:len() < 4 then
+	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
 	local ok, err = cache:SearchFilters(searchString)

@@ -91,13 +91,16 @@ function AddFilterToTags(e,p){
         }
       })
       if (found == true) {
-        foundBannedTag == true
+        foundBannedTag = true
+        console.log('test')
         $(tagElement).addClass('banned');
       } else {
         $(tagElement).removeClass('banned');
       }
     })
+
     if (foundBannedTag == true){
+      console.log('marking filter as banned')
       $(filterElement).addClass('banned');
     } else {
       $(filterElement).removeClass('banned');
