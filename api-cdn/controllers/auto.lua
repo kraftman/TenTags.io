@@ -7,10 +7,10 @@ local api = require 'api.api'
 local tinsert = table.insert
 
 local filters = {
-  {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagIDs = {'gifs'}, bannedTagIDs = {'meta:self'}},
-  {title = 'funny', name = 'funny', description = 'funny', requiredTagIDs = {'funny'}, bannedTagIDs = {'nsfw'}},
-  {title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTagIDs = {'funny','nsfw'}, bannedTagIDs = {'sfw'}},
-  {title = 'pics', name = 'pics', description = 'pics', requiredTagIDs = {'pics'}, bannedTagIDs = {'nsfw'}},
+  {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
+  {title = 'funny', name = 'funny', description = 'funny', requiredTagNames = {'funny'}, bannedTagNames = {'nsfw'}},
+  {title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTagNames = {'funny','nsfw'}, bannedTagNames = {'sfw'}},
+  {title = 'pics', name = 'pics', description = 'pics', requiredTagNames = {'pics'}, bannedTagNames = {'nsfw'}},
 }
 
 local posts = {
@@ -38,8 +38,8 @@ function m.AutoContent(request)
       createdAt = ngx.time(),
       createdBy = userID,
       ownerID = userID,
-      bannedTagIDs = v.bannedTagIDs,
-      requiredTagIDs = v.requiredTagIDs
+      bannedTagNames = v.bannedTagNames,
+      requiredTagNames = v.requiredTagNames
     }
 
     local ok, err = api:CreateFilter(userID, info)

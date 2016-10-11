@@ -41,7 +41,6 @@ function config.Run(_,self)
 
 end
 
-
 function config:GetJob(jobName)
   local filterID = redisRead:GetOldestJob(jobName)
   if not filterID then
@@ -66,14 +65,14 @@ function config:GetJob(jobName)
 end
 
 --DRY, needs combining with api:AverageTagScore
-local function AverageTagScore(filterRequiredTagIDs,postTags)
+local function AverageTagScore(filterrequiredTagNames,postTags)
 
 	local score = 0
 	local count = 0
 
-  for _,filterTagID in pairs(filterRequiredTagIDs) do
+  for _,filterTagName in pairs(filterrequiredTagNames) do
     for _,postTag in pairs(postTags) do
-      if filterTagID == postTag.id then
+      if filterTagName == postTag.name then
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
@@ -91,12 +90,12 @@ local function AverageTagScore(filterRequiredTagIDs,postTags)
 	return score / count
 end
 
-function config:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
+function config:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
 
   local newPostsKey = filter.id..':tempPosts'
 	local oldPostsKey = 'filterposts:'..filter.id
 
-  local ok, err = redisWrite:CreateTempFilterPosts(newPostsKey, requiredTagIDs, bannedTagIDs)
+  local ok, err = redisWrite:CreateTempFilterPosts(newPostsKey, requiredTagNames, bannedTagNames)
   if not ok then
     return ok, err
   end
@@ -116,13 +115,12 @@ end
 function config:GetRelatedFilters(filter)
 
 	-- for each tag, get filters that also have that tag
-	local tagIDs = {}
-	for _,tagID in pairs(filter.requiredTagIDs) do
-		table.insert(tagIDs, {id = tagID})
+	local tagNames = {}
+	for _,tagName in pairs(filter.requiredTagNames) do
+		table.insert(tagNames, {name = tagName})
 	end
 
-	--print(to_json(tagIDs))
-	local filterIDs = cache:GetFilterIDsByTags(tagIDs)
+	local filterIDs = cache:GetFilterIDsByTags(tagNames)
 	local filters = {}
 	for _,v in pairs(filterIDs) do
 		for filterID,_ in pairs(v) do
@@ -135,9 +133,9 @@ function config:GetRelatedFilters(filter)
 --	print('this: ',to_json(filters))
 	for _,relatedFilter in pairs(filters) do
 		local count = 0
-		for _,relatedTagID in pairs(relatedFilter.requiredTagIDs) do
-			for _, filterTagID in pairs(filterIDs) do
-				if relatedTagID == filterTagID then
+		for _,relatedTagName in pairs(relatedFilter.requiredTagNames) do
+			for _, filterTagName in pairs(filterIDs) do
+				if relatedTagName == filterTagName then
 					count = count + 1
 				end
 			end
@@ -168,15 +166,15 @@ function config:UpdateFilterPosts()
 
 
 	local ok, err
-	local requiredTagIDs = filter.requiredTagIDs
-	--print(to_json(requiredTagIDs))
-	local bannedTagIDs = filter.bannedTagIDs
+	local requiredTagNames = filter.requiredTagNames
+	print(to_json(requiredTagNames))
+	local bannedTagNames = filter.bannedTagNames
 
-	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagIDs, bannedTagIDs)
+	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
 
 	--get new post scores
 	for _, newPost in pairs(newPosts) do
-		newPost.score = AverageTagScore(requiredTagIDs, newPost.tags)
+		newPost.score = AverageTagScore(requiredTagNames, newPost.tags)
 	end
 
 	--update all the affected posts so they remove/add themselves to filters

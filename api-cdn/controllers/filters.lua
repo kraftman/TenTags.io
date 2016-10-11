@@ -128,13 +128,16 @@ function m.BanDomain(request,filter)
 end
 
 function m.UpdateFilterTags(request,filter)
-  local requiredTagIDs = from_json(request.params.requiredTagIDs)
-  local bannedTagIDs = from_json(request.params.bannedTagIDs)
+  local requiredTagNames = from_json(request.params.requiredTagNames)
+  local bannedTagNames = from_json(request.params.bannedTagNames)
   local userID = request.session.userID
 
   --print(to_json(filter))
   --print(filter.id)
-  local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTagIDs, bannedTagIDs)
+  --print(to_json(requiredTagNames))
+  --print(to_json(bannedTagNames))
+  --print('tjis')
+  local ok, err = api:UpdateFilterTags(userID, filter.id, requiredTagNames, bannedTagNames)
   if ok then
     print('done')
     return 'ok'
@@ -206,7 +209,7 @@ function m.UpdateFilter(request)
      return m.BanDomain(request,filter)
   end
 
-  if request.params.requiredTagIDs then
+  if request.params.requiredTagNames then
      return m.UpdateFilterTags(request,filter)
   end
 
@@ -252,13 +255,13 @@ function m.ViewFilterSettings(request)
 
   -- get key indexed tags
   request.requiredTagKeys = {}
-  for k, v in pairs(filter.requiredTagIDs) do
+  for k, v in pairs(filter.requiredTagNames) do
     request.requiredTagKeys[v] = true
   end
   print(to_json(request.requiredTagKeys))
 
   request.bannedTagKeys = {}
-  for k,v in pairs(filter.bannedTagIDs) do
+  for k,v in pairs(filter.bannedTagNames) do
     request.bannedTagKeys[v] = true
   end
 

@@ -35,11 +35,11 @@ $("#bannedSelect_chosen").bind('keyup',function(e) {
   $('input#submitButton').click( function(e) {
     e.preventDefault();
     console.log($('form#createfilter').serialize());
-    var requiredTagIDs =  $("#requiredSelect").val()
-    var bannedTagIDs =  $("#bannedSelect").val()
+    var requiredTagNames =  $("#requiredSelect").val()
+    var bannedTagNames =  $("#bannedSelect").val()
     var form = {
-      requiredTagIDs: JSON.stringify(requiredTagIDs),
-      bannedTagIDs: JSON.stringify(bannedTagIDs),
+      requiredTagNames: JSON.stringify(requiredTagNames),
+      bannedTagNames: JSON.stringify(bannedTagNames),
       title: $('#filtertitle').val(),
       description: $('#filterdescription').val(),
       label: $('#filterlabel').val(),

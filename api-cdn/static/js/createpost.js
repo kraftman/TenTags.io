@@ -19,7 +19,7 @@ $(function() {
 
   $('input#submitButton').click( function(e) {
     e.preventDefault();
-    var selectedtags =  $(".chosen-select").val()
+    var selectedtags =  $("#tagselect").val()
     var form = {
       selectedtags: JSON.stringify(selectedtags),
       title: $('#posttitle').val(),
@@ -65,7 +65,7 @@ function AddFilterToTags(e,p){
 
   if (p.selected){
     var tagSelectChosen = $('#tagselect')
-    $.each(selectedFilter.requiredTags,function(k,v){
+    $.each(selectedFilter.requiredTagNames,function(k,v){
       console.log(k,v)
       tagSelectChosen.append('<option selected="selected" value="'+v.name+'">'+v.name+'</option>');
       tagSelectChosen.trigger("chosen:updated");
@@ -85,7 +85,7 @@ function AddFilterToTags(e,p){
     $.each($('#tagselect_chosen').find('li.search-choice'), function(k,tagElement) {
       var tagName = $(tagElement).find('span').text()
       var found;
-      $.each(filter.bannedTags, function(k,v){
+      $.each(filter.bannedTagNames, function(k,v){
         if (v.name == tagName){
           found = true;
         }

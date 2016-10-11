@@ -15,30 +15,14 @@ function m.SearchFilter(request)
     return {json = {error = 'you must be logged in!', data = {}}}
   end
   local ok, err = api:SearchFilters(request.session.userID, request.params.searchString)
-  print(to_json(ok))
-
 
   if ok then
-    if request.params.withTags then
-      for k,v in pairs(ok) do
-        v.requiredTags = {}
-        for i,j in pairs(v.requiredTagIDs) do
-          print(j)
-          v.requiredTags[i] = api:GetTagByID(j)
-          print(to_json(j))
-        end
-        v.bannedTags = {}
-        for i,j in pairs(v.bannedTagIDs) do
-          v.bannedTags[i] = api:GetTagByID(j)
-        end
-      end
-    end
     return {json ={error = {}, data = ok} }
   else
     return {json = {error = {err}, data = {}}}
   end
 end
-
+--
 function m.GetUserFilters(request)
   local ok, err = api:GetUserFilters(request.session.userID)
   return {json = {error = {err}, data = ok or {}}}
@@ -121,8 +105,8 @@ function m.CreateFilter(request)
     return ToggleDefault(request)
   end
 
-  local requiredTagIDs = from_json(request.params.requiredTagIDs)
-  local bannedTagIDs = from_json(request.params.bannedTagIDs)
+  local requiredTagNames = from_json(request.params.requiredTagNames)
+  local bannedTagNames = from_json(request.params.bannedTagNames)
 
   local info ={
     title = request.params.title,
@@ -133,8 +117,8 @@ function m.CreateFilter(request)
     ownerID = request.session.userID
   }
 
-  info.bannedTagIDs = bannedTagIDs
-  info.requiredTagIDs = requiredTagIDs
+  info.bannedTagNames = bannedTagNames
+  info.requiredTagNames = requiredTagNames
 
   local ok, err = api:CreateFilter(request.session.userID, info)
   if ok then

@@ -663,24 +663,10 @@ end
 
 
 function cache:GetTag(tagName)
-  local tags = self:GetAllTags()
-  for _,v in pairs(tags) do
-    if v.name == tagName then
-      return v
-    end
-  end
-  return
+  local tag = redisread:GetTag(tagName)
+  return tag
 end
 
-function cache:GetTagByID(tagID)
-  local tags = self:GetAllTags()
-  for _,v in pairs(tags) do
-    if v.id == tagID then
-      return v
-    end
-  end
-  return
-end
 
 
 function cache:GetUserFilterIDs(userID)

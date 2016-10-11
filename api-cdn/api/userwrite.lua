@@ -27,13 +27,13 @@ function userwrite:LoadScript(script)
   return ok
 end
 
-function userwrite:AddUserTagVotes(userID, postID, tagIDs)
+function userwrite:AddUserTagVotes(userID, postID, tagNames)
   local red = util:GetUserWriteConnection()
-  for k,v in pairs(tagIDs) do
-    tagIDs[k] = postID..':'..v
+  for k,v in pairs(tagNames) do
+    tagNames[k] = postID..':'..v
   end
 
-  local ok, err = red:sadd('userTagVotes:'..userID, tagIDs)
+  local ok, err = red:sadd('userTagVotes:'..userID, tagNames)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)

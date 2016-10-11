@@ -173,13 +173,13 @@ end
 
 function m.UpvoteTag(request)
 
-  api:VoteTag(request.session.userID, request.params.postID, request.params.tagID, 'up')
+  api:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
 
 end
 
 function m.DownvoteTag(request)
-  api:VoteTag(request.session.userID, request.params.postID, request.params.tagID, 'down')
+  api:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
 end
@@ -346,8 +346,8 @@ function m:Register(app)
     POST = self.DeletePost,
   }))
 
-  app:get('upvotetag','/post/upvotetag/:tagID/:postID',self.UpvoteTag)
-  app:get('downvotetag','/post/downvotetag/:tagID/:postID',self.DownvoteTag)
+  app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
+  app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
