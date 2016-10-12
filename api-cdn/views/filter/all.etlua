@@ -1,4 +1,9 @@
 
+<form action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
+  <input class='filter-searchbox-main' class='form-control' type='text' name='searchString' maxlength="50" placeholder="<%= searchString or 'Search' -%>"/>
+  <input type="submit" style="visibility: hidden;" />
+</form>
+
 <div class = 'contents'>
   <div id='filters'>
     <% for i, filter in pairs(filters) do %>

@@ -14,6 +14,7 @@ function m.SearchFilter(request)
   if not request.session.userID then
     return {json = {error = 'you must be logged in!', data = {}}}
   end
+
   local ok, err = api:SearchFilters(request.session.userID, request.params.searchString)
 
   if ok then

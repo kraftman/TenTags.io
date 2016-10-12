@@ -124,14 +124,13 @@ function m.ConfirmLogin(request)
 
 end
 
-function m:Register(app)
 
+function m:Register(app)
 
   app:match('newsubuser','/sub/new', respond_to({
     GET = self.NewSubUser,
     POST = self.CreateSubUser
   }))
-
 
   app:post('login','/login',self.NewLogin)
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
@@ -139,6 +138,7 @@ function m:Register(app)
   app:get('viewuser','/user/:username', self.ViewUser)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
+  app:get('listusers','/user/list',function() return {render = 'listusers'} end)
 
 end
 

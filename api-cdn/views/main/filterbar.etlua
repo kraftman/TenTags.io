@@ -51,7 +51,10 @@
 
     <div id="box-two" class='info-box'>
       <% if session.userID then %>
-        <input class='form-control' type='text' name='email' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+        <form action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
+          <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+          <input type="submit" style="visibility: hidden;" />
+        </form>
       <% end %>
       <ul>
         <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>

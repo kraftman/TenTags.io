@@ -361,6 +361,29 @@ function m.BanPost(request)
   end
 end
 
+function m.SearchFilters(request)
+
+  if not request.params.searchString then
+    return 'cant search blank!'
+  end
+  if not request.session.userID then
+    return 'you must be logged in!'
+  end
+  local filters, err = api:SearchFilters(request.session.userID, request.params.searchString)
+
+  if not filters then
+    ngx.log(ngx.ERR, 'unable to search filters:',err)
+    return 'couldnt search filters, sorry!'
+  end
+
+  request.filters = filters
+  if not next(filters) then
+    return 'no filters found matching '..request.params.searchString
+  end
+  request.searchString = request.params.searchString
+  return {render = 'filter.all'}
+end
+
 function m:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
@@ -369,6 +392,7 @@ function m:Register(app)
   app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',self.UnbanUser)
   app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',self.UnbanDomain)
   app:get('banpost', '/filters/:filterlabel/banpost/:postID', self.BanPost)
+  app:match('searchfilters', '/filters/search', self.SearchFilters)
 
 end
 
