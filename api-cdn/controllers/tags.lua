@@ -1,19 +1,10 @@
-local db = require("lapis.db")
+
 
 local uuid = require 'lib.uuid'
 local api = require 'api.api'
 
 local m = {}
 m.__index = m
-
-local function DisplayTag(request, tag)
-  local query = "SELECT p.title from post p inner join itemtags pt on p.id = pt.itemID where pt.tagID = '"..tag.id.."'"
-  print(query)
-  local res = db.query(query)
-  print('found results: ',#res)
-  request.posts = res
-  return {render = 'tag'}
-end
 
 function m.ParseTags(request)
 

@@ -29,6 +29,11 @@ a {
   text-decoration: none;
 }
 
+.banned {
+  background: #c17272 !important;;
+  background-color: #c17272 !important;;
+}
+
 
 
 .post-icon {
@@ -130,6 +135,10 @@ a {
 
 .box-wrap {
   position: relative;
+}
+
+#box-one {
+  padding: 10px;
 }
 
 #box-one:target, #box-two:target {

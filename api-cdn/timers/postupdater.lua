@@ -44,14 +44,14 @@ function config.Run(_,self)
 
 end
 
-local function AverageTagScore(filterRequiredTagIDs,postTags)
+local function AverageTagScore(filterrequiredTagNames,postTags)
 
 	local score = 0
 	local count = 0
 
-  for _,filterTagID in pairs(filterRequiredTagIDs) do
+  for _,filterTagName in pairs(filterrequiredTagNames) do
     for _,postTag in pairs(postTags) do
-      if filterTagID == postTag.id then
+      if filterTagName == postTag.name then
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
@@ -75,7 +75,7 @@ function config:GetValidFilters(filter, post)
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
 
-	filter.score = AverageTagScore(filter.requiredTagIDs, post.tags)
+	filter.score = AverageTagScore(filter.requiredTagNames, post.tags)
 
 	if (filter.bannedUsers[post.createdBy]) then
 		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
@@ -91,11 +91,11 @@ end
 function config:TagsMatch(filter, post)
   -- the post needs to have all of the tags that the filter has in order to be valid
   local found
-  for _,filterTagID in pairs(filter.requiredTagIDs) do
+  for _,filterTagName in pairs(filter.requiredTagNames) do
     found = false
 
     for _,postTag in pairs(post.tags) do
-      if filterTagID == postTag.id then
+      if filterTagName == postTag.name then
 				found = true
       end
     end
@@ -117,6 +117,7 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
+		print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
@@ -406,7 +407,7 @@ function config:CheckReposts()
     return
   end
 
-  local posts, err = redisRead:GetTagPosts(linkTag.id)
+  local posts, err = redisRead:GetTagPosts(linkTag.name)
   if not posts then
     print(err)
   end

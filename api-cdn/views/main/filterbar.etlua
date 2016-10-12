@@ -7,17 +7,7 @@
   <div class='box-wrap'>
     <div id="box-one" class='info-box'>
 
-      <% if enableAds then %>
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <!-- SideBar -->
-          <ins class="adsbygoogle"
-               style="display:inline-block;width:300px;height:250px"
-               data-ad-client="ca-pub-5666598062804330"
-               data-ad-slot="7427560400"></ins>
-          <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      <% end %>
+
 
       <% if thisfilter then %>
         Subs:
@@ -41,6 +31,21 @@
             <%= filter.name -%>
           </a>
           <% end %>
+      <% else %>
+        Welcome to filter!
+      <% end %>
+      <% if enableAds then %>
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <!-- sidebar -->
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-5666598062804330"
+           data-ad-slot="5027717600"
+           data-ad-test="on"
+           data-ad-format="auto"></ins>
+      <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
       <% end %>
   	</div>
 

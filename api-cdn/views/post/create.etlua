@@ -28,9 +28,12 @@
         <input type="text" class="form-control" name='posttext' id='posttext' maxlength="50" placeholder="Text" aria-describedby="basic-addon1">
       </div>
 
+      <select name='filterselect' id='filterselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add filters'>
 
+      </select>
+      </br>
 
-      <select name='tagselect' id='test2select' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
+      <select name='tagselect' id='tagselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
         <% for i, tag in pairs(tags) do %>
          <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
         <% end %>

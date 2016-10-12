@@ -30,8 +30,8 @@ function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
 
-function worker:AddUserTagVotes(userID, postID, tagIDs)
-  return userWrite:AddUserTagVotes(userID, postID, tagIDs)
+function worker:AddUserTagVotes(userID, postID, tagNames)
+  return userWrite:AddUserTagVotes(userID, postID, tagNames)
 end
 
 function worker:LogChange(key, time, log)
@@ -154,10 +154,10 @@ end
 
 
 
-function worker:UpdateFilterTags(filter, requiredTagIDs, bannedTagIDs)
+function worker:UpdateFilterTags(filter, requiredTagNames, bannedTagNames)
 
 
-  local ok, err = rediswrite:UpdateFilterTags(filter,requiredTagIDs, bannedTagIDs)
+  local ok, err = rediswrite:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
   if not ok then
     return ok, err
   end
@@ -180,7 +180,7 @@ end
 
 function worker:FindPostsForFilter(filter)
   -- has to use write as it uses sinterstore
-  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTagIDs, filter.bannedTagIDs)
+  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTagNames, filter.bannedTagNames)
 end
 
 function worker:CreateFilter(filter)

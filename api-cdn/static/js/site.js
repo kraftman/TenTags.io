@@ -3,6 +3,7 @@ var newPosts = {};
 var maxPosts = 10;
 var seenPosts = [];
 var userID;
+var postIndex = 0;
 
 $(function() {
   userID = $('#userID').val()
@@ -43,7 +44,9 @@ function AddToSeenPosts(){
 }
 
 function LoadNewPosts(startAt = 0, endAt = 100){
-  $.getJSON('/api/user/'+userID+'/frontpage?startat=1&endat=100',function(data){
+  var uri = '/api/frontpage?startat=1&endat=100'
+
+  $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
       newPosts = data.data
@@ -202,8 +205,9 @@ function GetFreshPost(){
   while ($.inArray(newPost.id, seenPosts) != -1){
 
     //console.log(newPost)
-    if (newPost == null) {
-      return
+    if (newPost == undefined) {
+      postIndex = postIndex + 100
+      LoadNewPosts(postIndex,postIndex+100)
     }
     newPost = newPosts.shift()
   }
