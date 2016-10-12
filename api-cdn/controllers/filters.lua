@@ -32,6 +32,40 @@ end
 
 function m.NewFilter(request)
 
+  local info ={
+    title = request.params.title,
+    name= request.params.filterName:gsub(' ','') ,
+    description = request.params.description,
+    createdAt = ngx.time(),
+    createdBy = request.session.userID,
+    ownerID = request.session.userID,
+    bannedTagNames = {},
+    requiredTagNames = {}
+  }
+
+  if type(request.params.requiredTagNames) == 'string' then
+    for word in request.params.requiredTagNames:gmatch('%S+') do
+      table.insert(info.requiredTagNames, word)
+    end
+  else
+    info.requiredTagNames = from_json(request.params.requiredTagNames)
+  end
+
+  if type(request.params.bannedTagNames) == 'string' then
+    for word in request.params.bannedTagNames:gmatch('%S+') do
+      table.insert(info.bannedTagNames, word)
+    end
+  else
+    info.bannedTagNames = from_json(request.params.bannedTagNames)
+  end
+
+
+  local newFilter, err = api:CreateFilter(request.session.userID, info)
+  if newFilter then
+    return {redirect_to = request:url_for("updatefilter",{filterlabel = newFilter.name}) }
+  else
+    return 'Error creating filter: '..(err or '')
+  end
 end
 
 

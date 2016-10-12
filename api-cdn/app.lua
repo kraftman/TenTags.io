@@ -159,6 +159,11 @@ app:before_filter(function(self)
 
 end)
 
+-- Random stuff that doesnt go anywhere yet
+app:get('createpage', '/nojs/create', function() return {render = 'createpage'} end)
+
+
+
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec
 
 require 'tags':Register(app)

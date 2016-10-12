@@ -22,9 +22,9 @@ $(function() {
     var selectedtags =  $("#tagselect").val()
     var form = {
       selectedtags: JSON.stringify(selectedtags),
-      title: $('#posttitle').val(),
-      link: $('#postlink').val(),
-      text: $('#posttext').val(),
+      posttitle: $('#posttitle').val(),
+      postlink: $('#postlink').val(),
+      posttext: $('#posttext').val(),
     }
     $.ajax({
       type: "POST",

@@ -13,20 +13,25 @@ local trim = util.trim
 
 
 function m.CreatePost(request)
-  --print(request.params.selectedtags)
-  local selectedTags = from_json(request.params.selectedtags)
 
   if trim(request.params.link) == '' then
     request.params.link = nil
   end
 
   local info ={
-    title = request.params.title,
-    link = request.params.link,
-    text = request.params.text,
+    title = request.params.posttitle,
+    link = request.params.postlink,
+    text = request.params.posttext,
     createdBy = request.session.userID,
-    tags = selectedTags
+    tags = {}
   }
+  if type(request.params.selectedtags) == 'string' then
+    for word in request.params.selectedtags:gmatch('%S+') do
+      table.insert(request.params.selectedtags, word)
+    end
+  else
+    info.tags = from_json(request.params.selectedtags)
+  end
 
   local ok, err = api:CreatePost(request.session.userID, info)
 

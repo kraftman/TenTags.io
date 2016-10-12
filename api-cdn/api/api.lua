@@ -2007,7 +2007,7 @@ function api:CreateFilter(userID, filterInfo)
 	if not ok then
 		return ok,err
 	end
-  return true
+  return newFilter
 end
 
 function api:DeletePost(userID, postID)
