@@ -7,17 +7,7 @@ $(function() {
   AddPostFilterSearch()
   ConvertTagsToSelect();
   OverrideSubmit();
-  var tagSelectChosen = $('#tagselect')
-  tagSelectChosen.bind('keyup',function(e) {
-    if(e.which === 13 || e.which === 32) {
-      var newItem = $(e.target).val();
-      var mySelect = $(".chosen-select option[value='"+newItem+"']");
-      if (mySelect.length == 0) {
-        tagSelectChosen.append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
-        tagSelectChosen.trigger("chosen:updated");
-      }
-    }
-  });
+
 });
 
 
@@ -27,28 +17,25 @@ function ConvertTagsToSelect(){
   $('#selectedtags').replaceWith(`<select name='tagselect' id='selectedtags' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
       </select>`)
   $('#selectedtags').chosen()
-  $('#selectedtags_chosen').bind('keyup',function(e) {
-
-    console.log($(e.target).val())
-    var test = $(e.target).val()
-    $.getJSON('/api/tags/'+$(e.target).val(),function(data){
-      if (data.status == 'success'){
-        console.log(data)
-        $.each(data.data, function(k,v){
-          $('#selectedtags').append('<option value="'+v+'">'+v+'</option>');
-          $('#selectedtags').trigger("chosen:updated");
-          $(e.target).val(test)
-        })
+  var tagSelectChosen = $('#selectedtags_chosen')
+  tagSelectChosen.bind('keyup',function(e) {
+    console.log(e)
+    if(e.which === 13 || e.which === 32) {
+      var newItem = $(e.target).val();
+      var mySelect = $(".chosen-select option[value='"+newItem+"']");
+      if (mySelect.length == 0) {
+        $('#selectedtags').append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
+        $('#selectedtags').trigger("chosen:updated");
       }
-    })
-  })
+    }
+  });
 
 }
 
 function OverrideSubmit(){
   $('input#submitButton').click( function(e) {
     e.preventDefault();
-    var selectedtags =  $("#tagselect").val()
+    var selectedtags =  $("#selectedtags").val()
     var form = {
       selectedtags: JSON.stringify(selectedtags),
       posttitle: $('#posttitle').val(),

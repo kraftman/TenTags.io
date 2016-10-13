@@ -25,12 +25,14 @@ function m.CreatePost(request)
     createdBy = request.session.userID,
     tags = {}
   }
-  if type(request.params.selectedtags) == 'string' then
+
+  if to_json(request.params.selectedtags) ~= -1 then
+    info.tags = from_json(request.params.selectedtags)
+  else
+    print(request.params.selectedtags)
     for word in request.params.selectedtags:gmatch('%S+') do
       table.insert(request.params.selectedtags, word)
     end
-  else
-    info.tags = from_json(request.params.selectedtags)
   end
 
   local ok, err = api:CreatePost(request.session.userID, info)
