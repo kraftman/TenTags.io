@@ -111,7 +111,7 @@ function m.CreateFilter(request)
 
   local info ={
     title = request.params.title,
-    name= request.params.label:gsub(' ','') ,
+    name= request.params.name:gsub(' ','') ,
     description = request.params.description,
     createdAt = ngx.time(),
     createdBy = request.session.userID,

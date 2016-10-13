@@ -48,14 +48,14 @@ $(function() {
   $('input#submitButton').click( function(e) {
     e.preventDefault();
     console.log($('form#createfilter').serialize());
-    var requiredTagNames =  $("#requiredSelect").val()
-    var bannedTagNames =  $("#bannedSelect").val()
+    var requiredTagNames =  $("#requiredTagNames").val()
+    var bannedTagNames =  $("#bannedTagNames").val()
     var form = {
       requiredTagNames: JSON.stringify(requiredTagNames),
       bannedTagNames: JSON.stringify(bannedTagNames),
       title: $('#filtertitle').val(),
       description: $('#filterdescription').val(),
-      label: $('#filterlabel').val(),
+      name: $('#filterName').val(),
     }
     $.ajax({
       type: "POST",

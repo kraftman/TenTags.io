@@ -43,20 +43,20 @@ function m.NewFilter(request)
     requiredTagNames = {}
   }
 
-  if type(request.params.requiredTagNames) == 'string' then
+  if to_json(request.params.requiredTagNames) ~= -1 then
+    info.requiredTagNames = from_json(request.params.requiredTagNames)
+  else
     for word in request.params.requiredTagNames:gmatch('%S+') do
       table.insert(info.requiredTagNames, word)
     end
-  else
-    info.requiredTagNames = from_json(request.params.requiredTagNames)
   end
 
-  if type(request.params.bannedTagNames) == 'string' then
+  if to_json(request.params.bannedTagNames) ~= -1 then
+    info.bannedTagNames = from_json(request.params.bannedTagNames)
+  else
     for word in request.params.bannedTagNames:gmatch('%S+') do
       table.insert(info.bannedTagNames, word)
     end
-  else
-    info.bannedTagNames = from_json(request.params.bannedTagNames)
   end
 
 
