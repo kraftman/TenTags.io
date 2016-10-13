@@ -1,36 +1,49 @@
 
+function ConvertTagsToSelect(){
+  $('#requiredTagNames').replaceWith(`<select name='requiredTagNames' id='requiredTagNames' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
+      </select>`)
+  $('#requiredTagNames').chosen()
 
-$(function() {
+  $('#bannedTagNames').replaceWith(`<select name='bannedTagNames' id='bannedTagNames' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
+      </select>`)
+  $('#bannedTagNames').chosen()
 
-  $('#testbutton').click(function(){
-    }
-  );
-
-  $(".chosen-select").chosen();
-  $("#requiredSelect_chosen").bind('keyup',function(e) {
+  $("#requiredTagNames_chosen").bind('keyup',function(e) {
     if(e.which === 13 || e.which === 32) {
 
       var newItem = $(e.target).val();
       console.log(e.target)
-      var mySelect = $("#requiredSelect option[value='"+newItem+"']");
+      var mySelect = $("#requiredTagNames option[value='"+newItem+"']");
       if (mySelect.length == 0) {
-        $("#requiredSelect").append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
-        $("#requiredSelect").trigger("chosen:updated");
+        $("#requiredTagNames").append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
+        $("#requiredTagNames").trigger("chosen:updated");
       }
     }
-});
-$("#bannedSelect_chosen").bind('keyup',function(e) {
-  if(e.which === 13 || e.which === 32) {
+  });
 
-    var newItem = $(e.target).val();
-    console.log(e.target)
-    var mySelect = $("#bannedSelect option[value='"+newItem+"']");
-    if (mySelect.length == 0) {
-      $("#bannedSelect").append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
-      $("#bannedSelect").trigger("chosen:updated");
+  $("#bannedTagNames_chosen").bind('keyup',function(e) {
+    if(e.which === 13 || e.which === 32) {
+
+      var newItem = $(e.target).val();
+      console.log(e.target)
+      var mySelect = $("#bannedTagNames option[value='"+newItem+"']");
+      if (mySelect.length == 0) {
+        $("#bannedTagNames").append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
+        $("#bannedTagNames").trigger("chosen:updated");
+      }
     }
-  }
-});
+  });
+
+}
+
+$(function() {
+
+  ConvertTagsToSelect()
+
+
+
+
+
 
   $('input#submitButton').click( function(e) {
     e.preventDefault();
