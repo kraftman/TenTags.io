@@ -167,7 +167,11 @@ function UpdateSidebar(filters){
 
 function AddFilterSearch(){
   console.log('adding this')
-  $('#filterSearch').on('input', function() {
+  $('.filter-search-form').submit(function(e){
+    e.preventDefault()
+  })
+  $('#filterSearch').on('input', function(e) {
+    e.preventDefault();
     clearTimeout($(this).data('timeout'));
     var _self = this;
     $(this).data('timeout', setTimeout(function () {

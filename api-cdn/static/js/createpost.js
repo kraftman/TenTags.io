@@ -5,6 +5,8 @@ $(function() {
   $("#tagselect").chosen();
   $('#filterselect').chosen();
   AddPostFilterSearch()
+  ConvertTagsToSelect();
+  OverrideSubmit();
   var tagSelectChosen = $('#tagselect')
   tagSelectChosen.bind('keyup',function(e) {
     if(e.which === 13 || e.which === 32) {
@@ -16,7 +18,34 @@ $(function() {
       }
     }
   });
+});
 
+
+//<option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
+function ConvertTagsToSelect(){
+  console.log('this')
+  $('#selectedtags').replaceWith(`<select name='tagselect' id='selectedtags' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
+      </select>`)
+  $('#selectedtags').chosen()
+  $('#selectedtags_chosen').bind('keyup',function(e) {
+
+    console.log($(e.target).val())
+    var test = $(e.target).val()
+    $.getJSON('/api/tags/'+$(e.target).val(),function(data){
+      if (data.status == 'success'){
+        console.log(data)
+        $.each(data.data, function(k,v){
+          $('#selectedtags').append('<option value="'+v+'">'+v+'</option>');
+          $('#selectedtags').trigger("chosen:updated");
+          $(e.target).val(test)
+        })
+      }
+    })
+  })
+
+}
+
+function OverrideSubmit(){
   $('input#submitButton').click( function(e) {
     e.preventDefault();
     var selectedtags =  $("#tagselect").val()
@@ -45,7 +74,7 @@ $(function() {
       dataType: 'json'
     });
   });
-});
+}
 
 function UpdateFilterSelect(filters){
   var filterContainer  = $('#filterselect')

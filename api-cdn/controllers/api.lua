@@ -130,6 +130,20 @@ function m.CreateFilter(request)
   end
 end
 
+function m.SearchTags(request)
+  local searchString = request.params.searchString
+  if not searchString or type(searchString) ~= 'string' or searchString:gsub(' ','') == '' then
+    return {json = {status = 'error', error = 'empty or bad string'}}
+  end
+  local ok, err = api:SearchTags(searchString)
+  print('tt',to_json(ok))
+  if ok then
+    return {json = {status = 'success', data = ok}}
+  else
+    return {json = {status = 'error', data = err}}
+  end
+end
+
 function m:Register(app)
   app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
   app:match('userfilters', '/api/user/filters', self.GetUserFilters)
@@ -140,6 +154,7 @@ function m:Register(app)
   app:match('/api/frontpage', self.GetFrontPage)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
   app:match('/api/filters/create', self.CreateFilter)
+  app:match('/api/tags/:searchString', self.SearchTags)
 end
 
 return m

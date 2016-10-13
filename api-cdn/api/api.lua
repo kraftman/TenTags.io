@@ -273,6 +273,11 @@ function api:UserCanEditFilter(userID, filterID)
 	return nil, 'you must be admin or mod to edit filters'
 end
 
+function api:SearchTags(searchString)
+	searchString = self:SanitiseUserInput(searchString, 100)
+	return cache:SearchTags(searchString)
+end
+
 function api:SearchFilters(userID, searchString)
 	local ok, err = RateLimit('SearchFilters:',userID, 20, 10)
 	if not ok then
