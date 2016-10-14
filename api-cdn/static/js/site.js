@@ -16,7 +16,28 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
+  DraggablePosts();
 })
+
+function DraggablePosts(){
+  $('.post').draggable({
+    axis: "x",
+    stop: function( event, ui ) {
+      console.log(ui.position)
+
+      if(ui.position.left > 100) {
+        $(ui.helper).animate({ left: '1000px'}, 200,function() {Upvote(event)})
+      } else if (ui.position.left < -100){
+        $(ui.helper).animate({ left: '-1000px'}, 200,function() {Downvote(event)})
+      } else {
+        $(ui.helper).animate({ left: '0px'}, 200)
+      }
+
+    }
+
+  })
+
+}
 
 function AddFilterHandler(){
   // take over the loading of new filters
@@ -206,14 +227,22 @@ function AddMenuHandler(){
 
 function GetFreshPost(){
   var newPost = newPosts.shift()
+
   while ($.inArray(newPost.id, seenPosts) != -1){
 
     //console.log(newPost)
+
+    newPost = newPosts.shift()
+
     if (newPost == undefined) {
       postIndex = postIndex + 100
       LoadNewPosts(postIndex,postIndex+100)
+      newPost = newPosts.shift()
+      if (newPost == undefined) {
+        return
+      }
     }
-    newPost = newPosts.shift()
+
   }
   return newPost
 }
