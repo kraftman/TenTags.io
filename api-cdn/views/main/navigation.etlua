@@ -39,3 +39,8 @@
     <% end %>
   </ul>
 </div>
+<div id="outer" style="width: 100%; overflow: scroll;">
+  <div style="width: 800px;">
+    long text goes herelong text goes herelong text goes herelong text goes herelong text goes herelong text goes herelong text goes herelong text goes herelong text goes here
+  </div>
+</div>
