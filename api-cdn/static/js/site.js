@@ -26,10 +26,8 @@ function DraggablePosts(){
 
       if(ui.position.left > 100) {
         VotePost(this,'up')
-        return
       } else if (ui.position.left < -100){
         VotePost(this,'down')
-        return
       }
       $(ui.helper).animate({ left: '0px'}, 200)
     }
@@ -101,7 +99,7 @@ function VotePost(post, direction){
   }
 
   $.get(uri,function(data){
-    console.log(data);
+    //console.log(data);
   })
 }
 
