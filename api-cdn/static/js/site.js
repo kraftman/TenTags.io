@@ -39,15 +39,16 @@ function Upvote(e) {
   var post = $(':focus')
 
   if (post.length) {
-    VotePost.call(post, 'up');
+    VotePost(post, 'up');
   }
 }
 
 function Downvote(e) {
   var post = $(':focus')
+  console.log(post)
   if (post.length) {
     console.log(2)
-    VotePost.call(post, 'down');
+    VotePost(post, 'down');
   }
 }
 
@@ -69,20 +70,22 @@ function VotePost(post, direction){
   //get the post
   var postID = $(post).children('.postID').val()
   var postHash = $(post).children('.postHash').val()
-  console.log('this')
-
 
   if (userSettings.hideVotedPosts == '1') {
     if ($.inArray(postID, seenPosts) == -1){
       seenPosts.push(postID)
     }
 
-    var nextPost = $(post).parents('.post').next()
-    if (nextPost.length) {
-      nextPost.focus()
-    }
+
     LoadMorePosts($(post).parents('.post'));
-    $(post).hide("slide", { direction: "right" }, 200, function() { $(post).remove();});
+    
+    $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
+      var nextPost = $(post).next()
+      console.log(nextPost)
+      if (nextPost.length) {
+        nextPost.focus()
+      }
+      $(post).remove();});
     //$(post).show("slide", { direction: "right" }, 100);
     // $(post).parents('.post').slideUp('fast',function() {
     //   $(post).remove();
