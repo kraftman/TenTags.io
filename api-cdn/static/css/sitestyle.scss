@@ -38,6 +38,7 @@ a {
 }
 
 .filter-sort {
+  margin-top: 5px;
   background-color: #333;
   white-space: nowrap;
   overflow-y: scroll;
@@ -121,8 +122,13 @@ a {
   }
 }
 
+.top-nav {
+  margin-bottom: 0px;
+}
+
 
 .filter-bar {
+  margin: 5px;
   flex: 0 0 250px;
   height: 100%;
   display: block;
@@ -169,9 +175,10 @@ a {
 
 .info-bar {
   float: right;
-  width: 250px;
+  width: 310px;
   height: auto;
   margin: 5px;
+  padding: 5px;
   min-height: 250px;
 }
 
