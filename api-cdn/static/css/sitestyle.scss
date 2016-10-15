@@ -146,13 +146,22 @@ a {
   flex: 1;
 }
 
-.hamburger {
-  display: none;
+.filter-hamburger {
   padding: 7px;
+}
+
+.filter-nav-bar .hamburger {
+  display: none;
 }
 
 .email-submit {
   display: inline-block;
+}
+
+.info-burger {
+  height: 25px;
+  width: 25px;
+  margin: 5px;
 }
 
 @media only screen and (max-width: 1026px) {
@@ -161,16 +170,21 @@ a {
     float: none;
     display: none;
     width: 250px;
-    height: 100%;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
   }
 
-  .hamburger {
+  .filter-hamburger {
     display:inline;
   }
+
+  .filter-nav-bar .hamburger {
+    display: inline;
+  }
+
+
 }
 
 .info-bar {
@@ -185,7 +199,7 @@ a {
 
 .contents {
   position: relative;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .box-wrap {

@@ -2,6 +2,7 @@
 
 <div class='navbar navbar-default top-nav'>
 
+  <input class = 'pull-right navbar-right info-burger' type="image" src="/static/icons/menu.png" />
   <div class="navbar-header">
     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
       <span class="sr-only">Toggle navigation</span>
@@ -53,4 +54,6 @@
       <% end %>
     </ul>
   </div>
+
+
 </div>
