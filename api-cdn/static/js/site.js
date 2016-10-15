@@ -17,7 +17,20 @@ $(function() {
   AddToSeenPosts();
   AddFilterHandler();
   DraggablePosts();
+  FilterToggle()
 })
+
+function FilterToggle(){
+  var $hamburger = $(".hamburger");
+  $hamburger.on("click", function(e) {
+    $hamburger.toggleClass("is-active");
+    console.log('that')
+    // Do something else, like open/close menu
+    var filterBar = $('.filter-bar')
+    filterBar.toggle()
+  });
+
+}
 
 function DraggablePosts(){
   $('.post').draggable({
@@ -78,7 +91,7 @@ function VotePost(post, direction){
 
 
     LoadMorePosts($(post).parents('.post'));
-    
+
     $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
       var nextPost = $(post).next()
       console.log(nextPost)

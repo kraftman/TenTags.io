@@ -16,6 +16,7 @@
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" >
   <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css" >
+  <link href="/static/css/hamburgers.css" rel="stylesheet">
   <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 
 
@@ -25,9 +26,13 @@
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
   <div class='center-page'>
-    <% render("views.main.navigation") %>
-    <% render("views.main.filterbar") %>
-    <% content_for("inner") %>
+
+    <div class = 'main'>
+      <% render("views.main.navigation") %>
+      <% render("views.main.filterbar") %>
+      <% render("views.main.infobar") %>
+      <% content_for("inner") %>
+    </div>
   </div>
 </body>
 </html>

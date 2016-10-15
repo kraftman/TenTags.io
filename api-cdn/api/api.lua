@@ -284,6 +284,7 @@ function api:SearchFilters(userID, searchString)
 		return ok, err
 	end
 	searchString = self:SanitiseUserInput(searchString, 100)
+	searchString = searchString:lower()
 	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
@@ -1929,6 +1930,8 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 	if userFilter.name == '' then
 		return nil, 'filter name cannot be blank or special characters'
 	end
+
+		userFilter.name = userFilter.name:lower()
 
 
 	local newFilter = {

@@ -1,70 +1,26 @@
 
 <div class='panel panel-default filter-bar'>
-  <div class='tab-buttons'>
-    <a id='infoBoxLink' href="#box-one">Info</a>
-    <a id='filterBoxLink' href="#box-two">Filters</a>
+    <!--
+    
+  -->
+  <div class='filter-nav-bar'>
+    <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
+
+      <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
+        <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+        <input class='hidden-search-input' type="submit" style="visibility: hidden;" />
+      </form>
+
   </div>
-  <div class='box-wrap'>
-    <div id="box-one" class='info-box'>
-
-
-
-      <% if thisfilter then %>
-        Subs:
-        <%= thisfilter.subs-%>
-        Description:
-        </br>
-        <%= thisfilter.description -%>
-        </br>
-        Owner:
-        <%= thisfilter.ownerName -%>
-        </br>
-        Mods:
-        </br>
-        <% for _,mod in pairs(thisfilter.mods) do %>
-          <%= mod.username -%>
-        <% end %>
-        Related Filters:
-          </br>
-          <% for _,filter in pairs(thisfilter.relatedFilters) do %>
-          <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
-            <%= filter.name -%>
-          </a>
-          <% end %>
-      <% else %>
-        Welcome to filter!
-      <% end %>
-      <% if enableAds then %>
-      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-      <!-- sidebar -->
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-5666598062804330"
-           data-ad-slot="5027717600"
-           data-ad-test="on"
-           data-ad-format="auto"></ins>
-      <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-      <% end %>
-  	</div>
-
-    <div id="box-two" class='info-box'>
-      <% if session.userID then %>
-        <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
-          <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
-          <input type="submit" style="visibility: hidden;" />
-        </form>
-      <% end %>
-      <ul>
-        <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
-      </ul>
-      <div class='filterContainer'>
-        <% for i, filter in pairs(userFilters) do %>
-          <% render("views.st.filterbarelement",{filter = filter}) %>
-        <% end %>
-      </div>
-  	</div>
+  <ul>
+    <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
+  </ul>
+  <div class='filterContainer'>
+    <% for i, filter in pairs(userFilters) do %>
+      <% render("views.st.filterbarelement",{filter = filter}) %>
+    <% end %>
   </div>
+
+
 
 </div>
