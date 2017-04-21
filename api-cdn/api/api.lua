@@ -8,6 +8,7 @@ local cache = require 'api.cache'
 local api = {}
 local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
+local util = require 'util'
 local tinsert = table.insert
 local trim = (require 'lapis.util').trim
 local scrypt = require 'lib.scrypt'
@@ -15,7 +16,6 @@ local salt = 'poopants'
 --local to_json = (require 'lapis.util').to_json
 --local magick = require 'magick'
 local http = require 'lib.http'
-local rateDict = ngx.shared.ratelimit
 --arbitrary, needs adressing later
 local TAG_BOUNDARY = 0.15
 local TAG_START_DOWNVOTES = 0
@@ -30,7 +30,6 @@ local SOURCE_POST_THRESHOLD = 0.75
 
 local MAX_ALLOWED_TAG_COUNT = 20
 local MAX_MOD_COUNT = 7
-local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 
 local USER_ROLES = {ADMIN = 1, USER = 2}
 
@@ -59,38 +58,6 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 	return score / count
 end
 
-local function RateLimit(action, userID, limit, duration)
-	if DISABLE_RATELIMIT then
-		return true
-	end
-
-	if not userID then
-		return nil, 'you must be logged in to do that'
-	end
-	local key = action..userID
-
-	local ok, err = rateDict:get(key)
-	if err then
-		ngx.log(ngx.ERR, 'error getting rate limit key ',key)
-	end
-
-	if not ok then
-		rateDict:set(key, 0, duration)
-	end
-
-	rateDict:incr(key,1)
-
-	if not ok then
-		return true
-	end
-
-	if ok <= limit then
-		return ok
-	else
-		return nil, 429
-	end
-
-end
 
 
 local function SanitiseHTML(str)
@@ -106,7 +73,7 @@ end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	local ok, err = RateLimit('DeleteComment:', userID, 1, 60)
+	local ok, err = util.RateLimit('DeleteComment:', userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -128,52 +95,7 @@ function api:DeleteComment(userID, postID, commentID)
 
 end
 
-function api:LabelUser(userID, targetUserID, label)
 
-	local ok, err = RateLimit('UpdateUser:',userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
-
-	ok, err = worker:LabelUser(userID, targetUserID, label)
-	return ok, err
-
-end
-
-function api:UpdateUser(userID, userToUpdate)
-	local ok, err = RateLimit('UpdateUser:',userID, 3, 30)
-	if not ok then
-		return ok, err
-	end
-
-	if userID ~= userToUpdate.id then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
-			return nil, 'you must be admin to edit a users details'
-		end
-	end
-	local userInfo = {
-		id = userToUpdate.id,
-		enablePM = userToUpdate.enablePM and 1 or 0,
-		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
-		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
-		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
-		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
-		username = userToUpdate.username
-	}
-	
-
-
-
-	for k,v in pairs(userToUpdate) do
-		if k:find('^filterStyle:') then
-			k = k:sub(1,100)
-			userInfo[k] = v:sub(1,100)
-		end
-	end
-
-	return worker:UpdateUser(userInfo)
-end
 
 function api:GetFilters(filterIDs)
 	local filters = {}
@@ -184,31 +106,7 @@ function api:GetFilters(filterIDs)
 end
 
 
-function api:GetUserFilters(userID)
-	-- can only get your own filters
-  if not userID then
-    userID = 'default'
-  end
-  local filterIDs = cache:GetUserFilterIDs(userID)
-	--print(to_json(filterIDs))
-	local filters = cache:GetFilterInfo(filterIDs)
-	--print(to_json(filters))
-	return filters
-end
 
-function api:GetUserSettings(userID)
-	local ok, err = RateLimit('GetUserSettings', 5, 1)
-	if not ok then
-		return nil, "you're doing that too much"
-	end
-	if not userID or userID:gsub(' ', '') == '' then
-		return nil, 'no userID given'
-	end
-
-	local user, err = cache:GetUser(userID)
-	return user, err
-
-end
 
 function api:ConvertShortURL(shortURL)
 	return cache:ConvertShortURL(shortURL)
@@ -245,36 +143,6 @@ function api:GetThread(threadID)
   return cache:GetThread(threadID)
 end
 
-function api:UserHasAlerts(userID)
-	--can only get your own alerts
-  local alerts = cache:GetUserAlerts(userID)
-  return #alerts > 0
-end
-
-function api:UserCanEditFilter(userID, filterID)
-	local user = cache:GetUser(userID)
-
-	if not user then
-		return nil, 'userID not found'
-	end
-
-	local filter = cache:GetFilterByID(filterID)
-	if user.role == 'Admin' then
-		return filter
-	end
-
-	if filter.ownerID == userID then
-		return filter
-	end
-
-	for _,mod in pairs(filter.mods) do
-		if mod.id == userID then
-			return filter
-		end
-	end
-
-	return nil, 'you must be admin or mod to edit filters'
-end
 
 function api:SearchTags(searchString)
 	searchString = self:SanitiseUserInput(searchString, 100)
@@ -282,7 +150,7 @@ function api:SearchTags(searchString)
 end
 
 function api:SearchFilters(userID, searchString)
-	local ok, err = RateLimit('SearchFilters:',userID, 20, 10)
+	local ok, err = util.RateLimit('SearchFilters:',userID, 20, 10)
 	if not ok then
 		return ok, err
 	end
@@ -395,15 +263,9 @@ function api:FilterUnbanDomain(userID, filterID, domainName)
 	return worker:FilterUnbanDomain(filterID, domainName)
 end
 
-function api:GetUserAlerts(userID)
-	-- can only get their own
-  local alerts = cache:GetUserAlerts(userID)
-
-  return alerts
-end
 
 function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
+	local ok, err = util.RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
@@ -504,7 +366,7 @@ function api:CreateThread(userID, messageInfo)
 		return err
 	end
 
-	ok, err = RateLimit('CreateThread:', userID, 2, 60)
+	ok, err = util.RateLimit('CreateThread:', userID, 2, 60)
 	if not ok then
 		return ok, err
 	end
@@ -554,16 +416,13 @@ function api:CreateThread(userID, messageInfo)
 	return ok, err
 end
 
-function api:GetUserID(username)
-	return cache:GetUserID(username)
-end
 
 function api:GetThreads(userID)
   return cache:GetThreads(userID)
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = RateLimit('SubscribeComment:', userID, 3, 30)
+	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -583,7 +442,7 @@ end
 
 function api:SubscribeComment(userID, postID, commentID)
 
-	local ok, err = RateLimit('SubscribeComment:', userID, 3, 10)
+	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 10)
 	if not ok then
 		return ok, err
 	end
@@ -782,7 +641,7 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-	local ok, err = RateLimit('VotePost:', userID, 10, 60)
+	local ok, err = util.RateLimit('VotePost:', userID, 10, 60)
 	if not ok then
 		return ok, err
 	end
@@ -880,7 +739,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 end
 
 function api:EditPost(userID, userPost)
-	local ok, err = RateLimit('EditPost:', userID, 4, 300)
+	local ok, err = util.RateLimit('EditPost:', userID, 4, 300)
 	if not ok then
 		return ok, err
 	end
@@ -912,7 +771,7 @@ function api:EditPost(userID, userPost)
 end
 
 function api:UpdateFilterDescription(userID, filterID, newDescription)
-	local ok, err = RateLimit('EditFilter:', userID, 4, 120)
+	local ok, err = util.RateLimit('EditFilter:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -936,7 +795,7 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 end
 
 function api:UpdateFilterTitle(userID, filterID, newTitle)
-	local ok, err = RateLimit('EditFilterTitle:', userID, 4, 120)
+	local ok, err = util.RateLimit('EditFilterTitle:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -960,7 +819,7 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 end
 
 function api:EditComment(userID, userComment)
-	local ok, err = RateLimit('EditComment:', userID, 4, 120)
+	local ok, err = util.RateLimit('EditComment:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -995,7 +854,7 @@ end
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
 
-	local ok, err = RateLimit('CreateComment:', userID, 1, 30)
+	local ok, err = util.RateLimit('CreateComment:', userID, 1, 30)
 	if not ok then
 		return ok, err
 	end
@@ -1306,101 +1165,11 @@ function api:GetUserFrontPage(userID,filter,startAt, endAt)
   return cache:GetUserFrontPage(userID,filter,startAt, endAt)
 end
 
-function api:CreateSubUser(accountID, username)
-
-  local subUser = {
-    id = uuid.generate(),
-    username = SanitiseHTML(username,20),
-    filters = cache:GetUserFilterIDs('default'),
-    parentID = accountID,
-    enablePM = 1
-  }
-
-	local existingUserID = cache:GetUserID(subUser.username)
-	if existingUserID then
-		return nil, 'username is taken'
-	end
-
-	--TODO limit number of subusers allowed
-
-	local account = cache:GetAccount(accountID)
-	tinsert(account.users, subUser.id)
-	account.userCount = account.userCount + 1
-	account.currentUsername = subUser.username
-	account.currentUserID = subUser.id
-	local ok, err = worker:UpdateAccount(account)
-	if not ok then
-		return ok, err
-	end
-  local ok, err = worker:CreateSubUser(subUser)
-	if ok then
-		return subUser
-	else
-		return ok, err
-	end
-end
-
-function api:GetAccount(userAccountID, targetAccountID)
-	if userAccountID ~= targetAccountID then
-		return nil, 'not available yet'
-	end
-
-	if not targetAccountID then
-		return nil, 'no target accountID'
-	end
-
-	local account,err = cache:GetAccount(targetAccountID)
-	return account, err
-
-end
-
-function api:GetAccountUsers(userAccountID, accountID)
-	local userAccount = cache:GetAccount(userAccountID)
-
-	if userAccount.role ~= 'Admin' and userAccountID ~= accountID then
-		return nil, 'must be admin to view other users'
-	end
-
-	local queryAccount = cache:GetAccount(accountID)
-	if not queryAccount then
-		return nil, 'account not found'
-	end
-
-	local users = {}
-	local subUser
-  for _, subUserID in pairs(queryAccount.users) do
-    subUser = cache:GetUser(subUserID)
-    if subUser then
-      tinsert(users, subUser)
-    end
-  end
-  return users
-end
-
-function api:SwitchUser(accountID, userID)
-	local account = cache:GetAccount(accountID)
-	local user = cache:GetUser(userID)
-
-	if user.parentID ~= accountID and account.role ~= 'admin' then
-		return nil, 'noooope'
-	end
-
-	account.currentUserID = user.id
-	account.currentUsername = user.username
-
-	local ok, err = worker:UpdateAccount(account)
-	if not ok then
-		return ok, err
-	end
-
-	return user
-end
-
 
 
 function api:AddPostTag(userID, postID, tagName)
 
-	local ok, err = RateLimit('AddPostTag:', userID, 1, 60)
+	local ok, err = util.RateLimit('AddPostTag:', userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -1558,7 +1327,7 @@ end
 
 function api:VoteTag(userID, postID, tagName, direction)
 
-	if not RateLimit('VoteTag:', userID, 5, 30) then
+	if not util.RateLimit('VoteTag:', userID, 5, 30) then
 		return nil, 'rate limited'
 	end
 
@@ -1792,7 +1561,7 @@ end
 function api:CreatePost(userID, postInfo)
 	local newPost, ok, err
 
-	ok, err = RateLimit('CreatePost:',userID, 1, 300)
+	ok, err = util.RateLimit('CreatePost:',userID, 1, 300)
 	if not ok then
 		return ok, err
 	end
@@ -1966,7 +1735,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	local newFilter, err, ok
 
-	ok, err = RateLimit('CreateFilter:', userID, 1, 600)
+	ok, err = util.RateLimit('CreateFilter:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
@@ -2053,7 +1822,7 @@ function api:AddSource(userID, postID, sourceURL)
 	-- check existing sources by this user
 
 
-	local ok, err = RateLimit('AddSource:', userID, 1, 600)
+	local ok, err = util.RateLimit('AddSource:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end

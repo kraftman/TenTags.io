@@ -248,3 +248,12 @@ TODO:
 - split api.lua up into user/post/EditComment
 - format pm's
 - check / change how the default subs work (is having a 'default' user a good idea?)
+
+
+converting to classes?
+how would we load a user?
+ask user factory for one
+user factory checks cache
+cache generates user
+or ask redis
+redis generates user
