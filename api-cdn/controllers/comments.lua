@@ -17,7 +17,7 @@ function m.ViewComment(request)
 
 end
 
-local function ViewShortURLComment(request)
+function m.ViewShortURLComment(request)
   request.commentInfo = api:GetComment(request.params.commentShortURL)
   request.commentInfo.username = api:GetUser(request.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(request.commentInfo))
@@ -123,11 +123,11 @@ function m:Register(app)
   }))
   app:get('viewcomment','/comment/:postID/:commentID',m.ViewComment)
 
-  app:get('viewcommentshort','/comment/:commentShortURL',m.ViewShortURLComment)
-  app:get('subscribecomment','/comment/subscribe/:postID/:commentID',m.SubscribeComment)
+  app:get('viewcommentshort','/c/:commentShortURL', m.ViewShortURLComment)
+  app:get('subscribecomment','/comment/subscribe/:postID/:commentID', m.SubscribeComment)
   app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
-  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash',m.DownVoteComment)
-  app:post('newcomment','/comment/',m.CreateComment)
+  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', m.DownVoteComment)
+  app:post('newcomment','/comment/', m.CreateComment)
 
   app:match('viewcomment','/comment/:postID/:commentID', respond_to({
     GET = m.ViewComment,

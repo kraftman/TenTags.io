@@ -39,9 +39,10 @@ function config.Run(_,self)
     end
 
     local emailInfo = from_json(ok)
+    print(emailInfo.body)
     ok, err = self.emailer:SendMessage(emailInfo.subject, emailInfo.body, recipientAddress)
     if not ok then
-      return
+      --return
     end
 
     self.emailDict:delete(recipientAddress)

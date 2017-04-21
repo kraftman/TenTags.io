@@ -102,10 +102,6 @@ end
 
 function m.CreateFilter(request)
 
-  if request.params.setdefault or request.params.subscribe then
-    return ToggleDefault(request)
-  end
-
   local requiredTagNames = from_json(request.params.requiredTagNames)
   local bannedTagNames = from_json(request.params.bannedTagNames)
 

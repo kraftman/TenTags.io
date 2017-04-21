@@ -32,9 +32,13 @@ end
 
 function m.NewFilter(request)
 
+  if request.params.setdefault or request.params.subscribe then
+    return m.ToggleDefault(request)
+  end
+
   local info ={
     title = request.params.title,
-    name= request.params.filterName:gsub(' ','') ,
+    name= request.params.filterName and request.params.filterName:gsub(' ','') or '',
     description = request.params.description,
     createdAt = ngx.time(),
     createdBy = request.session.userID,
