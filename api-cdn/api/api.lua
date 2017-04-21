@@ -29,8 +29,10 @@ local SOURCE_POST_THRESHOLD = 0.75
 --local permission = require 'userpermission'
 
 local MAX_ALLOWED_TAG_COUNT = 20
-local MAX_MOD_COUNT = 3
+local MAX_MOD_COUNT = 7
 local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
+
+local USER_ROLES = {ADMIN = 1, USER = 2}
 
 local function AverageTagScore(filterrequiredTagNames,postTags)
 
@@ -159,6 +161,7 @@ function api:UpdateUser(userID, userToUpdate)
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username
 	}
+	
 
 
 
@@ -1318,6 +1321,8 @@ function api:CreateSubUser(accountID, username)
 		return nil, 'username is taken'
 	end
 
+	--TODO limit number of subusers allowed
+
 	local account = cache:GetAccount(accountID)
 	tinsert(account.users, subUser.id)
 	account.userCount = account.userCount + 1
@@ -1898,6 +1903,7 @@ function api:AddMod(userID, filterID, newModName)
 	-- check they can be made mod of this sub
 	local newMod = cache:GetUser(newModID)
 	local account = cache:GetAccount(newMod.parentID)
+	print (account.modCount, account.role)
 	if account.modCount >= MAX_MOD_COUNT and account.role ~= 'admin' then
 		return nil, 'mod of too many filters'
 	end
@@ -1967,6 +1973,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	local user = cache:GetUser(userID)
 	local account = cache:GetAccount(user.parentID)
+
 	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
 		--return nil, 'you cant mod any more subs!'
 	end

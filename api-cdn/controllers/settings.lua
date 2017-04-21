@@ -8,7 +8,7 @@ local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
 function m.DisplaySettings(request)
-  print(request.session.userID, request.session.accountID, request.session.username)
+  
   local user = api:GetUser(request.session.userID)
   if not user then
     return 'unknown user'
@@ -25,7 +25,6 @@ function m.DisplaySettings(request)
       end
     end
   end
-  print(to_json(user))
 
 
   request.enablePM = user.enablePM == '1' and 'checked' or ''
@@ -48,7 +47,7 @@ function m.UpdateSettings(request)
   user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
   user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
   user.showNSFW = request.params.showNSFW and 1 or 0
-  print 'this'
+
   local ok, err = api:UpdateUser(request.session.userID, user)
   if not ok then
     print(err)

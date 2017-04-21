@@ -36,6 +36,8 @@
             <% for _,user in pairs(otherUsers) do %>
               <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
             <% end %>
+
+            <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
           </ul>
         </li>
         <li><a href="<%= url_for('usersettings') %>">Settings</a></li>
@@ -47,6 +49,10 @@
           <input class='form-control' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
           <input class='btn btn-default email-submit' type='submit' name='Submit' value='Sign Up/In' />
         </form></li>
+      <% end %>
+
+      <% if account and account.role == 'Admin' then %>
+        <li><a href="<%= url_for('adminpanel') %>">Admin</a></li>
       <% end %>
 
       <% if userHasAlerts then %>

@@ -88,6 +88,7 @@ local function ValidateSession(self)
   if self.session.accountID then
     local account,err = api:ValidateSession(self.session.accountID, self.session.sessionID)
     if account then
+      self.account = account
       return
     end
 
@@ -177,6 +178,7 @@ require 'comments':Register(app)
 require 'alerts':Register(app)
 require 'api':Register(app)
 require 'auto':Register(app)
+require 'admin':Register(app)
 
 -- TESTING
 --require 'test.perftest':Register(app)

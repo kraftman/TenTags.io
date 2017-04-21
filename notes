@@ -11,6 +11,8 @@ Tags
 - If you add a tag you own it and its up/down votes
 - Only tags of a certain threshold are included in filters
 - Upvoting a post as a whole upvotes all tags shared between the post and the filter that meant the user saw it - done
+- we need a different threshold for bannedtags then wanted tags
+- to stop people abusing the system by adding a bannedtag to stop the post showing up
 
 Filters
 - Select posts with certain tags or without certain tags
@@ -238,3 +240,11 @@ user clicks email:
 per request:
   - check the user session is still valid
   - check the user browser info matches
+
+
+
+TODO:
+- clean up the css/layout (again)
+- split api.lua up into user/post/EditComment
+- format pm's
+- check / change how the default subs work (is having a 'default' user a good idea?)

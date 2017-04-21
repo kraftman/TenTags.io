@@ -16,11 +16,10 @@
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" >
   <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css" >
-  <link href="/static/css/hamburgers.css" rel="stylesheet">
   <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 
 
-  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.css">
 
 </head>
 <body>
