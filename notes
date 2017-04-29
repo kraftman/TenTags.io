@@ -260,6 +260,7 @@ TODO:
 - add basic cookie check, serve static of no cookie or LOGGED_OUT cookie set
 - add some basic per-user stats (comments made, post viewed, subs viewed, per sub view count, etc) efficiently
   - per post/filter stats (hyperloglogs?)
+- split out etlua components to be more reusable
 
 
 converting to classes?
