@@ -13,6 +13,7 @@ local COMMENT_LENGTH_LIMIT = 2000
 
 local TAG_START_DOWNVOTES = 0
 local TAG_START_UPVOTES = 1
+local MAX_ALLOWED_TAG_COUNT = 30
 
 local function UserCanAddSource(tags, userID)
   for _,tag in pairs(tags) do
@@ -85,7 +86,7 @@ function api:AddPostTag(userID, postID, tagName)
 
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
-	newTag.score = self:GetScore(newTag.up, newTag.down)
+	newTag.score = util:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 

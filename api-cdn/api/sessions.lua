@@ -19,6 +19,10 @@ function api:GetHash(values)
   return str.to_hex(digest)
 end
 
+function api:GetAccount(accountID)
+  return cache:GetAccount(accountID)
+end
+
 
 function api:SanitiseSession(session)
 

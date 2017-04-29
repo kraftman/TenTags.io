@@ -5,6 +5,7 @@ m.__index = m
 
 local respond_to = (require 'lapis.application').respond_to
 local userAPI = require 'api.users'
+local commentAPI = require 'api.comments'
 local sessionAPI = require 'api.sessions'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
@@ -20,7 +21,7 @@ function m.ViewUser(request)
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
   print(to_json(request.userInfo))
-  request.comments = userAPI:GetUserComments(request.session.userID, request.userID)
+  request.comments = commentAPI:GetUserComments(request.session.userID, request.userID)
   for _,v in pairs(request.comments) do
     v.username = userAPI:GetUser(v.createdBy).username
   end

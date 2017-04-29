@@ -128,12 +128,20 @@ local function GetFilterTemplate(self)
   return filterStyles[filterStyle]
 end
 
+local function LoadUser(self)
+  if self.session.userID then
+    self.userInfo = userAPI:GetUser(self.session.userID)
+    print('oaded user: ', self.session.userID)
+  end
+end
+
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
 
   self.enableAds = true
 
   ValidateSession(self)
+  LoadUser(self)
 
   if self.session.accountID then
     self.otherUsers = userAPI:GetAccountUsers(self.session.accountID, self.session.accountID)

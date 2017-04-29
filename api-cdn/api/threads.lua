@@ -61,6 +61,32 @@ function api:CreateMessageReply(userID, userMessage)
 end
 
 
+function api:ConvertUserMessageToMessage(userID, userMessage)
+	if not userMessage.threadID then
+		return nil, 'no thread id'
+	end
+
+	if not userMessage.createdBy then
+		userMessage.createdBy = userID
+	end
+
+	local newInfo = {
+		threadID = util:SanitiseUserInput(userMessage.threadID, 200),
+		body = util:SanitiseUserInput(userMessage.body, 2000),
+		id = uuid.generate_random(),
+		createdAt = ngx.time(),
+		createdBy = util:SanitiseUserInput(userMessage.createdBy)
+	}
+
+	local ok, err = self:VerifyMessageSender(userID, newInfo)
+	if not ok then
+		return ok, err
+	end
+
+	return newInfo
+end
+
+
 
 function api:CreateThread(userID, messageInfo)
 

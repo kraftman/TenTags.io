@@ -344,15 +344,15 @@ function m.SubscribePost(request)
 end
 
 function m:Register(app)
-  app:match('newpost','/post/new', respond_to({
+  app:match('newpost','/p/new', respond_to({
     GET = self.CreatePostForm,
     POST = self.CreatePost
   }))
-  app:match('viewpost','/post/:postID', respond_to({
+  app:match('viewpost','/p/:postID', respond_to({
     GET = self.GetPost,
     POST = self.EditPost,
   }))
-  app:match('deletepost','/post/delete/:postID', respond_to({
+  app:match('deletepost','/p/delete/:postID', respond_to({
     GET = self.DeletePost,
     POST = self.DeletePost,
   }))
