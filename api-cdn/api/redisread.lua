@@ -87,14 +87,28 @@ function read:ConvertShortURL(shortURL)
   return ok, err
 end
 
+function read:GetInvalidationRequests(startTime, endTime)
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zrangebyscore('invalidationRequests', startTime, endTime)
+  red:close()
+  if ok == ngx.null then
+    return nil
+  end
+  if err then
+    ngx.log(ngx.ERR, 'unable to get invalidation requests: ',err)
+  end
+  return ok,err
+
+end
+
 function read:GetFilterIDsByTags(tags)
 
   local red = util:GetRedisReadConnection()
   red:init_pipeline()
-  for _,v in pairs(tags) do
-    --print('tag:filters:'..v.id)
-    red:hgetall('tag:filters:'..v.id)
-  end
+    for _,v in pairs(tags) do
+      --print('tag:filters:'..v.id)
+      red:hgetall('tag:filters:'..v.name)
+    end
   local results, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
@@ -122,6 +136,17 @@ function read:VerifyReset(emailAddr, resetKey)
     return true
   end
 
+end
+
+function read:GetTag(tagName)
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:hgetall('tag:'..tagName)
+  util:SetKeepalive(red)
+  if ok then
+    return self:ConvertListToTable(ok)
+  else
+    return nil, err
+  end
 end
 
 function read:GetAllTags()
@@ -296,6 +321,7 @@ end
 
 
 function read:GetFilter(filterID)
+  --print(to_json(filterID))
   local red = util:GetRedisReadConnection()
   local ok, err = red:hgetall('filter:'..filterID)
   if not ok then
@@ -305,51 +331,68 @@ function read:GetFilter(filterID)
     return nil
   end
   local filter = self:ConvertListToTable(ok)
+  --error()
 
   filter.bannedUsers = {}
   filter.bannedDomains = {}
   filter.mods = {}
+  filter.relatedFilterIDs = {}
   local banInfo
   for k, v in pairs(filter) do
-    if k:find('^bannedUser:') then
-      banInfo = from_json(v)
-      filter.bannedUsers[banInfo.userID] = banInfo
-      filter[k] = nil
-    elseif k:find('^bannedDomain:') then
-      tinsert(filter.bannedDomains, from_json(v))
-      banInfo = from_json(v)
-      filter.bannedDomains[banInfo.domainName] = banInfo
-      filter[k] = nil
-    elseif k:find('mod:') then
-      tinsert(filter.mods, from_json(v))
+    if type(k) == 'string' then
+      if k:find('^bannedUser:') then
+        banInfo = from_json(v)
+        filter.bannedUsers[banInfo.userID] = banInfo
+        filter[k] = nil
+      elseif k:find('^bannedDomain:') then
+        tinsert(filter.bannedDomains, from_json(v))
+        banInfo = from_json(v)
+        filter.bannedDomains[banInfo.domainName] = banInfo
+        filter[k] = nil
+      elseif k:find('mod:') then
+        tinsert(filter.mods, from_json(v))
+        filter[k] = nil
+      elseif k:find('^relatedFilter:') then
+        tinsert(filter.relatedFilterIDs, v)
+        filter[k] = nil
+      end
     end
   end
 
-
-  --print(to_json(filter))
-
-  ok, err = red:smembers('filter:bannedtags:'..filterID)
+  ok, err = red:smembers('filter:bannedTagNames:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load banned tags: ',err)
   end
   if ok == ngx.null then
-    filter.bannedTags = {}
+    filter.bannedTagNames = {}
   else
-    filter.bannedTags = ok
+    filter.bannedTagNames = ok
   end
 
-  ok, err = red:smembers('filter:requiredtags:'..filterID)
+  ok, err = red:smembers('filter:requiredTagNames:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load required tags: ',err)
   end
   if ok == ngx.null then
-    filter.requiredTags = {}
+    filter.requiredTagNames = {}
   else
-    filter.requiredTags = ok
+    filter.requiredTagNames = ok
   end
   return filter
 
 
+end
+
+function read:SearchFilters(searchString)
+  searchString = '*'..searchString..'*'
+  local red = util:GetRedisReadConnection()
+  print(searchString)
+  local ok,err = red:sscan('filterNames', 0, 'match', searchString)
+  print(to_json(ok))
+  if ok then
+    return ok[2]
+  end
+  return ok,err
 end
 
 function read:GetPost(postID)
@@ -382,7 +425,7 @@ function read:GetPost(postID)
   end
 
   local postTags
-  postTags, err = red:smembers('post:tagIDs:'..postID)
+  postTags, err = red:smembers('post:tagNames:'..postID)
   if not postTags then
     ngx.log(ngx.ERR, 'unable to get post tags:',err)
   end
@@ -392,8 +435,8 @@ function read:GetPost(postID)
 
   post.tags = {}
 
-  for _, tagID in pairs(postTags) do
-    ok, err = red:hgetall('posttags:'..postID..':'..tagID)
+  for _, tagName in pairs(postTags) do
+    ok, err = red:hgetall('posttags:'..postID..':'..tagName)
     if not ok then
       ngx.log(ngx.ERR, 'unable to load posttags:',err)
     end
@@ -419,9 +462,17 @@ function read:GetPost(postID)
   return post
 end
 
-function read:GetFilterPosts(filter)
+function read:GetFilterPosts(filter, sortBy)
+  local key = 'filterposts:score:'
+  if sortBy == 'fresh' then
+    key = 'filterposts:datescore:'
+  elseif sortBy == 'new' then
+    key = 'filterposts:date:'
+  elseif sortBy == 'best' then
+    key = 'filterposts:score:'
+  end
   local red = util:GetRedisReadConnection()
-  local ok, err = red:zrange('filterposts:score:'..filter.id,0,50)
+  local ok, err = red:zrevrange(key..filter.id,0,50)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter posts ',err)
   end
@@ -451,6 +502,18 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   end
 
   return ok ~= ngx.null and ok or {}
+end
+
+function read:SearchTags(searchString)
+  local red = util:GetRedisReadConnection()
+  searchString = searchString..'*'
+  local ok, err = red:sscan('tags', 0, 'match', searchString)
+  util:SetKeepalive(red)
+  if ok then
+    return ok[2]
+  else
+    return ok, err
+  end
 end
 
 function read:GetAllBestPosts(rangeStart,rangeEnd)
@@ -493,13 +556,18 @@ function read:GetTag(tagName)
     return
   end
   local tagInfo = self:ConvertListToTable(ok)
+  if tagInfo.name then
+    return tagInfo
+  else
+    return nil
+  end
 
   return tagInfo
 end
 
-function read:GetTagPosts(tagID)
+function read:GetTagPosts(tagName)
   local red = util:GetRedisReadConnection()
-  local ok, err = red:smembers('tagPosts:'..tagID)
+  local ok, err = red:smembers('tagPosts:'..tagName)
   if not ok then
     return nil, err
   end

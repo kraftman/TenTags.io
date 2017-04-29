@@ -71,6 +71,7 @@ function config:CreateAccount(accountID, session)
     users = {},
     userCount = 0,
     active = 0,
+		modCount = 0
   }
   return account
 end
@@ -94,7 +95,6 @@ function config:RegisterAccount()
   if not session then
     return
   end
-
   session = from_json(session)
 	local emailAddr = session.email
 	session.email = nil

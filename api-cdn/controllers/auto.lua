@@ -7,10 +7,10 @@ local api = require 'api.api'
 local tinsert = table.insert
 
 local filters = {
-  {title = 'gifs', name = 'gifs', description = 'gifs', requiredTags = {'gifs'}, bannedTags = {'meta:self'}},
-  {title = 'funny', name = 'funny', description = 'funny', requiredTags = {'funny'}, bannedTags = {'nsfw'}},
-  {title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTags = {'funny','nsfw'}, bannedTags = {'sfw'}},
-  {title = 'pics', name = 'pics', description = 'pics', requiredTags = {'pics'}, bannedTags = {'nsfw'}},
+  {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
+  {title = 'funny', name = 'funny', description = 'funny', requiredTagNames = {'funny'}, bannedTagNames = {'nsfw'}},
+  {title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTagNames = {'funny','nsfw'}, bannedTagNames = {'sfw'}},
+  {title = 'pics', name = 'pics', description = 'pics', requiredTagNames = {'pics'}, bannedTagNames = {'nsfw'}},
 }
 
 local posts = {
@@ -23,8 +23,8 @@ local posts = {
 }
 
 
-function m:AutoContent(app)
-  local userID = app.session.userID
+function m.AutoContent(request)
+  local userID = request.session.userID
   if not userID then
     return 'no userID!'
   end
@@ -38,8 +38,8 @@ function m:AutoContent(app)
       createdAt = ngx.time(),
       createdBy = userID,
       ownerID = userID,
-      bannedTags = v.bannedTags,
-      requiredTags = v.requiredTags
+      bannedTagNames = v.bannedTagNames,
+      requiredTagNames = v.requiredTagNames
     }
 
     local ok, err = api:CreateFilter(userID, info)
@@ -73,9 +73,30 @@ function m:AutoContent(app)
 
 end
 
+function m.CreatePosts(self)
+  local userID = self.session.userID
+
+  for i = 1, 10 do
+    local info = {
+      title = 'post:456:'..i,
+      text = 'text:'..i,
+      createdBy = userID,
+      tags = {'456'}
+    }
+
+    local ok, err = api:CreatePost(userID, info)
+
+    if not ok then
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      return {json = err}
+    end
+  end
+
+end
 
 function m:Register(app)
-  app:get('/auto/all', function(appInst) return self:AutoContent(appInst) end)
+  app:get('/auto/all', self.AutoContent)
+  app:get('/auto/posts', self.CreatePosts)
 end
 
 return m

@@ -30,11 +30,11 @@ local tinsert = table.insert
 local userInfo = ngx.shared.userInfo
 local commentInfo = ngx.shared.comments
 local voteInfo = ngx.shared.userVotes
+local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = false
-
+local DISABLE_CACHE = os.getenv('DISABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -48,10 +48,10 @@ function cache:GetThreads(userID)
   return threads
 end
 
-function cache:GetUserInfo(userID)
+function cache:GetUser(userID)
   local ok, err
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
      ok, err = userInfo:get(userID)
     if ok then
       return from_json(ok)
@@ -61,7 +61,7 @@ function cache:GetUserInfo(userID)
     end
   end
 
-  local user, err = userRead:GetUserInfo(userID)
+  local user, err = userRead:GetUser(userID)
   if not user then
     return user, err
   end
@@ -75,12 +75,22 @@ function cache:GetUserInfo(userID)
 
 end
 
+function cache:PurgeKey(keyInfo)
+  if keyInfo.keyType == 'account' then
+    if PRECACHE_INVALID then
+      userInfo:delete(keyInfo.id)
+    else
+      self:GetAccount(keyInfo.id)
+    end
+  end
+end
+
 function cache:GetCommentIDFromURL(commentURL)
   return commentRead:GetCommentIDFromURL(commentURL)
 end
 
 function cache:GetAccount(accountID)
-    if ENABLE_CACHE then
+    if not DISABLE_CACHE then
       local ok, err = userInfo:get(accountID)
       if err then
         ngx.log(ngx.ERR, 'unable to get account: ',err)
@@ -96,18 +106,14 @@ function cache:GetAccount(accountID)
     end
     local ok, err = userInfo:set(accountID, to_json(account))
     if not ok then
-      ngx.log(ngx.ERR, 'unable to set master info: ',err)
+      ngx.log(ngx.ERR, 'unable to set account info: ',err)
     end
 
     return account
 end
 
-function cache:VerifyReset(emailAddr, key)
-  return redisread:VerifyReset(emailAddr, key)
-end
-
 function cache:GetUserAlerts(userID)
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
   if not user.alertCheck then
     user.alertCheck = 0
   end
@@ -116,17 +122,6 @@ function cache:GetUserAlerts(userID)
   return alerts
 end
 
-function cache:GetMasterUserByEmail(email)
-  email = email:lower()
-  local userID = userRead:GetMasterUserByEmail(email)
-  if not userID then
-    return
-  end
-
-  local userInfo = self:GetMasterUserInfo(userID)
-  return userInfo
-
-end
 
 function cache:GetUserTagVotes(userID)
   if not userID then
@@ -195,9 +190,22 @@ function cache:AddChildren(parentID,flat)
   return t
 end
 
+function cache:SearchTags(searchString)
+  return redisread:SearchTags(searchString)
+end
+
+function cache:SearchFilters(searchString)
+  local filterNames = redisread:SearchFilters(searchString)
+  local filters = {}
+  for _,filterName in pairs(filterNames) do
+    tinsert(filters, self:GetFilterByName(filterName))
+  end
+  return filters
+end
+
 function cache:GetUsername(userID)
 
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
   if user then
     return user.username
   end
@@ -207,7 +215,7 @@ function cache:GetPostComments(postID)
 
   local ok, err,flatComments
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = commentInfo:get(postID)
     if err then
       ngx.log(ngx.ERR, 'could not get post comments: ',err)
@@ -311,7 +319,7 @@ function cache:GetPost(postID)
     postID = self:ConvertShortURL(postID)
   end
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = postInfo:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -335,14 +343,15 @@ function cache:GetPost(postID)
 
 end
 
-function cache:GetFilterPosts(filter)
+function cache:GetFilterPosts(userID, filter, sortBy)
 
-  local filterIDs = redisread:GetFilterPosts(filter)
+  local filterIDs = redisread:GetFilterPosts(filter, sortBy)
   local posts = {}
   local post
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
+    table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
   end
 
@@ -367,7 +376,7 @@ end
 function cache:GetFilterByID(filterID)
   local ok, err, result
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = filterDict:get(filterID)
 
     if err then
@@ -416,8 +425,10 @@ function cache:GetFiltersBySubs(startAt,endAt)
 
   local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
   if not filterIDs then
+    print('none found')
     return {}
   end
+  print(to_json(filterIDs))
   return self:GetFilterInfo(filterIDs)
 end
 
@@ -547,7 +558,7 @@ function cache:GetUserCommentVotes(userID)
 
   local ok, err, commentVotes
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
 
     ok, err = voteInfo:get('commentVotes:'..userID)
 
@@ -610,24 +621,23 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   tinsert(newPosts, post)
 end
 
-function cache:GetUserFrontPage(userID,filter,range)
-  range = range or 0
+function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
 
-  local user = self:GetUserInfo(userID)
+  local user = self:GetUser(userID)
 
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetFreshUserPosts(userID,filter)
+  local freshPosts = cache:GetFreshUserPosts(userID,sortBy)
 
   local newPosts = {}
 
-  if filter ~= 'seen' and userID ~= 'default' then
+  if sortBy ~= 'seen' and userID ~= 'default' then
     for _,postID in pairs(freshPosts) do
       self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
 
-      -- stop when we hace a page worth
-      if #newPosts > 10 then
+      -- stop when we have a page worth
+      if #newPosts > (endAt - startAt) then
         break
       end
     end
@@ -635,21 +645,18 @@ function cache:GetUserFrontPage(userID,filter,range)
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else
-    for i = range, range+10 do
+    for i = startAt, endAt do
       if freshPosts[i] then
         tinsert(newPosts,self:GetPost(freshPosts[i]))
       end
     end
   end
 
-
-
-
   local userVotedPosts = self:GetUserPostVotes(userID)
 
   for _,post in pairs(newPosts) do
-
       post.filters = self:GetFilterInfo(post.filters) or {}
+      table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     if userVotedPosts[post.id] then
       post.userHasVoted = true
     end
@@ -660,20 +667,16 @@ end
 
 
 function cache:GetTag(tagName)
-  local tags = self:GetAllTags()
-  for _,v in pairs(tags) do
-    if v.name == tagName then
-      return v
-    end
-  end
-  return
+  local tag = redisread:GetTag(tagName)
+  return tag
 end
+
 
 
 function cache:GetUserFilterIDs(userID)
   local ok, err, res
 
-  if ENABLE_CACHE then
+  if not DISABLE_CACHE then
     ok, err = userFilterIDs:get(userID)
     if err then
       ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)

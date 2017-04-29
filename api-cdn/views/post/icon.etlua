@@ -1,9 +1,11 @@
 <% if post['specialTag:nsfw'] then %>
-  <% if userInfo.showNSFW then print('true') %>
+  <% if userInfo.showNSFW == '1' and post.postType ~= 'self' then %>
     <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
   <% else %>
     <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="40" width="40">
   <% end %>
+<% elseif post.postType == 'self' then %>
+  <img class = 'post-icon' src="/static/icons/self.svg" height="40" width="40">
 <% else %>
   <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
 

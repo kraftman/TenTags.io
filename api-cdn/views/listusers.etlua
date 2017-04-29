@@ -1,0 +1,4 @@
+
+<% for _,user in pairs(otherUsers) do %>
+  <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
+<% end %>

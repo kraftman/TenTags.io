@@ -4,33 +4,35 @@ local m = {}
 
 
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
+local userAPI = require 'api.users'
+local threadAPI = require 'api.threads'
+local commentAPI = require 'api.comments'
 local tinsert = table.insert
 
-local function ViewAlerts(self)
-  local alerts = api:GetUserAlerts(self.session.userID)
-  api:UpdateLastUserAlertCheck(self.session.userID)
-  self.alerts = {}
+function m.ViewAlerts(request)
+  local alerts = userAPI:GetUserAlerts(request.session.userID)
+  userAPI:UpdateLastUserAlertCheck(request.session.userID)
+  request.alerts = {}
 
   for _, v in pairs(alerts) do
 
     if v:find('thread:') then
       local threadID = v:match('thread:(%w+)')
-      local thread = api:GetThread(threadID)
-      tinsert(self.alerts, {alertType = 'thread', data = thread})
+      local thread = threadAPI:GetThread(threadID)
+      tinsert(request.alerts, {alertType = 'thread', data = thread})
     elseif v:find('postComment:') then
       local postID, commentID = v:match('postComment:(%w+):(%w+)')
-      local comment = api:GetComment(postID, commentID)
-      comment.username = api:GetUserInfo(comment.createdBy).username
-      
-      tinsert(self.alerts,{alertType = 'comment', data = comment})
+      local comment = commentAPI:GetComment(postID, commentID)
+      comment.username = userAPI:GetUser(comment.createdBy).username
+
+      tinsert(request.alerts,{alertType = 'comment', data = comment})
     end
   end
   return { render = 'alerts'}
 end
 
 function m:Register(app)
-  app:match('viewalerts','/alerts/view',respond_to({GET = ViewAlerts}))
+  app:match('viewalerts','/alerts/view',respond_to({GET = self.ViewAlerts}))
 end
 
 return m

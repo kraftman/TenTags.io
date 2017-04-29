@@ -67,6 +67,7 @@ local function GetImageLinks(res)
 end
 
 local function SendImage(image, postID)
+  print('sending image')
   local resp = {}
   local body,code,headers,status = http.request{
   url = "http://"..imgHostURl..':'..imgHostPort.."/upload",
@@ -81,6 +82,7 @@ local function SendImage(image, postID)
   }
   print(postID)
   print(body,code,status)
+  print(table.concat(resp))
 
   if headers then
       for k,v in pairs(headers) do
@@ -127,7 +129,9 @@ local function GetPostIcon(postURL, postID)
   print(postURL, postID)
 
   if postURL:find('imgur.com') then
-    return ProcessImgur(postURL, postID)
+    if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+      return ProcessImgur(postURL, postID)
+    end
   end
 
   local res, c, h = http.request ( postURL )
@@ -138,7 +142,7 @@ local function GetPostIcon(postURL, postID)
 
 
   local imageLinks = {}
-  if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png  ') then
+  if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
     imageLinks = {{link = postURL}}
   else
     imageLinks = GetImageLinks(res)
@@ -246,7 +250,7 @@ local function GetNextPost()
     else
       -- add back into queue but later
       print('couldnt process, requeueing')
-      ok, err = red:zadd(queueName, os.time(), postID)
+      --ok, err = red:zadd(queueName, os.time(), postID)
     end
  end
 end
@@ -259,5 +263,6 @@ end
 
 while true do
   socket.sleep(1)
+  print('this')
   GetNextPost()
 end

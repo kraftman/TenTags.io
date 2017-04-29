@@ -12,6 +12,12 @@ function worker:CreateTag(tagInfo)
   return rediswrite:CreateTag(tagInfo)
 end
 
+function worker:KillSession(account)
+  --same as update account but we force a purge
+  local ok, err = rediswrite:InvalidateKey('account', account.id)
+  return userWrite:CreateAccount(account)
+end
+
 function worker:UpdateAccount(account)
   return userWrite:CreateAccount(account)
 end
@@ -24,9 +30,8 @@ function worker:IncrementUserStat(userID, statName, value)
   return userWrite:IncrementUserStat(userID, statName, value)
 end
 
-
-function worker:AddUserTagVotes(userID, postID, tagIDs)
-  return userWrite:AddUserTagVotes(userID, postID, tagIDs)
+function worker:AddUserTagVotes(userID, postID, tagNames)
+  return userWrite:AddUserTagVotes(userID, postID, tagNames)
 end
 
 function worker:LogChange(key, time, log)
@@ -75,6 +80,7 @@ function worker:UpdateFilterTitle(filter)
 end
 
 function worker:QueueJob(jobName, value)
+  --doesnt update existing elements
   return rediswrite:QueueJob(jobName, value)
 end
 
@@ -102,6 +108,7 @@ function worker:CreatePost(post)
     return ok, err
   end
 end
+
 
 function worker:FilterBanDomain(filterID, banInfo)
   return rediswrite:FilterBanDomain(filterID, banInfo)
@@ -138,41 +145,33 @@ function worker:CreateComment(commentInfo)
 end
 
 function worker:UpdateUser(user)
-  userWrite:CreateSubUser(user)
+  return userWrite:CreateSubUser(user)
 end
 
 function worker:AddPostsToFilter(filter, posts)
-  rediswrite:AddPostsToFilter(filter, posts)
+  return rediswrite:AddPostsToFilter(filter, posts)
 end
 
 
-function worker:UpdateFilterTags(filter, requiredTags, bannedTags)
-  return rediswrite:UpdateFilterTags(filter, requiredTags, bannedTags)
+
+function worker:UpdateFilterTags(filter, requiredTagNames, bannedTagNames)
+
+
+  local ok, err = rediswrite:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
+  if not ok then
+    return ok, err
+  end
+
+  -- filter HAS to be updated firstUser
+  -- or the job wont use the new tags
+
+  return self:QueueJob('UpdateFilterTags',filter.id)
 end
 
 function worker:RemovePostsFromFilter(filterID, postIDs)
   return rediswrite:RemovePostsFromFilter(filterID, postIDs)
 end
 
-function worker:GetUpdatedFilterPosts(filter, newRequiredTags, newBannedTags)
-
-  local newPostsKey = filter.id..':tempPosts'
-  local ok, err = rediswrite:CreateTempFilterPosts(newPostsKey, newRequiredTags, newBannedTags)
-  if not ok then
-    return ok, err
-  end
-
-  local oldPostsKey = 'filterposts:'..filter.id
-  local oldPostIDs = rediswrite:GetSetDiff(oldPostsKey, newPostsKey)
-  --print('old posts:'..to_json(oldPostIDs))
-  local newPostIDs = rediswrite:GetSetDiff(newPostsKey, oldPostsKey)
-  --print('new posts:'..to_json(newPostIDs))
-
-  local newPosts = cache:GetPosts(newPostIDs)
-  rediswrite:DeleteKey(newPostsKey)
-  return newPosts, oldPostIDs
-
-end
 
 function worker:UpdatePostParentID(post)
   return rediswrite:UpdatePostParentID(post)
@@ -181,26 +180,40 @@ end
 
 function worker:FindPostsForFilter(filter)
   -- has to use write as it uses sinterstore
-  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTags, filter.bannedTags)
+  return rediswrite:FindPostsForFilter(filter.id, filter.requiredTagNames, filter.bannedTagNames)
 end
 
-function worker:CreateFilter(filterInfo)
+function worker:CreateFilter(filter)
 
   --local postIDs = self:FindPostsForFilter(filterInfo)
   --local posts = cache:GetPosts(postIDs)
-  rediswrite:CreateFilter(filterInfo)
+  local ok, err = rediswrite:CreateFilter(filter)
+  if not ok then
+    print('error creating filter')
+    return ok, err
+  end
   -- we need to get scores per post :(
 
-  --self:AddPostsToFilter(filterInfo, posts)
-  self:SubscribeToFilter(filterInfo.createdBy, filterInfo.id)
+  --self:AddPostsToFilter(filterInfo, posts)X
+  return self:SubscribeToFilter(filter.createdBy, filter.id)
 
 end
 
 function worker:SubscribeToFilter(userID,filterID)
-  userWrite:SubscribeToFilter(userID, filterID)
+  print('adding ', userID, ' to ', filterID)
+  local ok, err = rediswrite:IncrementFilterSubs(filterID, 1)
+  if not ok then
+    print(err)
+    return ok, err
+  end
+  return userWrite:SubscribeToFilter(userID, filterID)
 end
 
 function worker:UnsubscribeFromFilter(username,filterID)
+  local ok, err = rediswrite:IncrementFilterSubs(filterID, -1)
+  if not ok then
+    return ok, err
+  end
   rediswrite:UnsubscribeFromFilter(username,filterID)
 end
 
@@ -275,14 +288,6 @@ end
 
 function worker:CreateSubUser(userInfo)
   return userWrite:CreateSubUser(userInfo)
-end
-
-function worker:CreateMasterUser(masterInfo)
-  return userWrite:CreateMasterUser(masterInfo)
-end
-
-function worker:ActivateAccount(userID)
-  return userWrite:ActivateAccount(userID)
 end
 
 function worker:AddUserAlert(userID, alert)

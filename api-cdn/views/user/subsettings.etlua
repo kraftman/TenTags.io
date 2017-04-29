@@ -1,23 +1,39 @@
 
 <div class = 'contents panel panel-default'>
+  <h2>User Settings</h2>
   <a href="<%= url_for('newsubuser') %>">Add User</a>
   <form action="<%= url_for('usersettings') %>" method = 'POST'>
+    <label for='userbio' >Bio:</label>
+      </br>
+    <textarea  name='userbio' id='userbio' id="txtArea" rows="10" cols="50"><%= userBio %></textarea>
+
     <div class="checkbox">
-      <label><input type="checkbox" <%= enablePM -%>>Enable PM's</label>
+      <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
     </div>
     <div class="checkbox">
-      <label><input type="checkbox" <%= hideSeenPosts -%>>Hide Seen Posts</label>
+      <label><input type="checkbox" name='hideSeenPosts' <%= hideSeenPosts -%>>Hide Seen Posts</label>
     </div>
     <div class="checkbox">
-      <label><input type="checkbox" <%= hideVotedPosts -%>>Hide Voted Posts</label>
+      <label><input type="checkbox" name='hideVotedPosts' <%= hideVotedPosts -%>>Hide Voted Posts</label>
     </div>
     <div class="checkbox">
-      <label><input type="checkbox" <%= hideClickedPosts -%>>Hide Clicked Posts</label>
+      <label><input type="checkbox" name='hideClickedPosts' <%= hideClickedPosts -%>>Hide Clicked Posts</label>
     </div>
     <div class="checkbox">
-      <label><input type="checkbox" <%= showNSFW -%>>Show NSFW</label>
+      <label><input type="checkbox" name='showNSFW' <%= showNSFW -%>>Show NSFW</label>
     </div>
 
     <button class='btn btn-default' type="submit" value="Submit">submit</button>
+
   </form>
+
+</div>
+
+
+<div class = 'contents panel panel-default'>
+  <h2>Account Settings</h2>
+
+  <% for k,accountSession in pairs(account.sessions) do %>
+    <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+  <% end %>
 </div>

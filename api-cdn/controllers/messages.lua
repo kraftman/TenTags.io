@@ -2,61 +2,61 @@
 
 local m = {}
 
-
+local threadAPI = require 'api.threads'
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
+
 local to_json = (require 'lapis.util').to_json
 
 
-local function NewMessage(self)
-  if not self.session.userID then
-    return { redirect_to = self:url_for("login") }
+function m.NewMessage(request)
+  if not request.session.userID then
+    return { render = 'pleaselogin' }
   end
   return {render = 'message.create'}
 end
 
-local function ViewMessages(self)
-  self.threads = api:GetThreads(self.session.userID)
-  ngx.log(ngx.ERR, to_json(self.threads))
+function m.ViewMessages(request)
+  request.threads = threadAPI:GetThreads(request.session.userID)
+  ngx.log(ngx.ERR, to_json(request.threads))
   return {render = 'message.view'}
 end
 
-local function CreateThread(self)
+function m.CreateThread(request)
   local msgInfo = {
-    title = self.params.subject,
-    body = self.params.body,
-    recipient = self.params.recipient,
-    createdBy = self.session.userID
+    title = request.params.subject,
+    body = request.params.body,
+    recipient = request.params.recipient,
+    createdBy = request.session.userID
   }
   print('create thread')
-  local ok, err = api:CreateThread(self.session.userID, msgInfo)
+  local ok, err = threadAPI:CreateThread(request.session.userID, msgInfo)
   if ok then
-    self.threads = api:GetThreads(self.session.userID)
-    ngx.log(ngx.ERR, to_json(self.threads))
+    request.threads = threadAPI:GetThreads(request.session.userID)
+    ngx.log(ngx.ERR, to_json(request.threads))
     return {render = 'message.view'}
   else
     return 'fail '..err
   end
 end
 
-local function CreateMessageReply(self)
+function m.CreateMessageReply(request)
   -- need the threadID
   local msgInfo = {}
-  msgInfo.threadID = self.params.threadID
-  msgInfo.body = self.params.body
-  msgInfo.createdBy = self.session.userID
-  api:CreateMessageReply(self.session.userID, msgInfo)
+  msgInfo.threadID = request.params.threadID
+  msgInfo.body = request.params.body
+  msgInfo.createdBy = request.session.userID
+  threadAPI:CreateMessageReply(request.session.userID, msgInfo)
 end
 
-local function MessageReply(self)
-  self.thread = api:GetThread(self.params.threadID)
+function m.MessageReply(request)
+  request.thread = threadAPI:GetThread(request.params.threadID)
   return {render = 'message.reply'}
 end
 
 function m:Register(app)
-  app:match('viewmessages','/messages/view',respond_to({GET = ViewMessages}))
-  app:match('newmessage','/messages/new',respond_to({GET = NewMessage, POST = CreateThread}))
-  app:match('replymessage','/messages/reply/:threadID',respond_to({GET = MessageReply,POST = CreateMessageReply}))
+  app:match('viewmessages','/messages/view',respond_to({GET = self.ViewMessages}))
+  app:match('newmessage','/messages/new',respond_to({GET = self.NewMessage, POST = self.CreateThread}))
+  app:match('replymessage','/messages/reply/:threadID',respond_to({GET = self.MessageReply,POST = self.CreateMessageReply}))
 end
 
 return m

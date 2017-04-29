@@ -2,16 +2,10 @@
 
 local write = {}
 
-local redis = require 'resty.redis'
 local to_json = (require 'lapis.util').to_json
 local tinsert = table.insert
 local SCORE_FACTOR = 43200
 local util = require 'util'
-
-
-
-
-
 
 
 function write:ConvertListToTable(list)
@@ -45,6 +39,14 @@ function write:AddPasswordReset(emailAddr, uuid)
   return ok, err
 end
 
+function write:InvalidateKey(keyType, id)
+  local timeInvalidated = ngx.now()
+  local red = util:GetRedisWriteConnection()
+  local data = to_json({keyType = keyType, id = id})
+  local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+  return ok, err
+end
+
 function write:LoadScript(script)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:script('load',script)
@@ -64,10 +66,10 @@ function write:AddKey(addSHA,baseKey,newElement)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add key: ',err)
   end
-  return ok
+  return ok, err
 end
 
-
+--[[
 function write:CreateComment(postID,commentID, comment)
   local red = util:GetRedisWriteConnection()
   local ok , err = red:hmset(postID,commentID,comment)
@@ -86,6 +88,7 @@ function write:GetComments(postID)
   util:SetKeepalive(red)
   return self:ConvertListToTable(ok)
 end
+--]]
 
 
 function write:ConvertListToTable(list)
@@ -148,50 +151,48 @@ function write:FilterUnbanUser(filterID, userID)
   return ok, err
 end
 
-function write:AddTagsToFilter(red, filterID, requiredTags, bannedTags)
+function write:AddtagNamesToFilter(red, filterID, requiredTagNames, bannedTagNames)
 
     -- add list of required tags
-    for _, tagID in pairs(requiredTags) do
-      red:sadd('filter:requiredtags:'..filterID,tagID)
+    for _, tagName in pairs(requiredTagNames) do
+      red:sadd('filter:requiredTagNames:'..filterID,tagName)
+      red:hset('tag:filters:'..tagName, filterID, 'required')
     end
 
     -- add list of banned tags
-    for _, tagID in pairs(bannedTags) do
-      red:sadd('filter:bannedtags:'..filterID, tagID)
+    for _, tagName in pairs(bannedTagNames) do
+      red:sadd('filter:bannedTagNames:'..filterID, tagName)
+      red:hset('tag:filters:'..tagName, filterID, 'banned')
     end
 
-    -- add filter to required tag
-    for _, tagID in pairs(requiredTags) do
-      red:hset('tag:filters:'..tagID, filterID, 'required')
-    end
-    -- add filter to banned tag
-    for _, tagID in pairs(bannedTags) do
-      red:hset('tag:filters:'..tagID, filterID, 'banned')
-    end
 end
 
-function write:UpdateFilterTags(filter, newRequiredTags, newBannedTags)
+function write:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
   local red = util:GetRedisWriteConnection()
 
   red:init_pipeline()
     -- remove all existing tags from the filter
-    red:del('filter:requiredtags:'..filter.id)
-    red:del('filter:bannedtags:'..filter.id)
+    red:del('filter:requiredTagNames:'..filter.id)
+    red:del('filter:bannedTagNames:'..filter.id)
     -- remove the filter from all tags
-    for _,tag in pairs(filter.requiredTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
+
+    for _,tagName in pairs(filter.requiredTagNames) do
+      if type(tagName) == 'table' then tagName = tagName.name end
+      red:hdel('tag:filters:'..tagName, filter.id)
     end
-    for _,tag in pairs(filter.bannedTags) do
-      red:hdel('tag:filters:'..tag.id, filter.id)
+    for _,tagName in pairs(filter.bannedTagNames) do
+      if type(tagName) == 'table' then tagName = tagName.name end
+      red:hdel('tag:filters:'..tagName, filter.id)
     end
 
     -- add the new tags
-    self:AddTagsToFilter(red, filter.id, newRequiredTags, newBannedTags)
+    self:AddtagNamesToFilter(red, filter.id, requiredTagNames, bannedTagNames)
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update filter tags: ',err)
   end
+
 
   return res, err
 
@@ -223,59 +224,60 @@ function write:AddMod(filterID, mod)
   return ok, err
 end
 
-function write:CreateFilter(filterInfo)
-  local tempRequiredTags, tempBannedTags = filterInfo.requiredTags, filterInfo.bannedTags
-  local requiredTags = {}
-  local bannedTags = {}
+function write:UpdateRelatedFilters(filter, relatedFilters)
+  local red = util:GetRedisWriteConnection()
 
-  for _,v in pairs( filterInfo.requiredTags) do
-    tinsert(requiredTags, v.id)
-  end
-  for _,v in pairs( filterInfo.bannedTags) do
-    tinsert(bannedTags, v.id)
+  for _,v in pairs(filter.relatedFilterIDs) do
+    red:hdel('filter:'..filter.id, 'relatedFilter:'..v)
   end
 
-  for _,mod in pairs(filterInfo.mods) do
-    filterInfo['mod:'..mod] = to_json(mod)
+  for _,v in pairs(relatedFilters) do
+    red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
   end
-  filterInfo.mods = nil
 
-  filterInfo.bannedTags = nil
-  filterInfo.requiredTags = nil
+end
 
-  if filterInfo.bannedUsers then
-    for _, banInfo in pairs(filterInfo.bannedUsers) do
-      tinsert(filterInfo, 'bannedUser:'..banInfo.userID,to_json(banInfo))
+function write:CreateFilter(filter)
+
+  local hashFilter = {}
+
+  for k, v in pairs(filter) do
+    if k == 'mods' then
+      for _,mod in pairs(v) do
+        hashFilter['mod:'..mod.id] = to_json(mod)
+      end
+    elseif k == 'bannedUsers' then
+      for _,banInfo in pairs(v) do
+        hashFilter['bannedUser'..banInfo.userID] = to_json(banInfo)
+      end
+    elseif k == 'bannedDomains' then
+      for _,banInfo in pairs(v) do
+        hashFilter['bannedDomains:'..banInfo.domainName] = to_json(banInfo)
+      end
+    elseif type(v) == 'string' then
+      hashFilter[k] = v
     end
-    filterInfo.bannedUsers = nil
-  end
-
-  if filterInfo.bannedDomains then
-    for _,banInfo in pairs(filterInfo.bannedDomains) do
-      tinsert(filterInfo, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
-    end
-    filterInfo.bannedDomains = nil
   end
 
 
   -- add id to name conversion table
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
-  red:set('filterid:'..filterInfo.name,filterInfo.id)
+    red:set('filterid:'..hashFilter.name,hashFilter.id)
 
 
-  -- add to list ranked by subs
-  red:zadd('filtersubs',filterInfo.subs, filterInfo.id)
+    -- add to list ranked by subs
+    red:zadd('filtersubs',hashFilter.subs, hashFilter.id)
 
-  -- add to list of filters
-  red:zadd('filters',filterInfo.createdAt,filterInfo.id)
+    -- add to list of filters
+    red:zadd('filters',hashFilter.createdAt,hashFilter.id)
+    red:sadd('filterNames',hashFilter.name)
 
-  -- add all filter info
-  red:hmset('filter:'..filterInfo.id, filterInfo)
+    -- add all filter info
+    red:hmset('filter:'..hashFilter.id, hashFilter)
 
-  self:AddTagsToFilter(red, filterInfo.id, requiredTags, bannedTags)
-  filterInfo.requiredTags = tempRequiredTags
-  filterInfo.bannedTags = tempBannedTags
+    self:AddtagNamesToFilter(red, filter.id, filter.requiredTagNames, filter.bannedTagNames)
+
   local results, err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
@@ -285,6 +287,7 @@ end
 
 function write:CreateFilterPostInfo(red, filter,postInfo)
   --print('updating filter '..filter.title..'with new score: '..filter.score)
+  --print(filter.id, postInfo.id)
   red:sadd('filterposts:'..filter.id, postInfo.id)
   red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
   red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
@@ -294,10 +297,32 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
 end
 
+function write:IncrementFilterSubs(filterID, value)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:hincrby('filter:'..filterID, 'subs', value)
+  if not ok then
+    util:SetKeepalive(red)
+    print('error updating subcount ', err)
+    return ok, err
+  end
+  print('adding ',ok,' to filtersubs')
+  ok,err = red:zadd('filtersubs',ok, filterID)
+  if not ok then
+    print('moop : ',err)
+  end
+  return ok,err
+end
+
+function write:RemoveInvalidations(cutOff)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:zremrangebyscore('invalidationRequests', 0, cutOff)
+  return ok, err
+end
+
 function write:QueueJob(queueName,value)
   local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
-  print(realQName, value)
+  --print(realQName, value)
   local ok, err = red:zadd(realQName,'NX', ngx.time(), value)
   util:SetKeepalive(red)
   if not ok then
@@ -312,6 +337,8 @@ function write:AddPostToFilters(post, filters)
   local red = util:GetRedisWriteConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
+        --print(to_json(filterInfo))
+        --print(to_json(post))
       self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
@@ -319,7 +346,13 @@ function write:AddPostToFilters(post, filters)
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
   end
-  return results
+
+  if not results and not err then
+    return true
+  else
+    return results, err
+  end
+
 end
 
 function write:RemoveFilterPostInfo(red, filterID,postID)
@@ -386,6 +419,10 @@ function write:DeleteKey(key)
 
 end
 
+function write:LogChange()
+  return true
+end
+
 function write:RemovePostsFromFilter(filterID, postIDs)
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
@@ -415,6 +452,7 @@ function write:AddPostsToFilter(filterInfo,posts)
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
   end
+  --print('pipeline: ',err, err)
   return results
 end
 
@@ -426,37 +464,51 @@ function write:UpdatePostParentID(post)
 end
 
 
-function write:CreateTempFilterPosts(tempKey, requiredTagIDs, bannedTagIDs)
-  -- hacky duplicate of FindPostsForFilter, my bannedTagIDs
+function write:CreateTempFilterPosts(tempKey, requiredTagNames, bannedTagNames)
+  -- hacky duplicate of FindPostsForFilter, my bannedTagNames
   -- TODO: merge back together later
 
-  local red = util:GetRedisWriteConnection()
-  local requiredTags = {}
-  local bannedTags = {}
+  --[[
+    so we get list of every post that matches all the tags we want
+    then we remove every post that has a tag we dont want,
+    then store this list temporarily
 
-  for _,tag in pairs(requiredTagIDs) do
-    tinsert(requiredTags,'tagPosts:'..tag.id)
+  ]]
+
+  local red = util:GetRedisWriteConnection()
+  local labelledrequiredTagNames = {}
+  local labelledbannedTagNames = {}
+  print(to_json(requiredTagNames))
+  for _,tagName in pairs(requiredTagNames) do
+    if type(tagName) == 'table'then
+      tagName = tagName.name
+    end
+    tinsert(labelledrequiredTagNames,'tagPosts:'..tagName)
   end
 
-  for _,tag in pairs(bannedTagIDs) do
-    tinsert(bannedTags,'tagPosts:'..tag.id)
+  for _,tagName in pairs(bannedTagNames) do
+    if type(tagName) == 'table'then
+      tagName = tagName.name
+    end
+    tinsert(labelledbannedTagNames,'tagPosts:'..tagName)
   end
 
   local tempRequiredPostsKey = tempKey..':required'
-  print(tempRequiredPostsKey)
-
-  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(requiredTags))
+  --print(tempRequiredPostsKey)
+  print(to_json(tempRequiredPostsKey))
+  print(to_json(labelledrequiredTagNames))
+  local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(labelledrequiredTagNames))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempRequiredPostsKey)
     util:SetKeepalive(red)
-    return nil
+    return nil, err
   end
-  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(bannedTags))
+  ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(labelledbannedTagNames))
   if not ok then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)
-    return nil
+    return nil, err
   end
 
   ok, err = red:del(tempRequiredPostsKey)
@@ -480,30 +532,34 @@ function write:GetSetDiff(key1, key2)
 end
 
 
-function write:FindPostsForFilter(filterID, requiredTagIDs, bannedTagIDs)
+function write:FindPostsForFilter(filterID, requiredTagNames, bannedTagNames)
   -- in the future it may be too big to load in one go, and
   -- we may want to store the diff and iterate through it in chunks
+
+  --for each tag, get the list of posts
+  -- sinter all the posts that hared the required tags
+  -- remove any posts that are under our banned tags
   local red = util:GetRedisWriteConnection()
   local matchingPostIDs
-  local requiredTags = {}
-  local bannedTags = {}
-  for _,v in pairs(requiredTagIDs) do
-    tinsert(requiredTags,'tagPosts:'..v.id)
+  local labelledrequiredTagNames = {}
+  local labelledbannedTagNames = {}
+  for _,v in pairs(requiredTagNames) do
+    tinsert(labelledrequiredTagNames,'tagPosts:'..v.name)
   end
-  for _,v in pairs(bannedTagIDs) do
-    tinsert(bannedTags,'tagPosts:'..v.id)
+  for _,v in pairs(bannedTagNames) do
+    tinsert(bannedTagNames,'tagPosts:'..v.name)
   end
 
   local tempKey = filterID..':tempPosts'
 
-  local ok, err = red:sinterstore(tempKey, unpack(requiredTags))
+  local ok, err = red:sinterstore(tempKey, unpack(labelledrequiredTagNames))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempKey)
     util:SetKeepalive(red)
     return nil
   end
-  matchingPostIDs, err = red:sdiff(tempKey, unpack(bannedTags))
+  matchingPostIDs, err = red:sdiff(tempKey, unpack(labelledbannedTagNames))
   if not matchingPostIDs then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
     util:SetKeepalive(red)
@@ -535,7 +591,6 @@ function write:CreateTag(tagInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get tag: ',err)
   end
-  print('got tag: ', to_json(ok))
 
   if ok ~= ngx.null and next(ok) then
     return self:ConvertListToTable(ok)
@@ -559,12 +614,12 @@ function write:UpdatePostTags(post)
   local red = util:GetRedisWriteConnection()
   red:init_pipeline()
   for _,tag in pairs(post.tags) do
-    red:sadd('post:tagIDs:'..post.id, tag.id)
-    red:hmset('posttags:'..post.id..':'..tag.id,tag)
+    red:sadd('post:tagNames:'..post.id, tag.name)
+    red:hmset('posttags:'..post.id..':'..tag.name,tag)
   end
   local res, err = red:commit_pipeline()
   util:SetKeepalive(red)
-  
+
   if err then
     ngx.log(ngx.ERR, 'unable to update post tags: ',err)
   end
@@ -599,39 +654,47 @@ function write:UpdateFilterTitle(filter)
   end
 end
 
-function write:CreatePost(postInfo)
+function write:CreatePost(post)
+
+  local hashedPost = {}
+  hashedPost.viewers = {}
+  hashedPost.filters = {}
+
+  for k,v in pairs(post) do
+    if k == 'viewers' then
+      for _,viewerID in pairs(v) do
+        hashedPost['viewer:'..viewerID] = 'true'
+      end
+    elseif k == 'filters' then
+      for _,filterID in pairs(v) do
+        hashedPost['filter:'..filterID] = 'true'
+      end
+    elseif k == 'tags' then
+      --leave tags seperate for now as we do more with them
+    else
+      hashedPost[k] = v
+    end
+   end
+
   local red = util:GetRedisWriteConnection()
-  local tags = postInfo.tags
-  postInfo.tags = nil
-
-  for _,viewerID in pairs(postInfo.viewers) do
-    postInfo['viewer:'..viewerID] = 'true'
-  end
-  postInfo.viewers = nil
-
-  for _,filterID in pairs(postInfo.filters) do
-    postInfo['filter:'..filterID] = 'true'
-  end
-  postInfo.filters = nil
 
   red:init_pipeline()
 
-    red:del('post:'..postInfo.id)
+    red:del('post:'..hashedPost.id)
 
     -- collect tag ids and add taginfo to hash
-    for _,tag in pairs(tags) do
-      red:sadd('tagPosts:'..tag.id, postInfo.id)
-      red:sadd('post:tagIDs:'..postInfo.id,tag.id)
-      red:hmset('posttags:'..postInfo.id..':'..tag.id,tag)
+    for _,tag in pairs(post.tags) do
+      red:sadd('tagPosts:'..tag.name, hashedPost.id)
+      red:sadd('post:tagNames:'..hashedPost.id,tag.name)
+      red:hmset('posttags:'..hashedPost.id..':'..tag.name,tag)
     end
 
     -- add to /f/all
 
-    red:zadd('allposts:date',postInfo.createdAt,postInfo.id)
+    red:zadd('allposts:date',hashedPost.createdAt,hashedPost.id)
 
-    -- add post info
-    red:hmset('post:'..postInfo.id,postInfo)
-
+    -- add post inf
+    red:hmset('post:'..hashedPost.id,hashedPost)
   local results,err = red:commit_pipeline()
   if err then
     ngx.log(ngx.ERR, 'unable to create post:',err)
@@ -643,19 +706,24 @@ end
 
 
 function write:CreateThread(thread)
-  local red = util:GetRedisWriteConnection()
-  local viewers = thread.viewers
-  thread.viewers = nil
 
-  -- there wont be many viewers ever so lets not waste a set
-  for _,userID in pairs(viewers) do
-    ngx.log(ngx.ERR, 'adding user: ',userID)
-    thread['viewer:'..userID] = 1
+  local hashedThread = {}
+  hashedThread.viewers = {}
+  for k,v in pairs(thread) do
+    if k == 'viewers' then
+      for _,userID in pairs(v) do
+        hashedThread['viewer:'..userID] = 1
+      end
+    else
+      hashedThread[k] = v
+    end
   end
 
+  local red = util:GetRedisWriteConnection()
+
   red:init_pipeline()
-    red:hmset('Thread:'..thread.id,thread)
-    for _,userID in pairs(viewers) do
+    red:hmset('Thread:'..hashedThread.id,hashedThread)
+    for _,userID in pairs(thread.viewers) do
       red:zadd('UserThreads:'..userID,thread.lastUpdated,thread.id)
     end
   local res, err = red:commit_pipeline()

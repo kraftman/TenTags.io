@@ -13,7 +13,7 @@ local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local SEED = 1
+local SEED = 1879873
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -22,6 +22,8 @@ local SPECIAL_TAGS = {
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
+	math.randomseed(ngx.now()+ngx.worker.pid())
+	math.random()
 
   return c
 end
@@ -42,14 +44,14 @@ function config.Run(_,self)
 
 end
 
-local function AverageTagScore(filterRequiredTagIDs,postTags)
+local function AverageTagScore(filterrequiredTagNames,postTags)
 
 	local score = 0
 	local count = 0
 
-  for _,filterTagID in pairs(filterRequiredTagIDs) do
+  for _,filterTagName in pairs(filterrequiredTagNames) do
     for _,postTag in pairs(postTags) do
-      if filterTagID == postTag.id then
+      if filterTagName == postTag.name then
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
@@ -73,7 +75,7 @@ function config:GetValidFilters(filter, post)
 	--rather than just checking they exist, also need to get
 	-- all intersecting tags, and calculate an average score
 
-	filter.score = AverageTagScore(filter.requiredTags, post.tags)
+	filter.score = AverageTagScore(filter.requiredTagNames, post.tags)
 
 	if (filter.bannedUsers[post.createdBy]) then
 		ngx.log(ngx.ERR, 'ignoring filter: ',filter.id,' as user: ',post.createdBy, ' is banned')
@@ -89,11 +91,11 @@ end
 function config:TagsMatch(filter, post)
   -- the post needs to have all of the tags that the filter has in order to be valid
   local found
-  for _,filterTagID in pairs(filter.requiredTags) do
+  for _,filterTagName in pairs(filter.requiredTagNames) do
     found = false
 
     for _,postTag in pairs(post.tags) do
-      if filterTagID == postTag.id then
+      if filterTagName == postTag.name then
 				found = true
       end
     end
@@ -115,6 +117,7 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
+		print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
@@ -135,10 +138,10 @@ function config:CalculatePostFilters(post)
     end
   end
 
-
   local chosenFilters = {}
   -- if a filter doesnt want any of the tags, remove it
   -- else load it
+	--print('this')
   for _,v in pairs(filterIDs) do
     for filterID,filterType in pairs(v) do
       if filterType ~= 'banned' then
@@ -149,7 +152,16 @@ function config:CalculatePostFilters(post)
       end
     end
   end
-  print('potential filters: ',to_json(chosenFilters))
+
+	--remove banned
+	for _,v in pairs(filterIDs) do
+    for filterID,filterType in pairs(v) do
+      if filterType == 'banned' then
+        chosenFilters[filterID] = nil
+      end
+    end
+  end
+  --print('potential filters: ',to_json(chosenFilters))
 
   --at this point we know that the filters want at least one tag
   --that the post has
@@ -189,10 +201,10 @@ function config:GetJob(jobName)
   return post
 end
 
-function config:CreateShortURL()
+function config:CreateShortURL(postID)
   local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
   SEED = SEED + 1
-  math.randomseed(ngx.time()+ngx.worker.pid()+SEED)
+
   local newURL = ''
   for _ = 1, 7 do
     local v = math.random(#urlChars)
@@ -217,7 +229,7 @@ function config:UpdatePostShortURL()
 
   local shortURL
   for i = 1, 5 do
-    shortURL = self:CreateShortURL()
+    shortURL = self:CreateShortURL(postID)
     ok, err = redisWrite:SetNX('shortURL:'..shortURL, postID)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
@@ -244,7 +256,7 @@ function config:UpdatePostShortURL()
 
   ok, err = redisWrite:DeleteJob('AddPostShortURL',postID)
 
-  ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
+  --ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
 
 end
 
@@ -306,9 +318,9 @@ function config:UpdatePostFilters()
   end
 
 	local newFilters = self:CalculatePostFilters(post)
+	--print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
-  --print(to_json(post.filters))
 	for _,filterID in pairs(post.filters) do
 		if not newFilters[filterID] then
 			purgeFilterIDs[filterID] = filterID
@@ -318,6 +330,7 @@ function config:UpdatePostFilters()
   local specialTagFound = {}
 
   for _,tag in pairs(post.tags) do
+		--print(tag.name)
     if SPECIAL_TAGS[tag.name] then
       specialTagFound[SPECIAL_TAGS[tag.name]] = true
     end
@@ -325,12 +338,11 @@ function config:UpdatePostFilters()
 
   for k,v in pairs(SPECIAL_TAGS) do
     if specialTagFound[k] then
+			print('found special tag: ',v)
       post['specialTag:'..v] = 'true'
-
     else
       post['specialTag:'..v] = 'false'
     end
-    print ('added specialTag:'..v)
   end
 
   --print('removing from: '..to_json(purgeFilterIDs))
@@ -338,10 +350,14 @@ function config:UpdatePostFilters()
 
 	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
+		print('couldnt remove post from filters: ',err)
 		return ok, err
 	end
+--	print(to_json(post))
+	--print(to_json(newFilters))
 	ok, err = redisWrite:AddPostToFilters(post, newFilters)
 	if not ok then
+		print('couldnt add post to filters',ok, '|',err)
 		return ok, err
 	end
 
@@ -351,7 +367,10 @@ function config:UpdatePostFilters()
     tinsert(post.filters,filter.id)
   end
 
-  redisWrite:CreatePost(post)
+  ok, err = redisWrite:CreatePost(post)
+	if not ok then
+		print(err)
+	end
 	return
 end
 
@@ -388,7 +407,7 @@ function config:CheckReposts()
     return
   end
 
-  local posts, err = redisRead:GetTagPosts(linkTag.id)
+  local posts, err = redisRead:GetTagPosts(linkTag.name)
   if not posts then
     print(err)
   end
@@ -410,11 +429,7 @@ function config:CheckReposts()
   --updating parent ID
   redisWrite:UpdatePostParentID(post)
 
-
   ok, err = redisWrite:DeleteJob('CheckReposts',postID)
-
-
-
 
 end
 

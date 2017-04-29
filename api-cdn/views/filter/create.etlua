@@ -9,39 +9,40 @@
 
 
 <div class = 'contents'>
-<input id='testbutton' type='button' name='Submit' value='test' />
-<form id='createfilter' action='' method='post'
-    accept-charset='UTF-8'>
+<form id='createfilter' action='' method='post' accept-charset='UTF-8'>
   <fieldset >
     <legend>Create Filter</legend>
+    <div class='warningText'></div>
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-    <label for='filterlabel' >Filter Name</label>
-    <input type='text' name='filterlabel' id='filterlabel' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
+    <label for='filterName' >Filter Name</label>
+      </br>
+    <input type='text' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
 
+    </br>
     <label for='filtertitle' >Filter Title:</label>
+      </br>
     <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
 
-
+    </br>
     <label for='filterdescription' >Filter Description</label>
-    <input type='text' name='filterdescription' id='filterdescription' maxlength="50" />
+      </br>
+
+    <textarea name='filterdescription' id='filterdescription' id="txtArea" rows="10" cols="70"></textarea>
+
     </br>
 
-    <label for='plustagselect'>Required Tags</label>
-    <select name='plustagselect' id='requiredSelect' style="width:350px;" multiple='true' class="chosen-select">
-      <% for i, tag in pairs(tags) do %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-      <% end %>
+    <label for='requiredTagNames'>Required Tags</label>
+    <input type='text' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
+
     </select>
     </br>
-    <label for='minustagselect'>Excluded Tags</label>
-    <select name='minustagselect' id='bannedSelect' style="width:350px;" multiple='true' class="chosen-select">
-      <% for i, tag in pairs(tags) do %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-      <% end %>
-    </select>
+    <label for='bannedTagNames'>Excluded Tags</label>
+    <input type='text' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
 
-    <input id='submitButton' type='submit' name='Submit' value='Submit' />
+    </select>
+    </br>
+    <input class="btn btn-primary" id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </fieldset>
 </form>

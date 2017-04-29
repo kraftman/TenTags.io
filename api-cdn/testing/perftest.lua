@@ -265,11 +265,11 @@ local function TestGenerate(self)
       ownerID = self.session.userID,
       createdBy = self.session.userID,
     }
-    info.bannedTags = {}
-    info.requiredTags = {}
+    info.bannedTagNames = {}
+    info.requiredTagNames = {}
     for j = 1, 30 do
-      info.requiredTags[j] = 'requiredtag'..j
-      info.bannedTags[j] = 'bannedtag'..j
+      info.requiredTagNames[j] = 'requiredtag'..j
+      info.bannedTagNames[j] = 'bannedtag'..j
     end
 
 
@@ -293,13 +293,12 @@ local function TestGenerate(self)
 
 end
 
-
 function m:Register(app)
 
   app:get('/test/generaterandom', TestGenerate)
   app:get('/test/rate',TestRate)
   app:get('/test/posts',TestPosting)
-  app:get('/test/comments',TestCommentDict)
+  app:get('/test/comments',TestComments)
   app:get('/test/users',TestUserIDsSharedDict)
   app:get('/gc', ShowGC)
 end

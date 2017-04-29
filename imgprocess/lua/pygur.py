@@ -3,8 +3,8 @@ import sys
 from imgurpython import ImgurClient
 from urllib import urlretrieve
 
-client_id = '5e6b7e85cfe7bf4'
-client_secret = '1d684f6e2bcd1593ef30e4f95b1df672a05f21ce'
+client_id = ''
+client_secret = ''
 
 client = ImgurClient(client_id, client_secret)
 

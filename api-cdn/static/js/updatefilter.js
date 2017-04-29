@@ -30,13 +30,14 @@ $("#bannedSelect_chosen").bind('keyup',function(e) {
   $('#updateTagsButton').click( function(e) {
     e.preventDefault();
     console.log($('form#createfilter').serialize());
-    var requiredTags =  $("#requiredSelect").val()
-    var bannedTags =  $("#bannedSelect").val()
+    var requiredTagNames =  $("#requiredSelect").val()
+    var bannedTagNames =  $("#bannedSelect").val()
     var form = {
-      requiredTags: JSON.stringify(requiredTags),
-      bannedTags: JSON.stringify(bannedTags),
+      requiredTagNames: JSON.stringify(requiredTagNames),
+      bannedTagNames: JSON.stringify(bannedTagNames),
     }
     console.log($('#hiddenFilterName').val());
+    console.log(form)
     $.ajax({
       type: "POST",
       url: '/filters/'+$('#hiddenFilterName').val(),

@@ -1,22 +1,29 @@
 version: '2'
 services:
-  api-cdn:
+  filtta:
     build: api-cdn/.
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - "8084:8080"
+      - "8081:8081"
     links:
       - imghost
+      - redis-general
+      - redis-comment
+      - redis-user
     volumes:
       - ./api-cdn:/opt/openresty/nginx/conf
     entrypoint: ""
     command:  bash -c "lapis server"
+    environment:
+      - DISABLE_CACHE=true
+      - DISABLE_RATELIMIT=true
+      - UNLIMITED_VOTING=true
+      - EMAIL_CREDENTIALS=831q&0AP3Y9w
 
   imghost:
     image: tenstartups/openresty
-    ports:
-      - "81:80"
+    expose:
+      - "80"
     volumes:
      - ./imghost:/imghost
      - ./www:/var/www
@@ -33,8 +40,8 @@ services:
     build: redis
     volumes:
       - ./redis/general:/data
-    ports:
-      - '16379:6379'
+    expose:
+      - '6379'
   redis-comment:
     build: redis
     volumes:
@@ -51,4 +58,4 @@ services:
 networks:
   default:
     external:
-      name: taggr_net
+      name: webserver_default

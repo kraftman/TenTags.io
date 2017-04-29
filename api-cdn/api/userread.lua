@@ -63,17 +63,20 @@ function userread:GetAccount(accountID)
   account.sessions = {}
   account.users = {}
 
+  account.userCount = 0
   for k,v in pairs(account) do
-
     if k:find('^user:') then
       table.insert(account.users, v)
       account[k] = nil
+      account.userCount = account.userCount +1
     elseif k:find('^session:') then
       local session = from_json(v)
       account.sessions[session.id] = session
       account[k] = nil
     end
   end
+
+  account.modCount = tonumber(account.modCount or 0)
 
 
   return account
@@ -110,7 +113,7 @@ function userread:GetUserPostVotes(userID)
   end
 end
 
-function userread:GetUserInfo(userID)
+function userread:GetUser(userID)
   local red = util:GetUserReadConnection()
   local ok, err = red:hgetall('user:'..userID)
   util:SetKeepalive(red)
@@ -167,22 +170,6 @@ function userread:GetUserComments(userID)
   end
   if ok == ngx.null then
     return nil
-  else
-    return ok
-  end
-end
-
-function userread:GetMasterUserByEmail(email)
-  local red = util:GetUserReadConnection()
-  local ok, err = red:hget('useremails',email)
-  util:SetKeepalive(red)
-
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get user info:',err)
-  end
-
-  if ok == ngx.null then
-    return
   else
     return ok
   end

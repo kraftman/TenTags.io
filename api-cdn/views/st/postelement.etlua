@@ -1,10 +1,16 @@
 
 <div class='post' tabindex = "0" >
+  <input type=hidden class='postID' value="<%= post.id %>"/>
+  <input type=hidden class='postHash' value="<%= post.hash %>"/>
   <div class = 'vote-container'>
     <% if not post.userHasVoted then %>
-      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
+      <a class ='postUpvote' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
       </br>
-      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
+      <a class = 'postDownvote' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
+    <% else %>
+    <a class ='postUpvote' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> " style='display:none'>up</a>
+    </br>
+    <a class = 'postDownvote' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> " style='display:none'>down</a>
     <% end %>
   </div>
 
@@ -14,8 +20,14 @@
     <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
     </br>
     <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
-    <% for _,filter in pairs(post.filters) do %>
+    <% for i = 1,5  do
+      local filter = post.filters[i]
+    %>
+      <% if not filter then %>
+        <a class ='filter-icon' href="" style='display: none'></a>
+      <% else %>
         <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+      <% end %>
     <% end %>
 
   </div>

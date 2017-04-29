@@ -6,9 +6,6 @@ local to_json = (require 'lapis.util').to_json
 local addKey = require 'redisscripts.addkey'
 local util = require 'util'
 
-
-
-
 function userwrite:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -30,13 +27,13 @@ function userwrite:LoadScript(script)
   return ok
 end
 
-function userwrite:AddUserTagVotes(userID, postID, tagIDs)
+function userwrite:AddUserTagVotes(userID, postID, tagNames)
   local red = util:GetUserWriteConnection()
-  for k,v in pairs(tagIDs) do
-    tagIDs[k] = postID..':'..v
+  for k,v in pairs(tagNames) do
+    tagNames[k] = postID..':'..v
   end
-  --print(to_json(tagIDs))
-  local ok, err = red:sadd('userTagVotes:'..userID, unpack(tagIDs))
+
+  local ok, err = red:sadd('userTagVotes:'..userID, tagNames)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)
@@ -99,48 +96,30 @@ end
 
 function userwrite:CreateAccount(account)
 
-
   local red = util:GetUserWriteConnection()
-  local ok, err = red:del('account:'..account.id)
 
-
-  local users = account.users
-  local sessions = account.sessions
-  account.sessions = nil
-  account.users = nil
-
-  for k,v in pairs(users) do
-    account['user:'..v] = v
+  local hashedAccount = {}
+  hashedAccount.sessions = {}
+  hashedAccount.users = {}
+  for k,v in pairs(account) do
+    if k == 'sessions' then
+      for _,session in pairs(v) do
+        hashedAccount['session:'..session.id] = to_json(session)
+      end
+    elseif k == 'users' then
+      for _,userID in pairs(v) do
+        hashedAccount['user:'..userID] = userID
+      end
+    else
+      hashedAccount[k] = v
+    end
   end
-  for k,session in pairs(sessions) do
-    account['session:'..session.id] = to_json(session)
-  end
-  local ok, err = red:del('account:'..account.id)
-  local ok, err = red:hmset('account:'..account.id,account)
+
+
+  local ok, err = red:del('account:'..hashedAccount.id)
+   ok, err = red:hmset('account:'..hashedAccount.id,hashedAccount)
 
   return ok, err
-
-end
-
-function userwrite:CreateMasterUser(masterInfo)
-  -- pipeline
-  local red = util:GetUserWriteConnection()
-  local users = masterInfo.users
-  masterInfo.users = nil
-  local ok, err = red:hmset('master:'..masterInfo.id,masterInfo)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master info:',err)
-    return false
-  end
-
-  red:hset('useremails',masterInfo.email,masterInfo.id)
-
-  for k, v in pairs(users) do
-    ok, err = red:sadd('masterusers:'..masterInfo.id, v)
-  end
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create master user: ',err)
-  end
 
 end
 
@@ -179,21 +158,28 @@ function userwrite:IncrementUserStat(userID, statName, value)
   return ok, err
 end
 
-function userwrite:CreateSubUser(userInfo)
-  local red = util:GetUserWriteConnection()
-  local filters = userInfo.filters or {}
-  userInfo.filters = nil
+function userwrite:CreateSubUser(user)
 
-  for k,v in pairs(userInfo) do
-    ngx.log(ngx.ERR, k, to_json(v))
+  local hashedUser = {}
+  hashedUser.filters = {}
+
+  for k,v in pairs(user) do
+    if k == 'filters' then
+      --do nothing for now, might add the hash later
+    else
+      hashedUser[k] = v
+    end
   end
 
+  local red = util:GetUserWriteConnection()
+  user.filters = user.filters or {}
+
   red:init_pipeline()
-    red:hmset('user:'..userInfo.id,userInfo)
-    for _,filterID in pairs(filters) do
-      red:sadd('userfilters:'..userInfo.id,filterID)
+    red:hmset('user:'..hashedUser.id, hashedUser)
+    for _,filterID in pairs(user.filters) do
+      red:sadd('userfilters:'..hashedUser.id,filterID)
     end
-    red:hset('userToID',userInfo.username:lower(),userInfo.id)
+    red:hset('userToID',hashedUser.username:lower(),hashedUser.id)
   local results, err = red:commit_pipeline()
   util:SetKeepalive(red)
 
@@ -205,19 +191,10 @@ function userwrite:CreateSubUser(userInfo)
 
 end
 
-function userwrite:ActivateAccount(userID)
-  local red = util:GetUserWriteConnection()
-  local ok, err = red:hset('master:'..userID,'active',1)
-  util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to activate account:',err)
-  end
-end
-
 function userwrite:SubscribeToFilter(userID,filterID)
-  local userID = userID or 'default'
+  userID = userID or 'default'
   local red = util:GetUserWriteConnection()
-  print('adding filter ',filterID, ' to ',userID)
+  --print('adding filter ',filterID, ' to ',userID)
   local ok, err = red:sadd('userfilters:'..userID, filterID)
 
   if not ok then
@@ -226,11 +203,9 @@ function userwrite:SubscribeToFilter(userID,filterID)
     return
   end
 
-  ok, err = red:hincrby('filter:'..filterID,'subs',1)
+
   util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
-  end
+  return ok, err
 
 end
 
@@ -243,7 +218,6 @@ function userwrite:UnsubscribeFromFilter(userID, filterID)
     return
   end
 
-  ok, err = red:hincrby('filter:'..filterID,'subs',-1)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)

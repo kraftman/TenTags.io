@@ -24,7 +24,7 @@
     <button type="submit">Subscribe</button>
   </form>
 
-  <% if isAdmin then %>
+  <% if isAdmin or isMod then %>
     <a class='post-link' href="<%= url_for('updatefilter',{filterlabel = filter.name}) %>">Settings</a>
   <% end %>
 </li>

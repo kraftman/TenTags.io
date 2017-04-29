@@ -1,50 +1,26 @@
 
 <div class='panel panel-default filter-bar'>
-  <div class='tab-buttons'>
-    <a id='infoBoxLink' href="#box-one">Info</a>
-    <a id='filterBoxLink' href="#box-two">Filters</a>
+    <!--
+    
+  -->
+  <div class='filter-nav-bar'>
+    <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
+
+      <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
+        <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+        <input class='hidden-search-input' type="submit" style="visibility: hidden;" />
+      </form>
+
   </div>
-  <div class='box-wrap'>
-    <div id="box-one" class='info-box'>
-
-
-      <% if enableAds then %>
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <!-- SideBar -->
-          <ins class="adsbygoogle"
-               style="display:inline-block;width:300px;height:250px"
-               data-ad-client="ca-pub-5666598062804330"
-               data-ad-slot="7427560400"></ins>
-          <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      <% end %>
-
-      <% if thisfilter then %>
-        Description:
-        </br>
-        <%= thisfilter.description -%>
-        </br>
-        Owner:
-        <%= thisfilter.ownerName -%>
-        </br>
-        Mods:
-        </br>
-        <% for _,mod in pairs(thisfilter.mods) do %>
-          <%= mod.username -%>
-        <% end %>
-      <% end %>
-  	</div>
-
-    <div id="box-two" class='info-box'>
-
-      <ul>
-        <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
-      </ul>
-      <% for i, filter in pairs(userFilters) do %>
-        <% render("views.st.filterbarelement",{filter = filter}) %>
-      <% end %>
-  	</div>
+  <ul>
+    <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
+  </ul>
+  <div class='filterContainer'>
+    <% for i, filter in pairs(userFilters) do %>
+      <% render("views.st.filterbarelement",{filter = filter}) %>
+    <% end %>
   </div>
+
+
 
 </div>

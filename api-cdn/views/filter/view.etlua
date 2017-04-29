@@ -1,10 +1,29 @@
 <div class = 'contents'>
+  <div class='navbar navbar-default'>
+    <ul class="nav navbar-nav">
+      <li><a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=fresh'>Fresh</a></li>
+      <li><a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=new'>New</a></li>
+      <li><a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=best'>Best</a></li>
+      <li><a href="<%= url_for('seen') %>">Seen</a></li>
+      <% if thisfilter and (isMod or isAdmin) then %>
+        <li><a href='<%= url_for("updatefilter",{filterlabel = thisfilter.name}) %>'>Filter Settings</a></li>
+      <% end %>
 
-  <% if thisfilter and session.userID == thisfilter.createdBy then %>
-    <div>
-      <a href="<%= url_for("updatefilter",{filterlabel = thisfilter.title}) %>">Filter Settings</a>
-    </div>
-  <% end %>Style:
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Style<span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <% for styleName,_ in pairs(filterStyles) do %>
+            <form action="/settings/filterstyle" method="POST">
+              <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
+              <button type="submit" name='styleselect' value="<%= styleName -%>" class="btn-link"><%= styleName -%></button>
+            </form>
+          <% end %>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  Style:
   <form class ='filter-style-select' action="/settings/filterstyle" method="POST">
     <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
     <select name='styleselect' id='styleselect' style="width:150px;" onchange="this.form.submit()">

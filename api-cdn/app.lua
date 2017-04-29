@@ -8,11 +8,18 @@
 
 local lapis = require("lapis")
 local app = lapis.Application()
-local api = require 'api.api'
+local sessionAPI = require 'api.sessions'
+local userAPI = require 'api.users'
+local date = require("date")
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
 local csrf = require("lapis.csrf")
+
+app.cookie_attributes = function(self)
+  local expires = date(true):adddays(365):fmt("${http}")
+  return "Expires=" .. expires .. "; Path=/; HttpOnly"
+end
 
 
 -- DEV ONLY
@@ -29,7 +36,7 @@ local filterStyles = {
 
 
 local function GetStyleSelected(self, styleName)
-  self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+  self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
 
   if not self.userInfo then
     return ''
@@ -59,13 +66,50 @@ local function CalculateColor(name)
 
 end
 
+local function RemoveSession(self)
+  self.session.accountID = nil
+  self.session.userID = nil
+  self.session.sessionID = nil
+  self.session.username = nil
+end
+
+local function SignOut(self)
+  -- kill the session with the api so it cant be reused
+  -- delete everything in the session
+  local ok, err = api:KillSession(self.session.accountID, self.session.sessionID)
+  if not ok then
+    print('error killing session: ',err)
+  end
+  RemoveSession(self)
+  return {redirect_to = self:url_for('home')}
+end
+
+
+local function ValidateSession(self)
+  if self.session.accountID then
+    local account,err = sessionAPI:ValidateSession(self.session.accountID, self.session.sessionID)
+    if account then
+      self.account = account
+      return
+    end
+
+    print('invalid session: ',err)
+    RemoveSession(self)
+    return {redirect_to = self:url_for('home')}
+
+  end
+  if self.session.username or self.session.userID then
+    RemoveSession()
+  end
+end
+
 
 local function GetFilterTemplate(self)
 
   local filterStyle = 'default'
   local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
   if self.session.userID then
-    self.userInfo = self.userInfo or api:GetUserInfo(self.session.userID)
+    self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
 
 
     if self.userInfo then
@@ -84,19 +128,27 @@ local function GetFilterTemplate(self)
   return filterStyles[filterStyle]
 end
 
-app:before_filter(function(self)
-  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
+local function LoadUser(self)
+  if self.session.userID then
+    self.userInfo = userAPI:GetUser(self.session.userID)
+    print('oaded user: ', self.session.userID)
+  end
+end
 
-  self.enableAds = false
+app:before_filter(function(self)
+  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
+
+  self.enableAds = true
+
+  ValidateSession(self)
+  LoadUser(self)
 
   if self.session.accountID then
-    print('this')
-    self.otherUsers = api:GetAccountUsers(self.session.accountID, self.session.accountID)
-    
+    self.otherUsers = userAPI:GetAccountUsers(self.session.accountID, self.session.accountID)
   end
 
   if self.session.userID then
-    if api:UserHasAlerts(self.session.userID) then
+    if userAPI:UserHasAlerts(self.session.userID) then
       self.userHasAlerts = true
     end
   end
@@ -107,7 +159,7 @@ app:before_filter(function(self)
   --ngx.log(ngx.ERR, to_json(user))
 
   self.csrf_token = csrf.generate_token(self,self.session.userID)
-  self.userFilters = api:GetUserFilters(self.session.userID or 'default') or {}
+  self.userFilters = userAPI:GetUserFilters(self.session.userID or 'default') or {}
 
   self.GetFilterTemplate = GetFilterTemplate
   self.GetStyleSelected = GetStyleSelected
@@ -116,6 +168,11 @@ app:before_filter(function(self)
 
 
 end)
+
+-- Random stuff that doesnt go anywhere yet
+app:get('createpage', '/nojs/create', function() return {render = 'createpage'} end)
+
+
 
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec
 
@@ -130,9 +187,11 @@ require 'comments':Register(app)
 require 'alerts':Register(app)
 require 'api':Register(app)
 require 'auto':Register(app)
+require 'admin':Register(app)
+
 
 -- TESTING
-require 'test.perftest':Register(app)
+--require 'testing.perftest':Register(app)
 
 
 
