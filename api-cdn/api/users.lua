@@ -1,9 +1,43 @@
 
 local cache = require 'api.cache'
-locla util = require 'util'
+local util = require 'api.util'
+local worker = require 'api.worker'
 local api = {}
 local tinsert = table.insert
 
+
+
+
+function api:UserCanVoteTag(userID, postID, tagName)
+	if self:UserHasVotedTag(userID, postID, tagName) and (not UNLIMITED_VOTING) then
+		local user = cache:GetUser(userID)
+		if user.role ~= 'admin' then
+			return false
+		end
+	end
+	return true
+end
+
+
+function api:GetUserFrontPage(userID,filter,startAt, endAt)
+	-- can only get own
+	if not userID then
+		return nil, 'no userID'
+	end
+	startAt,endAt = tonumber(startAt), tonumber(endAt)
+	if not startAt or not endAt then
+		return nil, 'no range'
+	end
+	if startAt >= endAt then
+		return nil, 'start must be lower than end'
+	end
+	if (endAt - startAt) > 100 then
+		return nil, 'cannot requset range > 100'
+	end
+
+
+  return cache:GetUserFrontPage(userID,filter,startAt, endAt)
+end
 
 
 function api:LabelUser(userID, targetUserID, label)
@@ -16,6 +50,86 @@ function api:LabelUser(userID, targetUserID, label)
 	ok, err = worker:LabelUser(userID, targetUserID, label)
 	return ok, err
 
+end
+
+
+function api:UserHasVotedPost(userID, postID)
+	-- can only see own
+	local userPostVotes = cache:GetUserPostVotes(userID)
+	return userPostVotes[postID]
+
+end
+
+function api:UserHasVotedTag(userID, postID, tagName)
+	-- can only see own
+	local userTagVotes = cache:GetUserTagVotes(userID)
+	return userTagVotes[postID..':'..tagName]
+
+end
+
+
+function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
+	if userID ~= subscriberID then
+		local user = cache:GetUser(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin to change another users subscriptions'
+		end
+	end
+
+
+  local filterIDs = cache:GetUserFilterIDs(userID)
+  local found = nil
+  for _,v in pairs(filterIDs) do
+    if v == filterID then
+      found = true
+    end
+  end
+  if not found then
+    -- no need to unsubscribe
+    return
+  end
+
+  worker:UnsubscribeFromFilter(subscriberID,filterID)
+
+
+end
+
+
+
+
+function api:SubscribeToFilter(userID, userToSubID, filterID)
+
+  local filterIDs = cache:GetUserFilterIDs(userID)
+	print(to_json(filterIDs))
+
+	if userID ~= userToSubID then
+		local user = cache:GetUser(userID)
+		if user.role ~= 'Admin' then
+			return nil, 'you must be admin to do that'
+		end
+	end
+
+
+  for _, v in pairs(filterIDs) do
+    if v == filterID then
+      -- they are already subbed
+      return nil, userToSubID..' is already subbed!'
+    end
+  end
+
+  worker:SubscribeToFilter(userToSubID,filterID)
+
+end
+
+
+
+function api:UpdateLastUserAlertCheck(userID)
+	local ok, err = util:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
+	-- can only edit their own
+  return worker:UpdateLastUserAlertCheck(userID)
 end
 
 

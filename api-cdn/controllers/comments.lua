@@ -1,6 +1,8 @@
 
+local commentAPI = require 'api.comments'
 
-local api = require 'api.api'
+local postAPI = require 'api.posts'
+local userAPI = require 'api.users'
 local to_json = (require 'lapis.util').to_json
 
 local respond_to = (require 'lapis.application').respond_to
@@ -9,17 +11,17 @@ local m = {}
 
 
 function m.ViewComment(request)
-  request.commentInfo = api:GetComment(request.params.postID,request.params.commentID)
+  request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
 
-  request.commentInfo.username = api:GetUser(request.commentInfo.createdBy).username
+  request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(request.commentInfo))
   return {render = 'viewcomment'}
 
 end
 
 function m.ViewShortURLComment(request)
-  request.commentInfo = api:GetComment(request.params.commentShortURL)
-  request.commentInfo.username = api:GetUser(request.commentInfo.createdBy).username
+  request.commentInfo = commentAPI:GetComment(request.params.commentShortURL)
+  request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
   ngx.log(ngx.ERR, to_json(request.commentInfo))
   return {render = 'viewcomment'}
 
@@ -36,7 +38,7 @@ function m.CreateComment(request)
     text = request.params.commentText,
   }
   --ngx.log(ngx.ERR, to_json(request.params))
-  local ok = api:CreateComment(request.session.userID, commentInfo)
+  local ok = commentAPI:CreateComment(request.session.userID, commentInfo)
   if ok then
     print('created')
     return 'created!'
@@ -54,7 +56,7 @@ function m.EditComment(request)
     id = request.params.commentID
   }
 
-  local ok,err = api:EditComment(request.session.userID, commentInfo)
+  local ok,err = commentAPI:EditComment(request.session.userID, commentInfo)
   if ok then
     return 'created!'
   else
@@ -63,7 +65,7 @@ function m.EditComment(request)
 end
 
 function m.SubscribeComment(request)
-  api:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
+  commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
   return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
 
@@ -82,7 +84,7 @@ function m.UpvoteComment(request)
   if not HashIsValid(request) then
     return 'hashes dont match'
   end
-  local ok, err = api:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
+  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
   if ok then
     return 'success!'
   else
@@ -95,7 +97,7 @@ function m.DownVoteComment(request)
     return 'hashes dont match'
   end
 
-  local ok, err = api:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
+  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
   if ok then
     return 'success'
   else
@@ -108,7 +110,7 @@ function m.DeleteComment(request)
   local userID = request.session.userID
   local commentID = request.params.commentID
 
-  local ok, err = api:DeleteComment(userID, postID, commentID)
+  local ok, err = commentAPI:DeleteComment(userID, postID, commentID)
   if ok then
     return 'deleted!'
   else

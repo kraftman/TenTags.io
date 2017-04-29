@@ -2,9 +2,9 @@
 
 local m = {}
 
-
+local threadAPI = require 'api.threads'
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
+
 local to_json = (require 'lapis.util').to_json
 
 
@@ -16,7 +16,7 @@ function m.NewMessage(request)
 end
 
 function m.ViewMessages(request)
-  request.threads = api:GetThreads(request.session.userID)
+  request.threads = threadAPI:GetThreads(request.session.userID)
   ngx.log(ngx.ERR, to_json(request.threads))
   return {render = 'message.view'}
 end
@@ -29,9 +29,9 @@ function m.CreateThread(request)
     createdBy = request.session.userID
   }
   print('create thread')
-  local ok, err = api:CreateThread(request.session.userID, msgInfo)
+  local ok, err = threadAPI:CreateThread(request.session.userID, msgInfo)
   if ok then
-    request.threads = api:GetThreads(request.session.userID)
+    request.threads = threadAPI:GetThreads(request.session.userID)
     ngx.log(ngx.ERR, to_json(request.threads))
     return {render = 'message.view'}
   else
@@ -45,11 +45,11 @@ function m.CreateMessageReply(request)
   msgInfo.threadID = request.params.threadID
   msgInfo.body = request.params.body
   msgInfo.createdBy = request.session.userID
-  api:CreateMessageReply(request.session.userID, msgInfo)
+  threadAPI:CreateMessageReply(request.session.userID, msgInfo)
 end
 
 function m.MessageReply(request)
-  request.thread = api:GetThread(request.params.threadID)
+  request.thread = threadAPI:GetThread(request.params.threadID)
   return {render = 'message.reply'}
 end
 

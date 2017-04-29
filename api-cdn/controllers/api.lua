@@ -4,7 +4,8 @@ local m = {}
 
 
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
+local filterAPI = require 'api.filters'
+local userAPI = require 'api.users'
 local tinsert = table.insert
 
 function m.SearchFilter(request)
@@ -15,7 +16,7 @@ function m.SearchFilter(request)
     return {json = {error = 'you must be logged in!', data = {}}}
   end
 
-  local ok, err = api:SearchFilters(request.session.userID, request.params.searchString)
+  local ok, err = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
 
   if ok then
     return {json ={error = {}, data = ok} }
@@ -25,7 +26,7 @@ function m.SearchFilter(request)
 end
 --
 function m.GetUserFilters(request)
-  local ok, err = api:GetUserFilters(request.session.userID)
+  local ok, err = filterAPI:GetUserFilters(request.session.userID)
   return {json = {error = {err}, data = ok or {}}}
 end
 
@@ -48,7 +49,7 @@ function m.UpvotePost(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'up')
+  local ok, err = userAPI:VotePost(request.session.userID, request.params.postID, 'up')
   if ok then
     return { json = {status = 'success', data = {}} }
   else
@@ -60,7 +61,7 @@ function m.DownvotePost(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'down')
+  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'down')
   if ok then
     return { json = {status = 'success', data = {}} }
   else
@@ -69,7 +70,7 @@ function m.DownvotePost(request)
 end
 
 function m.GetUserSettings(request)
-  local ok, err = api:GetUserSettings(request.session.userID)
+  local ok, err = userAPI:GetUserSettings(request.session.userID)
   if ok then
     return {json = {status = 'success', data = ok}}
   else
@@ -83,7 +84,7 @@ function m.GetFrontPage(request)
   local sortBy = request.params.sortby or 'fresh'
   local userID = request.session.userID or 'default'
 
-  local ok,err = api:GetUserFrontPage(userID, sortBy, startAt, endAt)
+  local ok,err = userAPI:GetUserFrontPage(userID, sortBy, startAt, endAt)
   if ok then
     return {json = {status = 'success', data = ok or {}}}
   else
@@ -117,7 +118,7 @@ function m.CreateFilter(request)
   info.bannedTagNames = bannedTagNames
   info.requiredTagNames = requiredTagNames
 
-  local ok, err = api:CreateFilter(request.session.userID, info)
+  local ok, err = filterAPI:CreateFilter(request.session.userID, info)
   if ok then
     return { json = {status = 'success', data = ok }}
   else
@@ -131,7 +132,7 @@ function m.SearchTags(request)
   if not searchString or type(searchString) ~= 'string' or searchString:gsub(' ','') == '' then
     return {json = {status = 'error', error = 'empty or bad string'}}
   end
-  local ok, err = api:SearchTags(searchString)
+  local ok, err = tagAPI:SearchTags(searchString)
   print('tt',to_json(ok))
   if ok then
     return {json = {status = 'success', data = ok}}

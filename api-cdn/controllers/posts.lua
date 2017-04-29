@@ -1,6 +1,10 @@
 
 
-local api = require 'api.api'
+local commentAPI = require 'api.comments'
+local filterAPI = require 'api.filters'
+local userAPI = require 'api.users'
+local postAPI = require 'api.posts'
+local tagAPI = require 'api.tags'
 local util = require("lapis.util")
 
 local from_json = util.from_json
@@ -29,13 +33,13 @@ function m.CreatePost(request)
   if to_json(request.params.selectedtags) ~= -1 then
     info.tags = from_json(request.params.selectedtags)
   else
-    print(request.params.selectedtags)
+    --print(request.params.selectedtags)
     for word in request.params.selectedtags:gmatch('%S+') do
       table.insert(request.params.selectedtags, word)
     end
   end
 
-  local ok, err = api:CreatePost(request.session.userID, info)
+  local ok, err = postAPI:CreatePost(request.session.userID, info)
 
   if ok then
     return {json = ok}
@@ -52,15 +56,15 @@ function m.GetPost(request)
 
   local postID = request.params.postID
   if #postID < 10 then
-    postID = api:ConvertShortURL(postID) or postID
+    postID = postAPI:ConvertShortURL(postID) or postID
   else
-    local post = api:GetPost(request.session.userID, postID)
+    local post = postAPI:GetPost(request.session.userID, postID)
     if post.shortURL then
       return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
     end
   end
 
-  local comments = api:GetPostComments(request.session.userID, postID,sortBy)
+  local comments = commentAPI:GetPostComments(request.session.userID, postID,sortBy)
 
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
@@ -72,7 +76,7 @@ function m.GetPost(request)
 
   request.comments = comments
 
-  local post,err = api:GetPost(request.session.userID, postID)
+  local post,err = postAPI:GetPost(request.session.userID, postID)
   --print(to_json(post))
 
   if not post then
@@ -88,7 +92,7 @@ function m.GetPost(request)
       local postID = v.name:match('meta:sourcePost:(%w+)')
       if postID then
         print(postID)
-        local parentPost = (api:GetPost(request.session.userID, postID))
+        local parentPost = (postAPI:GetPost(request.session.userID, postID))
         print(to_json(parentPost))
         if v.name and parentPost.title then
           v.fakeName = parentPost.title
@@ -98,12 +102,12 @@ function m.GetPost(request)
     end
   end
 
-  request.filters = api:GetFilterInfo(post.filters)
+  request.filters = filterAPI:GetFilterInfo(post.filters)
 
   if request.session.userID then
     post.hash = ngx.md5(post.id..request.session.userID)
-    post.userHasVoted = api:UserHasVotedPost(request.session.userID, post.id)
-    request.userLabels = api:GetUser(request.session.userID).userLabels
+    post.userHasVoted = userAPI:UserHasVotedPost(request.session.userID, post.id)
+    request.userLabels = userAPI:GetUser(request.session.userID).userLabels
   end
 
   request.post = post
@@ -168,7 +172,7 @@ function m.CreatePostForm(request)
     return { render = 'pleaselogin' }
   end
 
-  local tags = api.GetAllTags(api)
+  local tags = tagAPI:GetAllTags(api)
 
   request.tags = tags
 
@@ -180,13 +184,13 @@ end
 
 function m.UpvoteTag(request)
 
-  api:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
+  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
 
 end
 
 function m.DownvoteTag(request)
-  api:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
+  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
 end
@@ -206,7 +210,7 @@ function m.UpvotePost(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(request.session.userID, request.params.postID, 'up')
+  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'up')
   if ok then
     return { redirect_to = request:url_for("home") }
   else
@@ -220,7 +224,7 @@ function m.DownvotePost(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = api:VotePost(request.session.userID, request.params.postID,'down')
+  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID,'down')
   if ok then
     return { redirect_to = request:url_for("home") }
   else
@@ -233,7 +237,7 @@ function m.GetIcon(request)
     return 'nil'
   end
 
-  local post = api:GetPost(request.params.postID)
+  local post = postAPI:GetPost(request.params.postID)
   if not post.icon then
     return ''
   end
@@ -260,7 +264,7 @@ function m.AddSource(request)
     return 'you must be logged in to do that!'
   end
 
-  local ok, err = api:AddSource(userID, request.params.postID, sourceURL)
+  local ok, err = postAPI:AddSource(userID, request.params.postID, sourceURL)
   if ok then
     return 'success!'
   else
@@ -274,7 +278,7 @@ function m.AddTag(request)
   local userID = request.session.userID
   local postID = request.params.postID
 
-  local ok, err = api:AddPostTag(userID, postID, tagName)
+  local ok, err = postAPI:AddPostTag(userID, postID, tagName)
   if ok then
     return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
@@ -300,7 +304,7 @@ function m.EditPost(request)
     text = request.params.posttext
   }
 
-  local ok,err = api:EditPost(request.session.userID, post)
+  local ok,err = postAPI:EditPost(request.session.userID, post)
   if ok then
     return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
@@ -320,7 +324,7 @@ function m.DeletePost(request)
   local postID = request.params.postID
   local userID = request.params.userID
 
-  local ok, err = api:DeletePost(userID, postID)
+  local ok, err = postAPI:DeletePost(userID, postID)
 
   if ok then
     return 'success'
@@ -331,7 +335,7 @@ function m.DeletePost(request)
 end
 
 function m.SubscribePost(request)
-  local ok, err = api:SubscribePost(request.session.userID,request.params.postID)
+  local ok, err = postAPI:SubscribePost(request.session.userID,request.params.postID)
   if ok then
     return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else

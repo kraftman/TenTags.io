@@ -1,9 +1,62 @@
 
+local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
-local util = require 'util'
+local util = require 'api.util'
+local worker = require 'api.worker'
+
+local userAPI = require 'api.users'
 local api = {}
 local tinsert = table.insert
 
+local COMMENT_START_DOWNVOTES = 0
+local COMMENT_START_UPVOTES = 1
+
+
+function api:VoteComment(userID, postID, commentID,direction)
+	-- do we ever need permissions for this??
+
+	-- check if the user has already voted
+	-- if theyve voted down then remove down entry,
+	-- check if they can vote more than once
+	-- increment comment votes
+	-- recalculate score
+	-- add to user voted in cache
+	-- add to user voted in redis
+	-- for now dont allow unvoting
+
+	--if self:UserHasVotedComment(userID, commentID) then
+		--return if they cant multivote
+	--end
+
+
+	local comment = api:GetComment(postID, commentID)
+	if direction == 'up' then
+		comment.up = comment.up + 1
+	elseif direction == 'down' then
+		comment.down = comment.down + 1
+	end
+
+	comment.score = self:GetScore(comment.up,comment.down)
+
+	local ok, err = worker:AddUserCommentVotes(userID, commentID)
+	if not ok then
+		return ok, err
+	end
+
+	if direction == 'up' then
+		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
+	else
+		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
+	end
+	if not ok then
+		return ok, err
+	end
+
+	return worker:UpdateComment(comment)
+
+	-- also add to user voted comments?
+
+end
 
 function api:ConvertUserCommentToComment(userID, comment)
 
@@ -18,17 +71,35 @@ function api:ConvertUserCommentToComment(userID, comment)
 	local newComment = {
 		id = uuid.generate_random(),
 		createdAt = ngx.time(),
-		createdBy = self:SanitiseUserInput(comment.createdBy),
+		createdBy = util:SanitiseUserInput(comment.createdBy),
 		up = COMMENT_START_UPVOTES,
 		down = COMMENT_START_DOWNVOTES,
-		score = self:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
+		score = util:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
 		viewers = {comment.createdBy},
-		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
-		parentID = self:SanitiseUserInput(comment.parentID),
-		postID = self:SanitiseUserInput(comment.postID)
+		text = util:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
+		parentID = util:SanitiseUserInput(comment.parentID),
+		postID = util:SanitiseUserInput(comment.postID)
 	}
 
 	return newComment
+end
+
+function api:SubscribeComment(userID, postID, commentID)
+
+	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 10)
+	if not ok then
+		return ok, err
+	end
+
+  local comment = cache:GetComment(postID, commentID)
+  -- check they dont exist
+  for _, v in pairs(comment.viewers) do
+    if v == userID then
+      return
+    end
+  end
+  tinsert(comment.viewers, userID)
+  worker:UpdateComment(comment)
 end
 
 
@@ -54,7 +125,7 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
-	comment.text = self:SanitiseUserInput(userComment.text,2000)
+	comment.text = util:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
 	ok, err = worker:CreateComment(comment)
@@ -68,7 +139,7 @@ end
 function api:CreateComment(userID, userComment)
 	-- check if they are who they say they are
 
-	local ok, err = util.RateLimit('CreateComment:', userID, 1, 30)
+	local ok, err = util:RateLimit('CreateComment:', userID, 1, 30)
 	if not ok then
 		return ok, err
 	end
@@ -85,7 +156,7 @@ function api:CreateComment(userID, userComment)
 
   local postFilters = parentPost.filters
 
-  local userFilters = self:GetUserFilters(newComment.createdBy)
+  local userFilters = userAPI:GetUserFilters(newComment.createdBy)
 
 	-- get shared filters between user and post
   for _,userFilter in pairs(userFilters) do

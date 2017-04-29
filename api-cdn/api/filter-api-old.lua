@@ -1,6 +1,7 @@
 
 local cache = require 'api.cache'
 local util = require 'util'
+local worker = require 'api.worker'
 local api = {}
 local tinsert = table.insert
 

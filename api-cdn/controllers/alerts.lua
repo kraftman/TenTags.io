@@ -4,24 +4,26 @@ local m = {}
 
 
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
+local userAPI = require 'api.users'
+local threadAPI = require 'api.threads'
+local commentAPI = require 'api.comments'
 local tinsert = table.insert
 
 function m.ViewAlerts(request)
-  local alerts = api:GetUserAlerts(request.session.userID)
-  api:UpdateLastUserAlertCheck(request.session.userID)
+  local alerts = userAPI:GetUserAlerts(request.session.userID)
+  userAPI:UpdateLastUserAlertCheck(request.session.userID)
   request.alerts = {}
 
   for _, v in pairs(alerts) do
 
     if v:find('thread:') then
       local threadID = v:match('thread:(%w+)')
-      local thread = api:GetThread(threadID)
+      local thread = threadAPI:GetThread(threadID)
       tinsert(request.alerts, {alertType = 'thread', data = thread})
     elseif v:find('postComment:') then
       local postID, commentID = v:match('postComment:(%w+):(%w+)')
-      local comment = api:GetComment(postID, commentID)
-      comment.username = api:GetUser(comment.createdBy).username
+      local comment = commentAPI:GetComment(postID, commentID)
+      comment.username = userAPI:GetUser(comment.createdBy).username
 
       tinsert(request.alerts,{alertType = 'comment', data = comment})
     end

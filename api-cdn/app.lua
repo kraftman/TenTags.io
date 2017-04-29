@@ -8,7 +8,8 @@
 
 local lapis = require("lapis")
 local app = lapis.Application()
-local api = require 'api.api'
+local sessionAPI = require 'api.sessions'
+local userAPI = require 'api.users'
 local date = require("date")
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
@@ -35,7 +36,7 @@ local filterStyles = {
 
 
 local function GetStyleSelected(self, styleName)
-  self.userInfo = self.userInfo or api:GetUser(self.session.userID)
+  self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
 
   if not self.userInfo then
     return ''
@@ -86,7 +87,7 @@ end
 
 local function ValidateSession(self)
   if self.session.accountID then
-    local account,err = api:ValidateSession(self.session.accountID, self.session.sessionID)
+    local account,err = sessionAPI:ValidateSession(self.session.accountID, self.session.sessionID)
     if account then
       self.account = account
       return
@@ -108,7 +109,7 @@ local function GetFilterTemplate(self)
   local filterStyle = 'default'
   local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
   if self.session.userID then
-    self.userInfo = self.userInfo or api:GetUser(self.session.userID)
+    self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
 
 
     if self.userInfo then
@@ -135,11 +136,11 @@ app:before_filter(function(self)
   ValidateSession(self)
 
   if self.session.accountID then
-    self.otherUsers = api:GetAccountUsers(self.session.accountID, self.session.accountID)
+    self.otherUsers = userAPI:GetAccountUsers(self.session.accountID, self.session.accountID)
   end
 
   if self.session.userID then
-    if api:UserHasAlerts(self.session.userID) then
+    if userAPI:UserHasAlerts(self.session.userID) then
       self.userHasAlerts = true
     end
   end
@@ -150,7 +151,7 @@ app:before_filter(function(self)
   --ngx.log(ngx.ERR, to_json(user))
 
   self.csrf_token = csrf.generate_token(self,self.session.userID)
-  self.userFilters = api:GetUserFilters(self.session.userID or 'default') or {}
+  self.userFilters = userAPI:GetUserFilters(self.session.userID or 'default') or {}
 
   self.GetFilterTemplate = GetFilterTemplate
   self.GetStyleSelected = GetStyleSelected
