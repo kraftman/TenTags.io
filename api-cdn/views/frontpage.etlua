@@ -1,27 +1,29 @@
 
 
 <div class = 'contents'>
-  <div class='navbar navbar-default'>
-    <ul class="nav navbar-nav">
-      <li><a href="<%= url_for('home') %>">Fresh</a></li>
-      <li><a href="<%= url_for('new') %>">New</a></li>
-      <li><a href="<%= url_for('best') %>">Best</a></li>
-      <li><a href="<%= url_for('seen') %>">Seen</a></li>
+  <div class='navbar navbar-default top-nav'>
+    <div class='filter-contents panel panel-default'>
+      <ul class="nav navbar-nav">
+        <li><a href="<%= url_for('home') %>">Fresh</a></li>
+        <li><a href="<%= url_for('new') %>">New</a></li>
+        <li><a href="<%= url_for('best') %>">Best</a></li>
+        <li><a href="<%= url_for('seen') %>">Seen</a></li>
 
-      <li class="dropdown">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Style<span class="caret"></span></a>
-        <ul class="dropdown-menu">
-
-          <% for styleName,_ in pairs(filterStyles) do %>
-            <form action="/settings/filterstyle" method="POST">
-              <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
-              <button type="submit" name='styleselect' value="<%= styleName -%>" class="btn-link"><%= styleName -%></button>
-            </form>
-
-          <% end %>
-        </ul>
-      </li>
-    </ul>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Style<span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <% for styleName,_ in pairs(filterStyles) do %>
+              <li>
+                <form action="/settings/filterstyle" method="POST">
+                  <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
+                  <button type="submit" name='styleselect' value="<%= styleName -%>" class="btn-link"><%= styleName -%></button>
+                  </form>
+              </li>
+            <% end %>
+          </ul>
+        </li>
+      </ul>
+    </div>
   </div>
 
   <div id='posts'>

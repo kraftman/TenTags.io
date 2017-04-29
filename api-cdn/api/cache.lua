@@ -190,6 +190,10 @@ function cache:AddChildren(parentID,flat)
   return t
 end
 
+function cache:SearchTags(searchString)
+  return redisread:SearchTags(searchString)
+end
+
 function cache:SearchFilters(searchString)
   local filterNames = redisread:SearchFilters(searchString)
   local filters = {}

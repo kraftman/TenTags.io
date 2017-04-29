@@ -298,7 +298,7 @@ function m:Register(app)
   app:get('/test/generaterandom', TestGenerate)
   app:get('/test/rate',TestRate)
   app:get('/test/posts',TestPosting)
-  app:get('/test/comments',TestCommentDict)
+  app:get('/test/comments',TestComments)
   app:get('/test/users',TestUserIDsSharedDict)
   app:get('/gc', ShowGC)
 end

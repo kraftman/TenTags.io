@@ -504,6 +504,18 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   return ok ~= ngx.null and ok or {}
 end
 
+function read:SearchTags(searchString)
+  local red = util:GetRedisReadConnection()
+  searchString = searchString..'*'
+  local ok, err = red:sscan('tags', 0, 'match', searchString)
+  util:SetKeepalive(red)
+  if ok then
+    return ok[2]
+  else
+    return ok, err
+  end
+end
+
 function read:GetAllBestPosts(rangeStart,rangeEnd)
   local red = util:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:score',rangeStart,rangeEnd)

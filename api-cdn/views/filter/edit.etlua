@@ -34,7 +34,7 @@
     <input id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
 
   </form>
-
+  <h2>Mods:</h2>
   <% for _,mod in pairs(selectedFilter.mods) do %>
     <%= mod.username or 'test' -%>
     <form action="" method="post">

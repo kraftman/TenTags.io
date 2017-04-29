@@ -3,13 +3,15 @@
 local m = {}
 m.__index = m
 
+local userAPI = require 'api.users'
+local sessionAPI = require 'api.sessions'
+
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
 local to_json = (require 'lapis.util').to_json
 
 function m.DisplaySettings(request)
-  print(request.session.userID, request.session.accountID, request.session.username)
-  local user = api:GetUser(request.session.userID)
+
+  local user = request.userInfo
   if not user then
     return 'unknown user'
   end
@@ -17,7 +19,7 @@ function m.DisplaySettings(request)
     --ngx.log(ngx.ERR, k,to_json(v))
   end
 
-  request.account = api:GetAccount(request.session.accountID, request.session.accountID)
+  request.account = sessionAPI:GetAccount(request.session.accountID, request.session.accountID)
   if request.account then
     for k,v in pairs(request.account.sessions) do
       if not v.activated then
@@ -25,7 +27,6 @@ function m.DisplaySettings(request)
       end
     end
   end
-  print(to_json(user))
 
 
   request.enablePM = user.enablePM == '1' and 'checked' or ''
@@ -33,6 +34,7 @@ function m.DisplaySettings(request)
   request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
   request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
   request.showNSFW = user.showNSFW == '1' and 'checked' or ''
+  request.userBio = user.bio
 
   ngx.log(ngx.ERR, user.enablePM)
   return {render = 'user.subsettings'}
@@ -41,15 +43,16 @@ end
 
 function m.UpdateSettings(request)
 
-  local user = api:GetUser(request.session.userID)
+  local user = request.userInfo
   ngx.log(ngx.ERR, request.params.EnablePM)
   user.enablePM = request.params.EnablePM and 1 or 0
   user.hideSeenPosts = request.params.hideSeenPosts and 1 or 0
   user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
   user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
   user.showNSFW = request.params.showNSFW and 1 or 0
-  print 'this'
-  local ok, err = api:UpdateUser(request.session.userID, user)
+  user.bio = request.params.userbio or ''
+
+  local ok, err = userAPI:UpdateUser(request.session.userID, user)
   if not ok then
     print(err)
     return 'eek'
@@ -67,7 +70,7 @@ function m.UpdateFilterStyle(request)
     return 'error, missing arguments'
   end
 
-  local user = api:GetUser(request.session.userID)
+  local user = request.userInfo
   for k,v in pairs(user) do
     if type(v) == 'string' then
       print(k,v)
@@ -76,7 +79,7 @@ function m.UpdateFilterStyle(request)
 
   user['filterStyle:'..filterName] = filterStyle
   print ('setting filterstyle for filtername '..filterName..' to '..filterStyle)
-  api:UpdateUser(request.session.userID, user)
+  userAPI:UpdateUser(request.session.userID, user)
 
   if filterName == 'frontPage' then
     --return { redirect_to = request:url_for("home") }
@@ -89,7 +92,7 @@ end
 
 function m.KillSession(request)
 
-  local ok, err = api:KillSession(request.session.accountID, request.params.sessionID)
+  local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
   if ok then
     return 'killed!'
   else

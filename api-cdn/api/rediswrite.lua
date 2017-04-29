@@ -535,6 +535,10 @@ end
 function write:FindPostsForFilter(filterID, requiredTagNames, bannedTagNames)
   -- in the future it may be too big to load in one go, and
   -- we may want to store the diff and iterate through it in chunks
+
+  --for each tag, get the list of posts
+  -- sinter all the posts that hared the required tags
+  -- remove any posts that are under our banned tags
   local red = util:GetRedisWriteConnection()
   local matchingPostIDs
   local labelledrequiredTagNames = {}
