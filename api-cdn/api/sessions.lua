@@ -24,6 +24,21 @@ function api:GetAccount(accountID)
 end
 
 
+function api:GetAccount(userAccountID, targetAccountID)
+	if userAccountID ~= targetAccountID then
+		return nil, 'not available yet'
+	end
+
+	if not targetAccountID then
+		return nil, 'no target accountID'
+	end
+
+	local account,err = cache:GetAccount(targetAccountID)
+	return account, err
+
+end
+
+
 function api:SanitiseSession(session)
 
 	local newSession = {

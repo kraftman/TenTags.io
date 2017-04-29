@@ -1,4 +1,14 @@
 
+
+<% if userInfo.bio then %>
+  <h1> User Bio: </h1>
+  <div class = "panel panel-default">
+    <%= userInfo.bio %>
+  </div>
+
+
+<% end %>
+
 <% if userInfo.enablePM == '1' then %>
   <div>
     <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>

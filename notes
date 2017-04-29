@@ -45,11 +45,12 @@ Other Ideas from reddit
 - Vote out mods
 - Instead of deleted, mark as 'deleted by <name>' - mods cant delete posts
 - show related sub based on common user base -- run filter comparison to find common filters
-- Limit number of subs a mod can moderate
+- Limit number of subs a mod can moderate - done?
 - sub specific report reasons - wont do, allow any report reason?
 - sticky comments in a post -- per filter?
 - allow changing title within time duration - done
 - add profile section to user page
+ - custom css per filter
 
 
 Nodes
@@ -242,13 +243,23 @@ per request:
   - check the user session is still valid
   - check the user browser info matches
 
+Staggered voting
+ - sometimes users change their vote
+ - usually happens within a few seconds/minutes
+ - queue the vote but dont process it for a while
+ - then take the final vote direction when it is processed
+
 
 
 TODO:
 - clean up the css/layout (again)
-- split api.lua up into user/post/EditComment
+- split api.lua up into user/post/EditComment - done
 - format pm's
 - check / change how the default subs work (is having a 'default' user a good idea?)
+- move settings out to global settings file
+- add basic cookie check, serve static of no cookie or LOGGED_OUT cookie set
+- add some basic per-user stats (comments made, post viewed, subs viewed, per sub view count, etc) efficiently
+  - per post/filter stats (hyperloglogs?)
 
 
 converting to classes?

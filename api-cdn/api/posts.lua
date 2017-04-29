@@ -4,6 +4,7 @@ local util = require 'api.util'
 local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
 local userAPI = require 'api.users'
+local tagAPI = require 'api.tags'
 
 local trim = (require 'lapis.util').trim
 local api = {}
@@ -68,7 +69,7 @@ function api:AddPostTag(userID, postID, tagName)
 		return nil, 'post not found'
 	end
 
-	local newTag = self:CreateTag(userID, tagName)
+	local newTag = tagAPI:CreateTag(userID, tagName)
 
 	local count = 0
 	for _,postTag in pairs(post.tags) do	print('a')
@@ -104,39 +105,6 @@ end
 
 
 
-function api:CreateTag(userID, tagName)
-
-
-	tagName = tagName:gsub(' ','')
-
-  if tagName == '' then
-    return nil
-  end
-
-	tagName = util:SanitiseUserInput(tagName, 100)
-
-  local tag = cache:GetTag(tagName)
-  if tag then
-		print(to_json(tag))
-    return tag
-  end
-
-  local tagInfo = {
-    createdAt = ngx.time(),
-    createdBy = userID,
-    name = tagName
-  }
-
-  local existingTag, err = worker:CreateTag(tagInfo)
-	-- tag might exist but not be in cache
-	if existingTag and existingTag ~= true then
-		print('tag exists')
-		return existingTag
-	end
-	print(to_json(tagInfo))
-  return tagInfo
-end
-
 
 
 
@@ -159,28 +127,27 @@ function api:VotePost(userID, postID, direction)
 		return nil, 'post not found'
 	end
 
+  -- ARE THEY ALLOWED?
+
 	local user = cache:GetUser(userID)
 	if userAPI:UserHasVotedPost(userID, postID) then
-		if UNLIMITED_VOTING and user.role == 'Admin' then
-
-		else
+		if user.role ~= 'Admin' then
 			return nil, 'already voted'
 		end
 	end
 
+  -- HIDE THE POST
 	if tonumber(user.hideVotedPosts) == 1 then
 		print('hiding voted post')
 		cache:AddSeenPost(userID, postID)
 	end
 
-	-- get tags matching the users filters' tags
---	print('get matching tags')
+	-- get interesction of user tags and post tags
 	-- do we want matching tags, or matching filters??
 	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
-	--print(to_json(matchingTags))
 
 	-- filter out the tags they already voted on
-	--matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
+	-- matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
 	for _,tagName in pairs(matchingTags) do
 		for _,tag in pairs(post.tags) do
 			if tag.name == tagName then
@@ -188,7 +155,6 @@ function api:VotePost(userID, postID, direction)
 			end
 		end
 	end
-
 
 	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
@@ -229,7 +195,7 @@ function api:CreatePostTags(userID, postInfo)
 		--print(tagName)
 
 		tagName = trim(tagName:lower())
-		postInfo.tags[k] = self:CreateTag(postInfo.createdBy, tagName)
+		postInfo.tags[k] = tagAPI:CreateTag(postInfo.createdBy, tagName)
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -276,7 +242,7 @@ function api:AddSource(userID, postID, sourceURL)
 	end
 
 	local tagName = 'meta:sourcePost:'..sourcePostID
-	local newTag = self:CreateTag(userID, tagName)
+	local newTag = tagAPI:CreateTag(userID, tagName)
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
 	newTag.score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)

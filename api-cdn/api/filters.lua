@@ -1,9 +1,15 @@
 
 local cache = require 'api.cache'
-local util = require 'util'
+local util = require 'api.util'
+local worker = require 'api.worker'
+local uuid = require 'lib.uuid'
 local tinsert = table.insert
+local tagAPI = require 'api.tags'
+
 
 local api = {}
+
+local MAX_MOD_COUNT = 10
 
 
 function api:GetFilters(filterIDs)
@@ -53,8 +59,8 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
   for _,tagName in pairs(filterInfo.requiredTagNames) do
-		tagName = self:SanitiseUserInput(tagName, 100)
-    local tag = self:CreateTag(newFilter.createdBy,tagName)
+		tagName = util:SanitiseUserInput(tagName, 100)
+    local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
 			tinsert(newFilter.requiredTagNames, tag.name)
 		end
@@ -67,7 +73,7 @@ function api:CreateFilter(userID, filterInfo)
 	table.insert(filterInfo.bannedTagNames, 'meta:filterban:'..newFilter.id)
 
   for _,tagName in pairs(filterInfo.bannedTagNames) do
-    local tag = self:CreateTag(newFilter.createdBy,tagName)
+    local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
     	tinsert(newFilter.bannedTagNames, tag.name)
 		end
@@ -107,15 +113,15 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 
 	local newFilter = {
 		id = uuid.generate_random(),
-		name = self:SanitiseUserInput(userFilter.name, 30),
-		description = self:SanitiseUserInput(userFilter.name, 2000),
-		title = self:SanitiseUserInput(userFilter.name, 200),
+		name = util:SanitiseUserInput(userFilter.name, 30),
+		description = util:SanitiseUserInput(userFilter.name, 2000),
+		title = util:SanitiseUserInput(userFilter.name, 200),
 		subs = 0,
 		mods = {},
 		requiredTagNames = {},
 		bannedTagNames = {},
-		ownerID = self:SanitiseUserInput(userFilter.ownerID,50),
-		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
+		ownerID = util:SanitiseUserInput(userFilter.ownerID,50),
+		createdBy = util:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
 	}
 
@@ -287,7 +293,7 @@ function api:FilterUnbanPost(userID, filterID, postID)
 		return nil, 'post doesnt exist'
 	end
 
-	local newTag = self:CreateTag(userID, tagName)
+	local newTag = tagAPI:CreateTag(userID, tagName)
 	local found = false
 	for _,postTag in pairs(post.tags) do
 		if postTag.name == newTag.name then
@@ -328,7 +334,7 @@ function api:FilterBanPost(userID, filterID, postID)
 		return nil, 'post not found'
 	end
 
-	local newTag = self:CreateTag(userID, tagName)
+	local newTag = tagAPI:CreateTag(userID, tagName)
 
 	for _,postTag in pairs(post.tags) do
 		if postTag.name == newTag.name then
@@ -338,7 +344,7 @@ function api:FilterBanPost(userID, filterID, postID)
 
 	newTag.up = 100
 	newTag.down = 0
-	newTag.score = self:GetScore(newTag.up, newTag.down)
+	newTag.score = util:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 
@@ -409,12 +415,12 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 	local newrequiredTagNames, newbannedTagNames = {}, {}
 	for k,v in pairs(requiredTagNames) do
 		if v:gsub(' ', '') ~= '' then
-			newrequiredTagNames[k] = self:CreateTag(userID, v).name
+			newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
 		end
 	end
 	for k,v in pairs(bannedTagNames) do
 		if v ~= '' then
-			newbannedTagNames[k] = self:CreateTag(userID, v).name
+			newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
 		end
 	end
 

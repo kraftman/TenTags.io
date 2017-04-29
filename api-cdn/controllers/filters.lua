@@ -20,15 +20,15 @@ function m.ToggleDefault(request)
 
   if request.params.setdefault == 'true' then
     print('this')
-    returnfilterAPISubscribeToFilter(request.session.userID, 'default',request.params.filterID)
+    return filterAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    returnfilterAPIUnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
+    return filterAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
   end
 
   if request.params.subscribe == 'true' then
-    returnfilterAPISubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return filterAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    returnfilterAPIUnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return filterAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
   end
 end
 
@@ -325,12 +325,12 @@ function m.ViewFilterSettings(request)
 end
 
 function m.UnbanUser(request)
-  local filter =filterAPIGetFilterByName(request.params.filterlabel)
+  local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
   end
 
-  local ok, err =filterAPIFilterUnbanUser(filter.id, request.params.userID)
+  local ok, err =filterAPI:FilterUnbanUser(filter.id, request.params.userID)
   if ok then
     return 'success'
   else
@@ -340,12 +340,12 @@ function m.UnbanUser(request)
 end
 
 function m.UnbanDomain(request)
-  local filter =filterAPIGetFilterByName(request.params.filterlabel)
+  local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
   end
 
-  local ok, err =filterAPIFilterUnbanDomain(request.session.userID, filter.id, request.params.domainName)
+  local ok, err =filterAPI:FilterUnbanDomain(request.session.userID, filter.id, request.params.domainName)
   if ok then
     return 'success'
   else
@@ -354,12 +354,12 @@ function m.UnbanDomain(request)
 end
 
 function m.BanPost(request)
-  local filter =filterAPIGetFilterByName(request.params.filterlabel)
+  local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     return 'filter not found'
   end
 
-  local ok, err =filterAPIFilterBanPost(request.session.userID, filter.id, self.params.postID)
+  local ok, err =filterAPI:FilterBanPost(request.session.userID, filter.id, self.params.postID)
   if ok then
     return 'ok'
   else

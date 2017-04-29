@@ -19,6 +19,41 @@ function api:GetAllTags()
 end
 
 
+function api:CreateTag(userID, tagName)
+
+
+	tagName = tagName:gsub(' ','')
+
+  if tagName == '' then
+    return nil
+  end
+
+	tagName = util:SanitiseUserInput(tagName, 100)
+
+  local tag = cache:GetTag(tagName)
+  if tag then
+		print(to_json(tag))
+    return tag
+  end
+
+  local tagInfo = {
+    createdAt = ngx.time(),
+    createdBy = userID,
+    name = tagName
+  }
+
+  local existingTag, err = worker:CreateTag(tagInfo)
+	-- tag might exist but not be in cache
+	if existingTag and existingTag ~= true then
+		print('tag exists')
+		return existingTag
+	end
+	print(to_json(tagInfo))
+  return tagInfo
+end
+
+
+
 
 function api:VoteTag(userID, postID, tagName, direction)
 

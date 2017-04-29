@@ -272,7 +272,8 @@ function api:UpdateUser(userID, userToUpdate)
 		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
-		username = userToUpdate.username
+		username = userToUpdate.username,
+		bio = util:SanitiseUserInput(userToUpdate.bio, 1000)
 	}
 
 	for k,v in pairs(userToUpdate) do

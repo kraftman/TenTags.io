@@ -136,7 +136,7 @@ local function LoadUser(self)
 end
 
 app:before_filter(function(self)
-  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username))
+  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
 
   self.enableAds = true
 
@@ -189,8 +189,9 @@ require 'api':Register(app)
 require 'auto':Register(app)
 require 'admin':Register(app)
 
+
 -- TESTING
---require 'test.perftest':Register(app)
+--require 'testing.perftest':Register(app)
 
 
 

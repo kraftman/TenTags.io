@@ -34,6 +34,7 @@ function m.DisplaySettings(request)
   request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
   request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
   request.showNSFW = user.showNSFW == '1' and 'checked' or ''
+  request.userBio = user.bio
 
   ngx.log(ngx.ERR, user.enablePM)
   return {render = 'user.subsettings'}
@@ -49,6 +50,7 @@ function m.UpdateSettings(request)
   user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
   user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
   user.showNSFW = request.params.showNSFW and 1 or 0
+  user.bio = request.params.userbio or ''
 
   local ok, err = userAPI:UpdateUser(request.session.userID, user)
   if not ok then
