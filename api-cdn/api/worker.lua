@@ -26,10 +26,6 @@ function worker:RegisterAccount(session)
   return self:QueueJob('RegisterAccount',session)
 end
 
-function worker:IncrementUserStat(userID, statName, value)
-  return userWrite:IncrementUserStat(userID, statName, value)
-end
-
 function worker:AddUserTagVotes(userID, postID, tagNames)
   return userWrite:AddUserTagVotes(userID, postID, tagNames)
 end

@@ -406,6 +406,13 @@ function write:GetLock(key, expires)
   return ok, err
 end
 
+function write:RemLock(key)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:del(key)
+  util:SetKeepalive(red)
+  return ok, err
+end
+
 function write:DeleteKey(key)
   local red = util:GetRedisWriteConnection()
 

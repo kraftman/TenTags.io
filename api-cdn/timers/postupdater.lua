@@ -23,7 +23,7 @@ function config:New(util)
   local c = setmetatable({},self)
   c.util = util
 	math.randomseed(ngx.now()+ngx.worker.pid())
-	math.random()
+	math.random() math.random() math.random()
 
   return c
 end

@@ -3,6 +3,7 @@ local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
 local util = require 'api.util'
 local worker = require 'api.worker'
+local commentWrite = require 'api.commentwrite'
 
 local userAPI = require 'api.users'
 local api = {}
@@ -13,48 +14,25 @@ local COMMENT_START_UPVOTES = 1
 
 
 function api:VoteComment(userID, postID, commentID,direction)
-	-- do we ever need permissions for this??
 
-	-- check if the user has already voted
-	-- if theyve voted down then remove down entry,
-	-- check if they can vote more than once
-	-- increment comment votes
-	-- recalculate score
-	-- add to user voted in cache
-	-- add to user voted in redis
-	-- for now dont allow unvoting
-
-	--if self:UserHasVotedComment(userID, commentID) then
-		--return if they cant multivote
-	--end
-
-
-	local comment = api:GetComment(postID, commentID)
-	if direction == 'up' then
-		comment.up = comment.up + 1
-	elseif direction == 'down' then
-		comment.down = comment.down + 1
-	end
-
-	comment.score = self:GetScore(comment.up,comment.down)
-
-	local ok, err = worker:AddUserCommentVotes(userID, commentID)
+	local ok, err = util.RateLimit('VoteComment:', userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 
-	if direction == 'up' then
-		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
-	else
-		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
-	end
-	if not ok then
-		return ok, err
+	if self:UserHasVotedComment(userID, commentID) then
+		return nil, 'cannot vote more than once!'
 	end
 
-	return worker:UpdateComment(comment)
+	local commentVote = {
+		userID = userID,
+		postID = postID,
+		commentID = commentID,
+		direction = direction,
+		id = userID..':'..commentID
+	}
 
-	-- also add to user voted comments?
+	return commentWrite:QueueJob('commentvote', commentVote)
 
 end
 
