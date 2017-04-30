@@ -11,6 +11,8 @@ Tags
 - If you add a tag you own it and its up/down votes
 - Only tags of a certain threshold are included in filters
 - Upvoting a post as a whole upvotes all tags shared between the post and the filter that meant the user saw it - done
+- we need a different threshold for bannedtags then wanted tags
+- to stop people abusing the system by adding a bannedtag to stop the post showing up
 
 Filters
 - Select posts with certain tags or without certain tags
@@ -43,10 +45,12 @@ Other Ideas from reddit
 - Vote out mods
 - Instead of deleted, mark as 'deleted by <name>' - mods cant delete posts
 - show related sub based on common user base -- run filter comparison to find common filters
-- Limit number of subs a mod can moderate
+- Limit number of subs a mod can moderate - done?
 - sub specific report reasons - wont do, allow any report reason?
 - sticky comments in a post -- per filter?
 - allow changing title within time duration - done
+- add profile section to user page
+ - custom css per filter
 
 
 Nodes
@@ -238,3 +242,31 @@ user clicks email:
 per request:
   - check the user session is still valid
   - check the user browser info matches
+
+Staggered voting
+ - sometimes users change their vote
+ - usually happens within a few seconds/minutes
+ - queue the vote but dont process it for a while
+ - then take the final vote direction when it is processed
+
+
+
+TODO:
+- clean up the css/layout (again)
+- split api.lua up into user/post/EditComment - done
+- format pm's
+- check / change how the default subs work (is having a 'default' user a good idea?)
+- move settings out to global settings file
+- add basic cookie check, serve static of no cookie or LOGGED_OUT cookie set
+- add some basic per-user stats (comments made, post viewed, subs viewed, per sub view count, etc) efficiently
+  - per post/filter stats (hyperloglogs?)
+- split out etlua components to be more reusable
+
+
+converting to classes?
+how would we load a user?
+ask user factory for one
+user factory checks cache
+cache generates user
+or ask redis
+redis generates user

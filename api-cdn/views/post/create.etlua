@@ -24,23 +24,23 @@
       <div class="input-group">
         <input type="text" class="form-control" name='postlink' id='postlink' maxlength="300" placeholder="Link" aria-describedby="basic-addon1">
       </div>
-      <div class="input-group">
-        <input type="text" class="form-control" name='posttext' id='posttext' maxlength="50" placeholder="Text" aria-describedby="basic-addon1">
-      </div>
 
+      <label for='posttext' >Post Text</label>
+        </br>
+      <textarea  name='posttext' id='posttext' id="txtArea" rows="10" cols="50"></textarea>
+
+      <!--
       <select name='filterselect' id='filterselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add filters'>
-
       </select>
       </br>
+      -->
 
-      <select name='tagselect' id='tagselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
-        <% for i, tag in pairs(tags) do %>
-         <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-        <% end %>
-      </select>
+        <label for='selectedtags'>Tags</label></br>
+        <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />
 
-
-      <input class='btn btn-default' id='submitButton' type='submit' name='Submit' value='Submit' />
+        </br>
+        </br>
+      <input class="btn btn-primary" id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
 </div>

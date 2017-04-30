@@ -23,7 +23,7 @@
 
         <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
         <% if child.shortURL then %>
-          <a href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >reply</a>
+          <a href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >reply</a
         <% else %>
           <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
         <% end %>

@@ -1,5 +1,6 @@
 
 local api = require 'api.api'
+local userAPI = require 'api.users'
 
 local m = {}
 
@@ -12,7 +13,7 @@ function m.FrontPage(request)
   local range = 10*(request.pageNum-1)
   local filter = request.req.parsed_url.path:match('/(%w+)$')
 
-  request.posts = api:GetUserFrontPage(request.session.userID or 'default',filter,range, range+10)
+  request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default',filter,range, range+10)
 
   --print(to_json(request.posts))
 
@@ -34,7 +35,7 @@ function m.FrontPage(request)
         v.hash = ngx.md5(v.id..request.session.userID)
       end
     end
-    request.userInfo = api:GetUser(request.session.userID)
+    request.userInfo = userAPI:GetUser(request.session.userID)
   end
 
   -- if empty and logged in then redirect to seen posts

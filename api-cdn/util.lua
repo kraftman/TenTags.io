@@ -61,6 +61,7 @@ function util:GetCommentReadConnection()
 end
 
 
+
 --[[
 function util:GetRedisConnectionFromSentinel(masterName, role)
   local redis_connector = require "resty.redis.connector"

@@ -1,7 +1,7 @@
 
 
 local uuid = require 'lib.uuid'
-local api = require 'api.api'
+local tagAPI = require 'api.tags'
 
 local m = {}
 m.__index = m
@@ -30,7 +30,7 @@ function m.CreateTag(request)
     createdBy = request.session.userID
   }
 
-  local ok, err = api:CreateTag(request.session.userID, info)
+  local ok, err = tagAPI:CreateTag(request.session.userID, info)
   if ok then
     return 'tag created!'
   else

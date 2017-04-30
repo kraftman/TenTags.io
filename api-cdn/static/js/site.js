@@ -16,7 +16,108 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
+  DraggablePosts();
+  FilterToggle()
 })
+
+function FilterToggle(){
+  var $hamburger = $(".hamburger");
+  $hamburger.on("click", function(e) {
+    $hamburger.toggleClass("is-active");
+    console.log('that')
+    // Do something else, like open/close menu
+    var filterBar = $('.filter-bar')
+    filterBar.toggle('slide','left',200)
+  });
+
+}
+
+function DraggablePosts(){
+  $('.post').draggable({
+    axis: "x",
+    stop: function( event, ui ) {
+
+      if(ui.position.left > 100) {
+        VotePost(this,'up')
+      } else if (ui.position.left < -100){
+        VotePost(this,'down')
+      }
+      $(ui.helper).animate({ left: '0px'}, 200)
+    }
+  })
+}
+
+
+function Upvote(e) {
+  var post = $(':focus')
+
+  if (post.length) {
+    VotePost(post, 'up');
+  }
+}
+
+function Downvote(e) {
+  var post = $(':focus')
+  console.log(post)
+  if (post.length) {
+    console.log(2)
+    VotePost(post, 'down');
+  }
+}
+
+
+function AddPostVoteListener(){
+  $(".postUpvote").click(function(e) {
+    e.preventDefault()
+    VotePost($(this).parent().parent(), 'up')
+  })
+  $(".postDownvote").click(function(e){
+    e.preventDefault()
+    VotePost($(this).parent().parent(),'down')
+  })
+}
+
+
+function VotePost(post, direction){
+
+  //get the post
+  var postID = $(post).children('.postID').val()
+  var postHash = $(post).children('.postHash').val()
+
+  if (userSettings.hideVotedPosts == '1') {
+    if ($.inArray(postID, seenPosts) == -1){
+      seenPosts.push(postID)
+    }
+
+
+    LoadMorePosts($(post).parents('.post'));
+
+    $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
+      var nextPost = $(post).next()
+      console.log(nextPost)
+      if (nextPost.length) {
+        nextPost.focus()
+      }
+      $(post).remove();});
+    //$(post).show("slide", { direction: "right" }, 100);
+    // $(post).parents('.post').slideUp('fast',function() {
+    //   $(post).remove();
+    // })
+  }
+
+  var uri;
+  if (direction == 'up'){
+    $(post).css('border', 'solid 1px green');
+    uri = '/api/post/'+postID+'/upvote?hash='+postHash
+  } else {
+    $(post).css('border', 'solid 1px red');
+    uri = '/api/post/'+postID+'/downvote?hash='+postHash
+  }
+
+  $.get(uri,function(data){
+    //console.log(data);
+  })
+}
 
 function AddFilterHandler(){
   // take over the loading of new filters
@@ -76,19 +177,6 @@ function OpenComments(e) {
 
 }
 
-function Upvote(e) {
-  var upvoteButton = $(':focus').find('.postUpvote')
-  if (upvoteButton.length) {
-    VotePost.call(upvoteButton,e);
-  }
-}
-
-function Downvote(e) {
-  var downvoteButton = $(':focus').find('.postDownvote')
-  if (downvoteButton.length) {
-    VotePost.call(downvoteButton,e);
-  }
-}
 
 function MoveFocus(e) {
   e.preventDefault();
@@ -167,7 +255,11 @@ function UpdateSidebar(filters){
 
 function AddFilterSearch(){
   console.log('adding this')
-  $('#filterSearch').on('input', function() {
+  $('.filter-search-form').submit(function(e){
+    e.preventDefault()
+  })
+  $('#filterSearch').on('input', function(e) {
+    e.preventDefault();
     clearTimeout($(this).data('timeout'));
     var _self = this;
     $(this).data('timeout', setTimeout(function () {
@@ -202,14 +294,22 @@ function AddMenuHandler(){
 
 function GetFreshPost(){
   var newPost = newPosts.shift()
+
   while ($.inArray(newPost.id, seenPosts) != -1){
 
     //console.log(newPost)
+
+    newPost = newPosts.shift()
+
     if (newPost == undefined) {
       postIndex = postIndex + 100
       LoadNewPosts(postIndex,postIndex+100)
+      newPost = newPosts.shift()
+      if (newPost == undefined) {
+        return
+      }
     }
-    newPost = newPosts.shift()
+
   }
   return newPost
 }
@@ -258,46 +358,7 @@ function LoadMorePosts(template){
   $('#posts').append(newPost)
 }
 
-function VotePost(e){
-  var className = $('.myclass').attr('class');
 
-  e.preventDefault();
-  var postID = $(this).parent().parent().children('.postID').val()
-  var postHash = $(this).parent().parent().children('.postHash').val()
-
-  if (userSettings.hideVotedPosts) {
-    console.log('this')
-    if ($.inArray(postID, seenPosts) == -1){
-      seenPosts.push(postID)
-    }
-    console.log(userSettings.hideVotedPosts)
-    var nextPost = $(this).parents('.post').next()
-    if (nextPost.length) {
-      nextPost.focus()
-    }
-    LoadMorePosts($(this).parents('.post'));
-    $(this).parents('.post').slideUp('fast',function() {
-
-      $(this).remove();
-    })
-  }
-
-  var uri;
-  if ($(this).hasClass('postUpvote')){
-    uri = '/api/post/'+postID+'/upvote?hash='+postHash
-  } else {
-    uri = '/api/post/'+postID+'/downvote?hash='+postHash
-  }
-
-  $.get(uri,function(data){
-    console.log(data);
-  })
-}
-
-function AddPostVoteListener(){
-  $(".postUpvote").click(VotePost)
-  $(".postDownvote").click(VotePost)
-}
 
 function AddTagVoteListener(){
   $(".upvote").click(function(){

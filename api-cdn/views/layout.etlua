@@ -7,6 +7,8 @@
   <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
   <title><%= page_title or "Filtta" %></title>
   <script src="/static/js/jquery-2.1.4.js" ></script>
+  <script src="/static/js/jquery-ui.js" ></script>
+  <script src="/static/js/jquery.ui.touch-punch.js"></script>
   <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
   <script src="/static/chosen/chosen.jquery.js"  ></script>
   <script src="/static/js/mousetrap.min.js"  ></script>
@@ -17,15 +19,19 @@
   <script src="/static/bootstrap/js/bootstrap.min.js"></script>
 
 
-  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.css">
 
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
   <div class='center-page'>
-    <% render("views.main.navigation") %>
-    <% render("views.main.filterbar") %>
-    <% content_for("inner") %>
+
+    <div class = 'main'>
+      <% render("views.main.navigation") %>
+      <% render("views.main.filterbar") %>
+      <% render("views.main.infobar") %>
+      <% content_for("inner") %>
+    </div>
   </div>
 </body>
 </html>
