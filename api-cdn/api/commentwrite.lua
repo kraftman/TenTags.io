@@ -51,24 +51,6 @@ function commentwrite:LoadScript(script)
   return ok
 end
 
-function commentwrite:QueueJob(jobName, jobData)
-  jobName = 'queue:'..jobName
-  local red = util:GetCommentWriteConnection()
-  jobData = to_json(jobData)
-  -- this will remove duplicates by default since its not using NX
-  local ok, err = red:zadd(jobName, ngx.time(), jobData)
-  util:SetKeepalive(red)
-
-  return ok, err
-end
-
-function commentwrite:RemoveJob(jobName, jobData)
-jobName = 'queue:'..jobName
-  local red = util:GetCommentWriteConnection()
-  local ok, err = red:zrem(jobName, jobData)
-  util:SetKeepalive(red)
-  return ok, err
-end
 
 function commentwrite:CreateComment(commentInfo)
 

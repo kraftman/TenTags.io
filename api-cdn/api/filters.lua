@@ -308,7 +308,7 @@ function api:FilterBanUser(userID, filterID, banInfo)
 	end
 
 	banInfo.bannedAt = ngx.time()
-	return worker:FilterBanUser(filterID, banInfo)
+	return redisWrite:FilterBanUser(filterID, banInfo)
 end
 
 function api:FilterUnbanPost(userID, filterID, postID)
@@ -373,7 +373,7 @@ function api:FilterBanPost(userID, filterID, postID)
 		end
 	end
 
-	newTag.up = 100
+	newTag.up = 1000
 	newTag.down = 0
 	newTag.score = util:GetScore(newTag.up, newTag.down)
 	newTag.active = true
@@ -436,7 +436,8 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 	if not filterID then
 		return nil, 'no filter id!'
 	end
-	local filter, err = self:UserCanEditFilter(userID,filterID)
+	local filter, ok, err
+	filter, err = self:UserCanEditFilter(userID,filterID)
 	if not filter then
 		return filter, err
 	end
@@ -456,8 +457,8 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 	end
 
 
-	print(to_json(newrequiredTagNames))
-	local ok, err = worker:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
+
+	ok, err = redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
 	if not ok then
 		return ok, err
 	end
@@ -478,7 +479,7 @@ function api:FilterUnbanDomain(userID, filterID, domainName)
 	end
 
 	domainName = util:GetDomain(domainName) or domainName
-	return worker:FilterUnbanDomain(filterID, domainName)
+	return redisWrite:FilterUnbanDomain(filterID, domainName)
 end
 
 

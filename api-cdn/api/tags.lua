@@ -6,6 +6,7 @@ local worker = require 'api.worker'
 local redisWrite = require 'api.rediswrite'
 local userWrite  = require 'api.userwrite'
 local api = {}
+local tinsert = table.insert
 
 
 
@@ -87,25 +88,25 @@ function api:VoteTag(userID, postID, tagName, direction)
 
 	-- increment how many tags the user has voted on
 	if direction == 'up' then
-		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
+		userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
 	else
-		worker:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
+		userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
 	end
 
 	-- Is this a meaningful stat?
 	for _,tag in pairs(post.tags) do
 		if tag.name:find('meta:self') then
 			if direction == 'up' then
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
+				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
 			else
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
+				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
 			end
 			break -- stop as soon as we know what kind of post it is
 		elseif tag.name:find('meta:link') then
 			if direction == 'up' then
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
+				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
 			else
-				ok, err = worker:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
+				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
 			end
 			break
 		end
@@ -119,7 +120,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 	if not ok then
 		return ok, err
 	end
-	ok, err = worker:UpdatePostTags(post)
+	ok, err = redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end

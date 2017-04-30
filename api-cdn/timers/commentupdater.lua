@@ -37,8 +37,9 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
-  self:UpdateCommentVotes()
-  self:UpdateCommentSubscribers()
+  self:ProcessJob('commentvote', 'ProcessCommentVote')
+  self:ProcessJob('commentsub', 'ProcessCommentSub')
+  self:ProcessJob('createcomment', 'CreateComment')
 
 end
 
@@ -53,6 +54,37 @@ function config:ConvertToUnique(jsonData)
     commentVotes[converted.id] = converted
   end
   return commentVotes
+end
+
+
+function config:ProcessJob(jobName, handler)
+  local lockName = 'L:'..jobName
+  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
+    return
+  end
+
+  local jobs = self:ConvertToUnique(ok)
+
+  for jobID,job in pairs(jobs) do
+    ok, err = redisWrite:GetLock(lockName..jobID,10)
+    if err then
+      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
+    elseif ok ~= ngx.null then
+      -- the bit that does stuff
+      ok, err = self[handler](self,job)
+      if ok then
+        commentWrite:RemoveJob(jobName,job.json)
+        -- purge the comment from the cache
+        -- dont remove lock, just to limit updates a bit
+      else
+        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
+        redisWrite:RemLock(lockName..jobID)
+      end
+    end
+  end
+
 end
 
 function config:ProcessCommentVote(commentVote)
@@ -88,42 +120,9 @@ function config:ProcessCommentVote(commentVote)
 
 end
 
-function config:UpdateCommentVotes()
-  print('updating comment votes')
-  local jobName = 'commentvote'
-
-  local ok,err = commentRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local commentVotes = self:ConvertToUnique(ok)
-
-  -- now try and lock them
-  for commentVoteID,commentVote in pairs(commentVotes) do
-    ok, err = redisWrite:GetLock('L:CommentVote:'..commentVoteID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
-    elseif ok ~= ngx.null then
-
-      ok, err = self:ProcessCommentVote(commentVote)
-      if ok then
-        commentWrite:RemoveJob(jobName,commentVote.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
-        redisWrite:RemLock('L:CommentVote:'..commentVoteID)
-      end
-
-    end
-  end
-
-end
 
 
-function config:ProcessSub(commentSub)
+function config:ProcessCommentSub(commentSub)
 
   local comment = cache:GetComment(commentSub.postID, commentSub.commentID)
   -- check they dont exist
@@ -148,37 +147,6 @@ function config:ProcessSub(commentSub)
   return commentWrite:CreateComment(comment)
 end
 
-function config:UpdateCommentSubscribers()
-  print('updating comment subscribers')
-
-  local jobName = 'commentsub'
-  local ok,err = commentRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local commentSubs = self:ConvertToUnique(ok)
-  -- should be a unique list of their last action
-
-  for commentSubID,commentSub in pairs(commentSubs) do
-    ok, err = redisWrite:GetLock('L:CommentVote:'..commentSubID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
-    elseif ok ~= ngx.null then
-      ok, err = self:ProcessCommentSub(commentSub)
-      if ok then
-        commentWrite:RemoveJob(jobName,commentSub.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
-        redisWrite:RemLock('L:CommentVote:'..commentSubID)
-      end
-    end
-  end
-
-end
 
 
 function config:UpdateFilters(post, comment)
@@ -206,12 +174,12 @@ function config:AddAlerts(post, comment)
   -- need to add alert to all parent comment viewers
   if comment.parentID == comment.postID then
 		for _,viewerID in pairs(post.viewers) do
-			worker:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+			userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
-      worker:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+      userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
   end
 
@@ -219,7 +187,7 @@ function config:AddAlerts(post, comment)
 
 end
 
-function config:CreateCommment(commentInfo)
+function config:CreateComment(commentInfo)
 
   local comment = cache:GetComment(commentInfo.postID, commentInfo.commentID)
   local post = cache:GetPost(comment.postID)
@@ -244,38 +212,6 @@ function config:CreateCommment(commentInfo)
 
 end
 
-function config:CreateComment()
-  print('updating comment subscribers')
-
-  local jobName = 'commentcreate'
-  local lockName = 'L:CreateComment'
-  local ok,err = commentRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local jobs = self:ConvertToUnique(ok)
-  -- should be a unique list of their last action
-
-  for jobID,job in pairs(jobs) do
-    ok, err = redisWrite:GetLock(lockName..jobID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
-    elseif ok ~= ngx.null then
-      ok, err = self:CreateComment(job)
-      if ok then
-        commentWrite:RemoveJob(jobName,job.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
-        redisWrite:RemLock(lockName..jobID)
-      end
-    end
-  end
-
-end
 
 
 

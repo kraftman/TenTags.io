@@ -55,7 +55,7 @@ function api:CreateMessageReply(userID, userMessage)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
-      worker:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
+      userWrite:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
 
@@ -144,7 +144,7 @@ function api:CreateThread(userID, messageInfo)
 		return ok, err
 	end
 
-  ok, err = worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
+  ok, err = userWrite:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
 	return ok, err
 end
 

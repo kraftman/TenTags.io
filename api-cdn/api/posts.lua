@@ -16,6 +16,7 @@ local COMMENT_LENGTH_LIMIT = 2000
 local TAG_START_DOWNVOTES = 0
 local TAG_START_UPVOTES = 1
 local MAX_ALLOWED_TAG_COUNT = 30
+local SOURCE_POST_THRESHOLD = 0.75
 
 local function UserCanAddSource(tags, userID)
   for _,tag in pairs(tags) do
@@ -53,6 +54,26 @@ function api:ConvertShortURL(postID)
 end
 
 
+function api:UserCanAddTag(userID, newTag, tags)
+
+	local count = 0
+	for _,postTag in pairs(tags) do
+
+		if postTag.name == newTag.name then
+			return nil, 'tag already exists'
+		end
+
+		if postTag.createdBy == userID then
+			count = count +1
+			if count > MAX_ALLOWED_TAG_COUNT then
+				return nil, 'you cannot add any more tags'
+			end
+		end
+
+	end
+
+  return true
+end
 
 function api:AddPostTag(userID, postID, tagName)
 
@@ -70,21 +91,15 @@ function api:AddPostTag(userID, postID, tagName)
 		return nil, 'post not found'
 	end
 
-	local newTag = tagAPI:CreateTag(userID, tagName)
 
-	local count = 0
-	for _,postTag in pairs(post.tags) do	print('a')
+  local newTag = tagAPI:CreateTag(userID, tagName)
 
-		if postTag.name == newTag.name then
-			return nil, 'tag already exists'
-		end
-		if postTag.createdBy == userID then
-			count = count +1
-			if count > MAX_ALLOWED_TAG_COUNT then
-				return nil, 'you cannot add any more tags'
-			end
-		end
-	end
+  ok, err = self:UserCanAddTag(userID, newTag, post.tags)
+  if not ok then
+    return nil, err
+  end
+
+
 
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
@@ -99,7 +114,7 @@ function api:AddPostTag(userID, postID, tagName)
 		return ok, err
 	end
 
-	ok, err = worker:UpdatePostTags(post)
+	ok, err = redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end
@@ -111,62 +126,31 @@ end
 
 function api:VotePost(userID, postID, direction)
 
+  	--[[
+  		when we vote down a post as a whole we are saying
+  		'this post is not good enough to be under these filters'
+  		or 'the tags this post has that match the filters i care about are
+  		not good'
+
+  	]]
+
 	local ok, err = util.RateLimit('VotePost:', userID, 10, 60)
 	if not ok then
 		return ok, err
 	end
 
-	--[[
-		when we vote down a post as a whole we are saying
-		'this post is not good enough to be under these filters'
-		or 'the tags this post has that match the filters i care about are
-		not good'
+  local postVote = {
+    userID = userID,
+    postID = postID,
+    direction = direction
+  }
 
-	]]
-	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
-
-  -- ARE THEY ALLOWED?
-
-	local user = cache:GetUser(userID)
-	if userAPI:UserHasVotedPost(userID, postID) then
-		if user.role ~= 'Admin' then
-			return nil, 'already voted'
-		end
-	end
-
-  -- HIDE THE POST
+  local user = cache:GetUser(userID)
 	if tonumber(user.hideVotedPosts) == 1 then
-		print('hiding voted post')
 		cache:AddSeenPost(userID, postID)
 	end
 
-	-- get interesction of user tags and post tags
-	-- do we want matching tags, or matching filters??
-	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
-
-	-- filter out the tags they already voted on
-	-- matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
-	for _,tagName in pairs(matchingTags) do
-		for _,tag in pairs(post.tags) do
-			if tag.name == tagName then
-				self:AddVoteToTag(tag, direction)
-			end
-		end
-	end
-
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
-	if not ok then
-		return ok, err
-	end
-	worker:UpdatePostTags(post)
-
-	userWrite:AddUserTagVotes(userID, postID, matchingTags)
-	userWrite:AddUserPostVotes(userID, postID)
-
-	return true
+  return redisWrite:QueueJob('votepost',postVote)
 
 end
 
@@ -184,7 +168,7 @@ function api:SubscribePost(userID, postID)
 	end
 	tinsert(post.viewers, userID)
 
-	ok, err = worker:CreatePost(post)
+	ok, err = redisWrite:CreatePost(post)
 	return ok, err
 
 end
@@ -251,7 +235,7 @@ function api:AddSource(userID, postID, sourceURL)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:UpdatePostTags(post)
+	ok, err = redisWrite:UpdatePostTags(post)
 	if not ok then
 		return ok,err
 	end
@@ -339,7 +323,7 @@ function api:EditPost(userID, userPost)
 	post.text = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
 	post.editedAt = ngx.time()
 
-	ok, err = worker:CreatePost(post)
+	ok, err = redisWrite:CreatePost(post)
 	return ok, err
 
 end

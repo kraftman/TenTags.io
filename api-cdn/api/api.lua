@@ -21,7 +21,6 @@ local TAG_START_DOWNVOTES = 0
 local TAG_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 local UNLIMITED_VOTING = os.getenv('UNLIMITED_VOTING')
-local SOURCE_POST_THRESHOLD = 0.75
 --local permission = require 'userpermission'
 
 local MAX_ALLOWED_TAG_COUNT = 20

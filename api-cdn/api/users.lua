@@ -128,7 +128,7 @@ function api:SubscribeToFilter(userID, userToSubID, filterID)
     end
   end
 
-  worker:SubscribeToFilter(userToSubID,filterID)
+  redisWrite:SubscribeToFilter(userToSubID,filterID)
 
 end
 
@@ -140,7 +140,7 @@ function api:UpdateLastUserAlertCheck(userID)
 		return ok, err
 	end
 	-- can only edit their own
-  return worker:UpdateLastUserAlertCheck(userID)
+  return userWrite:UpdateLastUserAlertCheck(userID)
 end
 
 
@@ -249,7 +249,7 @@ function api:SwitchUser(accountID, userID)
 	account.currentUserID = user.id
 	account.currentUsername = user.username
 
-	local ok, err = worker:UpdateAccount(account)
+	local ok, err = userWrite:UpdateAccount(account)
 	if not ok then
 		return ok, err
 	end

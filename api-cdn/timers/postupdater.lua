@@ -9,6 +9,9 @@ config.cjson = require 'cjson'
 local redisRead = require 'api.redisread'
 local redisWrite = require 'api.rediswrite'
 local commentWrite = require 'api.commentwrite'
+local userWrite = require 'api.users'
+local userAPI = require 'api.users'
+local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
@@ -42,9 +45,83 @@ function config.Run(_,self)
   self:AddCommentShortURL()
   self:UpdatePostFilters()
   self:CheckReposts()
-	self:CheckNewPosts()
+	self:ProcessJob('createpost', 'CreatePost')
+	self:ProcessJob('votepost', 'VotePost')
 
 end
+
+function config:VotePost(postVote)
+
+	local user = cache:GetUser(postVote.userID)
+	if userAPI:UserHasVotedPost(postVote.userID, postVote.postID) then
+		if user.role ~= 'Admin' then
+			return true
+		end
+	end
+
+	local post = cache:GetPost(postVote.postID)
+	if not post then
+		return true
+	end
+
+
+
+	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(postVote.userID),post.filters)
+
+	-- filter out the tags they already voted on
+	matchingTags = tagAPI:GetUnvotedTags(user,postVote.postID, matchingTags)
+	for _,tagName in pairs(matchingTags) do
+		for _,tag in pairs(post.tags) do
+			if tag.name == tagName then
+				tagAPI:AddVoteToTag(tag, postVote.direction)
+			end
+		end
+	end
+
+
+
+	redisWrite:UpdatePostTags(post)
+
+	local ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
+
+	userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
+	userWrite:AddUserPostVotes(post.Vote.userID, postVote.postID)
+
+	return true
+
+end
+
+
+function config:ProcessJob(jobName, handler)
+  local lockName = 'L:'..jobName
+  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
+    return
+  end
+
+  local jobs = self:ConvertToUnique(ok)
+
+  for jobID,job in pairs(jobs) do
+    ok, err = redisWrite:GetLock(lockName..jobID,10)
+    if err then
+      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
+    elseif ok ~= ngx.null then
+      -- the bit that does stuff
+      ok, err = self[handler](self,job)
+      if ok then
+        commentWrite:RemoveJob(jobName,job.json)
+        -- purge the comment from the cache
+        -- dont remove lock, just to limit updates a bit
+      else
+        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
+        redisWrite:RemLock(lockName..jobID)
+      end
+    end
+  end
+
+end
+
 
 local function AverageTagScore(filterrequiredTagNames,postTags)
 
