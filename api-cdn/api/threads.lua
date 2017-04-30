@@ -3,6 +3,7 @@ local cache = require 'api.cache'
 local util = require 'api.util'
 local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
+local redisWrite = requrie 'api.rediswrite'
 
 local api = {}
 
@@ -46,7 +47,7 @@ function api:CreateMessageReply(userID, userMessage)
 		return newMessage, err
 	end
 
-  ok, err = worker:CreateMessage(userMessage)
+  ok, err = redisWrite:CreateMessage(userMessage)
 	if not ok then
 		return ok, err
 	end
@@ -133,12 +134,12 @@ function api:CreateThread(userID, messageInfo)
     threadID = thread.id
   }
 
-  ok, err = worker:CreateThread(thread)
+  ok, err = redisWrite:CreateThread(thread)
 	if not ok then
 		return ok, err
 	end
 
-  ok, err = worker:CreateMessage(msg)
+  ok, err = redisWrite:CreateMessage(msg)
 	if not ok then
 		return ok, err
 	end

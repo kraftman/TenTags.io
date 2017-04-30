@@ -62,6 +62,14 @@ function commentwrite:QueueJob(jobName, jobData)
   return ok, err
 end
 
+function commentwrite:RemoveJob(jobName, jobData)
+jobName = 'queue:'..jobName
+  local red = util:GetCommentWriteConnection()
+  local ok, err = red:zrem(jobName, jobData)
+  util:SetKeepalive(red)
+  return ok, err
+end
+
 function commentwrite:CreateComment(commentInfo)
 
   local red = util:GetCommentWriteConnection()

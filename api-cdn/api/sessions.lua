@@ -2,7 +2,7 @@
 local cache = require 'api.cache'
 local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
+local userWrite = require 'api.userwrite'
 
 local api = {}
 
@@ -103,7 +103,7 @@ function api:RegisterAccount(session, confirmURL)
 
 	session = to_json(session)
 	print(session)
-	ok, err = worker:RegisterAccount(session)
+	ok, err = userWrite:QueueJob('RegisterAccount',session)
 	return ok, err
 end
 
@@ -145,7 +145,7 @@ function api:ConfirmLogin(userSession, key)
 	accountSession.activated = true
 	account.lastSeen = ngx.time()
 	account.active = true
-	worker:UpdateAccount(account)
+	userWrite:UpdateAccount(account)
 
 	return account, accountSession.id
 
@@ -164,8 +164,9 @@ function api:KillSession(accountID, sessionID)
 	end
 
 	session.killed = true
-	local ok, err = worker:KillSession(account)
-	return ok, err
+  -- purge from cache
+  redisWrite:InvalidateKey('account', account.id)
+  return userWrite:CreateAccount(account)
 
 end
 

@@ -82,6 +82,9 @@ function cache:PurgeKey(keyInfo)
     else
       self:GetAccount(keyInfo.id)
     end
+  else if keyInfo.keyType == 'comment' then
+    local postID, commentID = keyInfo.id:match('(%w+):(%w+)')
+    commentInfo:delete(postID)
   end
 end
 

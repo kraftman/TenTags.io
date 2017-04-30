@@ -1,7 +1,8 @@
 
 local cache = require 'api.cache'
 local util = require 'api.util'
-local worker = require 'api.worker'
+local userWrite = require 'api.userwrite'
+local redisWrite = require 'api.rediswrite'
 local api = {}
 local tinsert = table.insert
 
@@ -47,7 +48,7 @@ function api:LabelUser(userID, targetUserID, label)
 		return ok, err
 	end
 
-	ok, err = worker:LabelUser(userID, targetUserID, label)
+	ok, err = userWrite:LabelUser(userID, targetUserID, label)
 	return ok, err
 
 end
@@ -89,8 +90,18 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
     return
   end
 
-  worker:UnsubscribeFromFilter(subscriberID,filterID)
+	local ok, err = redisWrite:IncrementFilterSubs(filterID, -1)
+	if not ok then
+		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
+	end
 
+	ok, err = redisWrite:UnsubscribeFromFilter(userID,filterID)
+	if not ok then
+		ngx.log(ngx.ERR, 'error unsubbing user: ', err)
+		return nil, 'error unsubbing'
+	end
+
+	return true
 
 end
 
@@ -168,11 +179,11 @@ function api:CreateSubUser(accountID, username)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
 	account.currentUserID = subUser.id
-	local ok, err = worker:UpdateAccount(account)
+	local ok, err = userWrite:UpdateAccount(account)
 	if not ok then
 		return ok, err
 	end
-  local ok, err = worker:CreateSubUser(subUser)
+  local ok, err = userWrite:CreateSubUser(subUser)
 	if ok then
 		return subUser
 	else
@@ -283,7 +294,7 @@ function api:UpdateUser(userID, userToUpdate)
 		end
 	end
 
-	return worker:UpdateUser(userInfo)
+	return redisWrite:UpdateUser(userInfo)
 end
 
 

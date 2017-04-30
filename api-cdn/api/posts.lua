@@ -2,9 +2,10 @@
 local cache = require 'api.cache'
 local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
+local redisWrite = require 'api.rediswrite'
 local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
+local userWrite = require 'api.userwrite'
 
 local trim = (require 'lapis.util').trim
 local api = {}
@@ -41,7 +42,7 @@ local function CheckPostParent(post)
 
 		if parentID and post.parentID ~= parentID then
 			post.parentID = parentID
-			worker:UpdatePostParentID(post)
+			redisWrite:UpdatePostParentID(post)
 		end
 	end
 end
@@ -93,7 +94,7 @@ function api:AddPostTag(userID, postID, tagName)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
@@ -156,14 +157,14 @@ function api:VotePost(userID, postID, direction)
 		end
 	end
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
 	worker:UpdatePostTags(post)
 
-	worker:AddUserTagVotes(userID, postID, matchingTags)
-	worker:AddUserPostVotes(userID, postID)
+	userWrite:AddUserTagVotes(userID, postID, matchingTags)
+	userWrite:AddUserPostVotes(userID, postID)
 
 	return true
 
@@ -255,7 +256,7 @@ function api:AddSource(userID, postID, sourceURL)
 		return ok,err
 	end
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
@@ -274,7 +275,7 @@ function api:DeletePost(userID, postID)
 		end
 	end
 
-	return worker:DeletePost(postID)
+	return redisWrite:DeletePost(postID)
 
 end
 
@@ -344,16 +345,6 @@ function api:EditPost(userID, userPost)
 end
 
 
-function api:GeneratePostTags(post)
-	if not post.link or trim(post.link) == '' then
-		post.postType = 'self'
-    tinsert(post.tags,'meta:self')
-  end
-	tinsert(post.tags, 'meta:all')
-
-  tinsert(post.tags,'meta:createdBy:'..post.createdBy)
-end
-
 
 
 
@@ -405,34 +396,19 @@ function api:ConvertUserPostToPost(userID, post)
 		tinsert(newPost.tags, util:SanitiseUserInput(v, 100))
 	end
 
-
-	return newPost
-
-end
-
-
-function api:CreatePost(userID, postInfo)
-	local newPost, ok, err
-
-	ok, err = util.RateLimit('CreatePost:',userID, 1, 300)
-	if not ok then
-		return ok, err
-	end
-
-	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
-	if not newPost then
-		return newPost, err
-	end
-
-	-- clear out any tags that shouldnt be allowed
-	for k,tagName in pairs(newPost.tags) do
+  for k,tagName in pairs(newPost.tags) do
 		if tagName:find('^meta:') then
 			newPost.tags[k] = ''
 		end
 	end
 
+  if not post.link or trim(post.link) == '' then
+		post.postType = 'self'
+    tinsert(post.tags,'meta:self')
+  end
+	tinsert(post.tags, 'meta:all')
 
-	self:GeneratePostTags(newPost)
+  tinsert(post.tags,'meta:createdBy:'..post.createdBy)
 
   if newPost.link then
 
@@ -442,21 +418,50 @@ function api:CreatePost(userID, postInfo)
       return nil, 'invalid url'
     end
 
-		ok, err = worker:QueueJob('GeneratePostIcon', newPost.id)
-		if not ok then
-			return ok, err
-		end
+
 
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)
     tinsert(newPost.tags,'meta:domain:'..domain)
   end
 
-	self:CreatePostTags(userID, newPost)
+  newPost.viewers = {userID}
 
-	newPost.viewers = {userID}
-	print('creating new post')
-	return worker:CreatePost(newPost)
+
+	return newPost
+
+end
+
+
+function api:CreatePost(userID, postInfo)
+
+	local newPost, ok, err
+
+	ok, err = util.RateLimit('CreatePost:',userID, 1, 300)
+	if not ok then
+		return ok, err
+	end
+
+	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
+	if not newPost then
+    ngx.log(ngx.ERR, 'error creating post: ',err)
+		return newPost, 'error creating post'
+	end
+
+
+  ok, err = redisWrite:CreatePost(newPost)
+  if not ok then
+    return nil, 'error creating new post'
+  end
+
+  local info = {
+    postID = newPost.id
+  }
+
+  return redisWrite:QueueJob('createpost', info)
+
+	--self:CreatePostTags(userID, newPost)
+
 end
 
 

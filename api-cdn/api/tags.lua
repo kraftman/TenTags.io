@@ -3,6 +3,8 @@ local cache = require 'api.cache'
 local util = require 'api.util'
 local uuid = require 'lib.uuid'
 local worker = require 'api.worker'
+local redisWrite = require 'api.rediswrite'
+local userWrite  = require 'api.userwrite'
 local api = {}
 
 
@@ -42,7 +44,7 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  local existingTag, err = worker:CreateTag(tagInfo)
+  local existingTag, err = rediswrite:CreateTag(tagInfo)
 	-- tag might exist but not be in cache
 	if existingTag and existingTag ~= true then
 		print('tag exists')
@@ -78,7 +80,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 	CheckPostParent(post)
 
 	-- mark tag as voted on by user
-	local ok, err = worker:AddUserTagVotes(userID, postID, {tagName})
+	local ok, err = userWrite:AddUserTagVotes(userID, postID, {tagName})
 	if not ok then
 		return ok, err
 	end
@@ -113,7 +115,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 		return ok, err
 	end
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end

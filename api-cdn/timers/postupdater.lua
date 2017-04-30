@@ -13,6 +13,7 @@ local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
 local SEED = 1879873
 
 local SPECIAL_TAGS = {
@@ -41,6 +42,7 @@ function config.Run(_,self)
   self:AddCommentShortURL()
   self:UpdatePostFilters()
   self:CheckReposts()
+	self:CheckNewPosts()
 
 end
 
@@ -67,6 +69,74 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 	end
 
 	return score / count
+end
+
+function config:CreatePost(post)
+	post = from_json(post)
+	post = redisRead:GetPost(post.postID)
+	if not post then
+		return nil, 'couldnt load post'
+	end
+
+	local ok, err
+
+	if post.link then
+		ok, err = redisWrite:QueueJob('GeneratePostIcon', post.id)
+	  if not ok then
+	    return ok, err
+	  end
+	end
+
+  ok, err = redisWrite:QueueJob('UpdatePostFilters',post.id)
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = redisWrite:QueueJob('AddPostShortURL',post.id)
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = redisWrite:QueueJob('CheckReposts', post.id)
+  if not ok then
+    return ok, err
+  end
+
+	return true
+
+end
+
+function config:CheckNewPosts()
+	print('updating comment subscribers')
+
+  local jobName = 'createpost'
+  local lockName = 'L:CreateComment'
+  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
+    return
+  end
+
+  local jobs = self:ConvertToUnique(ok)
+  -- should be a unique list of their last action
+
+  for jobID,job in pairs(jobs) do
+    ok, err = redisWrite:GetLock(lockName..jobID,10)
+    if err then
+      ngx.log(ngx.ERR, 'unable to lock '..jobName..': ',err)
+    elseif ok ~= ngx.null then
+      ok, err = self:CreatPost(job)
+      if ok then
+        redisWrite:RemoveJob(jobName,job.json)
+        -- purge the comment from the cache
+        -- dont remove lock, just to limit updates a bit
+      else
+        ngx.log(ngx.ERR, 'unable to process '..jobName..': ', err)
+        redisWrite:RemLock(lockName..jobID)
+      end
+    end
+  end
+
 end
 
 function config:GetValidFilters(filter, post)
@@ -304,6 +374,8 @@ function config:AddCommentShortURL()
   ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
 
 end
+
+
 
 
 function config:UpdatePostFilters()

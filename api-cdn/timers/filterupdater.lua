@@ -179,13 +179,13 @@ function config:UpdateFilterPosts()
 
 	--update all the affected posts so they remove/add themselves to filters
 	for _,v in pairs(newPosts) do
-		ok, err = worker:QueueJob('UpdatePostFilters', v.id)
+		ok, err = redisWrite:QueueJob('UpdatePostFilters', v.id)
 		if not ok then
 			return ok, err
 		end
 	end
 	for _,v in pairs(oldPostIDs) do
-		ok, err = worker:QueueJob('UpdatePostFilters', v)
+		ok, err = redisWrite:QueueJob('UpdatePostFilters', v)
 		if not ok then
 			return ok, err
 		end

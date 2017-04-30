@@ -5,6 +5,9 @@ local worker = require 'api.worker'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
 local tagAPI = require 'api.tags'
+local redisWrite = require 'api.rediswrite'
+local userWrite = require 'api.userWrite'
+local POST_TITLE_LENGTH = 100
 
 
 local api = {}
@@ -30,6 +33,14 @@ end
 
 function api:CreateFilter(userID, filterInfo)
 
+	--[[
+	MIN
+	- RateLimit
+	- check they are allowed to create more filters
+	-
+
+	]]
+
 	local newFilter, err, ok
 
 	ok, err = util.RateLimit('CreateFilter:', userID, 1, 600)
@@ -45,7 +56,7 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	account.modCount = account.modCount + 1
-	worker:UpdateAccount(account)
+	userWrite:UpdateAccount(account)
 
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
@@ -78,13 +89,28 @@ function api:CreateFilter(userID, filterInfo)
     	tinsert(newFilter.bannedTagNames, tag.name)
 		end
   end
-	print(to_json(newFilter))
-  local ok,err = worker:CreateFilter(newFilter)
+
+	ok, err = redisWrite:CreateFilter(filterInfo)
+
+
 	if not ok then
 		return ok, err
 	end
+
+	-- auto add the owner to filter subscribers
+	redisWrite:IncrementFilterSubs(filterInfo.id, 1)
+  userWrite:SubscribeToFilter(userID, filterInfo.id)
+
 	-- cant combine, due to other uses of function
-	ok, err = worker:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
+	 ok, err = redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
+  if not ok then
+    return ok, err
+  end
+
+  -- filter HAS to be updated firstUser
+  -- or the job wont use the new tags
+
+  ok,err = redisWrite:QueueJob('UpdateFilterTags',newFilter.id)
 	if not ok then
 		return ok,err
 	end
@@ -160,7 +186,7 @@ function api:AddMod(userID, filterID, newModName)
 	end
 
 	account.modCount = account.modCount + 1
-	worker:UpdateAccount(account)
+	userWrite:UpdateAccount(account)
 
 	local modInfo = {
 		id = newModID,
@@ -169,7 +195,7 @@ function api:AddMod(userID, filterID, newModName)
 		up = 10,
 		down = 0,
 	}
-	return worker:AddMod(filterID, modInfo)
+	return redisWrite:AddMod(filterID, modInfo)
 
 end
 
@@ -197,8 +223,8 @@ function api:DelMod(userID, filterID, modID)
 	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
-	worker:UpdateAccount(account)
-	return worker:DelMod(filterID, modID)
+	userWrite:UpdateAccount(account)
+	return redisWrite:DelMod(filterID, modID)
 
 end
 
@@ -217,13 +243,13 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 	if userID ~= filter.ownerID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
-			return nil, 'you must be admin or filter owner to add mods'
+			return nil, 'you must be admin or filter owner to do that'
 		end
 	end
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	return worker:UpdateFilterTitle(filter)
+	return redisWrite:UpdateFilterTitle(filter)
 
 end
 
@@ -249,7 +275,7 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	return worker:UpdateFilterDescription(filter)
+	return redisWrite:UpdateFilterDescription(filter)
 
 end
 
@@ -270,6 +296,11 @@ end
 
 
 function api:FilterBanUser(userID, filterID, banInfo)
+
+	local ok, err = util.RateLimit('FilterBanUser:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
 
 	local filter, err = self:UserCanEditFilter(userID, filterID)
 	if not filter then
@@ -311,12 +342,12 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.name)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.name)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = worker:UpdatePostTags(post)
+	ok, err = rediswrite:UpdatePostTags(post)
 	return ok, err
 
 end
@@ -350,12 +381,12 @@ function api:FilterBanPost(userID, filterID, postID)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = worker:UpdatePostTags(post)
+	ok, err = redisWrite:UpdatePostTags(post)
 	return ok, err
 end
 
@@ -367,7 +398,7 @@ function api:FilterUnbanUser(filterID, userID)
 		return ok, err
 	end
 
-	return worker:FilterUnbanUser(filterID, userID)
+	return redisWrite:FilterUnbanUser(filterID, userID)
 end
 
 function api:FilterBanDomain(userID, filterID, banInfo)
@@ -378,7 +409,7 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 
 	banInfo.bannedAt = ngx.time()
 	banInfo.domainName = util:GetDomain(banInfo.domainName) or banInfo.domainName
-	return worker:FilterBanDomain(filterID, banInfo)
+	return redisWrite:FilterBanDomain(filterID, banInfo)
 end
 
 
@@ -431,7 +462,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 		return ok, err
 	end
 
-	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
+	ok, err = redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
 		return ok,err
 	end

@@ -79,7 +79,7 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.name)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.name)
 	if not ok then
 		return ok, err
 	end
@@ -118,7 +118,7 @@ function api:FilterBanPost(userID, filterID, postID)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
 	if not ok then
 		return ok, err
 	end
@@ -199,7 +199,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 		return ok, err
 	end
 
-	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
+	ok, err = redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
 		return ok,err
 	end
