@@ -19,6 +19,7 @@ function m.ViewSettings(request)
 
 end
 
+
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
 end

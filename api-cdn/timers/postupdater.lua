@@ -17,7 +17,6 @@ local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local SEED = 1879873
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -122,7 +121,7 @@ end
 
 
 function config:ProcessJob(jobName, handler)
-	print('processing: ',jobName)
+	
   local lockName = 'L:'..jobName
   local ok,err = redisRead:GetOldestJobs(jobName, 1000)
   if err then

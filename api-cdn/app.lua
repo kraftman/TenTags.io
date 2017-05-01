@@ -131,7 +131,6 @@ end
 local function LoadUser(self)
   if self.session.userID then
     self.userInfo = userAPI:GetUser(self.session.userID)
-    print('oaded user: ', self.session.userID)
   end
 end
 

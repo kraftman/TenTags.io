@@ -68,7 +68,6 @@ function api:CreateFilter(userID, filterInfo)
 	if type(filterInfo.bannedTagNames) ~= 'table' then
 		filterInfo.bannedTagNames = {}
 	end
-
 	table.insert(filterInfo.bannedTagNames, 'meta:filterban:'..newFilter.id)
 
   for _,tagName in pairs(filterInfo.bannedTagNames) do
@@ -78,7 +77,10 @@ function api:CreateFilter(userID, filterInfo)
 		end
   end
 
-	ok, err = redisWrite:CreateFilter(filterInfo)
+	print('new filter id: ',newFilter.id)
+	ok, err = redisWrite:CreateFilter(newFilter)
+
+		print('new filter id: ',newFilter.id)
 
 
 	if not ok then
@@ -86,8 +88,8 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	-- auto add the owner to filter subscribers
-	redisWrite:IncrementFilterSubs(filterInfo.id, 1)
-  userWrite:SubscribeToFilter(userID, filterInfo.id)
+	redisWrite:IncrementFilterSubs(newFilter.id, 1)
+  userWrite:SubscribeToFilter(userID, newFilter.id)
 
 	-- cant combine, due to other uses of function
 	 ok, err = redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
@@ -95,10 +97,10 @@ function api:CreateFilter(userID, filterInfo)
     return ok, err
   end
 
-  -- filter HAS to be updated firstUser
+  -- filter HAS to be updated first
   -- or the job wont use the new tags
 
-  ok,err = redisWrite:QueueJob('UpdateFilterTags',newFilter.id)
+  ok,err = redisWrite:QueueJob('UpdateFilterTags',{id = newFilter.id})
 	if not ok then
 		return ok,err
 	end

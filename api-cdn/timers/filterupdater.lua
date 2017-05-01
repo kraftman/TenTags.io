@@ -11,7 +11,7 @@ local redisWrite = require 'api.rediswrite'
 local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local SEED = 1
+local from_json = (require 'lapis.util').from_json
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -34,32 +34,62 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
 
-  self:UpdateFilterPosts()
+	self:ProcessJob('UpdateFilterPosts', 'UpdateFilterPosts')
 
 end
 
-function config:GetJob(jobName)
-  local filterID = redisRead:GetOldestJob(jobName)
-  if not filterID then
+
+
+function config:ConvertToUnique(jsonData)
+  -- this also removes duplicates, using the newest only
+  -- as they are already sorted old -> new by redis
+  local commentVotes = {}
+  local converted
+  for _,v in pairs(jsonData) do
+
+    converted = from_json(v)
+    converted.json = v
+		if not converted.id then
+			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
+		end
+    commentVotes[converted.id] = converted
+  end
+  return commentVotes
+end
+
+
+function config:ProcessJob(jobName, handler)
+
+  local lockName = 'L:'..jobName
+  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
+  if err then
+    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
     return
   end
 
-  local ok, err = redisWrite:DeleteJob(jobName,filterID)
+  local jobs = self:ConvertToUnique(ok)
 
-  if ok ~= 1 then
+  for jobID,job in pairs(jobs) do
+    ok, err = redisWrite:GetLock(lockName..jobID,10)
     if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
+      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
+    elseif ok ~= ngx.null then
+      -- the bit that does stuff
+      ok, err = self[handler](self,job)
+      if ok then
+        redisWrite:RemoveJob(jobName,job.json)
+        -- purge the comment from the cache
+        -- dont remove lock, just to limit updates a bit
+      else
+        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
+        redisWrite:RemLock(lockName..jobID)
+      end
     end
-    return
   end
 
-  local filter = redisRead:GetFilter(filterID)
-  if not filter then
-		print('couldnt load filter: ',filterID)
-    return
-  end
-  return filter
 end
+
+
 
 --DRY, needs combining with api:AverageTagScore
 local function AverageTagScore(filterrequiredTagNames,postTags)
@@ -88,7 +118,7 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 end
 
 function config:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
-
+	print(to_json(filter))
   local newPostsKey = filter.id..':tempPosts'
 	local oldPostsKey = 'filterposts:'..filter.id
 
@@ -152,19 +182,18 @@ function config:GetRelatedFilters(filter)
 end
 
 
-function config:UpdateFilterPosts()
+function config:UpdateFilterPosts(data)
 
-  local filter = self:GetJob('UpdateFilterTags')
-
-  if not filter then
-    return
-  end
-	print('got job ',filter.id)
+	local filter = redisRead:GetFilterByID(data.id)
+	if not filter then
+		ngx.log(ngx.ERR, 'couldnt load filter id: ', data.id)
+		return true
+	end
 
 
 	local ok, err
 	local requiredTagNames = filter.requiredTagNames
-	print(to_json(requiredTagNames))
+
 	local bannedTagNames = filter.bannedTagNames
 
 	local newPosts, oldPostIDs = self:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
@@ -175,8 +204,8 @@ function config:UpdateFilterPosts()
 	end
 
 	--update all the affected posts so they remove/add themselves to filters
-	for _,v in pairs(newPosts) do
-		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = v.id})
+	for _,post in pairs(newPosts) do
+		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 		if not ok then
 			return ok, err
 		end

@@ -80,7 +80,7 @@ function m.CreateFilter(request)
     print('no user id')
     return { render = 'pleaselogin' }
   end
-  request.tags = filterAPI:GetAllTags()
+  request.tags = tagAPI:GetAllTags()
   return {render = 'filter.create'}
 end
 
