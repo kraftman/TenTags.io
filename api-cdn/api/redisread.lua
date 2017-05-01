@@ -74,8 +74,25 @@ function read:GetOldestJob(queueName)
   end
 end
 
+
+function read:GetOldestJobs(jobName, size)
+  jobName = 'queue:'..jobName
+
+  local red = util:GetRedisReadConnection()
+
+  local ok, err = red:zrange(jobName, 0, size)
+  util:SetKeepalive(red)
+
+  if (not ok) or ok == ngx.null then
+    return nil, err
+  else
+    return ok, err
+  end
+end
+
 function read:ConvertShortURL(shortURL)
   local red = util:GetRedisReadConnection()
+  print(to_json(shortURL))
   local ok, err = red:get('shortURL:'..shortURL)
   if err then
     ngx.log(ngx.ERR, 'unable to get short url: ',err)

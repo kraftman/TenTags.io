@@ -17,7 +17,6 @@ services:
     environment:
       - DISABLE_CACHE=true
       - DISABLE_RATELIMIT=true
-      - UNLIMITED_VOTING=true
       - EMAIL_CREDENTIALS=831q&0AP3Y9w
 
   imghost:

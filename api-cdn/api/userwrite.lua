@@ -69,29 +69,23 @@ function userwrite:AddUserAlert(createdAt,userID, alert)
   local red = util:GetUserWriteConnection()
   print('adding user alert for ',userID,to_json(alert))
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to create alert: ',err)
-  end
+
   util:SetKeepalive(red)
-  return ok
+  return ok, err
 end
 
 function userwrite:UpdateLastUserAlertCheck(userID, checkedAt)
   local red = util:GetUserWriteConnection()
   local ok, err = red:hmset('user:'..userID,'alertCheck',checkedAt)
   util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to set user alert check:',err)
-  end
-  return ok
+
+  return ok, err
 end
 
 function userwrite:AddComment(commentInfo)
   local red = util:GetUserWriteConnection()
   local ok, err = red:zadd('userComments:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to add comment: ', err)
-  end
+  return ok, err
 end
 
 function userwrite:CreateAccount(account)

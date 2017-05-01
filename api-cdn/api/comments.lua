@@ -2,59 +2,35 @@
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
 local util = require 'api.util'
-local worker = require 'api.worker'
+local commentWrite = require 'api.commentwrite'
 
-local userAPI = require 'api.users'
 local api = {}
-local tinsert = table.insert
 
 local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
+local COMMENT_LENGTH_LIMIT = 2000
 
 
 function api:VoteComment(userID, postID, commentID,direction)
-	-- do we ever need permissions for this??
 
-	-- check if the user has already voted
-	-- if theyve voted down then remove down entry,
-	-- check if they can vote more than once
-	-- increment comment votes
-	-- recalculate score
-	-- add to user voted in cache
-	-- add to user voted in redis
-	-- for now dont allow unvoting
-
-	--if self:UserHasVotedComment(userID, commentID) then
-		--return if they cant multivote
-	--end
-
-
-	local comment = api:GetComment(postID, commentID)
-	if direction == 'up' then
-		comment.up = comment.up + 1
-	elseif direction == 'down' then
-		comment.down = comment.down + 1
-	end
-
-	comment.score = self:GetScore(comment.up,comment.down)
-
-	local ok, err = worker:AddUserCommentVotes(userID, commentID)
+	local ok, err = util.RateLimit('VoteComment:', userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 
-	if direction == 'up' then
-		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
-	else
-		ok, err = worker:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
-	end
-	if not ok then
-		return ok, err
+	if self:UserHasVotedComment(userID, commentID) then
+		return nil, 'cannot vote more than once!'
 	end
 
-	return worker:UpdateComment(comment)
+	local commentVote = {
+		userID = userID,
+		postID = postID,
+		commentID = commentID,
+		direction = direction,
+		id = userID..':'..commentID
+	}
 
-	-- also add to user voted comments?
+	return commentWrite:QueueJob('commentvote', commentVote)
 
 end
 
@@ -91,19 +67,22 @@ function api:SubscribeComment(userID, postID, commentID)
 		return ok, err
 	end
 
-  local comment = cache:GetComment(postID, commentID)
-  -- check they dont exist
-  for _, v in pairs(comment.viewers) do
-    if v == userID then
-      return
-    end
-  end
-  tinsert(comment.viewers, userID)
-  worker:UpdateComment(comment)
+	local commentSub = {
+		userID = userID,
+		postID = postID,
+		commentID = commentID,
+		action = 'sub',
+		id = userID..':'..commentID
+	}
+
+	return commentWrite:QueueJob('commentsub', commentSub)
+
 end
 
 
 function api:EditComment(userID, userComment)
+	-- not moving this to backend for now
+	-- fairly low cost and users want immediate updates
 	local ok, err = util.RateLimit('EditComment:', userID, 4, 120)
 	if not ok then
 		return ok, err
@@ -125,76 +104,47 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
+
 	comment.text = util:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-	ok, err = worker:CreateComment(comment)
+  ok, err = commentWrite:CreateComment(comment)
+  if not ok then
+    return ok, err
+  end
 
-	return ok, err
-
-	-- dont change post comment count
+  return true
 
 end
 
 function api:CreateComment(userID, userComment)
-	-- check if they are who they say they are
 
-	local ok, err = util:RateLimit('CreateComment:', userID, 1, 30)
-	if not ok then
-		return ok, err
-	end
-
-	local newComment = api:ConvertUserCommentToComment(userID, userComment)
-
-
-  local filters = {}
-	local parentPost = cache:GetPost(newComment.postID)
-	if not parentPost then
-		return nil, 'could not find parent post'
-	end
-
-
-  local postFilters = parentPost.filters
-
-  local userFilters = userAPI:GetUserFilters(newComment.createdBy)
-
-	-- get shared filters between user and post
-  for _,userFilter in pairs(userFilters) do
-    for _,postFilterID in pairs(postFilters) do
-      if userFilter.id == postFilterID then
-        tinsert(filters, userFilter)
-      end
-    end
-  end
-
-  newComment.filters = filters
-
-  ok, err = worker:CreateComment(newComment)
-	if not ok then
-		return ok, err
-	end
-
-  -- need to add alert to all parent comment viewers
-  if newComment.parentID == newComment.postID then
-    local post = cache:GetPost(newComment.postID)
-		if post then
-			for _,viewerID in pairs(post.viewers) do
-				worker:AddUserAlert(viewerID, 'postComment:'..newComment.postID..':'..newComment.id)
-			end
+		local ok, err = util:RateLimit('CreateComment:', userID, 1, 30)
+		if not ok then
+			return ok, err
 		end
-  else
-    local parentComment = self:GetComment(newComment.postID, newComment.parentID)
-    for _,viewerID in pairs(parentComment.viewers) do
-      worker:AddUserAlert(viewerID, 'postComment:'..newComment.postID..':'..newComment.id)
-    end
-  end
 
-	local post = cache:GetPost(newComment.postID)
+		local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
-	worker:UpdatePostField(newComment.postID, 'commentCount',post.commentCount+1)
+		local parentPost = cache:GetPost(newComment.postID)
+		if not parentPost then
+			return nil, 'could not find parent post'
+		end
 
+		ok, err = commentWrite:CreateComment(newComment)
+		if not ok then
+			ngx.log(ngx.ERR, 'unable to create comment: ', err)
+			return nil, 'error creating comment'
+		end
 
-	return true
+		local commentUpdate = {
+			postID = newComment.postID,
+			commentID = newComment.commentID,
+			userID = userID
+		}
+
+		-- queue the rest
+		return commentWrite:QueueJob('commentcreate', commentUpdate)
 
 end
 
@@ -242,7 +192,7 @@ end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	local ok, err = util.RateLimit('DeleteComment:', userID, 1, 60)
+	local ok, err = util.RateLimit('DeleteComment:', userID, 6, 60)
 	if not ok then
 		return ok, err
 	end
@@ -260,7 +210,7 @@ function api:DeleteComment(userID, postID, commentID)
 		return nil, 'error loading comment'
 	end
 	comment.deleted = 'true'
-	return worker:CreateComment(comment)
+	return commentWrite:UpdateComment(comment)
 
 end
 

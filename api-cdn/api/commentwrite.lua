@@ -51,6 +51,7 @@ function commentwrite:LoadScript(script)
   return ok
 end
 
+
 function commentwrite:CreateComment(commentInfo)
 
   local red = util:GetCommentWriteConnection()

@@ -1,8 +1,8 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
-local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
+local userWrite = require 'api.userwrite'
+local to_json = (require 'lapis.util').to_json
+local redisWrite = require 'api.rediswrite'
 
 local api = {}
 
@@ -13,6 +13,10 @@ function api:GetHash(values)
   local sha1 = resty_sha1:new()
 
   local ok, err = sha1:update(values)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to sha1: ',err)
+    return nil
+  end
 
   local digest = sha1:final()
 
@@ -41,10 +45,15 @@ end
 
 function api:SanitiseSession(session)
 
+  local id = self:GetHash(ngx.time()..session.email..session.ip)
+  if not id then
+    return nil
+  end
+
 	local newSession = {
 		ip = session.ip,
 		userAgent = session.userAgent,
-		id = self:GetHash(ngx.time()..session.email..session.ip),
+		id = id,
 		email = session.email:lower(),
 		createdAt = ngx.time(),
 		activated = false,
@@ -101,10 +110,12 @@ function api:RegisterAccount(session, confirmURL)
 		return false, 'Email provided is invalid'
 	end
 
-	session = to_json(session)
-	print(session)
-	ok, err = worker:RegisterAccount(session)
-	return ok, err
+	ok, err = redisWrite:QueueJob('registeraccount',session)
+  if not ok then
+    ngx.log(ngx.ERR, 'error processing registration: ',err)
+    return nil, 'error setting up account'
+  end
+	return ok
 end
 
 
@@ -128,11 +139,11 @@ function api:ConfirmLogin(userSession, key)
 
 
 	if accountSession.activated then
-		--return nil, 'invalid session'
+		return nil, 'invalid session'
 	end
 	if accountSession.validUntil < ngx.time() then
 		print('expired session')
-		--return nil, 'expired'
+		return nil, 'expired'
 	end
 
 	if accountSession.activationTime < ngx.time() then
@@ -145,7 +156,7 @@ function api:ConfirmLogin(userSession, key)
 	accountSession.activated = true
 	account.lastSeen = ngx.time()
 	account.active = true
-	worker:UpdateAccount(account)
+	userWrite:CreateAccount(account)
 
 	return account, accountSession.id
 
@@ -164,8 +175,9 @@ function api:KillSession(accountID, sessionID)
 	end
 
 	session.killed = true
-	local ok, err = worker:KillSession(account)
-	return ok, err
+  -- purge from cache
+  redisWrite:InvalidateKey('account', account.id)
+  return userWrite:CreateAccount(account)
 
 end
 

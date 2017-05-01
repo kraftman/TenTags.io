@@ -319,15 +319,25 @@ function write:RemoveInvalidations(cutOff)
   return ok, err
 end
 
-function write:QueueJob(queueName,value)
-  local realQName = 'queue:'..queueName
+
+function write:QueueJob(jobName, jobData)
+  jobName = 'queue:'..jobName
   local red = util:GetRedisWriteConnection()
-  --print(realQName, value)
-  local ok, err = red:zadd(realQName,'NX', ngx.time(), value)
+  jobData = to_json(jobData)
+  -- this will remove duplicates by default since its not using NX
+  print(jobName, jobData)
+  local ok, err = red:zadd(jobName, ngx.time(), jobData)
+
   util:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to queue job: ',err)
-  end
+
+  return ok, err
+end
+
+function write:RemoveJob(jobName, jobData)
+jobName = 'queue:'..jobName
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:zrem(jobName, jobData)
+  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -403,6 +413,13 @@ function write:GetLock(key, expires)
   if err then
     ngx.log(ngx.ERR, 'unable to setex: ',err)
   end
+  return ok, err
+end
+
+function write:RemLock(key)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:del(key)
+  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -659,6 +676,8 @@ function write:CreatePost(post)
   local hashedPost = {}
   hashedPost.viewers = {}
   hashedPost.filters = {}
+
+  print('postype: ',post.postType)
 
   for k,v in pairs(post) do
     if k == 'viewers' then

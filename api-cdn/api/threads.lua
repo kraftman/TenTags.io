@@ -2,7 +2,8 @@
 local cache = require 'api.cache'
 local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
+local redisWrite = require 'api.rediswrite'
+local userWrite = require 'api.userwrite'
 
 local api = {}
 
@@ -14,8 +15,6 @@ end
 function api:GetThreads(userID)
   return cache:GetThreads(userID)
 end
-
-
 
 
 -- just checks the sender is correct
@@ -34,9 +33,6 @@ function api:VerifyMessageSender(userID, messageInfo)
 	return true
 end
 
-
-
-
 function api:CreateMessageReply(userID, userMessage)
 	local newMessage, ok, err
 
@@ -46,7 +42,7 @@ function api:CreateMessageReply(userID, userMessage)
 		return newMessage, err
 	end
 
-  ok, err = worker:CreateMessage(userMessage)
+  ok, err = redisWrite:CreateMessage(userMessage)
 	if not ok then
 		return ok, err
 	end
@@ -54,7 +50,7 @@ function api:CreateMessageReply(userID, userMessage)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
-      worker:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
+      userWrite:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
 
@@ -96,7 +92,7 @@ function api:CreateThread(userID, messageInfo)
 		return ok, err
 	end
 
-	local ok, err = self:VerifyMessageSender(userID, messageInfo)
+	ok, err = self:VerifyMessageSender(userID, messageInfo)
 	if not ok then
 		return nil, err
 	end
@@ -133,17 +129,23 @@ function api:CreateThread(userID, messageInfo)
     threadID = thread.id
   }
 
-  ok, err = worker:CreateThread(thread)
+  ok, err = redisWrite:CreateThread(thread)
 	if not ok then
-		return ok, err
+    ngx.log(ngx.ERR, 'unable to create thread: ',err)
+    return nil, 'failed'
 	end
 
-  ok, err = worker:CreateMessage(msg)
+  ok, err = redisWrite:CreateMessage(msg)
 	if not ok then
-		return ok, err
+    ngx.log(ngx.ERR, 'unable to create message: ',err)
+    return nil, 'failed'
 	end
 
-  ok, err = worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
+  ok, err = userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add user alert: ', err )
+    return nil, 'failed'
+  end
 	return ok, err
 end
 
