@@ -30,7 +30,7 @@ end
 
 function worker:Run()
 
-  local ok, err = ngx.timer.at(0, self.OnServerStart, self)
+  local ok, err = ngx.timer.at(1, self.OnServerStart, self)
   if not ok then
     if not err:find('process exiting') then
       ngx.log(ngx.ERR, 'initialise initman timer failed: '..err)

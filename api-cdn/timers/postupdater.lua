@@ -17,6 +17,7 @@ local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
+local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -46,8 +47,31 @@ function config.Run(_,self)
 	self:ProcessJob('votepost', 'VotePost')
 	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
 	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
+	self:ProcessJob('ReIndexPost', 'ReIndexPost')
 	--self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
+end
+
+function config:ReIndexPost(data)
+	local post = redisRead:GetPost(data.id)
+	if not post then
+		return true
+	end
+
+	local indexable = {
+		title = post.title,
+		text = post.text,
+		createdBy = post.createdBy,
+		id = post.id,
+		shortURL = post.shortURL or nil
+	}
+	local ok, err = elastic:Index('post',indexable)
+	if not ok then
+		ngx.log(ngx.ERR, 'failed to index doc: ', err)
+		return nil, err
+	end
+
+	return true
 end
 
 
@@ -121,7 +145,7 @@ end
 
 
 function config:ProcessJob(jobName, handler)
-	
+
   local lockName = 'L:'..jobName
   local ok,err = redisRead:GetOldestJobs(jobName, 1000)
   if err then
@@ -143,7 +167,7 @@ function config:ProcessJob(jobName, handler)
         -- purge the comment from the cache
         -- dont remove lock, just to limit updates a bit
       else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
+        ngx.log(ngx.ERR, 'unable to process ',jobName,':', err)
         redisWrite:RemLock(lockName..jobID)
       end
     end
@@ -206,6 +230,12 @@ function config:CreatePost(post)
   if not ok then
     return ok, err
   end
+
+  ok, err = redisWrite:QueueJob('ReIndexPost', {id = post.id})
+  if not ok then
+    return ok, err
+  end
+
 
 	return true
 

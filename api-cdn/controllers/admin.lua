@@ -6,6 +6,10 @@ local m = {}
 local respond_to = (require 'lapis.application').respond_to
 
 local tinsert = table.insert
+local http = require 'lib.http'
+
+
+local httpc = http.new()
 
 function m.ViewSettings(request)
   if not request.account then
@@ -19,9 +23,32 @@ function m.ViewSettings(request)
 
 end
 
+local function SearchTitle(request)
+  local search = 'testing'
+  local path = "http://elasticsearch1:9200"..'/_search'
+  local res, err = httpc:request_uri(path, {
+        method = "GET",
+        body = to_json({
+          query = {
+            match = {
+              title = search
+            }
+          }
+        }),
+        headers = {
+          ["Content-Type"] = "application/json",
+        }
+      })
+  for k,v in pairs(from_json(res.body)) do
+    ngx.say(k, ' ' , to_json(v),'</br>')
+  end
+end
+
+
 
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
+  app:get('ele', '/ele', SearchTitle)
 end
 
 return m

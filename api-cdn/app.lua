@@ -187,6 +187,7 @@ require 'alerts':Register(app)
 require 'api':Register(app)
 require 'auto':Register(app)
 require 'admin':Register(app)
+require 'search':Register(app)
 
 
 -- TESTING

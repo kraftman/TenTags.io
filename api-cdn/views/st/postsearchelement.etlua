@@ -1,0 +1,8 @@
+
+<div class = 'panel panel-default'>
+  <a  href="<%= url_for('viewpost',{postID = result.shortURL or result.id}) -%>">
+     <h3><%= result.title %></h3>
+  </a>
+
+  <p><%- highlight or (result.text):sub(1, 200)..'...' %></p>
+</div>
