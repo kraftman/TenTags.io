@@ -3,7 +3,6 @@ local m = {}
 
 
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
 local tinsert = table.insert
 
 local filters = {

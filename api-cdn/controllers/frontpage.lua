@@ -1,5 +1,5 @@
 
-local api = require 'api.api'
+
 local userAPI = require 'api.users'
 
 local m = {}

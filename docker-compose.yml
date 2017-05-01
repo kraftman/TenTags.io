@@ -3,7 +3,7 @@ services:
   filtta:
     build: api-cdn/.
     ports:
-      - "8084:8080"
+      - "80:8080"
       - "8081:8081"
     links:
       - imghost
@@ -17,7 +17,6 @@ services:
     environment:
       - DISABLE_CACHE=true
       - DISABLE_RATELIMIT=true
-      - UNLIMITED_VOTING=true
       - EMAIL_CREDENTIALS=831q&0AP3Y9w
 
   imghost:

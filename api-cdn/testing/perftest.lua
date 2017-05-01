@@ -5,7 +5,6 @@
 
 --]]
 local tinsert, random = table.insert, math.random
-local api = require 'api.api'
 local redisWrite = require 'api.rediswrite'
 local lru = require 'api.lrucache'
 local cache = require 'api.cache'
