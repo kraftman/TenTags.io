@@ -41,16 +41,45 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
-  self:UpdatePostShortURL()
-  self:AddCommentShortURL()
-  self:UpdatePostFilters()
-  self:CheckReposts()
+
+  self:ProcessJob('CheckReposts', 'CheckReposts')
 	self:ProcessJob('createpost', 'CreatePost')
 	self:ProcessJob('votepost', 'VotePost')
+	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
+	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
+	--self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
 end
 
+
+function config:ConvertToUnique(jsonData)
+  -- this also removes duplicates, using the newest only
+  -- as they are already sorted old -> new by redis
+  local commentVotes = {}
+  local converted
+  for _,v in pairs(jsonData) do
+
+    converted = from_json(v)
+    converted.json = v
+		if not converted.id then
+			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
+		end
+    commentVotes[converted.id] = converted
+  end
+  return commentVotes
+end
+
+
 function config:VotePost(postVote)
+
+
+	  	--[[
+	  		when we vote down a post as a whole we are saying
+	  		'this post is not good enough to be under these filters'
+	  		or 'the tags this post has that match the filters i care about are
+	  		not good'
+
+	  	]]
 
 	local user = cache:GetUser(postVote.userID)
 	if userAPI:UserHasVotedPost(postVote.userID, postVote.postID) then
@@ -82,7 +111,7 @@ function config:VotePost(postVote)
 
 	redisWrite:UpdatePostTags(post)
 
-	local ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
+	local ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	userWrite:AddUserPostVotes(post.Vote.userID, postVote.postID)
@@ -93,6 +122,7 @@ end
 
 
 function config:ProcessJob(jobName, handler)
+	print('processing: ',jobName)
   local lockName = 'L:'..jobName
   local ok,err = redisRead:GetOldestJobs(jobName, 1000)
   if err then
@@ -110,7 +140,7 @@ function config:ProcessJob(jobName, handler)
       -- the bit that does stuff
       ok, err = self[handler](self,job)
       if ok then
-        commentWrite:RemoveJob(jobName,job.json)
+        redisWrite:RemoveJob(jobName,job.json)
         -- purge the comment from the cache
         -- dont remove lock, just to limit updates a bit
       else
@@ -149,32 +179,31 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 end
 
 function config:CreatePost(post)
-	post = from_json(post)
-	post = redisRead:GetPost(post.postID)
+	post = redisRead:GetPost(post.id)
 	if not post then
 		return nil, 'couldnt load post'
 	end
 
 	local ok, err
 
-	if post.link then
-		ok, err = redisWrite:QueueJob('GeneratePostIcon', post.id)
+	if post.link and post.link ~= '' then
+		ok, err = redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
 	  if not ok then
 	    return ok, err
 	  end
 	end
 
-  ok, err = redisWrite:QueueJob('UpdatePostFilters',post.id)
+  ok, err = redisWrite:QueueJob('UpdatePostFilters',{id = post.id})
   if not ok then
     return ok, err
   end
 
-  ok, err = redisWrite:QueueJob('AddPostShortURL',post.id)
+  ok, err = redisWrite:QueueJob('AddPostShortURL',{id = post.id})
   if not ok then
     return ok, err
   end
 
-  ok, err = redisWrite:QueueJob('CheckReposts', post.id)
+  ok, err = redisWrite:QueueJob('CheckReposts', {id = post.id})
   if not ok then
     return ok, err
   end
@@ -183,38 +212,6 @@ function config:CreatePost(post)
 
 end
 
-function config:CheckNewPosts()
-	print('updating comment subscribers')
-
-  local jobName = 'createpost'
-  local lockName = 'L:CreateComment'
-  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local jobs = self:ConvertToUnique(ok)
-  -- should be a unique list of their last action
-
-  for jobID,job in pairs(jobs) do
-    ok, err = redisWrite:GetLock(lockName..jobID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock '..jobName..': ',err)
-    elseif ok ~= ngx.null then
-      ok, err = self:CreatPost(job)
-      if ok then
-        redisWrite:RemoveJob(jobName,job.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process '..jobName..': ', err)
-        redisWrite:RemLock(lockName..jobID)
-      end
-    end
-  end
-
-end
 
 function config:GetValidFilters(filter, post)
 
@@ -326,31 +323,9 @@ function config:CalculatePostFilters(post)
   return chosenFilters
 end
 
-function config:GetJob(jobName)
-  local postID = redisRead:GetOldestJob(jobName)
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:DeleteJob(jobName,postID)
-
-  if ok ~= 1 then
-    if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
-    end
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-  if not post then
-    return
-  end
-  return post
-end
 
 function config:CreateShortURL(postID)
   local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
-  SEED = SEED + 1
 
   local newURL = ''
   for _ = 1, 7 do
@@ -362,65 +337,53 @@ function config:CreateShortURL(postID)
   return newURL
 end
 
-function config:UpdatePostShortURL()
+function config:AddPostShortURL(data)
+	local post = redisRead:GetPost(data.id)
+	if not post then
+		return true
+	end
 
-  local postID = redisRead:GetOldestJob('AddPostShortURL')
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:GetLock('UpdatePostShortURL:'..postID,10)
-  if ok == ngx.null then
-    return
-  end
+	local ok, err
 
   local shortURL
-  for i = 1, 5 do
-    shortURL = self:CreateShortURL(postID)
-    ok, err = redisWrite:SetNX('shortURL:'..shortURL, postID)
+  for i = 1, 6 do
+    shortURL = self:CreateShortURL(post.id)
+    ok, err = redisWrite:SetNX('shortURL:'..shortURL, post.id)
     if err then
-      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
-      return
+      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', post.id)
+      return nil
     end
 
     if ok ~= ngx.null then
       break
     end
 
-    if (i == 5) then
-      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', postID)
+    if (i == 6) then
+      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', post.id)
       return
     end
   end
 
   -- add short url to hash
   -- deleted job
-  ok, err = redisWrite:UpdatePostField(postID, 'shortURL', shortURL)
+  ok, err = redisWrite:UpdatePostField(post.id, 'shortURL', shortURL)
   if not ok then
     print('error updating post field: ',err)
-    return
+    return nil
   end
 
-  ok, err = redisWrite:DeleteJob('AddPostShortURL',postID)
+	return true
 
   --ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
 
 end
 
-function config:AddCommentShortURL()
+function config:AddCommentShortURL(data)
 
-  local commentPostPair = redisRead:GetOldestJob('AddCommentShortURL')
-  if not commentPostPair then
-    return
-  end
+	local commentPostPair = data.id
 
-  local ok, err = redisWrite:GetLock('AddCommentShortURL:'..commentPostPair,10)
-  if ok == ngx.null then
-    return
-  end
-
-  local shortURL
-  for i = 1, 5 do
+  local shortURL, ok, err
+  for i = 1, 6 do
     shortURL = self:CreateShortURL()
     ok, err = redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
     if err then
@@ -432,7 +395,7 @@ function config:AddCommentShortURL()
       break
     end
 
-    if (i == 5) then
+    if (i == 6) then
       ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', commentPostPair)
       return
     end
@@ -446,28 +409,23 @@ function config:AddCommentShortURL()
     return
   end
 
-  ok, err = redisWrite:DeleteJob('AddCommentShortURL',commentPostPair)
 
   ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
-
+	return true
 end
 
 
 
 
-function config:UpdatePostFilters()
-	--[[
-		since addfilters and updatefilters are the same, we can just add
-		all of the newfilters, even if they already exist
-	]]
-
-  local post = self:GetJob('UpdatePostFilters')
-  if not post then
-    return
-  end
+function config:UpdatePostFilters(data)
+	local post = redisRead:GetPost(data.id)
+	if not post then
+		ngx.log(ngx.ERR 'post not found: ', to_json(data))
+		return true
+	end
 
 	local newFilters = self:CalculatePostFilters(post)
-	--print(to_json(newFilters))
+	print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
 	for _,filterID in pairs(post.filters) do
@@ -520,40 +478,30 @@ function config:UpdatePostFilters()
 	if not ok then
 		print(err)
 	end
-	return
+	return true
 end
 
-function config:CheckReposts()
+function config:CheckReposts(postData)
 
-  --[[]]
+  local post = redisRead:GetPost(postData.id)
+	if not post then
+		return true
+	end
 
-  local postID = redisRead:GetOldestJob('CheckReposts')
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:GetLock('CheckReposts:'..postID,10)
-  if ok == ngx.null then
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-
-  local postLink = post.link
-  if not postLink then
-    return
+  if not post.link then
+    return true
   end
 
   local linkTag
   for _,tag in pairs(post.tags) do
-    if tag.name == 'meta:link:'..postLink:lower() then
+    if tag.name == 'meta:link:'..post.link:lower() then
       linkTag = tag
       break
     end
   end
   if not linkTag then
     print('cant find link tag')
-    return
+    return true
   end
 
   local posts, err = redisRead:GetTagPosts(linkTag.name)
@@ -562,12 +510,12 @@ function config:CheckReposts()
   end
   if not next(posts) then
     print('no posts found')
-    return
+    return true
   end
 
 
-  for k,postID in pairs(posts) do
-    posts[k] = redisRead:GetPost(postID)
+  for k,id in pairs(posts) do
+    posts[k] = redisRead:GetPost(id)
   end
 
 
@@ -578,7 +526,7 @@ function config:CheckReposts()
   --updating parent ID
   redisWrite:UpdatePostParentID(post)
 
-  ok, err = redisWrite:DeleteJob('CheckReposts',postID)
+	return true
 
 end
 

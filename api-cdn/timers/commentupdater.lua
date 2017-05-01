@@ -195,6 +195,11 @@ function config:CreateComment(commentInfo)
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
   end
 
+  ok, err = self:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  if not ok then
+    return ok, err
+  end
+
 
   local ok, err = self:UpdateFilters(post, comment)
   if not ok then

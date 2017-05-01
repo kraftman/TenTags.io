@@ -2,15 +2,13 @@
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
 local util = require 'api.util'
-local worker = require 'api.worker'
 local commentWrite = require 'api.commentwrite'
 
-local userAPI = require 'api.users'
 local api = {}
-local tinsert = table.insert
 
 local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
+local COMMENT_LENGTH_LIMIT = 2000
 
 
 function api:VoteComment(userID, postID, commentID,direction)

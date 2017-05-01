@@ -1,13 +1,12 @@
 
 local cache = require 'api.cache'
 local util = require 'api.util'
-local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
 local redisWrite = require 'api.rediswrite'
+local to_json = (require 'lapis.util').to_json
 local userWrite  = require 'api.userwrite'
 local api = {}
 local tinsert = table.insert
-
+local SOURCE_POST_THRESHOLD = 0.75
 
 
 function api:SearchTags(searchString)
@@ -15,10 +14,30 @@ function api:SearchTags(searchString)
 	return cache:SearchTags(searchString)
 end
 
-
-
 function api:GetAllTags()
   return cache:GetAllTags()
+end
+
+
+local function CheckPostParent(post)
+	local sourceTags = {}
+	for _, tag in pairs(post.tags) do
+		if tag.name:find('^meta:sourcePost:') then
+			tinsert(sourceTags, tag)
+		end
+	end
+
+	-- set a new parentID for the post if the source is over the threshold
+	table.sort(sourceTags, function(a,b) return a.score > b.score end)
+
+	if sourceTags[1] and sourceTags[1].score > SOURCE_POST_THRESHOLD then
+		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
+
+		if parentID and post.parentID ~= parentID then
+			post.parentID = parentID
+			redisWrite:UpdatePostParentID(post)
+		end
+	end
 end
 
 
@@ -45,13 +64,16 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  local existingTag, err = rediswrite:CreateTag(tagInfo)
+  local existingTag, err = redisWrite:CreateTag(tagInfo)
 	-- tag might exist but not be in cache
+	if err then
+		ngx.log(ngx.ERR, 'err creating tag: ', err)
+	end
 	if existingTag and existingTag ~= true then
 		print('tag exists')
 		return existingTag
 	end
-	print(to_json(tagInfo))
+
   return tagInfo
 end
 
@@ -116,7 +138,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 		return ok, err
 	end
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end

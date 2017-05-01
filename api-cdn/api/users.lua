@@ -3,14 +3,13 @@ local cache = require 'api.cache'
 local util = require 'api.util'
 local userWrite = require 'api.userwrite'
 local redisWrite = require 'api.rediswrite'
+local uuid = require 'lib.uuid'
 local api = {}
 local tinsert = table.insert
 
 
-
-
 function api:UserCanVoteTag(userID, postID, tagName)
-	if self:UserHasVotedTag(userID, postID, tagName) and (not UNLIMITED_VOTING) then
+	if self:UserHasVotedTag(userID, postID, tagName) then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'admin' then
 			return false
@@ -19,23 +18,7 @@ function api:UserCanVoteTag(userID, postID, tagName)
 	return true
 end
 
-
 function api:GetUserFrontPage(userID,filter,startAt, endAt)
-	-- can only get own
-	if not userID then
-		return nil, 'no userID'
-	end
-	startAt,endAt = tonumber(startAt), tonumber(endAt)
-	if not startAt or not endAt then
-		return nil, 'no range'
-	end
-	if startAt >= endAt then
-		return nil, 'start must be lower than end'
-	end
-	if (endAt - startAt) > 100 then
-		return nil, 'cannot requset range > 100'
-	end
-
 
   return cache:GetUserFrontPage(userID,filter,startAt, endAt)
 end
@@ -70,13 +53,18 @@ end
 
 
 function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
+
+	local ok, err = util.RateLimit('subscribefilter:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
 	if userID ~= subscriberID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin to change another users subscriptions'
 		end
 	end
-
 
   local filterIDs = cache:GetUserFilterIDs(userID)
   local found = nil
@@ -86,11 +74,10 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
     end
   end
   if not found then
-    -- no need to unsubscribe
     return
   end
 
-	local ok, err = redisWrite:IncrementFilterSubs(filterID, -1)
+	ok, err = redisWrite:IncrementFilterSubs(filterID, -1)
 	if not ok then
 		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
 	end
@@ -110,8 +97,13 @@ end
 
 function api:SubscribeToFilter(userID, userToSubID, filterID)
 
+
+	local ok, err = util.RateLimit('UpdateUser:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
   local filterIDs = cache:GetUserFilterIDs(userID)
-	print(to_json(filterIDs))
 
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
@@ -161,7 +153,7 @@ function api:CreateSubUser(accountID, username)
 
   local subUser = {
     id = uuid.generate(),
-    username = SanitiseHTML(username,20),
+    username = util:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
     parentID = accountID,
     enablePM = 1
@@ -179,11 +171,12 @@ function api:CreateSubUser(accountID, username)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
 	account.currentUserID = subUser.id
-	local ok, err = userWrite:UpdateAccount(account)
+	local ok, err = userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
-  local ok, err = userWrite:CreateSubUser(subUser)
+
+	ok, err = userWrite:CreateSubUser(subUser)
 	if ok then
 		return subUser
 	else
@@ -249,7 +242,7 @@ function api:SwitchUser(accountID, userID)
 	account.currentUserID = user.id
 	account.currentUsername = user.username
 
-	local ok, err = userWrite:UpdateAccount(account)
+	local ok, err = userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
@@ -312,15 +305,17 @@ end
 
 
 function api:GetUserSettings(userID)
-	local ok, err = util.RateLimit('GetUserSettings', 5, 1)
+	local ok, user, err
+
+	ok, err = util.RateLimit('GetUserSettings', 5, 1)
 	if not ok then
-		return nil, "you're doing that too much"
+		return nil, err
 	end
 	if not userID or userID:gsub(' ', '') == '' then
 		return nil, 'no userID given'
 	end
 
-	local user, err = cache:GetUser(userID)
+	user, err = cache:GetUser(userID)
 	return user, err
 
 end

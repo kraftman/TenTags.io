@@ -322,10 +322,12 @@ end
 
 function write:QueueJob(jobName, jobData)
   jobName = 'queue:'..jobName
-  local red = util:GetCommentWriteConnection()
+  local red = util:GetRedisWriteConnection()
   jobData = to_json(jobData)
   -- this will remove duplicates by default since its not using NX
+  print(jobName, jobData)
   local ok, err = red:zadd(jobName, ngx.time(), jobData)
+
   util:SetKeepalive(red)
 
   return ok, err
@@ -333,7 +335,7 @@ end
 
 function write:RemoveJob(jobName, jobData)
 jobName = 'queue:'..jobName
-  local red = util:GetCommentWriteConnection()
+  local red = util:GetRedisWriteConnection()
   local ok, err = red:zrem(jobName, jobData)
   util:SetKeepalive(red)
   return ok, err
@@ -674,6 +676,8 @@ function write:CreatePost(post)
   local hashedPost = {}
   hashedPost.viewers = {}
   hashedPost.filters = {}
+
+  print('postype: ',post.postType)
 
   for k,v in pairs(post) do
     if k == 'viewers' then

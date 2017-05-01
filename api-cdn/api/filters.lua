@@ -1,12 +1,11 @@
 
 local cache = require 'api.cache'
 local util = require 'api.util'
-local worker = require 'api.worker'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
 local tagAPI = require 'api.tags'
 local redisWrite = require 'api.rediswrite'
-local userWrite = require 'api.userWrite'
+local userWrite = require 'api.userwrite'
 local POST_TITLE_LENGTH = 100
 
 
@@ -17,7 +16,7 @@ local MAX_MOD_COUNT = 10
 
 function api:GetFilters(filterIDs)
 	local filters = {}
-	for k,v in pairs(filterIDs) do
+	for _,v in pairs(filterIDs) do
 		table.insert(filters, cache:GetFilterByID(v))
 	end
 	return filters
@@ -28,18 +27,7 @@ function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)
 end
 
-
-
-
 function api:CreateFilter(userID, filterInfo)
-
-	--[[
-	MIN
-	- RateLimit
-	- check they are allowed to create more filters
-	-
-
-	]]
 
 	local newFilter, err, ok
 
@@ -52,15 +40,15 @@ function api:CreateFilter(userID, filterInfo)
 	local account = cache:GetAccount(user.parentID)
 
 	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
-		--return nil, 'you cant mod any more subs!'
+		return nil, 'you cant mod any more subs!'
 	end
 
 	account.modCount = account.modCount + 1
-	userWrite:UpdateAccount(account)
+	userWrite:CreateAccount(account)
 
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
-	print(to_json(newFilter))
+
 	if not newFilter then
 		return newFilter, err
 	end
@@ -186,7 +174,7 @@ function api:AddMod(userID, filterID, newModName)
 	end
 
 	account.modCount = account.modCount + 1
-	userWrite:UpdateAccount(account)
+	userWrite:CreateAccount(account)
 
 	local modInfo = {
 		id = newModID,
@@ -223,7 +211,7 @@ function api:DelMod(userID, filterID, modID)
 	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
-	userWrite:UpdateAccount(account)
+	userWrite:CreateAccount(account)
 	return redisWrite:DelMod(filterID, modID)
 
 end
@@ -290,19 +278,23 @@ function api:SearchFilters(userID, searchString)
 	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
-	local ok, err = cache:SearchFilters(searchString)
-	return ok,err
+	ok, err = cache:SearchFilters(searchString)
+	if not ok then
+		ngx.log(ngx.ERR, 'error loading filters: ', err)
+		return nil, 'search failed'
+	end
+	return ok
 end
 
 
 function api:FilterBanUser(userID, filterID, banInfo)
-
-	local ok, err = util.RateLimit('FilterBanUser:',userID, 5, 10)
+	local ok, err, filter
+	ok, err = util.RateLimit('FilterBanUser:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 
-	local filter, err = self:UserCanEditFilter(userID, filterID)
+	filter, err = self:UserCanEditFilter(userID, filterID)
 	if not filter then
 		return filter, err
 	end
@@ -342,12 +334,12 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.name)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = postID})
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = rediswrite:UpdatePostTags(post)
+	ok, err = redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end
@@ -381,7 +373,7 @@ function api:FilterBanPost(userID, filterID, postID)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', post.id)
+	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end

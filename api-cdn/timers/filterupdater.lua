@@ -8,13 +8,10 @@ config.cjson = require 'cjson'
 
 local redisRead = require 'api.redisread'
 local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
 local cache = require 'api.cache'
-local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
 local SEED = 1
-local worker = require 'api.worker'
 
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
@@ -179,13 +176,13 @@ function config:UpdateFilterPosts()
 
 	--update all the affected posts so they remove/add themselves to filters
 	for _,v in pairs(newPosts) do
-		ok, err = redisWrite:QueueJob('UpdatePostFilters', v.id)
+		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = v.id})
 		if not ok then
 			return ok, err
 		end
 	end
-	for _,v in pairs(oldPostIDs) do
-		ok, err = redisWrite:QueueJob('UpdatePostFilters', v)
+	for _,postID in pairs(oldPostIDs) do
+		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = postID})
 		if not ok then
 			return ok, err
 		end
