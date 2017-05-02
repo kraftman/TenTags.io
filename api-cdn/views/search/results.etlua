@@ -1,0 +1,7 @@
+
+
+<div class = 'contents'>
+  <% for _,result in pairs(results) do %>
+      <% render("views.st.postsearchelement",{result = result['_source'], highlight = result.highlight and result.highlight.text[1]}) %>
+  <% end %>
+</div>
