@@ -398,6 +398,16 @@ function write:SetNX(key,value)
   return ok, err
 end
 
+
+function write:SetShortURL(shortURL, id)
+  local shortURL = 'su:'..shortURL
+  local key, field = util:SplitShortURL(shortURL)
+  local red = util:GetRedisWriteConnection()
+  local ok, err = red:hset(key, field, id)
+  util:SetKeepalive(red)
+  return ok, err
+end
+
 function write:DeleteJob(queueName, jobKey)
   local realQName = 'queue:'..queueName
   local red = util:GetRedisWriteConnection()
@@ -693,7 +703,7 @@ function write:LogBacklogStats(jobName, time, value, duration)
   end
   ok, err = red:zremrangebyrank(jobName, 0, -20000)
   return ok, err
-  return ok, err
+
 end
 
 function write:CreatePost(post)

@@ -383,7 +383,7 @@ function config:AddPostShortURL(data)
   local shortURL
   for i = 1, 6 do
     shortURL = self:CreateShortURL(post.id)
-    ok, err = redisWrite:SetNX('shortURL:'..shortURL, post.id)
+    ok, err = redisWrite:SetShortURL(shortURL, post.id)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', post.id)
       return nil
