@@ -24,6 +24,11 @@ function util:GetLock(key, lockTime)
 end
 
 
+function util:SplitShortURL(shortURL)
+  return shortURL:sub(1,5),shortURL:sub(6,-1)
+end
+
+
 function util:GetScore(up,down)
 	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
 	--http://www.evanmiller.org/bayesian-average-ratings.html

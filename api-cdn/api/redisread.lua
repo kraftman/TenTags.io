@@ -118,8 +118,9 @@ end
 
 function read:ConvertShortURL(shortURL)
   local red = util:GetRedisReadConnection()
-  print(to_json(shortURL))
-  local ok, err = red:get('shortURL:'..shortURL)
+  shortURL = 'su:'..shortURL
+  local key, field = util:SplitShortURL(shortURL)
+  local ok, err = red:hget(key,field)
   if err then
     ngx.log(ngx.ERR, 'unable to get short url: ',err)
   end
