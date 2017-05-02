@@ -74,6 +74,29 @@ function read:GetOldestJob(queueName)
   end
 end
 
+function read:GetQueueSize(jobName)
+  jobName = 'queue:'..jobName
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zcard(jobName)
+  util:SetKeepalive(red)
+  if not ok then
+    return ok, err
+  end
+
+  return ok
+
+end
+
+
+function read:GetBacklogStats(jobName,startAt, endAt)
+  jobName = 'backlog:'..jobName
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zrangebyscore(jobName, startAt, endAt)
+  print(to_json(ok), err)
+  util:SetKeepalive(red)
+  return ok, err
+end
+
 
 function read:GetOldestJobs(jobName, size)
   jobName = 'queue:'..jobName
@@ -88,6 +111,14 @@ function read:GetOldestJobs(jobName, size)
   else
     return ok, err
   end
+end
+
+function read:LogBacklogStats(jobName, time, value)
+  jobName = 'backlog:'..jobName
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zadd(jobName, 'NX', time, value)
+  util:SetKeepalive(red)
+  return ok, err
 end
 
 function read:ConvertShortURL(shortURL)

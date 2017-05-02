@@ -1,0 +1,9 @@
+
+
+this
+
+<div class = 'contents'>
+  <% for _,stat in pairs(stats) do %>
+      <%= stat %></br>
+  <% end %>
+</div>

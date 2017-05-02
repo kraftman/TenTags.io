@@ -7,6 +7,7 @@ local respond_to = (require 'lapis.application').respond_to
 
 local tinsert = table.insert
 local http = require 'lib.http'
+local adminAPI = require 'api.admin'
 
 
 local httpc = http.new()
@@ -45,10 +46,21 @@ local function SearchTitle(request)
 end
 
 
+local function Stat(request)
+  local ok, err = adminAPI:GetBacklogStats('createpost')
+  if not ok then
+    return 'error: ',err
+  end
+
+  request.stats = ok
+
+  return {render = 'stats.view'}
+end
 
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
   app:get('ele', '/ele', SearchTitle)
+  app:get('stat', '/admin/stats', Stat)
 end
 
 return m
