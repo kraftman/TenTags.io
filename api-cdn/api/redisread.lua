@@ -3,6 +3,7 @@
 local redis = require "resty.redis"
 local tinsert = table.insert
 local from_json = (require 'lapis.util').from_json
+local to_json = (require 'lapis.util').to_json
 local util = require 'util'
 
 local read = {}
@@ -74,6 +75,30 @@ function read:GetOldestJob(queueName)
   end
 end
 
+function read:GetQueueSize(jobName)
+  jobName = 'queue:'..jobName
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zcard(jobName)
+  util:SetKeepalive(red)
+  if not ok then
+    return ok, err
+  end
+
+  return ok
+
+end
+
+
+function read:GetBacklogStats(jobName,startAt, endAt)
+  jobName = 'backlog:'..jobName
+  local red = util:GetRedisReadConnection()
+  print('zrangebyscore ',jobName, ' ', startAt, ' ', endAt)
+  local ok, err = red:zrangebyscore(jobName, startAt, endAt)
+
+  util:SetKeepalive(red)
+  return ok, err
+end
+
 
 function read:GetOldestJobs(jobName, size)
   jobName = 'queue:'..jobName
@@ -89,6 +114,7 @@ function read:GetOldestJobs(jobName, size)
     return ok, err
   end
 end
+
 
 function read:ConvertShortURL(shortURL)
   local red = util:GetRedisReadConnection()

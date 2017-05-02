@@ -671,13 +671,36 @@ function write:UpdateFilterTitle(filter)
   end
 end
 
+
+function write:LogBacklogStats(jobName, time, value, duration)
+  jobName = 'backlog:'..jobName
+
+  local red = util:GetRedisReadConnection()
+  local ok, err = red:zrangebyscore(jobName, time, time)
+  if not ok then
+    util:SetKeepalive(red)
+    return nil, err
+  end
+  if (ok ~= ngx.null) and (next(ok) ~= nil) then
+    util:SetKeepalive(red)
+    return nil,' already exists'
+  end
+
+  ok, err = red:zadd(jobName, time, value)
+  if not ok then
+    util:SetKeepalive(red)
+    return ok, err
+  end
+  ok, err = red:zremrangebyrank(jobName, 0, -20000)
+  return ok, err
+  return ok, err
+end
+
 function write:CreatePost(post)
 
   local hashedPost = {}
   hashedPost.viewers = {}
   hashedPost.filters = {}
-
-  print('postype: ',post.postType)
 
   for k,v in pairs(post) do
     if k == 'viewers' then

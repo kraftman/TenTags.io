@@ -19,13 +19,13 @@ function M:Index(indexType, data)
   if not res then
     return nil, err
   end
-  print(res.status)
+  --print(res.status)
   if err then
     return nil, err
   end
 
   if res.status > 300 then
-    print(res.status)
+    --print(res.status)
     return nil, res.body
   end
 
