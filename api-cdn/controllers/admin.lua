@@ -47,11 +47,14 @@ end
 
 
 local function Stat(request)
-  local ok, err = adminAPI:GetBacklogStats('createpost')
+  local startAt = ngx.time() - 100000
+  local endAt = ngx.time()
+
+  local ok, err = adminAPI:GetBacklogStats('CreatePost:30', startAt, endAt)
   if not ok then
     return 'error: ',err
   end
-
+  print('thiss ',#ok)
   request.stats = ok
 
   return {render = 'stats.view'}

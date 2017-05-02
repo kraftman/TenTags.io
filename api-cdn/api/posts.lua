@@ -394,7 +394,7 @@ function api:CreatePost(userID, postInfo)
     id = newPost.id
   }
 
-  ok, err = redisWrite:QueueJob('createpost', info)
+  ok, err = redisWrite:QueueJob('CreatePost', info)
   if not ok then
     ngx.log(ngx.ERR, 'couldnt queue createpost: ', err)
     return nil, 'error processing post'

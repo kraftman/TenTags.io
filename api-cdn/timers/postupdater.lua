@@ -42,12 +42,12 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
 
-  self:ProcessJob('CheckReposts', 'CheckReposts')
-	self:ProcessJob('createpost', 'CreatePost')
-	self:ProcessJob('votepost', 'VotePost')
-	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
-	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
-	self:ProcessJob('ReIndexPost', 'ReIndexPost')
+  self:ProcessJob('CheckReposts', 'CheckReposts', 10)
+	self:ProcessJob('CreatePost', 'CreatePost', 10)
+	self:ProcessJob('votepost', 'VotePost',10)
+	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters',10)
+	self:ProcessJob('AddPostShortURL', 'AddPostShortURL',10)
+	self:ProcessJob('ReIndexPost', 'ReIndexPost',10)
 	--self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
 end
@@ -144,7 +144,7 @@ function config:VotePost(postVote)
 end
 
 
-function config:ProcessJob(jobName, handler)
+function config:ProcessJob(jobName, handler,limit)
 
   local lockName = 'L:'..jobName
   local ok,err = redisRead:GetOldestJobs(jobName, 1000)
@@ -155,11 +155,17 @@ function config:ProcessJob(jobName, handler)
 
   local jobs = self:ConvertToUnique(ok)
 
+	local count = 0
   for jobID,job in pairs(jobs) do
+
     ok, err = redisWrite:GetLock(lockName..jobID,10)
     if err then
       ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
     elseif ok ~= ngx.null then
+			count = count + 1
+			if count > limit then
+				return
+			end
       -- the bit that does stuff
       ok, err = self[handler](self,job)
       if ok then
@@ -290,7 +296,7 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
-		print(to_json(tag))
+		--print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
@@ -454,7 +460,6 @@ function config:UpdatePostFilters(data)
 	end
 
 	local newFilters = self:CalculatePostFilters(post)
-	print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
 	for _,filterID in pairs(post.filters) do
