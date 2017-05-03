@@ -12,8 +12,15 @@ function api:GetThread(threadID)
 end
 
 
-function api:GetThreads(userID)
-  return cache:GetThreads(userID)
+function api:GetThreads(userID, startAt, range)
+  startAt = startAt or 0
+  range = range or 10
+	local ok, err = util.RateLimit('GetThreads:', userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
+
+  return cache:GetThreads(userID, startAt, range)
 end
 
 

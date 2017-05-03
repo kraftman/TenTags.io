@@ -44,8 +44,8 @@ function cache:GetThread(threadID)
   return redisread:GetThreadInfo(threadID)
 end
 
-function cache:GetThreads(userID)
-  local threadIDs = redisread:GetUserThreads(userID)
+function cache:GetThreads(userID, startAt, range)
+  local threadIDs = redisread:GetUserThreads(userID, startAt, range)
   local threads = redisread:GetThreadInfos(threadIDs)
 
   return threads

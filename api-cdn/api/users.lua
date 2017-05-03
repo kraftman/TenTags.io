@@ -126,16 +126,6 @@ end
 
 
 
-function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = util:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
-	-- can only edit their own
-  return userWrite:UpdateLastUserAlertCheck(userID)
-end
-
-
 
 function api:GetUser(userID)
 	-- can only get own for now
@@ -224,11 +214,25 @@ end
 
 
 function api:GetUserAlerts(userID)
+	local ok, err = util:RateLimit('GetUserAlerts:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
 	-- can only get their own
   local alerts = cache:GetUserAlerts(userID)
 
   return alerts
 end
+
+function api:UpdateLastUserAlertCheck(userID)
+	local ok, err = util:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
+	-- can only edit their own
+  return userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+end
+
 
 
 function api:SwitchUser(accountID, userID)

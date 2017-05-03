@@ -237,9 +237,9 @@ function read:GetFiltersBySubs(startAt,endAt)
   end
 end
 
-function read:GetUserThreads(userID)
+function read:GetUserThreads(userID, startAt, range)
   local red = util:GetRedisReadConnection()
-  local ok, err = red:zrange('UserThreads:'..userID,0,10)
+  local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
     return {}
