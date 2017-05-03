@@ -1,3 +1,4 @@
+
 --[[
 caching the most with the leas
 LRU great for complex objects (tables) but expensive
@@ -205,11 +206,11 @@ function cache:GetUserComments(userID)
   if not postIDcommentIDs then
     return {}
   end
-  local commentInfo = commentRead:GetUserComments(postIDcommentIDs)
-  for k,v in pairs(commentInfo) do
-    commentInfo[k] = from_json(v)
+  local comments = commentRead:GetUserComments(postIDcommentIDs)
+  for k,v in pairs(comments) do
+    comments[k] = from_json(v)
   end
-  return commentInfo
+  return comments
 end
 
 function cache:AddChildren(parentID,flat)

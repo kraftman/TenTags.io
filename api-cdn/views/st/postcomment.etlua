@@ -1,7 +1,7 @@
 
 <div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
   <% if child then %>
-    <div class="commentBody <% for _,filter in pairs(child.filters) do %> filter_<%= filter.title -%><% end %>" >
+    <div class="commentBody <% for _,filter in pairs(child.filters or {}) do %> filter_<%= filter.title -%><% end %>" >
       <div class="commentTitle" >
         <a href='#' class='comment-collapse' >-</a>
 
@@ -36,11 +36,11 @@
         <% if child.deleted then %>
           <p>[deleted]</p>
         <% else %>
-          <p class="comment-text <% for _,filter in pairs(child.filters) do %><%= filter.id -%> <% end %> "><%= child.text -%></p>
+          <p class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> "><%= child.text -%></p>
         <% end %>
 
         filters:
-        <% for _,filter in pairs(child.filters) do print(filter.title)%>
+        <% for _,filter in pairs(child.filters or {}) do print(filter.title)%>
           <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
         <% end %>
           up: <%= child.up -%>
@@ -49,7 +49,7 @@
           date: <%= child.createdAt -%>
         <% end %>
 
-        <% for _,child in pairs(comments[key].children) do local depth = depth and depth+1 or 1 print(depth) %>
+        <% for _,child in pairs(comments[key].children or {}) do local depth = depth and depth+1 or 1 print(depth) %>
           <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
         <% end %>
       </div>

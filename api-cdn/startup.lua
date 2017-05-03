@@ -25,6 +25,7 @@ function worker:New()
   w.registerUser = (require 'timers.registeruser'):New(w.util)
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)
   w.statcollector = (require 'timers.statcollector'):New(w.util)
+  w.commentupdater = (require 'timers.commentupdater'):New(w.util)
 
   return w
 end
@@ -65,6 +66,7 @@ function worker.OnServerStart(_,self)
   self.registerUser.Run(_,self.registerUser)
   self.invalidateCache.Run(_,self.invalidateCache)
   self.statcollector.Run(_,self.statcollector)
+  self.commentupdater.Run(_,self.commentupdater)
 
   if not self.util:GetLock('l:ServerStart', 5) then
     return

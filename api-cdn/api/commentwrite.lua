@@ -56,7 +56,7 @@ function commentwrite:CreateComment(commentInfo)
 
   local red = util:GetCommentWriteConnection()
   local serialComment = to_json(commentInfo)
-  print('creating comment: ',commentInfo.postID,commentInfo.id)
+  
   local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
   util:SetKeepalive(red)
   if not ok then

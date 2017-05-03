@@ -37,9 +37,10 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
+  print('checking commments')
   self:ProcessJob('commentvote', 'ProcessCommentVote')
   self:ProcessJob('commentsub', 'ProcessCommentSub')
-  self:ProcessJob('createcomment', 'CreateComment')
+  self:ProcessJob('CreateComment', 'CreateComment')
 
 end
 
@@ -75,7 +76,7 @@ function config:ProcessJob(jobName, handler)
       -- the bit that does stuff
       ok, err = self[handler](self,job)
       if ok then
-        commentWrite:RemoveJob(jobName,job.json)
+        redisWrite:RemoveJob(jobName,job.json)
         -- purge the comment from the cache
         -- dont remove lock, just to limit updates a bit
       else
@@ -174,12 +175,12 @@ function config:AddAlerts(post, comment)
   -- need to add alert to all parent comment viewers
   if comment.parentID == comment.postID then
 		for _,viewerID in pairs(post.viewers) do
-			userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+			userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
-      userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+      userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
   end
 
@@ -188,20 +189,27 @@ function config:AddAlerts(post, comment)
 end
 
 function config:CreateComment(commentInfo)
-
+  print('creating comment')
+  local ok, err
   local comment = cache:GetComment(commentInfo.postID, commentInfo.commentID)
   local post = cache:GetPost(comment.postID)
   if not post then
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
   end
 
-  ok, err = self:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  ok, err = redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  if not ok then
+    return ok, err
+  end
+  print('adding comment to user')
+  ok, err = userWrite:AddComment(comment)
   if not ok then
     return ok, err
   end
 
 
-  local ok, err = self:UpdateFilters(post, comment)
+
+  ok, err = self:UpdateFilters(post, comment)
   if not ok then
     return ok, err
   else

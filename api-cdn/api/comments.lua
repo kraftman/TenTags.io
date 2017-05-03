@@ -3,6 +3,7 @@ local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
 local util = require 'api.util'
 local commentWrite = require 'api.commentwrite'
+local redisWrite = require 'api.rediswrite'
 
 local api = {}
 
@@ -138,13 +139,20 @@ function api:CreateComment(userID, userComment)
 		end
 
 		local commentUpdate = {
+			id = newComment.postID..':'..newComment.id,
 			postID = newComment.postID,
-			commentID = newComment.commentID,
+			commentID = newComment.id,
 			userID = userID
 		}
 
 		-- queue the rest
-		return commentWrite:QueueJob('commentcreate', commentUpdate)
+		ok, err = redisWrite:QueueJob('CreateComment', commentUpdate)
+		if not ok then
+			ngx.log(ngx.ERR, 'unable to queue comment create: ', err)
+			return nil, 'error creating comment'
+		end
+
+		return true
 
 end
 
