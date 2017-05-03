@@ -199,10 +199,10 @@ function cache:GetComment(postID, commentID)
   return commentRead:GetComment(postID,commentID)
 end
 
-function cache:GetUserComments(userID)
+function cache:GetUserComments(userID, sortBy, startAt, range)
   -- why is this split in two parts?
   -- why not just get all with hgetall
-  local postIDcommentIDs = userRead:GetUserComments(userID)
+  local postIDcommentIDs = userRead:GetUserComments(userID, sortBy, startAt, range)
   if not postIDcommentIDs then
     return {}
   end

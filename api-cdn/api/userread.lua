@@ -160,9 +160,9 @@ function userread:GetUserID(username)
 end
 
 
-function userread:GetUserComments(userID)
+function userread:GetUserComments(userID, sortBy,startAt, range)
   local red = util:GetUserReadConnection()
-  local ok, err = red:zrange('userComments:'..userID,0,-1)
+  local ok, err = red:zrange('userComments:'..sortBy..':'..userID, startAt, startAt+range)
   util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user comments, ',err)

@@ -180,7 +180,13 @@ end
 
 
 
-function api:GetUserComments(userID, targetUserID)
+function api:GetUserComments(userID, targetUserID, sortBy, startAt, range)
+	startAt = startAt or 0 -- 0 index for redis
+	range = range or 20
+	if not sortBy or not (sortBy == 'date' or sortBy == 'score') then
+		sortBy = 'date'
+	end
+
 	-- check if they allow it
 	local targetUser = cache:GetUser(targetUserID)
 	if not targetUser then
@@ -194,7 +200,7 @@ function api:GetUserComments(userID, targetUserID)
 		end
 	end
 
-  local comments = cache:GetUserComments(targetUserID)
+  local comments = cache:GetUserComments(targetUserID, sortBy,startAt, range)
   return comments
 end
 

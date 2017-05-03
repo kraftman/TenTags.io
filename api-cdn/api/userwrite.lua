@@ -84,7 +84,8 @@ end
 
 function userwrite:AddComment(commentInfo)
   local red = util:GetUserWriteConnection()
-  local ok, err = red:zadd('userComments:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
+  local ok, err = red:zadd('userComments:date:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
+  ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
   return ok, err
 end
 

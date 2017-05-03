@@ -20,8 +20,12 @@ end
 function m.ViewUser(request)
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
-  print(to_json(request.userInfo))
-  request.comments = commentAPI:GetUserComments(request.session.userID, request.userID)
+
+  local startAt = request.params.startAt or 0
+  local range = request.params.range or 20
+  range = math.min(range, 50)
+  local sortBy = 'date'
+  request.comments = commentAPI:GetUserComments(request.session.userID, request.userID, sortBy, startAt, range)
   for _,v in pairs(request.comments) do
     v.username = userAPI:GetUser(v.createdBy).username
   end

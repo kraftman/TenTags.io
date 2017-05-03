@@ -37,7 +37,7 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
-  print('checking commments')
+
   self:ProcessJob('commentvote', 'ProcessCommentVote')
   self:ProcessJob('commentsub', 'ProcessCommentSub')
   self:ProcessJob('CreateComment', 'CreateComment')
@@ -115,6 +115,11 @@ function config:ProcessCommentVote(commentVote)
 	if not ok then
 		return ok, err
 	end
+
+  ok, err = userWrite:AddComment(comment)
+  if not ok then
+    return ok, err
+  end
 
 	ok, err = commentWrite:CreateComment(comment)
   return ok, err
