@@ -18,7 +18,7 @@ local filterDict = ngx.shared.filters
 --local frontpages = ngx.shared.frontpages
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenDict = ngx.shared.usersessionseen
---local tags = ngx.shared.tags
+local searchResults = ngx.shared.searchresults
 local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -26,6 +26,8 @@ local redisread = require 'api.redisread'
 local userRead = require 'api.userread'
 local commentRead = require 'api.commentread'
 local lru = require 'api.lrucache'
+
+local elastic = require 'lib.elasticsearch'
 local tinsert = table.insert
 local userInfo = ngx.shared.userInfo
 local commentInfo = ngx.shared.comments
@@ -75,6 +77,31 @@ function cache:GetUser(userID)
 
 end
 
+function cache:SearchPost(queryString)
+  local results, ok, err
+  if not DISABLE_CACHE then
+    ok, err = searchResults:get()
+    if err then
+      ngx.log(ngx.ERR, 'unable to check searchResults shdict ', err)
+      return nil, err
+    end
+    if ok then
+      return from_json(ok)
+    end
+  end
+  results, err = elastic:SearchWholePostFuzzy(queryString)
+  if not results then
+    return nil, err
+  end
+  ok, err = searchResults:set(queryString, results)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to store search results: ', err)
+  end
+
+  return from_json(results)
+
+end
+
 function cache:PurgeKey(keyInfo)
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
@@ -93,26 +120,27 @@ function cache:GetCommentIDFromURL(commentURL)
 end
 
 function cache:GetAccount(accountID)
-    if not DISABLE_CACHE then
-      local ok, err = userInfo:get(accountID)
-      if err then
-        ngx.log(ngx.ERR, 'unable to get account: ',err)
-      end
-      if ok then
-        return from_json(ok)
-      end
-    end
-
-    local account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  local account, ok, err
+  if not DISABLE_CACHE then
+    ok, err = userInfo:get(accountID)
     if err then
-      return account, err
+      ngx.log(ngx.ERR, 'unable to get account: ',err)
     end
-    local ok, err = userInfo:set(accountID, to_json(account))
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to set account info: ',err)
+    if ok then
+      return from_json(ok)
     end
+  end
 
-    return account
+  account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  if err then
+    return account, err
+  end
+  ok, err = userInfo:set(accountID, to_json(account))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set account info: ',err)
+  end
+
+  return account
 end
 
 function cache:GetUserAlerts(userID)

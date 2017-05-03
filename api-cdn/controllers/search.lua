@@ -6,19 +6,18 @@ local m = {}
 local respond_to = (require 'lapis.application').respond_to
 
 local tinsert = table.insert
-local elastic = require 'lib.elasticsearch'
+local searchAPI = require 'api.search'
 
 
 function m.SearchPosts(request)
   local search = request.params.searchquery or ''
-  local results, err = elastic:SearchWholePostFuzzy(search)
-  if not results then
+  local ok, err = searchAPI:SearchPost(search)
+
+  if not ok then
     ngx.log(ngx.ERR, err)
     return {render = 'search.failed'}
   else
-    results = from_json(results)
-    request.results = results.hits.hits
-    print(to_json(results))
+    request.results = ok.hits.hits
     return {render = 'search.results'}
   end
 end
