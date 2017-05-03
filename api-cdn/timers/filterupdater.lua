@@ -6,16 +6,9 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
 local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
-
-local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
-}
 
 
 
@@ -76,18 +69,18 @@ function config:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
   local newPostsKey = filter.id..':tempPosts'
 	local oldPostsKey = 'filterposts:'..filter.id
 
-  local ok, err = redisWrite:CreateTempFilterPosts(newPostsKey, requiredTagNames, bannedTagNames)
+  local ok, err = self.redisWrite:CreateTempFilterPosts(newPostsKey, requiredTagNames, bannedTagNames)
   if not ok then
     return ok, err
   end
 
-  local oldPostIDs = redisWrite:GetSetDiff(oldPostsKey, newPostsKey)
+  local oldPostIDs = self.redisWrite:GetSetDiff(oldPostsKey, newPostsKey)
   --print('old posts:'..to_json(oldPostIDs))
-  local newPostIDs = redisWrite:GetSetDiff(newPostsKey, oldPostsKey)
+  local newPostIDs = self.redisWrite:GetSetDiff(newPostsKey, oldPostsKey)
   --print('new posts:'..to_json(newPostIDs))
 
   local newPosts = cache:GetPosts(newPostIDs)
-  redisWrite:DeleteKey(newPostsKey)
+  self.redisWrite:DeleteKey(newPostsKey)
   return newPosts, oldPostIDs
 
 end
@@ -138,7 +131,7 @@ end
 
 function config:UpdateFilterPosts(data)
 
-	local filter = redisRead:GetFilterByID(data.id)
+	local filter = self.redisRead:GetFilterByID(data.id)
 	if not filter then
 		ngx.log(ngx.ERR, 'couldnt load filter id: ', data.id)
 		return true
@@ -159,34 +152,34 @@ function config:UpdateFilterPosts(data)
 
 	--update all the affected posts so they remove/add themselves to filters
 	for _,post in pairs(newPosts) do
-		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+		ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 		if not ok then
 			return ok, err
 		end
 	end
 	for _,postID in pairs(oldPostIDs) do
-		ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = postID})
+		ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = postID})
 		if not ok then
 			return ok, err
 		end
 	end
 
-	ok , err = redisWrite:AddPostsToFilter(filter, newPosts)
+	ok , err = self.redisWrite:AddPostsToFilter(filter, newPosts)
 	if not ok then
 		print('error adding posts to filter: ',err)
 		return ok, err
 	end
 
-	ok, err = redisWrite:RemovePostsFromFilter(filter.id, oldPostIDs)
+	ok, err = self.redisWrite:RemovePostsFromFilter(filter.id, oldPostIDs)
 	if not ok then
 		print(ok, err)
 		return ok, err
 	end
 
 	local relatedFilters = self:GetRelatedFilters(filter)
-	ok, err = redisWrite:UpdateRelatedFilters(filter, relatedFilters)
+	ok, err = self.redisWrite:UpdateRelatedFilters(filter, relatedFilters)
 
-
+	return ok, err
 
 end
 

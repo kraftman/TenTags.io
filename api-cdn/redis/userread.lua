@@ -7,12 +7,10 @@ recieved messages
 
 ]]
 
-local redis = require "resty.redis"
 local checkKey = require 'redisscripts.checkkey'
-local userread = {}
-local util = require 'util'
-local from_json = (require 'lapis.util').from_json
-local to_json = (require 'lapis.util').to_json
+
+local base = require 'redis.base'
+local userread = setmetatable({}, base)
 
 
 
@@ -25,7 +23,7 @@ function userread:ConvertListToTable(list)
 end
 
 function userread:GetUserAlerts(userID, startAt, endAt)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:zrangebyscore('UserAlerts:'..userID,startAt,endAt)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user alerts: ',err)
@@ -38,9 +36,9 @@ function userread:GetUserAlerts(userID, startAt, endAt)
 end
 
 function userread:GetUserCommentVotes(userID)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:smembers('userCommentVotes:'..userID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user comment votes:',err)
   end
@@ -52,7 +50,7 @@ function userread:GetUserCommentVotes(userID)
 end
 
 function userread:GetAccount(accountID)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:hgetall('account:'..accountID)
   if not ok or ok == ngx.null then
     return nil
@@ -70,7 +68,7 @@ function userread:GetAccount(accountID)
       account[k] = nil
       account.userCount = account.userCount +1
     elseif k:find('^session:') then
-      local session = from_json(v)
+      local session = self:from_json(v)
       account.sessions[session.id] = session
       account[k] = nil
     end
@@ -85,9 +83,9 @@ end
 
 
 function userread:GetUserTagVotes(userID)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:smembers('userTagVotes:'..userID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user tag votes: ',err)
   end
@@ -100,9 +98,9 @@ end
 
 function userread:GetUserPostVotes(userID)
   -- replace with bloom later
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:smembers('userPostVotes:'..userID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user post votes:',err)
   end
@@ -114,9 +112,9 @@ function userread:GetUserPostVotes(userID)
 end
 
 function userread:GetUser(userID)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:hgetall('user:'..userID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR,'unable to get user: ',err)
   end
@@ -144,9 +142,9 @@ end
 
 function userread:GetUserID(username)
   username = username:lower()
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok,err = red:hget('userToID',username)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get userID from username:',err)
     return nil
@@ -161,9 +159,9 @@ end
 
 
 function userread:GetUserComments(userID, sortBy,startAt, range)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userComments:'..sortBy..':'..userID, startAt, startAt+range)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user comments, ',err)
     return {}
@@ -176,7 +174,7 @@ function userread:GetUserComments(userID, sortBy,startAt, range)
 end
 
 function userread:GetUnseenPosts(baseKey, elements)
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()
 
   red:init_pipeline()
@@ -186,7 +184,7 @@ function userread:GetUnseenPosts(baseKey, elements)
   end
 
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to check for elements: ',err)
@@ -207,28 +205,28 @@ function userread:GetAllUserSeenPosts(userID,startRange,endRange)
   --ngx.log(ngx.ERR,startRange,' ',endRange,' ',userID)
   startRange = startRange or 0
   endRange = endRange or 1000
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userSeen:'..userID, startRange, endRange)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if not ok then
     ngx.log(ngx.ERR,'unable to get user seen posts:',err)
     return {}
   end
-  --ngx.log(ngx.ERR,to_json(ok))
+  --ngx.log(ngx.ERR,self:to_json(ok))
   return ok ~= ngx.null and ok or {}
 end
 
 function userread:GetUserFilterIDs(userID)
 
-  local red = util:GetUserReadConnection()
+  local red = self:GetUserReadConnection()
 
   local ok, err
 
   ok, err = red:smembers('userfilters:'..userID)
 
-  util:SetKeepalive(red)
-  --print(userID, to_json(ok))
+  self:SetKeepalive(red)
+  --print(userID, self:to_json(ok))
 
   if not ok then
     ngx.log(ngx.ERR, 'error getting filter list for user "',userID,'", error:',err)

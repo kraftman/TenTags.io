@@ -6,11 +6,9 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
+local redisRead = (require 'redis.db').redisRead
+local redisWrite = (require 'redis.db').redisWrite
 local cache = require 'api.cache'
-local tinsert = table.insert
-local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 
 

@@ -23,9 +23,9 @@ local searchResults = ngx.shared.searchresults
 local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local redisread = require 'api.redisread'
-local userRead = require 'api.userread'
-local commentRead = require 'api.commentread'
+local redisread = (require 'redis.db').redisRead
+local userRead = (require 'redis.db').userRead
+local commentRead = (require 'redis.db').commentRead
 local lru = require 'api.lrucache'
 
 local elastic = require 'lib.elasticsearch'

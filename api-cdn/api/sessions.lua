@@ -1,10 +1,8 @@
 
 local cache = require 'api.cache'
-local userWrite = require 'api.userwrite'
-local to_json = (require 'lapis.util').to_json
-local redisWrite = require 'api.rediswrite'
 
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 
 
 function api:GetHash(values)
@@ -110,7 +108,7 @@ function api:RegisterAccount(session, confirmURL)
 		return false, 'Email provided is invalid'
 	end
 
-	ok, err = redisWrite:QueueJob('registeraccount',session)
+	ok, err = self.redisWrite:QueueJob('registeraccount',session)
   if not ok then
     ngx.log(ngx.ERR, 'error processing registration: ',err)
     return nil, 'error setting up account'
@@ -156,7 +154,7 @@ function api:ConfirmLogin(userSession, key)
 	accountSession.activated = true
 	account.lastSeen = ngx.time()
 	account.active = true
-	userWrite:CreateAccount(account)
+	self.userWrite:CreateAccount(account)
 
 	return account, accountSession.id
 
@@ -176,8 +174,8 @@ function api:KillSession(accountID, sessionID)
 
 	session.killed = true
   -- purge from cache
-  redisWrite:InvalidateKey('account', account.id)
-  return userWrite:CreateAccount(account)
+  self.redisWrite:InvalidateKey('account', account.id)
+  return self.userWrite:CreateAccount(account)
 
 end
 

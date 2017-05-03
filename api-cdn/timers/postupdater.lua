@@ -6,17 +6,12 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local userWrite = require 'api.users'
 local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
 local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
@@ -58,7 +53,7 @@ function config.Run(_,self)
 end
 
 function config:ReIndexPost(data)
-	local post = redisRead:GetPost(data.id)
+	local post = self.redisRead:GetPost(data.id)
 	if not post then
 		return true
 	end
@@ -119,12 +114,12 @@ function config:VotePost(postVote)
 
 
 
-	redisWrite:UpdatePostTags(post)
+	self.redisWrite:UpdatePostTags(post)
 
-	local ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
-	userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
-	userWrite:AddUserPostVotes(post.Vote.userID, postVote.postID)
+	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
+	self.userWrite:AddUserPostVotes(post.Vote.userID, postVote.postID)
 
 	return true
 
@@ -159,7 +154,7 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 end
 
 function config:CreatePost(post)
-	post = redisRead:GetPost(post.id)
+	post = self.redisRead:GetPost(post.id)
 	if not post then
 		return nil, 'couldnt load post'
 	end
@@ -167,28 +162,28 @@ function config:CreatePost(post)
 	local ok, err
 
 	if post.link and post.link ~= '' then
-		ok, err = redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
+		ok, err = self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
 	  if not ok then
 	    return ok, err
 	  end
 	end
 
-  ok, err = redisWrite:QueueJob('UpdatePostFilters',{id = post.id})
+  ok, err = self.redisWrite:QueueJob('UpdatePostFilters',{id = post.id})
   if not ok then
     return ok, err
   end
 
-  ok, err = redisWrite:QueueJob('AddPostShortURL',{id = post.id})
+  ok, err = self.redisWrite:QueueJob('AddPostShortURL',{id = post.id})
   if not ok then
     return ok, err
   end
 
-  ok, err = redisWrite:QueueJob('CheckReposts', {id = post.id})
+  ok, err = self.redisWrite:QueueJob('CheckReposts', {id = post.id})
   if not ok then
     return ok, err
   end
 
-  ok, err = redisWrite:QueueJob('ReIndexPost', {id = post.id})
+  ok, err = self.redisWrite:QueueJob('ReIndexPost', {id = post.id})
   if not ok then
     return ok, err
   end
@@ -324,7 +319,7 @@ function config:CreateShortURL(postID)
 end
 
 function config:AddPostShortURL(data)
-	local post = redisRead:GetPost(data.id)
+	local post = self.redisRead:GetPost(data.id)
 	if not post then
 		return true
 	end
@@ -334,7 +329,7 @@ function config:AddPostShortURL(data)
   local shortURL
   for i = 1, 6 do
     shortURL = self:CreateShortURL(post.id)
-    ok, err = redisWrite:SetShortURL(shortURL, post.id)
+    ok, err = self.redisWrite:SetShortURL(shortURL, post.id)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', post.id)
       return nil
@@ -352,7 +347,7 @@ function config:AddPostShortURL(data)
 
   -- add short url to hash
   -- deleted job
-  ok, err = redisWrite:UpdatePostField(post.id, 'shortURL', shortURL)
+  ok, err = self.redisWrite:UpdatePostField(post.id, 'shortURL', shortURL)
   if not ok then
     print('error updating post field: ',err)
     return nil
@@ -371,7 +366,7 @@ function config:AddCommentShortURL(data)
   local shortURL, ok, err
   for i = 1, 6 do
     shortURL = self:CreateShortURL()
-    ok, err = redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
+    ok, err = self.redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' commentPostPair: ', commentPostPair)
       return
@@ -389,7 +384,7 @@ function config:AddCommentShortURL(data)
 
   local postID, commentID = commentPostPair:match('(%w+):(%w+)')
 
-  ok, err = commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
+  ok, err = self.commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
   if not ok then
     print('error updating post field: ',err)
     return
@@ -404,7 +399,7 @@ end
 
 
 function config:UpdatePostFilters(data)
-	local post = redisRead:GetPost(data.id)
+	local post = self.redisRead:GetPost(data.id)
 	if not post then
 		ngx.log(ngx.ERR 'post not found: ', to_json(data))
 		return true
@@ -440,14 +435,14 @@ function config:UpdatePostFilters(data)
   --print('removing from: '..to_json(purgeFilterIDs))
   --print('adding to: '..to_json(newFilters))
 
-	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
+	local ok, err = self.redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
 		print('couldnt remove post from filters: ',err)
 		return ok, err
 	end
 --	print(to_json(post))
 	--print(to_json(newFilters))
-	ok, err = redisWrite:AddPostToFilters(post, newFilters)
+	ok, err = self.redisWrite:AddPostToFilters(post, newFilters)
 	if not ok then
 		print('couldnt add post to filters',ok, '|',err)
 		return ok, err
@@ -459,7 +454,7 @@ function config:UpdatePostFilters(data)
     tinsert(post.filters,filter.id)
   end
 
-  ok, err = redisWrite:CreatePost(post)
+  ok, err = self.redisWrite:CreatePost(post)
 	if not ok then
 		print(err)
 	end
@@ -468,7 +463,7 @@ end
 
 function config:CheckReposts(postData)
 
-  local post = redisRead:GetPost(postData.id)
+  local post = self.redisRead:GetPost(postData.id)
 	if not post then
 		return true
 	end
@@ -489,7 +484,7 @@ function config:CheckReposts(postData)
     return true
   end
 
-  local posts, err = redisRead:GetTagPosts(linkTag.name)
+  local posts, err = self.redisRead:GetTagPosts(linkTag.name)
   if not posts then
     print(err)
   end
@@ -500,7 +495,7 @@ function config:CheckReposts(postData)
 
 
   for k,id in pairs(posts) do
-    posts[k] = redisRead:GetPost(id)
+    posts[k] = self.redisRead:GetPost(id)
   end
 
 
@@ -509,7 +504,7 @@ function config:CheckReposts(postData)
   local parentPost = posts[1]
   post.parentID = parentPost.id
   --updating parent ID
-  redisWrite:UpdatePostParentID(post)
+  self.redisWrite:UpdatePostParentID(post)
 
 	return true
 

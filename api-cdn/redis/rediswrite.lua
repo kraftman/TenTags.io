@@ -1,11 +1,12 @@
 
 
-local write = {}
 
-local to_json = (require 'lapis.util').to_json
 local tinsert = table.insert
 local SCORE_FACTOR = 43200
-local util = require 'util'
+
+
+local base = require 'redis.base'
+local write = setmetatable({}, base)
 
 
 function write:ConvertListToTable(list)
@@ -17,10 +18,10 @@ function write:ConvertListToTable(list)
 end
 
 function write:DeleteResetKey(emailAddr)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   local ok, err = red:del('emailReset:'..emailAddr)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to remove password reset: ',err)
   end
@@ -29,11 +30,11 @@ function write:DeleteResetKey(emailAddr)
 end
 
 function write:AddPasswordReset(emailAddr, uuid)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local PASSWORD_RESET_TIME = 3600
 
   local ok, err = red:setex('emailReset:'..emailAddr, PASSWORD_RESET_TIME, uuid)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to set password reset: ',err)
   end
@@ -43,15 +44,15 @@ end
 
 function write:InvalidateKey(keyType, id)
   local timeInvalidated = ngx.now()
-  local red = util:GetRedisWriteConnection()
-  local data = to_json({keyType = keyType, id = id})
+  local red = self:GetRedisWriteConnection()
+  local data = self:to_json({keyType = keyType, id = id})
   local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function write:LoadScript(script)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:script('load',script)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add script to redis:',err)
@@ -64,7 +65,7 @@ function write:LoadScript(script)
 end
 
 function write:AddKey(addSHA,baseKey,newElement)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:evalsha(addSHA,0,baseKey,10000,0.01,newElement)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add key: ',err)
@@ -74,21 +75,21 @@ end
 
 --[[
 function write:CreateComment(postID,commentID, comment)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok , err = red:hmset(postID,commentID,comment)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to write comment',err)
   end
 end
 
 function write:GetComments(postID)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hgetall(postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get comments:',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return self:ConvertListToTable(ok)
 end
 --]]
@@ -103,9 +104,9 @@ function write:ConvertListToTable(list)
 end
 
 function write:FilterBanUser(filterID, banInfo)
-  local red = util:GetRedisWriteConnection()
-  local ok, err = red:hset('filter:'..filterID, 'bannedUser:'..banInfo.userID, to_json(banInfo))
-  util:SetKeepalive(red)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hset('filter:'..filterID, 'bannedUser:'..banInfo.userID, self:to_json(banInfo))
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add banned user: ',err)
     return nil, err
@@ -114,9 +115,9 @@ function write:FilterBanUser(filterID, banInfo)
 end
 
 function write:FilterBanDomain(filterID, banInfo)
-  local red = util:GetRedisWriteConnection()
-  local ok, err = red:hset('filter:'..filterID, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
-  util:SetKeepalive(red)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hset('filter:'..filterID, 'bannedDomain:'..banInfo.domainName, self:to_json(banInfo))
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add banned domain: ',err)
     return nil, err
@@ -125,9 +126,9 @@ function write:FilterBanDomain(filterID, banInfo)
 end
 
 function write:UpdatePostField(postID, field, newValue)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..postID,field,newValue)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to update post field: ', err)
   end
@@ -135,9 +136,9 @@ function write:UpdatePostField(postID, field, newValue)
 end
 
 function write:FilterUnbanDomain(filterID, domainName)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hdel('filter:'..filterID, 'bannedDomain:'..domainName)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to unban domain: ',err)
   end
@@ -145,9 +146,9 @@ function write:FilterUnbanDomain(filterID, domainName)
 end
 
 function write:FilterUnbanUser(filterID, userID)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hdel('filter:'..filterID, 'bannedUser:'..userID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to unban user: ',err)
   end
@@ -171,7 +172,7 @@ function write:AddtagNamesToFilter(red, filterID, requiredTagNames, bannedTagNam
 end
 
 function write:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   red:init_pipeline()
     -- remove all existing tags from the filter
@@ -191,7 +192,7 @@ function write:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
     -- add the new tags
     self:AddtagNamesToFilter(red, filter.id, requiredTagNames, bannedTagNames)
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update filter tags: ',err)
   end
@@ -202,16 +203,16 @@ function write:UpdateFilterTags(filter,requiredTagNames, bannedTagNames)
 end
 
 function write:DeletePost(postID)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..postID, 'deleted', 'true')
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function write:DelMod(filterID, modID)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hdel('filter:'..filterID, 'mod:'..modID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to del mod: ',err)
   end
@@ -219,9 +220,9 @@ function write:DelMod(filterID, modID)
 end
 
 function write:AddMod(filterID, mod)
-  local red = util:GetRedisWriteConnection()
-  local ok, err = red:hset('filter:'..filterID, 'mod:'..mod.id, to_json(mod))
-  util:SetKeepalive(red)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hset('filter:'..filterID, 'mod:'..mod.id, self:to_json(mod))
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add mod: ',err)
   end
@@ -229,7 +230,7 @@ function write:AddMod(filterID, mod)
 end
 
 function write:UpdateRelatedFilters(filter, relatedFilters)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   for _,v in pairs(filter.relatedFilterIDs) do
     red:hdel('filter:'..filter.id, 'relatedFilter:'..v)
@@ -238,7 +239,7 @@ function write:UpdateRelatedFilters(filter, relatedFilters)
   for _,v in pairs(relatedFilters) do
     red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
 end
 
@@ -249,15 +250,15 @@ function write:CreateFilter(filter)
   for k, v in pairs(filter) do
     if k == 'mods' then
       for _,mod in pairs(v) do
-        hashFilter['mod:'..mod.id] = to_json(mod)
+        hashFilter['mod:'..mod.id] = self:to_json(mod)
       end
     elseif k == 'bannedUsers' then
       for _,banInfo in pairs(v) do
-        hashFilter['bannedUser'..banInfo.userID] = to_json(banInfo)
+        hashFilter['bannedUser'..banInfo.userID] = self:to_json(banInfo)
       end
     elseif k == 'bannedDomains' then
       for _,banInfo in pairs(v) do
-        hashFilter['bannedDomains:'..banInfo.domainName] = to_json(banInfo)
+        hashFilter['bannedDomains:'..banInfo.domainName] = self:to_json(banInfo)
       end
     elseif type(v) == 'string' then
       hashFilter[k] = v
@@ -266,7 +267,7 @@ function write:CreateFilter(filter)
 
 
   -- add id to name conversion table
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   red:init_pipeline()
     red:set('filterid:'..hashFilter.name,hashFilter.id)
 
@@ -287,7 +288,7 @@ function write:CreateFilter(filter)
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return results
 end
 
@@ -304,16 +305,16 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
 end
 
 function write:IncrementFilterSubs(filterID, value)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hincrby('filter:'..filterID, 'subs', value)
   if not ok then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     print('error updating subcount ', err)
     return ok, err
   end
   print('adding ',ok,' to filtersubs')
   ok,err = red:zadd('filtersubs',ok, filterID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     print('moop : ',err)
   end
@@ -321,45 +322,45 @@ function write:IncrementFilterSubs(filterID, value)
 end
 
 function write:RemoveInvalidations(cutOff)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:zremrangebyscore('invalidationRequests', 0, cutOff)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 
 function write:QueueJob(jobName, jobData)
   jobName = 'queue:'..jobName
-  local red = util:GetRedisWriteConnection()
-  jobData = to_json(jobData)
+  local red = self:GetRedisWriteConnection()
+  jobData = self:to_json(jobData)
   -- this will remove duplicates by default since its not using NX
   local ok, err = red:zadd(jobName, ngx.time(), jobData)
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   return ok, err
 end
 
 function write:RemoveJob(jobName, jobData)
 jobName = 'queue:'..jobName
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:zrem(jobName, jobData)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function write:AddPostToFilters(post, filters)
   -- add post to the filters that want it
   -- by post score, and by date
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
     red:init_pipeline()
     for _, filterInfo in pairs(filters) do
-        --print(to_json(filterInfo))
-        --print(to_json(post))
+        --print(self:to_json(filterInfo))
+        --print(self:to_json(post))
       self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
@@ -384,13 +385,13 @@ function write:RemoveFilterPostInfo(red, filterID,postID)
 end
 
 function write:RemovePostFromFilters(postID, filterIDs)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   red:init_pipeline()
     for _,filterID in pairs(filterIDs) do
       self:RemoveFilterPostInfo(red, filterID, postID)
     end
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'error removing post from filters: ',err)
   end
@@ -398,9 +399,9 @@ function write:RemovePostFromFilters(postID, filterIDs)
 end
 
 function write:SetNX(key,value)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:set(key,value,'NX')
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to setNX: ',err)
   end
@@ -410,26 +411,26 @@ end
 
 function write:SetShortURL(shortURL, id)
   local shortURL = 'su:'..shortURL
-  local key, field = util:SplitShortURL(shortURL)
-  local red = util:GetRedisWriteConnection()
+  local key, field = self:SplitShortURL(shortURL)
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hset(key, field, id)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function write:DeleteJob(queueName, jobKey)
   local realQName = 'queue:'..queueName
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:zrem(realQName, jobKey)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 
 end
 
 function write:GetLock(key, expires)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:set(key, key,'NX', 'EX',expires)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to setex: ',err)
   end
@@ -437,18 +438,18 @@ function write:GetLock(key, expires)
 end
 
 function write:RemLock(key)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:del(key)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function write:DeleteKey(key)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   local ok, err = red:del(key)
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'failed to delete keys: ', err)
   end
@@ -461,13 +462,13 @@ function write:LogChange()
 end
 
 function write:RemovePostsFromFilter(filterID, postIDs)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   red:init_pipeline()
     for _,postID in pairs(postIDs) do
       self:RemoveFilterPostInfo(red, filterID, postID)
     end
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'error removing post from filters: ',err)
   end
@@ -476,7 +477,7 @@ end
 
 function write:AddPostsToFilter(filterInfo,posts)
 
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
     red:init_pipeline()
     for _, postInfo in pairs(posts) do
       if postInfo.score then
@@ -485,7 +486,7 @@ function write:AddPostsToFilter(filterInfo,posts)
       self:CreateFilterPostInfo(red,filterInfo,postInfo)
     end
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
@@ -495,9 +496,9 @@ function write:AddPostsToFilter(filterInfo,posts)
 end
 
 function write:UpdatePostParentID(post)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..post.id,'parentID',post.parentID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
@@ -513,10 +514,10 @@ function write:CreateTempFilterPosts(tempKey, requiredTagNames, bannedTagNames)
 
   ]]
 
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local labelledrequiredTagNames = {}
   local labelledbannedTagNames = {}
-  print(to_json(requiredTagNames))
+  print(self:to_json(requiredTagNames))
   for _,tagName in pairs(requiredTagNames) do
     if type(tagName) == 'table'then
       tagName = tagName.name
@@ -533,19 +534,19 @@ function write:CreateTempFilterPosts(tempKey, requiredTagNames, bannedTagNames)
 
   local tempRequiredPostsKey = tempKey..':required'
   --print(tempRequiredPostsKey)
-  print(to_json(tempRequiredPostsKey))
-  print(to_json(labelledrequiredTagNames))
+  print(self:to_json(tempRequiredPostsKey))
+  print(self:to_json(labelledrequiredTagNames))
   local ok, err = red:sinterstore(tempRequiredPostsKey, unpack(labelledrequiredTagNames))
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempRequiredPostsKey)
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil, err
   end
   ok, err = red:sdiffstore(tempKey, tempRequiredPostsKey, unpack(labelledbannedTagNames))
   if not ok then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil, err
   end
 
@@ -553,15 +554,15 @@ function write:CreateTempFilterPosts(tempKey, requiredTagNames, bannedTagNames)
   if not ok then
     ngx.log(ngx.ERR, 'unable to del temp posts set "',tempRequiredPostsKey,'": ',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok
 
 end
 
 function write:GetSetDiff(key1, key2)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local res, err = red:sdiff(key1, key2)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not res then
     ngx.log(ngx.ERR, 'unable to get set diff: ',err)
     return {}
@@ -577,7 +578,7 @@ function write:FindPostsForFilter(filterID, requiredTagNames, bannedTagNames)
   --for each tag, get the list of posts
   -- sinter all the posts that hared the required tags
   -- remove any posts that are under our banned tags
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local matchingPostIDs
   local labelledrequiredTagNames = {}
   local labelledbannedTagNames = {}
@@ -594,13 +595,13 @@ function write:FindPostsForFilter(filterID, requiredTagNames, bannedTagNames)
   if not ok then
     ngx.log(ngx.ERR, 'unable to sinterstore tags: ',err)
     red:del(tempKey)
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil
   end
   matchingPostIDs, err = red:sdiff(tempKey, unpack(labelledbannedTagNames))
   if not matchingPostIDs then
     ngx.log(ngx.ERR, 'unable to diff tags: ',err)
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil
   end
 
@@ -608,7 +609,7 @@ function write:FindPostsForFilter(filterID, requiredTagNames, bannedTagNames)
   if not ok then
     ngx.log(ngx.ERR, 'unable to del temp posts set "',tempKey,'": ',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if matchingPostIDs == ngx.null then
     return {}
@@ -623,7 +624,7 @@ end
 
 
 function write:CreateTag(tagInfo)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   local ok, err = red:hgetall('tag:'..tagInfo.name)
 
   if not ok then
@@ -644,19 +645,19 @@ function write:CreateTag(tagInfo)
     ngx.log(ngx.ERR, 'unable to add tag: ',err)
   end
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return true
 end
 
 function write:UpdatePostTags(post)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   red:init_pipeline()
   for _,tag in pairs(post.tags) do
     red:sadd('post:tagNames:'..post.id, tag.name)
     red:hmset('posttags:'..post.id..':'..tag.name,tag)
   end
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to update post tags: ',err)
@@ -665,10 +666,10 @@ function write:UpdatePostTags(post)
 end
 
 function write:UpdateFilterDescription(filter)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   print('filter:'..filter.id)
   local ok, err = red:hset('filter:'..filter.id, 'description', filter.description)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update description: ', err)
   end
@@ -680,10 +681,10 @@ function write:UpdateFilterDescription(filter)
 end
 
 function write:UpdateFilterTitle(filter)
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   local ok, err = red:hset('filter:'..filter.id, 'title', filter.title)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update description: ', err)
   end
@@ -698,20 +699,20 @@ end
 function write:LogBacklogStats(jobName, time, value, duration)
   jobName = 'backlog:'..jobName
 
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrangebyscore(jobName, time, time)
   if not ok then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil, err
   end
   if (ok ~= ngx.null) and (next(ok) ~= nil) then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return nil,' already exists'
   end
 
   ok, err = red:zadd(jobName, time, value)
   if not ok then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     return ok, err
   end
   ok, err = red:zremrangebyrank(jobName, 0, -20000)
@@ -739,14 +740,14 @@ function write:CreatePost(post)
 
     elseif k == 'edits' then
       for time,edit in pairs(v) do
-        hashedPost['edit:'..time] = to_json(edit)
+        hashedPost['edit:'..time] = self:to_json(edit)
       end
     else
       hashedPost[k] = v
     end
    end
 
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   red:init_pipeline()
 
@@ -767,11 +768,11 @@ function write:CreatePost(post)
     red:hmset('post:'..hashedPost.id,hashedPost)
   local results,err = red:commit_pipeline()
   if err then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to create post:',err)
   end
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return results, err
 end
 
@@ -790,7 +791,7 @@ function write:CreateThread(thread)
     end
   end
 
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
 
   red:init_pipeline()
     red:hmset('Thread:'..hashedThread.id,hashedThread)
@@ -798,7 +799,7 @@ function write:CreateThread(thread)
       red:zadd('UserThreads:'..userID,thread.lastUpdated,thread.id)
     end
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log('unable to write thread:',err)
   end
@@ -807,14 +808,14 @@ end
 
 function write:CreateMessage(msg)
   -- also need to update theead last userUpdate
-  local red = util:GetRedisWriteConnection()
+  local red = self:GetRedisWriteConnection()
   red:init_pipeline()
 
-    red:hset('ThreadMessages:'..msg.threadID,msg.id,to_json(msg))
+    red:hset('ThreadMessages:'..msg.threadID,msg.id,self:to_json(msg))
     red:hset('Thread:'..msg.threadID,'lastUpdated',msg.createdAt)
 
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to create message: ',err)
   end

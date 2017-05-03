@@ -6,13 +6,8 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local commentRead = require 'api.commentread'
 local commentAPI = require 'api.comments'
 local userAPI = require 'api.users'
-local userWrite = require 'api.userwrite'
 local cache = require 'api.cache'
 local tinsert = table.insert
 
@@ -61,26 +56,26 @@ function config:ProcessCommentVote(commentVote)
 
   comment.score = self.util:GetScore(comment.up, comment.down)
 
-  local ok, err = userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
+  local ok, err = self.userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
   if not ok then
     return ok, err
   end
 
   if commentVote.direction == 'up' then
-		ok, err = userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
+		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
 	else
-		ok, err = userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
+		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
 	end
 	if not ok then
 		return ok, err
 	end
 
-  ok, err = userWrite:AddComment(comment)
+  ok, err = self.userWrite:AddComment(comment)
   if not ok then
     return ok, err
   end
 
-	ok, err = commentWrite:CreateComment(comment)
+	ok, err = self.commentWrite:CreateComment(comment)
   return ok, err
 
 end
@@ -109,7 +104,7 @@ function config:ProcessCommentSub(commentSub)
     end
   end
 
-  return commentWrite:CreateComment(comment)
+  return self.commentWrite:CreateComment(comment)
 end
 
 
@@ -139,12 +134,12 @@ function config:AddAlerts(post, comment)
   -- need to add alert to all parent comment viewers
   if comment.parentID == comment.postID then
 		for _,viewerID in pairs(post.viewers) do
-			userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+			self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
-      userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+      self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
   end
 
@@ -161,12 +156,12 @@ function config:CreateComment(commentInfo)
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
   end
 
-  ok, err = redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
   if not ok then
     return ok, err
   end
   print('adding comment to user')
-  ok, err = userWrite:AddComment(comment)
+  ok, err = self.userWrite:AddComment(comment)
   if not ok then
     return ok, err
   end
@@ -183,7 +178,7 @@ function config:CreateComment(commentInfo)
   self:AddAlerts(post, comment)
 
 
-  redisWrite:UpdatePostField(comment.postID, 'commentCount',post.commentCount+1)
+  self.redisWrite:UpdatePostField(comment.postID, 'commentCount',post.commentCount+1)
 
   return true
 

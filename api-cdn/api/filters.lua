@@ -1,15 +1,13 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
 local tagAPI = require 'api.tags'
-local redisWrite = require 'api.rediswrite'
-local userWrite = require 'api.userwrite'
 local POST_TITLE_LENGTH = 100
 
 
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 
 local MAX_MOD_COUNT = 10
 
@@ -31,7 +29,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	local newFilter, err, ok
 
-	ok, err = util.RateLimit('CreateFilter:', userID, 1, 600)
+	ok, err = self:RateLimit('CreateFilter:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
@@ -44,7 +42,7 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	account.modCount = account.modCount + 1
-	userWrite:CreateAccount(account)
+	self.userWrite:CreateAccount(account)
 
 
 	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
@@ -58,7 +56,7 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
   for _,tagName in pairs(filterInfo.requiredTagNames) do
-		tagName = util:SanitiseUserInput(tagName, 100)
+		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
 			tinsert(newFilter.requiredTagNames, tag.name)
@@ -78,7 +76,7 @@ function api:CreateFilter(userID, filterInfo)
   end
 
 	print('new filter id: ',newFilter.id)
-	ok, err = redisWrite:CreateFilter(newFilter)
+	ok, err = self.redisWrite:CreateFilter(newFilter)
 
 		print('new filter id: ',newFilter.id)
 
@@ -88,11 +86,11 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	-- auto add the owner to filter subscribers
-	redisWrite:IncrementFilterSubs(newFilter.id, 1)
-  userWrite:SubscribeToFilter(userID, newFilter.id)
+	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
+  self.userWrite:SubscribeToFilter(userID, newFilter.id)
 
 	-- cant combine, due to other uses of function
-	 ok, err = redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
+	 ok, err = self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
   if not ok then
     return ok, err
   end
@@ -100,7 +98,7 @@ function api:CreateFilter(userID, filterInfo)
   -- filter HAS to be updated first
   -- or the job wont use the new tags
 
-  ok,err = redisWrite:QueueJob('UpdateFilterTags',{id = newFilter.id})
+  ok,err = self.redisWrite:QueueJob('UpdateFilterTags',{id = newFilter.id})
 	if not ok then
 		return ok,err
 	end
@@ -129,15 +127,15 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 
 	local newFilter = {
 		id = uuid.generate_random(),
-		name = util:SanitiseUserInput(userFilter.name, 30),
-		description = util:SanitiseUserInput(userFilter.name, 2000),
-		title = util:SanitiseUserInput(userFilter.name, 200),
+		name = self:SanitiseUserInput(userFilter.name, 30),
+		description = self:SanitiseUserInput(userFilter.name, 2000),
+		title = self:SanitiseUserInput(userFilter.name, 200),
 		subs = 0,
 		mods = {},
 		requiredTagNames = {},
 		bannedTagNames = {},
-		ownerID = util:SanitiseUserInput(userFilter.ownerID,50),
-		createdBy = util:SanitiseUserInput(userFilter.createdBy, 50),
+		ownerID = self:SanitiseUserInput(userFilter.ownerID,50),
+		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
 	}
 
@@ -176,7 +174,7 @@ function api:AddMod(userID, filterID, newModName)
 	end
 
 	account.modCount = account.modCount + 1
-	userWrite:CreateAccount(account)
+	self.userWrite:CreateAccount(account)
 
 	local modInfo = {
 		id = newModID,
@@ -185,7 +183,7 @@ function api:AddMod(userID, filterID, newModName)
 		up = 10,
 		down = 0,
 	}
-	return redisWrite:AddMod(filterID, modInfo)
+	return self.redisWrite:AddMod(filterID, modInfo)
 
 end
 
@@ -213,14 +211,14 @@ function api:DelMod(userID, filterID, modID)
 	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
-	userWrite:CreateAccount(account)
-	return redisWrite:DelMod(filterID, modID)
+	self.userWrite:CreateAccount(account)
+	return self.redisWrite:DelMod(filterID, modID)
 
 end
 
 
 function api:UpdateFilterTitle(userID, filterID, newTitle)
-	local ok, err = util.RateLimit('EditFilterTitle:', userID, 4, 120)
+	local ok, err = self:RateLimit('EditFilterTitle:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -239,14 +237,14 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	return redisWrite:UpdateFilterTitle(filter)
+	return self.redisWrite:UpdateFilterTitle(filter)
 
 end
 
 
 
 function api:UpdateFilterDescription(userID, filterID, newDescription)
-	local ok, err = util.RateLimit('EditFilter:', userID, 4, 120)
+	local ok, err = self:RateLimit('EditFilter:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -265,13 +263,13 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	return redisWrite:UpdateFilterDescription(filter)
+	return self.redisWrite:UpdateFilterDescription(filter)
 
 end
 
 
 function api:SearchFilters(userID, searchString)
-	local ok, err = util.RateLimit('SearchFilters:',userID, 20, 10)
+	local ok, err = self:RateLimit('SearchFilters:',userID, 20, 10)
 	if not ok then
 		return ok, err
 	end
@@ -291,7 +289,7 @@ end
 
 function api:FilterBanUser(userID, filterID, banInfo)
 	local ok, err, filter
-	ok, err = util.RateLimit('FilterBanUser:',userID, 5, 10)
+	ok, err = self:RateLimit('FilterBanUser:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
@@ -302,7 +300,7 @@ function api:FilterBanUser(userID, filterID, banInfo)
 	end
 
 	banInfo.bannedAt = ngx.time()
-	return redisWrite:FilterBanUser(filterID, banInfo)
+	return self.redisWrite:FilterBanUser(filterID, banInfo)
 end
 
 function api:FilterUnbanPost(userID, filterID, postID)
@@ -336,12 +334,12 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = postID})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = postID})
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = redisWrite:UpdatePostTags(post)
+	ok, err = self.redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end
@@ -369,18 +367,18 @@ function api:FilterBanPost(userID, filterID, postID)
 
 	newTag.up = 1000
 	newTag.down = 0
-	newTag.score = util:GetScore(newTag.up, newTag.down)
+	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = redisWrite:UpdatePostTags(post)
+	ok, err = self.redisWrite:UpdatePostTags(post)
 	return ok, err
 end
 
@@ -392,7 +390,7 @@ function api:FilterUnbanUser(filterID, userID)
 		return ok, err
 	end
 
-	return redisWrite:FilterUnbanUser(filterID, userID)
+	return self.redisWrite:FilterUnbanUser(filterID, userID)
 end
 
 function api:FilterBanDomain(userID, filterID, banInfo)
@@ -402,8 +400,8 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 	end
 
 	banInfo.bannedAt = ngx.time()
-	banInfo.domainName = util:GetDomain(banInfo.domainName) or banInfo.domainName
-	return redisWrite:FilterBanDomain(filterID, banInfo)
+	banInfo.domainName = self:GetDomain(banInfo.domainName) or banInfo.domainName
+	return self.redisWrite:FilterBanDomain(filterID, banInfo)
 end
 
 
@@ -452,12 +450,12 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 
 
 
-	ok, err = redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
+	ok, err = self.redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
+	ok, err = self.redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
 	if not ok then
 		return ok,err
 	end
@@ -472,8 +470,8 @@ function api:FilterUnbanDomain(userID, filterID, domainName)
 		return ok, err
 	end
 
-	domainName = util:GetDomain(domainName) or domainName
-	return redisWrite:FilterUnbanDomain(filterID, domainName)
+	domainName = self:GetDomain(domainName) or domainName
+	return self.redisWrite:FilterUnbanDomain(filterID, domainName)
 end
 
 

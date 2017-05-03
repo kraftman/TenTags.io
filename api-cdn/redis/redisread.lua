@@ -1,12 +1,8 @@
 
 
-local redis = require "resty.redis"
 local tinsert = table.insert
-local from_json = (require 'lapis.util').from_json
-local to_json = (require 'lapis.util').to_json
-local util = require 'util'
-
-local read = {}
+local base = require 'redis.base'
+local read = setmetatable({}, base)
 
 
 
@@ -21,14 +17,14 @@ function read:ConvertListToTable(list)
 end
 
 function read:GetUnseenElements(checkSHA,baseKey, elements)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   red:init_pipeline()
   ngx.log(ngx.ERR,'checking for sha: ',checkSHA)
   for _,v in pairs(elements) do
     red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
   end
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
     return {}
@@ -39,7 +35,7 @@ end
 
 --[[function read:CheckKey(checkSHA,addSHA)
   local keys = {'testr','rsitenrsi','rsiteunrsit'}
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
 
   local ok, err = red:evalsha(addSHA,0,'basekey',10000,0.01,'testr')
   if not ok then
@@ -51,7 +47,7 @@ end
       red:evalsha(checkSHA,0,'basekey',10000,0.01,v)
     end
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   for k,v in pairs(res) do
     ngx.log(ngx.ERR,'k:',k,' v: ',v)
   end
@@ -63,9 +59,9 @@ end
 function read:GetOldestJob(queueName)
   local realQName = 'queue:'..queueName
   --print('getting job: ',realQName)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange(realQName, 0, 1)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'error getting job: ',err)
   end
@@ -78,9 +74,9 @@ end
 
 function read:GetQueueSize(jobName)
   jobName = 'queue:'..jobName
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zcard(jobName)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     return ok, err
   end
@@ -92,11 +88,11 @@ end
 
 function read:GetBacklogStats(jobName,startAt, endAt)
   jobName = 'backlog:'..jobName
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   print('zrangebyscore ',jobName, ' ', startAt, ' ', endAt)
   local ok, err = red:zrangebyscore(jobName, startAt, endAt)
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
@@ -104,10 +100,10 @@ end
 function read:GetOldestJobs(jobName, size)
   jobName = 'queue:'..jobName
 
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
 
   local ok, err = red:zrange(jobName, 0, size)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if (not ok) or ok == ngx.null then
     return nil, err
@@ -118,9 +114,9 @@ end
 
 
 function read:ConvertShortURL(shortURL)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   shortURL = 'su:'..shortURL
-  local key, field = util:SplitShortURL(shortURL)
+  local key, field = self:SplitShortURL(shortURL)
   local ok, err = red:hget(key,field)
   if err then
     ngx.log(ngx.ERR, 'unable to get short url: ',err)
@@ -133,7 +129,7 @@ function read:ConvertShortURL(shortURL)
 end
 
 function read:GetInvalidationRequests(startTime, endTime)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrangebyscore('invalidationRequests', startTime, endTime)
   red:close()
   if ok == ngx.null then
@@ -148,14 +144,14 @@ end
 
 function read:GetFilterIDsByTags(tags)
 
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   red:init_pipeline()
     for _,v in pairs(tags) do
       --print('tag:filters:'..v.id)
       red:hgetall('tag:filters:'..v.name)
     end
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   for k,v in pairs(results) do
     results[k] = self:ConvertListToTable(v)
@@ -169,10 +165,10 @@ function read:GetFilterIDsByTags(tags)
 end
 
 function read:VerifyReset(emailAddr, resetKey)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
 
   local ok, err = red:get('emailReset:'..emailAddr)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get email reset: ',err)
   end
@@ -185,9 +181,9 @@ function read:VerifyReset(emailAddr, resetKey)
 end
 
 function read:GetTag(tagName)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('tag:'..tagName)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if ok then
     return self:ConvertListToTable(ok)
   else
@@ -196,7 +192,7 @@ function read:GetTag(tagName)
 end
 
 function read:GetAllTags()
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, results, err
   ok, err = red:smembers('tags')
   if not ok then
@@ -217,14 +213,14 @@ function read:GetAllTags()
   if err then
     ngx.log(ngx.ERR, 'error reading tags from reds: ',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return results
 end
 
 function read:GetFiltersBySubs(startAt,endAt)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrange('filtersubs',startAt,endAt)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filters: ',err)
@@ -239,9 +235,9 @@ function read:GetFiltersBySubs(startAt,endAt)
 end
 
 function read:GetUserThreads(userID, startAt, range)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   print(startAt, range, #ok)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
@@ -276,7 +272,7 @@ function read:ConvertThreadFromRedis(thread)
 end
 
 function read:GetThreadInfo(threadID)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
 
   local ok, err = red:hgetall('Thread:'..threadID)
   if not ok then
@@ -294,14 +290,14 @@ function read:GetThreadInfo(threadID)
 
   thread.messages = self:ConvertListToTable(ok)
   for k,v in pairs(thread.messages) do
-    thread.messages[k] = from_json(v)
+    thread.messages[k] = self:from_json(v)
   end
 
   return thread
 end
 
 function read:GetThreadInfos(threadIDs)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   red:init_pipeline()
     for _,threadID in pairs(threadIDs) do
       red:hgetall('Thread:'..threadID)
@@ -333,7 +329,7 @@ function read:GetThreadInfos(threadIDs)
     local threadID
     for m,n in pairs(msgs[k]) do
 
-      msgs[k][m] = from_json(n)
+      msgs[k][m] = self:from_json(n)
       if not threadID then
       threadID = msgs[k][m].threadID
       end
@@ -351,12 +347,12 @@ function read:GetThreadInfos(threadIDs)
 end
 
 function read:GetFilterID(filterName)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:get('filterid:'..filterName)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter id from name: ',err)
   end
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if ok == ngx.null then
     return nil
   else
@@ -367,8 +363,8 @@ end
 
 
 function read:GetFilter(filterID)
-  --print(to_json(filterID))
-  local red = util:GetRedisReadConnection()
+  --print(self:to_json(filterID))
+  local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('filter:'..filterID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load filter info: ',err)
@@ -387,16 +383,16 @@ function read:GetFilter(filterID)
   for k, v in pairs(filter) do
     if type(k) == 'string' then
       if k:find('^bannedUser:') then
-        banInfo = from_json(v)
+        banInfo = self:from_json(v)
         filter.bannedUsers[banInfo.userID] = banInfo
         filter[k] = nil
       elseif k:find('^bannedDomain:') then
-        tinsert(filter.bannedDomains, from_json(v))
-        banInfo = from_json(v)
+        tinsert(filter.bannedDomains, self:from_json(v))
+        banInfo = self:from_json(v)
         filter.bannedDomains[banInfo.domainName] = banInfo
         filter[k] = nil
       elseif k:find('mod:') then
-        tinsert(filter.mods, from_json(v))
+        tinsert(filter.mods, self:from_json(v))
         filter[k] = nil
       elseif k:find('^relatedFilter:') then
         tinsert(filter.relatedFilterIDs, v)
@@ -431,10 +427,10 @@ end
 
 function read:SearchFilters(searchString)
   searchString = '*'..searchString..'*'
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   print(searchString)
   local ok,err = red:sscan('filterNames', 0, 'match', searchString)
-  print(to_json(ok))
+  print(self:to_json(ok))
   if ok then
     return ok[2]
   end
@@ -442,7 +438,7 @@ function read:SearchFilters(searchString)
 end
 
 function read:GetPost(postID)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('post:'..postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post:',err)
@@ -470,7 +466,7 @@ function read:GetPost(postID)
       post[k] = v == 'true' and true or nil
 
     elseif k:find('^edit:') then
-      post.edits[k] = from_json(v)
+      post.edits[k] = self:from_json(v)
       post[k] = nil
     end
   end
@@ -501,14 +497,14 @@ function read:GetPost(postID)
     end
   end
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   --[[
   ok,err = red:smembers('postfilters:'..postID)
   if not ok then
     ngx.log(ngx.ERR, 'could not load filters: ',err)
   end
-  --ngx.log(ngx.ERR, to_json(ok))
+  --ngx.log(ngx.ERR, self:to_json(ok))
   post.filters = ok
   --]]
 
@@ -524,21 +520,21 @@ function read:GetFilterPosts(filter, sortBy)
   elseif sortBy == 'best' then
     key = 'filterposts:score:'
   end
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange(key..filter.id,0,50)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter posts ',err)
   end
   ok = ok ~= ngx.null and ok or {}
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok
 end
 
 
 function read:GetAllNewPosts(rangeStart,rangeEnd)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:date',rangeStart,rangeEnd)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get new posts: ',err)
   end
@@ -547,9 +543,9 @@ function read:GetAllNewPosts(rangeStart,rangeEnd)
 end
 
 function read:GetAllFreshPosts(rangeStart,rangeEnd)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:datescore',rangeStart,rangeEnd)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get fresh posts: ',err)
   end
@@ -558,10 +554,10 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
 end
 
 function read:SearchTags(searchString)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   searchString = searchString..'*'
   local ok, err = red:sscan('tags', 0, 'match', searchString)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if ok then
     return ok[2]
   else
@@ -570,9 +566,9 @@ function read:SearchTags(searchString)
 end
 
 function read:GetAllBestPosts(rangeStart,rangeEnd)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:score',rangeStart,rangeEnd)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get best posts: ',err)
   end
@@ -582,7 +578,7 @@ end
 
 
 function read:BatchLoadPosts(posts)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   red:init_pipeline()
   for _,postID in pairs(posts) do
       red:hgetall('post:'..postID)
@@ -601,9 +597,9 @@ function read:BatchLoadPosts(posts)
 end
 
 function read:GetTag(tagName)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('tag:'..tagName)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load tag:',err)
     return
@@ -619,9 +615,9 @@ function read:GetTag(tagName)
 end
 
 function read:GetTagPosts(tagName)
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:smembers('tagPosts:'..tagName)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     return nil, err
   end

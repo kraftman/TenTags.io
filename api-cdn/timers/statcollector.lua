@@ -6,8 +6,8 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
+local redisRead = (require 'redis.db').redisRead
+local redisWrite = (require 'redis.db').redisWrite
 
 
 

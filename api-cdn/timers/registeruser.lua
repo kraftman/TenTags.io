@@ -6,24 +6,8 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local userRead = require 'api.userread'
-local userWrite = require 'api.userwrite'
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local cache = require 'api.cache'
-local tinsert = table.insert
-local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
-local SEED = 1
 local emailDict = ngx.shared.emailQueue
-local str = require "resty.string"
-local uuid = require 'lib.uuid'
-
-local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
-}
 
 
 local common = require 'timers.common'
@@ -83,7 +67,7 @@ function config:ProcessAccount(session)
 	session.email = nil
 
   local accountID = self:GetHash(emailAddr)
-  local account = userRead:GetAccount(accountID)
+  local account = self.userRead:GetAccount(accountID)
   if not account then
     account = self:CreateAccount(accountID, session)
   end
@@ -94,7 +78,7 @@ function config:ProcessAccount(session)
   end
 	account.sessions[session.id] = session
 
-  local ok, err = userWrite:CreateAccount(account)
+  local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		ngx.log(ngx.ERR, err)
 		return

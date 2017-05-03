@@ -1,20 +1,20 @@
 
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
-local util = require 'api.util'
-local commentWrite = require 'api.commentwrite'
-local redisWrite = require 'api.rediswrite'
 
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 
 local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 
 
+
+
 function api:VoteComment(userID, postID, commentID,direction)
 
-	local ok, err = util.RateLimit('VoteComment:', userID, 5, 10)
+	local ok, err = self:RateLimit('VoteComment:', userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
@@ -31,7 +31,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 		id = userID..':'..commentID
 	}
 
-	return commentWrite:QueueJob('commentvote', commentVote)
+	return self.self.self.commentWrite:QueueJob('commentvote', commentVote)
 
 end
 
@@ -48,14 +48,14 @@ function api:ConvertUserCommentToComment(userID, comment)
 	local newComment = {
 		id = uuid.generate_random(),
 		createdAt = ngx.time(),
-		createdBy = util:SanitiseUserInput(comment.createdBy),
+		createdBy = self:SanitiseUserInput(comment.createdBy),
 		up = COMMENT_START_UPVOTES,
 		down = COMMENT_START_DOWNVOTES,
-		score = util:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
+		score = self:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
 		viewers = {comment.createdBy},
-		text = util:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
-		parentID = util:SanitiseUserInput(comment.parentID),
-		postID = util:SanitiseUserInput(comment.postID)
+		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
+		parentID = self:SanitiseUserInput(comment.parentID),
+		postID = self:SanitiseUserInput(comment.postID)
 	}
 
 	return newComment
@@ -63,7 +63,7 @@ end
 
 function api:SubscribeComment(userID, postID, commentID)
 
-	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 10)
+	local ok, err = self:RateLimit('SubscribeComment:', userID, 3, 10)
 	if not ok then
 		return ok, err
 	end
@@ -76,7 +76,7 @@ function api:SubscribeComment(userID, postID, commentID)
 		id = userID..':'..commentID
 	}
 
-	return commentWrite:QueueJob('commentsub', commentSub)
+	return self.self.commentWrite:QueueJob('commentsub', commentSub)
 
 end
 
@@ -84,7 +84,7 @@ end
 function api:EditComment(userID, userComment)
 	-- not moving this to backend for now
 	-- fairly low cost and users want immediate updates
-	local ok, err = util.RateLimit('EditComment:', userID, 4, 120)
+	local ok, err = self:RateLimit('EditComment:', userID, 4, 120)
 	if not ok then
 		return ok, err
 	end
@@ -106,10 +106,10 @@ function api:EditComment(userID, userComment)
 	end
 
 
-	comment.text = util:SanitiseUserInput(userComment.text,2000)
+	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-  ok, err = commentWrite:CreateComment(comment)
+  ok, err = self.self.commentWrite:CreateComment(comment)
   if not ok then
     return ok, err
   end
@@ -120,7 +120,7 @@ end
 
 function api:CreateComment(userID, userComment)
 
-		local ok, err = util:RateLimit('CreateComment:', userID, 1, 30)
+		local ok, err = self:RateLimit('CreateComment:', userID, 1, 30)
 		if not ok then
 			return ok, err
 		end
@@ -132,7 +132,7 @@ function api:CreateComment(userID, userComment)
 			return nil, 'could not find parent post'
 		end
 
-		ok, err = commentWrite:CreateComment(newComment)
+		ok, err = self.self.commentWrite:CreateComment(newComment)
 		if not ok then
 			ngx.log(ngx.ERR, 'unable to create comment: ', err)
 			return nil, 'error creating comment'
@@ -146,7 +146,7 @@ function api:CreateComment(userID, userComment)
 		}
 
 		-- queue the rest
-		ok, err = redisWrite:QueueJob('CreateComment', commentUpdate)
+		ok, err = self.redisWrite:QueueJob('CreateComment', commentUpdate)
 		if not ok then
 			ngx.log(ngx.ERR, 'unable to queue comment create: ', err)
 			return nil, 'error creating comment'
@@ -206,7 +206,7 @@ end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	local ok, err = util.RateLimit('DeleteComment:', userID, 6, 60)
+	local ok, err = self:RateLimit('DeleteComment:', userID, 6, 60)
 	if not ok then
 		return ok, err
 	end
@@ -224,7 +224,7 @@ function api:DeleteComment(userID, postID, commentID)
 		return nil, 'error loading comment'
 	end
 	comment.deleted = 'true'
-	return commentWrite:UpdateComment(comment)
+	return self.self.commentWrite:UpdateComment(comment)
 
 end
 

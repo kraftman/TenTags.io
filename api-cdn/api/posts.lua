@@ -1,13 +1,12 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local redisWrite = require 'api.rediswrite'
 
 local tagAPI = require 'api.tags'
 
 local trim = (require 'lapis.util').trim
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 local tinsert = table.insert
 local POST_TITLE_LENGTH = 300
 local COMMENT_LENGTH_LIMIT = 2000
@@ -52,7 +51,7 @@ end
 
 function api:AddPostTag(userID, postID, tagName)
 
-	local ok, err = util.RateLimit('AddPostTag:', userID, 1, 60)
+	local ok, err = self:RateLimit('AddPostTag:', userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -78,18 +77,18 @@ function api:AddPostTag(userID, postID, tagName)
 
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
-	newTag.score = util:GetScore(newTag.up, newTag.down)
+	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = redisWrite:UpdatePostTags(post)
+	ok, err = self.redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end
@@ -101,7 +100,7 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-	local ok, err = util.RateLimit('VotePost:', userID, 10, 60)
+	local ok, err = self:RateLimit('VotePost:', userID, 10, 60)
 	if not ok then
 		return ok, err
 	end
@@ -117,12 +116,12 @@ function api:VotePost(userID, postID, direction)
 		cache:AddSeenPost(userID, postID)
 	end
 
-  return redisWrite:QueueJob('votepost',postVote)
+  return self.redisWrite:QueueJob('votepost',postVote)
 
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 30)
+	local ok, err = self:RateLimit('SubscribeComment:', userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -135,7 +134,7 @@ function api:SubscribePost(userID, postID)
 	end
 	tinsert(post.viewers, userID)
 
-	ok, err = redisWrite:CreatePost(post)
+	ok, err = self.redisWrite:CreatePost(post)
 	return ok, err
 
 end
@@ -152,7 +151,7 @@ function api:CreatePostTags(userID, postInfo)
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
 			postInfo.tags[k].down = TAG_START_DOWNVOTES
-			postInfo.tags[k].score = util:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
+			postInfo.tags[k].score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
 			postInfo.tags[k].active = true
 			postInfo.tags[k].createdBy = userID
 		end
@@ -170,7 +169,7 @@ end
 
 function api:AddSource(userID, postID, sourceURL)
 
-	local ok, err = util.RateLimit('AddSource:', userID, 1, 600)
+	local ok, err = self:RateLimit('AddSource:', userID, 1, 600)
 	if not ok then
 		return ok, err
 	end
@@ -195,12 +194,12 @@ function api:AddSource(userID, postID, sourceURL)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = redisWrite:UpdatePostTags(post)
+	ok, err = self.redisWrite:UpdatePostTags(post)
 	if not ok then
 		return ok,err
 	end
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end
@@ -219,7 +218,7 @@ function api:DeletePost(userID, postID)
 		end
 	end
 
-	return redisWrite:DeletePost(postID)
+	return self.redisWrite:DeletePost(postID)
 
 end
 
@@ -252,7 +251,7 @@ end
 
 
 function api:EditPost(userID, userPost)
-	local ok, err = util.RateLimit('EditPost:', userID, 4, 300)
+	local ok, err = self:RateLimit('EditPost:', userID, 4, 300)
 	if not ok then
 		return ok, err
 	end
@@ -272,21 +271,21 @@ function api:EditPost(userID, userPost)
 
   -- only allow changing the title for newly made posts
 	if ngx.time() - post.createdAt < 600 then
-		post.title = util:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
+		post.title = self:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
 	end
 
   -- save EditPost
-  local newText = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+  local newText = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
   if post.text ~= newText then
     -- save the edit history
     post.edits = post.edits or {}
     post.edits[ngx.time()] = {time = ngx.time(), editedBy = userID, original = post.text}
   end
 
-	post.text = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+	post.text = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
 	post.editedAt = ngx.time()
 
-	ok, err = redisWrite:CreatePost(post)
+	ok, err = self.redisWrite:CreatePost(post)
 	return ok, err
 
 end
@@ -316,9 +315,9 @@ function api:ConvertUserPostToPost(userID, post)
 		parentID = newID,
 		createdBy = post.createdBy,
 		commentCount = 0,
-		title = util:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
-		link = util:SanitiseUserInput(post.link, 400),
-		text = util:SanitiseUserInput(post.text, 2000),
+		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
+		link = self:SanitiseUserInput(post.link, 400),
+		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
 		filters = {}
 	}
@@ -336,7 +335,7 @@ function api:ConvertUserPostToPost(userID, post)
 	end
 
 	for _,v in pairs(post.tags) do
-		tinsert(newPost.tags, util:SanitiseUserInput(v, 100))
+		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
 	end
 
   for k,tagName in pairs(newPost.tags) do
@@ -355,7 +354,7 @@ function api:ConvertUserPostToPost(userID, post)
 
   if newPost.link then
 
-    local domain  = util:GetDomain(newPost.link)
+    local domain  = self:GetDomain(newPost.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
@@ -380,7 +379,7 @@ function api:CreatePost(userID, postInfo)
 
 	local newPost, ok, err
 
-	ok, err = util.RateLimit('CreatePost:',userID, 1, 300)
+	ok, err = self:RateLimit('CreatePost:',userID, 1, 300)
 	if not ok then
 		return ok, err
 	end
@@ -392,7 +391,7 @@ function api:CreatePost(userID, postInfo)
 	end
 
   self:CreatePostTags(userID, newPost)
-  ok, err = redisWrite:CreatePost(newPost)
+  ok, err = self.redisWrite:CreatePost(newPost)
   if not ok then
     ngx.log(ngx.ERR, 'unable to createpost: ',err)
     return nil, 'error creating new post'
@@ -402,7 +401,7 @@ function api:CreatePost(userID, postInfo)
     id = newPost.id
   }
 
-  ok, err = redisWrite:QueueJob('CreatePost', info)
+  ok, err = self.redisWrite:QueueJob('CreatePost', info)
   if not ok then
     ngx.log(ngx.ERR, 'couldnt queue createpost: ', err)
     return nil, 'error processing post'

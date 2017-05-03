@@ -2,15 +2,7 @@
 local util = {}
 
 util.locks = ngx.shared.locks
-local redis = require 'resty.redis'
 
-local REDIS_SERVER = 'redis-master'
---REDIS_SERVER = '192.168.1.30'
-
-local sentinels = {
-  { host = "master-sentinel", port = "26379" },
-  { host = "api-sentinel", port = "26379" },
-}
 
 function util:GetLock(key, lockTime)
   local success, err = self.locks:add(key, true, lockTime)
@@ -62,43 +54,6 @@ function util:ConvertToUnique(jsonData)
 end
 
 
-function util:GetRedisConnection(host)
-  local red = redis:new()
-
-  red:set_timeout(1000)
-  local ok, err = red:connect(host, 6379)
-  if not ok then
-    ngx.log(ngx.ERR, "failed to connect: ", err)
-    return nil
-  end
-  return red
-end
-
-
-function util:GetUserWriteConnection()
-  return self:GetRedisConnection('redis-user')
-end
-
-function util:GetUserReadConnection()
-  return self:GetRedisConnection('redis-user')
-end
-
-function util:GetRedisReadConnection()
-  return self:GetRedisConnection('redis-general')
-end
-
-function util:GetRedisWriteConnection()
-  return self:GetRedisConnection('redis-general')
-end
-
-function util:GetCommentWriteConnection()
-  return self:GetRedisConnection('redis-comment')
-end
-
-function util:GetCommentReadConnection()
-  return self:GetRedisConnection('redis-comment')
-end
-
 
 
 --[[
@@ -142,12 +97,5 @@ function util:GetCommentReadConnection()
 end
 --]]
 
-function util:SetKeepalive(red)
-  local ok, err = red:set_keepalive(1000, 1000)
-  if not ok then
-      ngx.log(ngx.ERR, "failed to set keepalive: ", err)
-      return
-  end
-end
 
 return util

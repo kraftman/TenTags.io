@@ -1,10 +1,8 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
-local userWrite = require 'api.userwrite'
-local redisWrite = require 'api.rediswrite'
 local uuid = require 'lib.uuid'
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 local tinsert = table.insert
 
 
@@ -26,12 +24,12 @@ end
 
 function api:LabelUser(userID, targetUserID, label)
 
-	local ok, err = util.RateLimit('UpdateUser:',userID, 1, 60)
+	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = userWrite:LabelUser(userID, targetUserID, label)
+	ok, err = self.userWrite:LabelUser(userID, targetUserID, label)
 	return ok, err
 
 end
@@ -54,7 +52,7 @@ end
 
 function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 
-	local ok, err = util.RateLimit('subscribefilter:',userID, 1, 60)
+	local ok, err = self:RateLimit('subscribefilter:',userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -77,12 +75,12 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
     return
   end
 
-	ok, err = redisWrite:IncrementFilterSubs(filterID, -1)
+	ok, err = self.redisWrite:IncrementFilterSubs(filterID, -1)
 	if not ok then
 		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
 	end
 
-	ok, err = redisWrite:UnsubscribeFromFilter(userID,filterID)
+	ok, err = self.redisWrite:UnsubscribeFromFilter(userID,filterID)
 	if not ok then
 		ngx.log(ngx.ERR, 'error unsubbing user: ', err)
 		return nil, 'error unsubbing'
@@ -98,7 +96,7 @@ end
 function api:SubscribeToFilter(userID, userToSubID, filterID)
 
 
-	local ok, err = util.RateLimit('UpdateUser:',userID, 1, 60)
+	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
@@ -120,7 +118,7 @@ function api:SubscribeToFilter(userID, userToSubID, filterID)
     end
   end
 
-  redisWrite:SubscribeToFilter(userToSubID,filterID)
+  self.redisWrite:SubscribeToFilter(userToSubID,filterID)
 
 end
 
@@ -143,7 +141,7 @@ function api:CreateSubUser(accountID, username)
 
   local subUser = {
     id = uuid.generate(),
-    username = util:SanitiseHTML(username,20),
+    username = self:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
     parentID = accountID,
     enablePM = 1
@@ -161,12 +159,12 @@ function api:CreateSubUser(accountID, username)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
 	account.currentUserID = subUser.id
-	local ok, err = userWrite:CreateAccount(account)
+	local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = userWrite:CreateSubUser(subUser)
+	ok, err = self.userWrite:CreateSubUser(subUser)
 	if ok then
 		return subUser
 	else
@@ -214,7 +212,7 @@ end
 
 
 function api:GetUserAlerts(userID)
-	local ok, err = util:RateLimit('GetUserAlerts:',userID, 5, 10)
+	local ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
@@ -225,12 +223,12 @@ function api:GetUserAlerts(userID)
 end
 
 function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = util:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
+	local ok, err = self:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 	-- can only edit their own
-  return userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+  return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
 end
 
 
@@ -246,7 +244,7 @@ function api:SwitchUser(accountID, userID)
 	account.currentUserID = user.id
 	account.currentUsername = user.username
 
-	local ok, err = userWrite:CreateAccount(account)
+	local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
@@ -262,7 +260,7 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
-	local ok, err = util.RateLimit('UpdateUser:',userID, 3, 30)
+	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -281,7 +279,7 @@ function api:UpdateUser(userID, userToUpdate)
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username,
-		bio = util:SanitiseUserInput(userToUpdate.bio, 1000)
+		bio = self:SanitiseUserInput(userToUpdate.bio, 1000)
 	}
 
 	for k,v in pairs(userToUpdate) do
@@ -291,7 +289,7 @@ function api:UpdateUser(userID, userToUpdate)
 		end
 	end
 
-	return redisWrite:UpdateUser(userInfo)
+	return self.redisWrite:UpdateUser(userInfo)
 end
 
 
@@ -311,7 +309,7 @@ end
 function api:GetUserSettings(userID)
 	local ok, user, err
 
-	ok, err = util.RateLimit('GetUserSettings', 5, 1)
+	ok, err = self:RateLimit('GetUserSettings', 5, 1)
 	if not ok then
 		return nil, err
 	end

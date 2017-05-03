@@ -6,11 +6,11 @@ local RECUR_INTERVAL = 10
 function worker:New()
   local w = setmetatable({}, self)
 
-  w.rediswrite = require 'api.rediswrite'
-  w.redisread = require 'api.redisread'
+  w.rediswrite = (require 'redis.db').redisWrite
+  w.redisread = (require 'redis.db').redisRead
   w.cjson = require 'cjson'
-  w.userwrite = require 'api.userwrite'
-  w.commentwrite = require 'api.commentwrite'
+  w.userwrite = (require 'redis.db').userWrite
+  w.commentwrite = (require 'redis.db').commentWrite
   w.util = require 'util'
   w.common = require 'timers.common'
 
