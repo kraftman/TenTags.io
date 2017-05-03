@@ -1,11 +1,8 @@
 
-
 local m = {}
-
 
 local respond_to = (require 'lapis.application').respond_to
 
-local tinsert = table.insert
 local http = require 'lib.http'
 local adminAPI = require 'api.admin'
 
@@ -50,7 +47,7 @@ local function Stat(request)
   local startAt = ngx.time() - 100000
   local endAt = ngx.time()
 
-  local ok, err = adminAPI:GetBacklogStats('CreatePost:30', startAt, endAt)
+  local ok, err = adminAPI:GetBacklogStats('ReIndexPost:30', startAt, endAt)
   if not ok then
     return 'error: ',err
   end

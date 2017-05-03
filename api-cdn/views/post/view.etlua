@@ -46,7 +46,7 @@
   <% end %>
 
   <% if post.containsSources then %>
-    <% for _,tag in pairs(post.tags) do %>
+    <% for _,tag in pairs(post.tags or {}) do %>
       <% if tag.name:find('^meta:sourcePost') then %>
         <% render("views.st.tag",{tag = tag}) %>
       <% end %>
@@ -75,12 +75,12 @@
   </form>
 
   Filters:</br>
-  <% for _,filter in pairs(filters) do %>
+  <% for _,filter in pairs(filters or {}) do %>
     <% render("views.st.postfilterelement",{filter = filter}) %>
   <% end %>
   </br></br>
   Tags:</br>
-  <% for _,tag in pairs(post.tags) do %>
+  <% for _,tag in pairs(post.tags or {}) do %>
     <% if not tag.name:find('^meta:') then %>
       <% render("views.st.tag",{tag = tag}) %>
     <% end %>
@@ -107,7 +107,7 @@
   >Top</option>
   </select>
   <div>
-    <% for _,filter in pairs(filters) do print(filter.title)%>
+    <% for _,filter in pairs(filters or {}) do print(filter.title)%>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
   </div>

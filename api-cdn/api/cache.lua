@@ -1,3 +1,4 @@
+
 --[[
 caching the most with the leas
 LRU great for complex objects (tables) but expensive
@@ -18,14 +19,16 @@ local filterDict = ngx.shared.filters
 --local frontpages = ngx.shared.frontpages
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenDict = ngx.shared.usersessionseen
---local tags = ngx.shared.tags
+local searchResults = ngx.shared.searchresults
 local postInfo = ngx.shared.postinfo
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local redisread = require 'api.redisread'
-local userRead = require 'api.userread'
-local commentRead = require 'api.commentread'
+local redisread = (require 'redis.db').redisRead
+local userRead = (require 'redis.db').userRead
+local commentRead = (require 'redis.db').commentRead
 local lru = require 'api.lrucache'
+
+local elastic = require 'lib.elasticsearch'
 local tinsert = table.insert
 local userInfo = ngx.shared.userInfo
 local commentInfo = ngx.shared.comments
@@ -41,8 +44,8 @@ function cache:GetThread(threadID)
   return redisread:GetThreadInfo(threadID)
 end
 
-function cache:GetThreads(userID)
-  local threadIDs = redisread:GetUserThreads(userID)
+function cache:GetThreads(userID, startAt, range)
+  local threadIDs = redisread:GetUserThreads(userID, startAt, range)
   local threads = redisread:GetThreadInfos(threadIDs)
 
   return threads
@@ -75,6 +78,31 @@ function cache:GetUser(userID)
 
 end
 
+function cache:SearchPost(queryString)
+  local results, ok, err
+  if not DISABLE_CACHE then
+    ok, err = searchResults:get()
+    if err then
+      ngx.log(ngx.ERR, 'unable to check searchResults shdict ', err)
+      return nil, err
+    end
+    if ok then
+      return from_json(ok)
+    end
+  end
+  results, err = elastic:SearchWholePostFuzzy(queryString)
+  if not results then
+    return nil, err
+  end
+  ok, err = searchResults:set(queryString, results)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to store search results: ', err)
+  end
+
+  return from_json(results)
+
+end
+
 function cache:PurgeKey(keyInfo)
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
@@ -93,26 +121,27 @@ function cache:GetCommentIDFromURL(commentURL)
 end
 
 function cache:GetAccount(accountID)
-    if not DISABLE_CACHE then
-      local ok, err = userInfo:get(accountID)
-      if err then
-        ngx.log(ngx.ERR, 'unable to get account: ',err)
-      end
-      if ok then
-        return from_json(ok)
-      end
-    end
-
-    local account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  local account, ok, err
+  if not DISABLE_CACHE then
+    ok, err = userInfo:get(accountID)
     if err then
-      return account, err
+      ngx.log(ngx.ERR, 'unable to get account: ',err)
     end
-    local ok, err = userInfo:set(accountID, to_json(account))
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to set account info: ',err)
+    if ok then
+      return from_json(ok)
     end
+  end
 
-    return account
+  account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  if err then
+    return account, err
+  end
+  ok, err = userInfo:set(accountID, to_json(account))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set account info: ',err)
+  end
+
+  return account
 end
 
 function cache:GetUserAlerts(userID)
@@ -170,18 +199,18 @@ function cache:GetComment(postID, commentID)
   return commentRead:GetComment(postID,commentID)
 end
 
-function cache:GetUserComments(userID)
+function cache:GetUserComments(userID, sortBy, startAt, range)
   -- why is this split in two parts?
   -- why not just get all with hgetall
-  local postIDcommentIDs = userRead:GetUserComments(userID)
+  local postIDcommentIDs = userRead:GetUserComments(userID, sortBy, startAt, range)
   if not postIDcommentIDs then
     return {}
   end
-  local commentInfo = commentRead:GetUserComments(postIDcommentIDs)
-  for k,v in pairs(commentInfo) do
-    commentInfo[k] = from_json(v)
+  local comments = commentRead:GetUserComments(postIDcommentIDs)
+  for k,v in pairs(comments) do
+    comments[k] = from_json(v)
   end
-  return commentInfo
+  return comments
 end
 
 function cache:AddChildren(parentID,flat)

@@ -6,12 +6,13 @@ local RECUR_INTERVAL = 10
 function worker:New()
   local w = setmetatable({}, self)
 
-  w.rediswrite = require 'api.rediswrite'
-  w.redisread = require 'api.redisread'
+  w.rediswrite = (require 'redis.db').redisWrite
+  w.redisread = (require 'redis.db').redisRead
   w.cjson = require 'cjson'
-  w.userwrite = require 'api.userwrite'
-  w.commentwrite = require 'api.commentwrite'
+  w.userwrite = (require 'redis.db').userWrite
+  w.commentwrite = (require 'redis.db').commentWrite
   w.util = require 'util'
+  w.common = require 'timers.common'
 
   -- shared dicts
   w.locks = ngx.shared.locks
@@ -20,11 +21,12 @@ function worker:New()
   w.userSessionSeenDict = ngx.shared.usersessionseen
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
-  w.postUpdater = (require 'timers.postupdater'):New(w.util)
+  w.postUpdater = (require 'timers.postupdater'):New(w.util, common)
   w.filterUpdater = (require 'timers.filterupdater'):New(w.util)
   w.registerUser = (require 'timers.registeruser'):New(w.util)
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)
   w.statcollector = (require 'timers.statcollector'):New(w.util)
+  w.commentupdater = (require 'timers.commentupdater'):New(w.util)
 
   return w
 end
@@ -65,6 +67,7 @@ function worker.OnServerStart(_,self)
   self.registerUser.Run(_,self.registerUser)
   self.invalidateCache.Run(_,self.invalidateCache)
   self.statcollector.Run(_,self.statcollector)
+  self.commentupdater.Run(_,self.commentupdater)
 
   if not self.util:GetLock('l:ServerStart', 5) then
     return

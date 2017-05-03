@@ -1,10 +1,7 @@
 
-local userwrite = {}
-
-local redis = require 'resty.redis'
-local to_json = (require 'lapis.util').to_json
 local addKey = require 'redisscripts.addkey'
-local util = require 'util'
+local base = require 'redis.base'
+local userwrite = setmetatable({}, base)
 
 function userwrite:ConvertListToTable(list)
   local info = {}
@@ -15,7 +12,7 @@ function userwrite:ConvertListToTable(list)
 end
 
 function userwrite:LoadScript(script)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   local ok, err = red:script('load',script)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add script to redis:',err)
@@ -28,13 +25,13 @@ function userwrite:LoadScript(script)
 end
 
 function userwrite:AddUserTagVotes(userID, postID, tagNames)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   for k,v in pairs(tagNames) do
     tagNames[k] = postID..':'..v
   end
 
   local ok, err = red:sadd('userTagVotes:'..userID, tagNames)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user tag vote: ',err)
   end
@@ -42,10 +39,10 @@ function userwrite:AddUserTagVotes(userID, postID, tagNames)
 end
 
 function userwrite:AddUserCommentVotes(userID, commentID)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
 
   local ok, err = red:sadd('userCommentVotes:'..userID, commentID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user comment vote: ',err)
   end
@@ -54,10 +51,10 @@ end
 
 
 function userwrite:AddUserPostVotes(userID, postID)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
 
   local ok, err = red:sadd('userPostVotes:'..userID, postID)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user post vote: ',err)
   end
@@ -66,31 +63,32 @@ function userwrite:AddUserPostVotes(userID, postID)
 end
 
 function userwrite:AddUserAlert(createdAt,userID, alert)
-  local red = util:GetUserWriteConnection()
-  print('adding user alert for ',userID,to_json(alert))
+  local red = self:GetUserWriteConnection()
+  print('adding user alert for ',userID,self:to_json(alert))
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
 function userwrite:UpdateLastUserAlertCheck(userID, checkedAt)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   local ok, err = red:hmset('user:'..userID,'alertCheck',checkedAt)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   return ok, err
 end
 
 function userwrite:AddComment(commentInfo)
-  local red = util:GetUserWriteConnection()
-  local ok, err = red:zadd('userComments:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userComments:date:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
+  ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
   return ok, err
 end
 
 function userwrite:CreateAccount(account)
 
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
 
   local hashedAccount = {}
   hashedAccount.sessions = {}
@@ -98,7 +96,7 @@ function userwrite:CreateAccount(account)
   for k,v in pairs(account) do
     if k == 'sessions' then
       for _,session in pairs(v) do
-        hashedAccount['session:'..session.id] = to_json(session)
+        hashedAccount['session:'..session.id] = self:to_json(session)
       end
     elseif k == 'users' then
       for _,userID in pairs(v) do
@@ -118,7 +116,7 @@ function userwrite:CreateAccount(account)
 end
 
 function userwrite:AddSeenPosts(userID,seenPosts)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   local addKeySHA1 = addKey:GetSHA1()
 
   red:init_pipeline()
@@ -127,7 +125,7 @@ function userwrite:AddSeenPosts(userID,seenPosts)
       red:zadd('userSeen:'..userID,ngx.time(),postID)
     end
   local res,err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to add seen post: ',err)
     return nil
@@ -136,7 +134,7 @@ function userwrite:AddSeenPosts(userID,seenPosts)
 end
 
 function userwrite:LabelUser(userID, targetUserID, label)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
 
   local ok, err = red:hset('user:'..userID, 'userlabel:'..targetUserID, label)
   if err then
@@ -146,9 +144,9 @@ function userwrite:LabelUser(userID, targetUserID, label)
 end
 
 function userwrite:IncrementUserStat(userID, statName, value)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   local ok, err = red:hincrby('user:'..userID, statName, value)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 end
 
@@ -165,7 +163,7 @@ function userwrite:CreateSubUser(user)
     end
   end
 
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   user.filters = user.filters or {}
 
   red:init_pipeline()
@@ -175,7 +173,7 @@ function userwrite:CreateSubUser(user)
     end
     red:hset('userToID',hashedUser.username:lower(),hashedUser.id)
   local results, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to create new user: ',err)
@@ -187,32 +185,32 @@ end
 
 function userwrite:SubscribeToFilter(userID,filterID)
   userID = userID or 'default'
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   --print('adding filter ',filterID, ' to ',userID)
   local ok, err = red:sadd('userfilters:'..userID, filterID)
 
   if not ok then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to add filter to list: ',err)
     return
   end
 
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   return ok, err
 
 end
 
 function userwrite:UnsubscribeFromFilter(userID, filterID)
-  local red = util:GetUserWriteConnection()
+  local red = self:GetUserWriteConnection()
   local ok, err = red:srem('userfilters:'..userID,filterID)
   if not ok then
-    util:SetKeepalive(red)
+    self:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)
     return
   end
 
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr subs: ',err)
   end

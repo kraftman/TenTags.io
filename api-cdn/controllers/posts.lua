@@ -54,6 +54,10 @@ function m.GetPost(request)
   local sortBy = request.params.sort or 'best'
   sortBy = sortBy:lower()
 
+  if not request.session.userID then
+    return 'no userID'
+  end
+
   local postID = request.params.postID
   if #postID < 10 then
     postID = postAPI:ConvertShortURL(postID) or postID

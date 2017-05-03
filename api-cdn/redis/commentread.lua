@@ -1,8 +1,6 @@
 
-local redis = require "resty.redis"
-local from_json = (require 'lapis.util').from_json
-local util = require 'util'
-local commentread = {}
+local base = require 'redis.base'
+local commentread = setmetatable({}, base)
 
 
 function commentread:ConvertListToTable(list)
@@ -14,7 +12,7 @@ function commentread:ConvertListToTable(list)
 end
 
 function commentread:GetPostComments(postID)
-  local red = util:GetCommentReadConnection()
+  local red = self:GetCommentReadConnection()
 
   local ok, err = red:hgetall('postComment:'..postID)
   if not ok then
@@ -34,7 +32,7 @@ function commentread:GetUserComments(postIDcommentIDs)
   -- split the postID and commentID apart
   -- pipelined the requsts
 
-  local red = util:GetCommentReadConnection()
+  local red = self:GetCommentReadConnection()
   local postID, commentID
   red:init_pipeline()
     for _,v in pairs(postIDcommentIDs) do
@@ -43,7 +41,7 @@ function commentread:GetUserComments(postIDcommentIDs)
       red:hget('postComment:'..postID,commentID)
     end
   local res, err = red:commit_pipeline()
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to get comments: ',err)
     return {}
@@ -56,9 +54,9 @@ end
 function commentread:GetOldestJobs(jobName, size)
    jobName = 'queue:'..jobName
 
-  local red = util:GetRedisReadConnection()
+  local red = self:GetRedisReadConnection()
   local ok, err = red:zrange(jobName, 0, size)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
 
   if (not ok) or ok == ngx.null then
     return nil, err
@@ -69,7 +67,7 @@ end
 
 
 function commentread:GetComment(postID, commentID)
-  local red = util:GetCommentReadConnection()
+  local red = self:GetCommentReadConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get comment info: ',err)
@@ -79,13 +77,13 @@ function commentread:GetComment(postID, commentID)
   if ok == ngx.null then
     return nil
   else
-    return from_json(ok)
+    return self:from_json(ok)
   end
 
 end
 
 function commentread:GetCommentInfos(commentIDs)
-  local red = util:GetCommentReadConnection()
+  local red = self:GetCommentReadConnection()
   red:init_pipeline()
   for _,v in pairs(commentIDs) do
     red:hgetall('comments:'..v)

@@ -6,17 +6,14 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local commentRead = require 'api.commentread'
 local commentAPI = require 'api.comments'
 local userAPI = require 'api.users'
-local userWrite = require 'api.userwrite'
 local cache = require 'api.cache'
 local tinsert = table.insert
-local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
+
+
+local common = require 'timers.common'
+setmetatable(config, common)
 
 function config:New(util)
   local c = setmetatable({},self)
@@ -37,55 +34,13 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
+  self.startTime = ngx.now()
   self:ProcessJob('commentvote', 'ProcessCommentVote')
   self:ProcessJob('commentsub', 'ProcessCommentSub')
-  self:ProcessJob('createcomment', 'CreateComment')
+  self:ProcessJob('CreateComment', 'CreateComment')
 
 end
 
-function config:ConvertToUnique(jsonData)
-  -- this also removes duplicates, using the newest only
-  -- as they are already sorted old -> new by redis
-  local commentVotes = {}
-  local converted
-  for _,v in pairs(jsonData) do
-    converted = from_json(v)
-    converted.json = v
-    commentVotes[converted.id] = converted
-  end
-  return commentVotes
-end
-
-
-function config:ProcessJob(jobName, handler)
-  local lockName = 'L:'..jobName
-  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local jobs = self:ConvertToUnique(ok)
-
-  for jobID,job in pairs(jobs) do
-    ok, err = redisWrite:GetLock(lockName..jobID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
-    elseif ok ~= ngx.null then
-      -- the bit that does stuff
-      ok, err = self[handler](self,job)
-      if ok then
-        commentWrite:RemoveJob(jobName,job.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
-        redisWrite:RemLock(lockName..jobID)
-      end
-    end
-  end
-
-end
 
 function config:ProcessCommentVote(commentVote)
   local comment = commentAPI:GetComment(commentVote.postID, commentVote.commentID)
@@ -101,21 +56,26 @@ function config:ProcessCommentVote(commentVote)
 
   comment.score = self.util:GetScore(comment.up, comment.down)
 
-  local ok, err = userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
+  local ok, err = self.userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
   if not ok then
     return ok, err
   end
 
   if commentVote.direction == 'up' then
-		ok, err = userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
+		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
 	else
-		ok, err = userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
+		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
 	end
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = commentWrite:CreateComment(comment)
+  ok, err = self.userWrite:AddComment(comment)
+  if not ok then
+    return ok, err
+  end
+
+	ok, err = self.commentWrite:CreateComment(comment)
   return ok, err
 
 end
@@ -144,7 +104,7 @@ function config:ProcessCommentSub(commentSub)
     end
   end
 
-  return commentWrite:CreateComment(comment)
+  return self.commentWrite:CreateComment(comment)
 end
 
 
@@ -174,12 +134,12 @@ function config:AddAlerts(post, comment)
   -- need to add alert to all parent comment viewers
   if comment.parentID == comment.postID then
 		for _,viewerID in pairs(post.viewers) do
-			userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+			self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
-      userAPI:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+      self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
   end
 
@@ -188,20 +148,27 @@ function config:AddAlerts(post, comment)
 end
 
 function config:CreateComment(commentInfo)
-
+  print('creating comment')
+  local ok, err
   local comment = cache:GetComment(commentInfo.postID, commentInfo.commentID)
   local post = cache:GetPost(comment.postID)
   if not post then
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
   end
 
-  ok, err = self:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  if not ok then
+    return ok, err
+  end
+  print('adding comment to user')
+  ok, err = self.userWrite:AddComment(comment)
   if not ok then
     return ok, err
   end
 
 
-  local ok, err = self:UpdateFilters(post, comment)
+
+  ok, err = self:UpdateFilters(post, comment)
   if not ok then
     return ok, err
   else
@@ -211,7 +178,7 @@ function config:CreateComment(commentInfo)
   self:AddAlerts(post, comment)
 
 
-  redisWrite:UpdatePostField(comment.postID, 'commentCount',post.commentCount+1)
+  self.redisWrite:UpdatePostField(comment.postID, 'commentCount',post.commentCount+1)
 
   return true
 

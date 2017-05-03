@@ -6,17 +6,10 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local commentRead = require 'api.commentread'
-local commentAPI = require 'api.comments'
-local userAPI = require 'api.users'
-local userWrite = require 'api.userwrite'
-local cache = require 'api.cache'
-local tinsert = table.insert
-local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
+local redisRead = (require 'redis.db').redisRead
+local redisWrite = (require 'redis.db').redisWrite
+
+
 
 function config:New(util)
   local c = setmetatable({},self)

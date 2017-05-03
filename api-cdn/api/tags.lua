@@ -1,16 +1,14 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
-local redisWrite = require 'api.rediswrite'
 local to_json = (require 'lapis.util').to_json
-local userWrite  = require 'api.userwrite'
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 local tinsert = table.insert
 local SOURCE_POST_THRESHOLD = 0.75
 
 
 function api:SearchTags(searchString)
-	searchString = util:SanitiseUserInput(searchString, 100)
+	searchString = self:SanitiseUserInput(searchString, 100)
 	return cache:SearchTags(searchString)
 end
 
@@ -35,7 +33,7 @@ local function CheckPostParent(post)
 
 		if parentID and post.parentID ~= parentID then
 			post.parentID = parentID
-			redisWrite:UpdatePostParentID(post)
+			self.redisWrite:UpdatePostParentID(post)
 		end
 	end
 end
@@ -50,11 +48,10 @@ function api:CreateTag(userID, tagName)
     return nil
   end
 
-	tagName = util:SanitiseUserInput(tagName, 100)
+	tagName = self:SanitiseUserInput(tagName, 100)
 
   local tag = cache:GetTag(tagName)
   if tag then
-		print(to_json(tag))
     return tag
   end
 
@@ -64,7 +61,7 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  local existingTag, err = redisWrite:CreateTag(tagInfo)
+  local existingTag, err = self.redisWrite:CreateTag(tagInfo)
 	-- tag might exist but not be in cache
 	if err then
 		ngx.log(ngx.ERR, 'err creating tag: ', err)
@@ -82,7 +79,7 @@ end
 
 function api:VoteTag(userID, postID, tagName, direction)
 
-	if not util.RateLimit('VoteTag:', userID, 5, 30) then
+	if not self:RateLimit('VoteTag:', userID, 5, 30) then
 		return nil, 'rate limited'
 	end
 
@@ -103,32 +100,32 @@ function api:VoteTag(userID, postID, tagName, direction)
 	CheckPostParent(post)
 
 	-- mark tag as voted on by user
-	local ok, err = userWrite:AddUserTagVotes(userID, postID, {tagName})
+	local ok, err = self.userWrite:AddUserTagVotes(userID, postID, {tagName})
 	if not ok then
 		return ok, err
 	end
 
 	-- increment how many tags the user has voted on
 	if direction == 'up' then
-		userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
+		self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
 	else
-		userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
+		self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvotedown',1)
 	end
 
 	-- Is this a meaningful stat?
 	for _,tag in pairs(post.tags) do
 		if tag.name:find('meta:self') then
 			if direction == 'up' then
-				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
+				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
 			else
-				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
+				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
 			end
 			break -- stop as soon as we know what kind of post it is
 		elseif tag.name:find('meta:link') then
 			if direction == 'up' then
-				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
+				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
 			else
-				ok, err = userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
+				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
 			end
 			break
 		end
@@ -138,11 +135,11 @@ function api:VoteTag(userID, postID, tagName, direction)
 		return ok, err
 	end
 
-	ok, err = redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then
 		return ok, err
 	end
-	ok, err = redisWrite:UpdatePostTags(post)
+	ok, err = self.redisWrite:UpdatePostTags(post)
 	return ok, err
 
 end

@@ -76,7 +76,7 @@ end
 function m.CreatePosts(self)
   local userID = self.session.userID
 
-  for i = 1, 100 do
+  for i = 1, 1000 do
     local info = {
       title = 'post:456:'..i,
       text = 'text:'..i,
