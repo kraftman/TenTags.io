@@ -15,6 +15,9 @@ local date = require("date")
 app:enable("etlua")
 app.layout = require 'views.layout'
 local csrf = require("lapis.csrf")
+local woothee = require "resty.woothee"
+
+local uuid = require 'lib.uuid'
 
 app.cookie_attributes = function(self)
   local expires = date(true):adddays(365):fmt("${http}")
@@ -76,7 +79,7 @@ end
 local function SignOut(self)
   -- kill the session with the api so it cant be reused
   -- delete everything in the session
-  local ok, err = api:KillSession(self.session.accountID, self.session.sessionID)
+  local ok, err = sessionAPI:KillSession(self.session.accountID, self.session.sessionID)
   if not ok then
     print('error killing session: ',err)
   end
@@ -129,8 +132,14 @@ local function GetFilterTemplate(self)
 end
 
 local function LoadUser(self)
+  local r = woothee.parse(ngx.var.http_user_agent)
+  ngx.say(r.get('category'))
   if self.session.userID then
+    self.tempID = nil
     self.userInfo = userAPI:GetUser(self.session.userID)
+  else
+    self.tempID = self.session.tempID or uuid:generate_random()
+    ngx.say(self.tempID)
   end
 end
 

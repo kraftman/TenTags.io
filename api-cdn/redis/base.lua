@@ -27,6 +27,12 @@ function M:to_json(data)
   return to_json(data)
 end
 
+
+function M:SplitShortURL(shortURL)
+  return shortURL:sub(1,5),shortURL:sub(6,-1)
+end
+
+
 function M:GetUserWriteConnection()
   return self:GetRedisConnection('redis-user')
 end
