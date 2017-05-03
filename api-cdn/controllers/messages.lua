@@ -20,7 +20,7 @@ function m.ViewMessages(request)
   if not tonumber(startAt) then
     startAt = 0
   end
-  local range = request.params.range or 0
+  local range = request.params.range or 10
   if not tonumber(range) then
     range = 10
   end

@@ -240,6 +240,7 @@ end
 function read:GetUserThreads(userID, startAt, range)
   local red = util:GetRedisReadConnection()
   local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
+  print(startAt, range, #ok)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
     return {}
@@ -259,7 +260,6 @@ function read:ConvertThreadFromRedis(thread)
 
   for k,_ in pairs(thread) do
     if k:find('viewer') then
-      ngx.log(ngx.ERR, 'found viewer:',k)
       local viewerID = k:match('viewer:(%w+)')
       if viewerID then
         thread[k] = nil
