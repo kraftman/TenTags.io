@@ -16,6 +16,30 @@ local respond_to = (require 'lapis.application').respond_to
 local trim = util.trim
 
 
+function m:Register(app)
+  app:match('newpost','/p/new', respond_to({
+    GET = self.CreatePostForm,
+    POST = self.CreatePost
+  }))
+  app:match('viewpost','/p/:postID', respond_to({
+    GET = self.GetPost,
+    POST = self.EditPost,
+  }))
+  app:match('deletepost','/p/delete/:postID', respond_to({
+    GET = self.DeletePost,
+    POST = self.DeletePost,
+  }))
+
+  app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
+  app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
+  app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
+  app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
+  app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
+
+end
+
+
 function m.CreatePost(request)
 
   if trim(request.params.link) == '' then
@@ -347,27 +371,5 @@ function m.SubscribePost(request)
   end
 end
 
-function m:Register(app)
-  app:match('newpost','/p/new', respond_to({
-    GET = self.CreatePostForm,
-    POST = self.CreatePost
-  }))
-  app:match('viewpost','/p/:postID', respond_to({
-    GET = self.GetPost,
-    POST = self.EditPost,
-  }))
-  app:match('deletepost','/p/delete/:postID', respond_to({
-    GET = self.DeletePost,
-    POST = self.DeletePost,
-  }))
-
-  app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
-  app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
-  app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
-  app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
-  app:get('geticon', '/icon/:postID', self.GetIcon)
-  app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
-
-end
 
 return m

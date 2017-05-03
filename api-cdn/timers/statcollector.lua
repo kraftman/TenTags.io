@@ -5,6 +5,8 @@ local config = {}
 config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
+local from_json = (require 'lapis.util').from_json
+local pageStatLog = ngx.shared.pageStatLog
 
 local redisRead = (require 'redis.db').redisRead
 local redisWrite = (require 'redis.db').redisWrite
@@ -31,23 +33,99 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
   self:GetStats()
+  self:GetPageStats()
+
 
 end
 
 
-local queues = {
-  --'CheckReposts',
-  'CreatePost',
-  --'votepost',
-  --'UpdatePostFilters',
-  --'AddPostShortURL',
-  --'ReIndexPost'
-}
+function config:GetPageStats()
+  local ok, err = self.util:GetLock('UpdateStats', 5)
+  if not ok then
+    return
+  end
+
+  local ok, err, stat
+  local keys = pageStatLog:get_keys()
+  for id,key in pairs(keys) do
+    stat, err = pageStatLog:get(key)
+    if not stat then
+      return
+    end
+    stat = from_json(stat)
+    self:ProcessAllViews(stat)
+    if stat.statType == 'PostView' then
+      ok, err = self:ProcessPostView(stat)
+      if ok then
+        pageStatLog:delete(key)
+      end
+    end
+    pageStatLog:delete(key)
+  end
+
+  --self.util:RemLock('UpdateStats')
+end
+
+function config:ProcessAllViews(stat)
+  -- log unique views for each category
+  local cat = { 'device', 'os', 'browser'}
+
+  local key, ok, err
+  redisWrite:LogSiteView()
+
+  for _,category in pairs(cat) do
+    key = 'sitestat:'..category
+    ok, err = redisWrite:LogUniqueSiteView(key, stat.time, stat.userID, stat[category])
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to add stats: ', err)
+    end
+
+  end
+  print('logged stat')
+
+end
+
+function config:ProcessPostView(stat)
+  if not stat.postID or #stat.postID < 5 then
+    return true
+  end
+  local post = redisRead:GetPost(stat.postID)
+  if not post then
+    return true
+  end
+  local viewCount = post.views or 1
+  local ok, err = redisWrite:UpdatePostField(stat.postID, 'views', viewCount)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to update post view count ',err)
+  end
+
+  --ok, err = redisWrite:InvalidateKey('post', stat.postID)
+
+  ok, err = redisWrite:AddUniquePostView()
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to log unique post view: ', err)
+    return nil
+  end
+
+  return true
+
+
+end
+
 
 function config:GetStats()
   -- check the backlog for each QueueJob
   -- add it to a sorted setmetatable
 
+
+  local queues = {
+    'CheckReposts',
+    'CreatePost',
+    'votepost',
+    'UpdatePostFilters',
+    'AddPostShortURL',
+    'ReIndexPost'
+  }
 
   local ok, err
 

@@ -30,6 +30,7 @@ http {
   lua_shared_dict userVotes 5m;
   lua_shared_dict ratelimit 1m;
   lua_shared_dict emailQueue 1m;
+  lua_shared_dict pageStatLog 5m;
 
   lua_shared_dict testusers 1m;
 

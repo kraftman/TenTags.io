@@ -57,10 +57,22 @@ local function Stat(request)
   return {render = 'stats.view'}
 end
 
+local function SiteStats(request)
+  local ok, err = adminAPI:GetSiteUniqueStats()
+  if not ok then
+    return 'error: ',err
+  end
+
+  local totalViews = adminAPI:GetSiteStats()
+  request.totals = totalViews
+  request.stats = ok
+  return {render = 'stats.view'}
+end
+
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
   app:get('ele', '/ele', SearchTitle)
-  app:get('stat', '/admin/stats', Stat)
+  app:get('stat', '/admin/stats', SiteStats)
 end
 
 return m

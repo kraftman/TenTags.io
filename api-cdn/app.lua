@@ -11,11 +11,11 @@ local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
 local userAPI = require 'api.users'
 local date = require("date")
+local pageStats = require 'middleware.pagestats'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
 local csrf = require("lapis.csrf")
-local woothee = require "resty.woothee"
 
 local uuid = require 'lib.uuid'
 
@@ -132,16 +132,14 @@ local function GetFilterTemplate(self)
 end
 
 local function LoadUser(self)
-  local r = woothee.parse(ngx.var.http_user_agent)
-  ngx.say(r.get('category'))
   if self.session.userID then
     self.tempID = nil
     self.userInfo = userAPI:GetUser(self.session.userID)
-  else
-    self.tempID = self.session.tempID or uuid:generate_random()
-    ngx.say(self.tempID)
+  elseif not self.session.accountID then
+    self.session.tempID = self.session.tempID or uuid:generate_random()
   end
 end
+
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
@@ -175,6 +173,11 @@ app:before_filter(function(self)
   self.CalculateColor = CalculateColor
 
 
+end)
+
+app:before_filter(function(request)
+
+  pageStats:LogStats(request)
 end)
 
 -- Random stuff that doesnt go anywhere yet

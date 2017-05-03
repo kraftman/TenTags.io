@@ -17,6 +17,54 @@ function write:ConvertListToTable(list)
   return info
 end
 
+function write:AddUniquePostView(postID, userID)
+  local red = self:GetRedisWriteConnection()
+
+  local ok, err = red:pfadd('post:uniquview:'..postID, userID)
+
+end
+
+function write:LogSiteView()
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hincrby('sitestats', 'views', 1)
+  if not ok then
+    self:SetKeepalive()
+    return ok, err
+  end
+  return ok, err
+end
+
+function write:LogUniqueSiteView(baseKey, statTime, userID, value)
+  local red = self:GetRedisWriteConnection()
+  local times = {}
+  times.minutes = '60'
+  times.hours = '3600'
+  times.days = '86400'
+  times.months = '2592000'
+  local zkey, statKey, newTime, ok, err
+  -- needs wrapping in pipeline
+  for k,label in pairs(times) do
+    zkey = baseKey..':'..k
+
+    newTime = statTime - (statTime % label)
+    statKey = baseKey..':'..statTime..':'..value
+    ok, err = red:zadd(zkey, newTime, statKey)
+    --print('creating zset at: ', zkey, ' time: ',newTime, ' statkey: ', statKey,'==')
+    if not ok then
+      return nil, err
+    end
+    ok, err = red:pfadd(statKey, userID)
+    --print(statKey, red:pfcount(statKey))
+    if not ok then
+      return nil, err
+    end
+
+  end
+  self:SetKeepalive(red)
+
+  return true
+end
+
 function write:DeleteResetKey(emailAddr)
   local red = self:GetRedisWriteConnection()
 

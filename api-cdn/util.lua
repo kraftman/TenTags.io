@@ -15,6 +15,10 @@ function util:GetLock(key, lockTime)
   return true
 end
 
+function util:RemLock(key)
+  self.locks:delete(key)
+end
+
 
 
 function util:GetScore(up,down)
