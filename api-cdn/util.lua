@@ -43,6 +43,25 @@ function util:GetScore(up,down)
 end
 
 
+
+function util:ConvertToUnique(jsonData)
+  -- this also removes duplicates, using the newest only
+  -- as they are already sorted old -> new by redis
+  local commentVotes = {}
+  local converted
+  for _,v in pairs(jsonData) do
+
+    converted = from_json(v)
+    converted.json = v
+		if not converted.id then
+			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
+		end
+    commentVotes[converted.id] = converted
+  end
+  return commentVotes
+end
+
+
 function util:GetRedisConnection(host)
   local red = redis:new()
 
@@ -124,7 +143,7 @@ end
 --]]
 
 function util:SetKeepalive(red)
-  local ok, err = red:set_keepalive(10000, 200)
+  local ok, err = red:set_keepalive(1000, 1000)
   if not ok then
       ngx.log(ngx.ERR, "failed to set keepalive: ", err)
       return

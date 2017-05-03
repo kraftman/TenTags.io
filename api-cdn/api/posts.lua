@@ -346,7 +346,6 @@ function api:ConvertUserPostToPost(userID, post)
 	end
 
   if (not post.link) or trim(post.link) == '' then
-    print('post type is self')
 		newPost.postType = 'self'
     tinsert(newPost.tags,'meta:self')
   end

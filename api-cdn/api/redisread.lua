@@ -28,6 +28,7 @@ function read:GetUnseenElements(checkSHA,baseKey, elements)
     red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
   end
   local res, err = red:commit_pipeline()
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
     return {}
@@ -171,6 +172,7 @@ function read:VerifyReset(emailAddr, resetKey)
   local red = util:GetRedisReadConnection()
 
   local ok, err = red:get('emailReset:'..emailAddr)
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get email reset: ',err)
   end
@@ -222,15 +224,14 @@ end
 function read:GetFiltersBySubs(startAt,endAt)
   local red = util:GetRedisReadConnection()
   local ok, err = red:zrange('filtersubs',startAt,endAt)
+  util:SetKeepalive(red)
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filters: ',err)
-    util:SetKeepalive(red)
     return
   end
 
   if ok == ngx.null then
-    util:SetKeepalive(red)
     return
   else
     return ok
@@ -240,6 +241,7 @@ end
 function read:GetUserThreads(userID, startAt, range)
   local red = util:GetRedisReadConnection()
   local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
+  util:SetKeepalive(red)
   print(startAt, range, #ok)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
@@ -499,6 +501,8 @@ function read:GetPost(postID)
     end
   end
 
+  util:SetKeepalive(red)
+
   --[[
   ok,err = red:smembers('postfilters:'..postID)
   if not ok then
@@ -617,6 +621,7 @@ end
 function read:GetTagPosts(tagName)
   local red = util:GetRedisReadConnection()
   local ok, err = red:smembers('tagPosts:'..tagName)
+  util:SetKeepalive(red)
   if not ok then
     return nil, err
   end

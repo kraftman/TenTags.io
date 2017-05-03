@@ -12,6 +12,7 @@ function worker:New()
   w.userwrite = require 'api.userwrite'
   w.commentwrite = require 'api.commentwrite'
   w.util = require 'util'
+  w.common = require 'timers.common'
 
   -- shared dicts
   w.locks = ngx.shared.locks
@@ -20,7 +21,7 @@ function worker:New()
   w.userSessionSeenDict = ngx.shared.usersessionseen
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
-  w.postUpdater = (require 'timers.postupdater'):New(w.util)
+  w.postUpdater = (require 'timers.postupdater'):New(w.util, common)
   w.filterUpdater = (require 'timers.filterupdater'):New(w.util)
   w.registerUser = (require 'timers.registeruser'):New(w.util)
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)

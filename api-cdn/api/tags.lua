@@ -54,7 +54,6 @@ function api:CreateTag(userID, tagName)
 
   local tag = cache:GetTag(tagName)
   if tag then
-		print(to_json(tag))
     return tag
   end
 

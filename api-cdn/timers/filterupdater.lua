@@ -17,6 +17,12 @@ local SPECIAL_TAGS = {
 	nsfw = 'nsfw'
 }
 
+
+
+local common = require 'timers.common'
+setmetatable(config, common)
+
+
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
@@ -34,62 +40,10 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
 
+  self.startTime = ngx.now()
 	self:ProcessJob('UpdateFilterPosts', 'UpdateFilterPosts')
 
 end
-
-
-
-function config:ConvertToUnique(jsonData)
-  -- this also removes duplicates, using the newest only
-  -- as they are already sorted old -> new by redis
-  local commentVotes = {}
-  local converted
-  for _,v in pairs(jsonData) do
-
-    converted = from_json(v)
-    converted.json = v
-		if not converted.id then
-			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
-		end
-    commentVotes[converted.id] = converted
-  end
-  return commentVotes
-end
-
-
-function config:ProcessJob(jobName, handler)
-
-  local lockName = 'L:'..jobName
-  local ok,err = redisRead:GetOldestJobs(jobName, 1000)
-  if err then
-    ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
-    return
-  end
-
-  local jobs = self:ConvertToUnique(ok)
-
-  for jobID,job in pairs(jobs) do
-    ok, err = redisWrite:GetLock(lockName..jobID,10)
-    if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
-    elseif ok ~= ngx.null then
-      -- the bit that does stuff
-      ok, err = self[handler](self,job)
-      if ok then
-        redisWrite:RemoveJob(jobName,job.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
-      else
-        ngx.log(ngx.ERR, 'unable to process commentvote: ', err)
-        redisWrite:RemLock(lockName..jobID)
-      end
-    end
-  end
-
-end
-
-
 
 --DRY, needs combining with api:AverageTagScore
 local function AverageTagScore(filterrequiredTagNames,postTags)

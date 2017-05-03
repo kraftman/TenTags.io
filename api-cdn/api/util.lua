@@ -20,7 +20,7 @@ end
 
 function util:SanitiseUserInput(msg, length)
 	if type(msg) ~= 'string' then
-		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
+		--ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
 		return ''
 	end
 	msg = trim(msg)

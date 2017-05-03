@@ -20,6 +20,7 @@ function write:DeleteResetKey(emailAddr)
   local red = util:GetRedisWriteConnection()
 
   local ok, err = red:del('emailReset:'..emailAddr)
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to remove password reset: ',err)
   end
@@ -32,6 +33,7 @@ function write:AddPasswordReset(emailAddr, uuid)
   local PASSWORD_RESET_TIME = 3600
 
   local ok, err = red:setex('emailReset:'..emailAddr, PASSWORD_RESET_TIME, uuid)
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to set password reset: ',err)
   end
@@ -44,6 +46,7 @@ function write:InvalidateKey(keyType, id)
   local red = util:GetRedisWriteConnection()
   local data = to_json({keyType = keyType, id = id})
   local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -102,22 +105,22 @@ end
 function write:FilterBanUser(filterID, banInfo)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:hset('filter:'..filterID, 'bannedUser:'..banInfo.userID, to_json(banInfo))
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add banned user: ',err)
     return nil, err
   end
-  util:SetKeepalive(red)
   return ok
 end
 
 function write:FilterBanDomain(filterID, banInfo)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:hset('filter:'..filterID, 'bannedDomain:'..banInfo.domainName, to_json(banInfo))
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add banned domain: ',err)
     return nil, err
   end
-  util:SetKeepalive(red)
   return ok
 end
 
@@ -134,20 +137,20 @@ end
 function write:FilterUnbanDomain(filterID, domainName)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:hdel('filter:'..filterID, 'bannedDomain:'..domainName)
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to unban domain: ',err)
   end
-  util:SetKeepalive(red)
   return ok, err
 end
 
 function write:FilterUnbanUser(filterID, userID)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:hdel('filter:'..filterID, 'bannedUser:'..userID)
+  util:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to unban user: ',err)
   end
-  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -201,6 +204,7 @@ end
 function write:DeletePost(postID)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..postID, 'deleted', 'true')
+  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -234,6 +238,7 @@ function write:UpdateRelatedFilters(filter, relatedFilters)
   for _,v in pairs(relatedFilters) do
     red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
   end
+  util:SetKeepalive(red)
 
 end
 
@@ -282,6 +287,7 @@ function write:CreateFilter(filter)
   if err then
     ngx.log(ngx.ERR, 'unable to add filter to redis: ',err)
   end
+  util:SetKeepalive(red)
   return results
 end
 
@@ -307,6 +313,7 @@ function write:IncrementFilterSubs(filterID, value)
   end
   print('adding ',ok,' to filtersubs')
   ok,err = red:zadd('filtersubs',ok, filterID)
+  util:SetKeepalive(red)
   if not ok then
     print('moop : ',err)
   end
@@ -316,6 +323,7 @@ end
 function write:RemoveInvalidations(cutOff)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:zremrangebyscore('invalidationRequests', 0, cutOff)
+  util:SetKeepalive(red)
   return ok, err
 end
 
@@ -325,7 +333,6 @@ function write:QueueJob(jobName, jobData)
   local red = util:GetRedisWriteConnection()
   jobData = to_json(jobData)
   -- this will remove duplicates by default since its not using NX
-  print(jobName, jobData)
   local ok, err = red:zadd(jobName, ngx.time(), jobData)
 
   util:SetKeepalive(red)
@@ -352,6 +359,7 @@ function write:AddPostToFilters(post, filters)
       self:CreateFilterPostInfo(red,filterInfo,post)
     end
   local results, err = red:commit_pipeline()
+  util:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
@@ -392,6 +400,7 @@ end
 function write:SetNX(key,value)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:set(key,value,'NX')
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to setNX: ',err)
   end
@@ -420,6 +429,7 @@ end
 function write:GetLock(key, expires)
   local red = util:GetRedisWriteConnection()
   local ok, err = red:set(key, key,'NX', 'EX',expires)
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to setex: ',err)
   end
@@ -475,6 +485,7 @@ function write:AddPostsToFilter(filterInfo,posts)
       self:CreateFilterPostInfo(red,filterInfo,postInfo)
     end
   local results, err = red:commit_pipeline()
+  util:SetKeepalive(red)
 
   if err then
     ngx.log(ngx.ERR, 'unable to add posts to filters: ',err)
@@ -657,6 +668,7 @@ function write:UpdateFilterDescription(filter)
   local red = util:GetRedisWriteConnection()
   print('filter:'..filter.id)
   local ok, err = red:hset('filter:'..filter.id, 'description', filter.description)
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update description: ', err)
   end
@@ -671,6 +683,7 @@ function write:UpdateFilterTitle(filter)
   local red = util:GetRedisWriteConnection()
 
   local ok, err = red:hset('filter:'..filter.id, 'title', filter.title)
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to update description: ', err)
   end
@@ -754,6 +767,7 @@ function write:CreatePost(post)
     red:hmset('post:'..hashedPost.id,hashedPost)
   local results,err = red:commit_pipeline()
   if err then
+    util:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to create post:',err)
   end
 
@@ -784,6 +798,7 @@ function write:CreateThread(thread)
       red:zadd('UserThreads:'..userID,thread.lastUpdated,thread.id)
     end
   local res, err = red:commit_pipeline()
+  util:SetKeepalive(red)
   if err then
     ngx.log('unable to write thread:',err)
   end
@@ -799,6 +814,7 @@ function write:CreateMessage(msg)
     red:hset('Thread:'..msg.threadID,'lastUpdated',msg.createdAt)
 
   local res, err = red:commit_pipeline()
+  util:SetKeepalive(red)
   if err then
     ngx.log(ngx.ERR, 'unable to create message: ',err)
   end
