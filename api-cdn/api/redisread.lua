@@ -453,6 +453,7 @@ function read:GetPost(postID)
   local post = self:ConvertListToTable(ok)
   post.viewers = {}
   post.filters = {}
+  post.edits = {}
 
   for k,v in pairs(post) do
     if k:find('^viewer:') then
@@ -465,6 +466,10 @@ function read:GetPost(postID)
       post[k] = nil
     elseif k:find('^specialTag:') then
       post[k] = v == 'true' and true or nil
+
+    elseif k:find('^edit:') then
+      post.edits[k] = from_json(v)
+      post[k] = nil
     end
   end
 

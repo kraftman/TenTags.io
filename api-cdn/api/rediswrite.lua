@@ -723,6 +723,11 @@ function write:CreatePost(post)
       end
     elseif k == 'tags' then
       --leave tags seperate for now as we do more with them
+
+    elseif k == 'edits' then
+      for time,edit in pairs(v) do
+        hashedPost['edit:'..time] = to_json(edit)
+      end
     else
       hashedPost[k] = v
     end

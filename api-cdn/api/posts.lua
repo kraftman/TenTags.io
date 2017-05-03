@@ -270,9 +270,18 @@ function api:EditPost(userID, userPost)
 		end
 	end
 
+  -- only allow changing the title for newly made posts
 	if ngx.time() - post.createdAt < 600 then
 		post.title = util:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
 	end
+
+  -- save EditPost
+  local newText = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+  if post.text ~= newText then
+    -- save the edit history
+    post.edits = post.edits or {}
+    post.edits[ngx.time()] = {time = ngx.time(), editedBy = userID, original = post.text}
+  end
 
 	post.text = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
 	post.editedAt = ngx.time()
