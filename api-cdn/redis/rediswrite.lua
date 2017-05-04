@@ -21,16 +21,50 @@ function write:AddUniquePostView(postID, userID)
   local red = self:GetRedisWriteConnection()
 
   local ok, err = red:pfadd('post:uniquview:'..postID, userID)
+  self:SetKeepalive(red)
+  return ok, err
 
 end
 
-function write:LogSiteView()
+function write:IncrementSiteStat(stat, value)
   local red = self:GetRedisWriteConnection()
-  local ok, err = red:hincrby('sitestats', 'views', 1)
-  if not ok then
-    self:SetKeepalive()
-    return ok, err
+  local ok, err = red:hincrby('sitestats', stat, value)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
+
+function write:LogFilterView(filterID, statTime, userID)
+
+  -- need total views per minute, hour, day, month
+  -- and unique pper minute, hour, day, month
+  local red = self:GetRedisWriteConnection()
+
+  local times = {}
+  times.minutes = '60'
+  times.hours = '3600'
+  times.days = '86400'
+  times.months = '2592000'
+  local newTime
+
+  local baseKey = 'filterStats:'..filterID
+  local newKey
+  red:init_pipeline()
+  for k,label in pairs(times) do
+    newTime = statTime - (statTime % label)
+    newKey = baseKey..':'..k..':'..newTime
+
+    red:zadd(baseKey, newTime, newKey)
+
+    -- store total views per timespan
+    red:hincrby(newKey, newTime, 1)
+    -- store unique views
+    red:pfadd(newKey..':unique', userID)
+
   end
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive(red)
+
   return ok, err
 end
 
@@ -41,28 +75,27 @@ function write:LogUniqueSiteView(baseKey, statTime, userID, value)
   times.hours = '3600'
   times.days = '86400'
   times.months = '2592000'
+
   local zkey, statKey, newTime, ok, err
   -- needs wrapping in pipeline
+  red:init_pipeline()
   for k,label in pairs(times) do
     zkey = baseKey..':'..k
 
     newTime = statTime - (statTime % label)
     statKey = baseKey..':'..statTime..':'..value
-    ok, err = red:zadd(zkey, newTime, statKey)
-    --print('creating zset at: ', zkey, ' time: ',newTime, ' statkey: ', statKey,'==')
-    if not ok then
-      return nil, err
-    end
-    ok, err = red:pfadd(statKey, userID)
-    --print(statKey, red:pfcount(statKey))
-    if not ok then
-      return nil, err
-    end
+
+    -- maintain a list of logs
+    red:zadd(zkey, newTime, statKey)
+
+    -- add unique view
+    red:pfadd(statKey, userID)
 
   end
+  ok, err = red:commit_pipeline()
   self:SetKeepalive(red)
 
-  return true
+  return ok, err
 end
 
 function write:DeleteResetKey(emailAddr)
@@ -755,7 +788,7 @@ function write:LogBacklogStats(jobName, time, value, duration)
   end
   if (ok ~= ngx.null) and (next(ok) ~= nil) then
     self:SetKeepalive(red)
-    return nil,' already exists'
+    return true,' already exists'
   end
 
   ok, err = red:zadd(jobName, time, value)

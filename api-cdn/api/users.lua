@@ -164,6 +164,11 @@ function api:CreateSubUser(accountID, username)
 		return ok, err
 	end
 
+	ok, err = self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'couldnt set stat: ', err)
+	end
+
 	ok, err = self.userWrite:CreateSubUser(subUser)
 	if ok then
 		return subUser
@@ -287,6 +292,9 @@ function api:UpdateUser(userID, userToUpdate)
 			k = k:sub(1,100)
 			userInfo[k] = v:sub(1,100)
 		end
+	end
+	if (userID == userToUpdate) then
+		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
 
 	return self.redisWrite:UpdateUser(userInfo)

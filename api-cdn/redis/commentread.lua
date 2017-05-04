@@ -15,6 +15,7 @@ function commentread:GetPostComments(postID)
   local red = self:GetCommentReadConnection()
 
   local ok, err = red:hgetall('postComment:'..postID)
+
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post comments: ',err)
     return {}

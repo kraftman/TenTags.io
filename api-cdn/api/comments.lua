@@ -132,7 +132,7 @@ function api:CreateComment(userID, userComment)
 			return nil, 'could not find parent post'
 		end
 
-		ok, err = self.self.commentWrite:CreateComment(newComment)
+		ok, err = self.commentWrite:CreateComment(newComment)
 		if not ok then
 			ngx.log(ngx.ERR, 'unable to create comment: ', err)
 			return nil, 'error creating comment'

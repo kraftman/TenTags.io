@@ -1,4 +1,5 @@
 
+
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 
@@ -74,6 +75,7 @@ function api:AddPostTag(userID, postID, tagName)
   end
 
 
+  self.userWrite:IncrementUserStat(userID, 'TagsAdded', 1)
 
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
@@ -198,6 +200,9 @@ function api:AddSource(userID, postID, sourceURL)
 	if not ok then
 		return ok,err
 	end
+
+
+  self.userWrite:IncrementUserStat(userID, 'SourcesAdded', 1)
 
 	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 	if not ok then

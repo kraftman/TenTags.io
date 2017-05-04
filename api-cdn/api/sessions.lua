@@ -156,6 +156,8 @@ function api:ConfirmLogin(userSession, key)
 	account.active = true
 	self.userWrite:CreateAccount(account)
 
+  self.userWrite:IncrementAccountStat(account.id, 'logins', 1)
+
 	return account, accountSession.id
 
 end

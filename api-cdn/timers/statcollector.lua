@@ -56,9 +56,8 @@ function config:GetPageStats()
     self:ProcessAllViews(stat)
     if stat.statType == 'PostView' then
       ok, err = self:ProcessPostView(stat)
-      if ok then
-        pageStatLog:delete(key)
-      end
+    elseif stat.statType == 'FilterView' then
+      ok, err = self:ProcessFilterView(stat)
     end
     pageStatLog:delete(key)
   end
@@ -71,7 +70,7 @@ function config:ProcessAllViews(stat)
   local cat = { 'device', 'os', 'browser'}
 
   local key, ok, err
-  redisWrite:LogSiteView()
+  redisWrite:IncrementSiteStat('views', 1)
 
   for _,category in pairs(cat) do
     key = 'sitestat:'..category
@@ -81,16 +80,42 @@ function config:ProcessAllViews(stat)
     end
 
   end
-  print('logged stat')
+
+end
+
+function config:ProcessFilterView(stat)
+  print('porcessing filter ')
+  if not stat.filterName or #stat.filterName < 3 then
+    return true
+  end
+  local filterID = redisRead:GetFilterID(stat.filterName)
+  if not filterID then
+    print('couldnt find filter: ', stat.filterName)
+    return nil
+  end
+
+
+  local ok, err = redisWrite:LogFilterView(filterID, stat.time, stat.userID)
+
+  if not ok then
+    ngx.log(ngx.err, 'unable to log filter view: ', err)
+  end
+
+  return true
 
 end
 
 function config:ProcessPostView(stat)
   if not stat.postID or #stat.postID < 5 then
+    print('post id too short')
     return true
+  end
+  if #stat.postID < 30 then
+    stat.postID = redisRead:ConvertShortURL(stat.postID)
   end
   local post = redisRead:GetPost(stat.postID)
   if not post then
+    print('couldnt find post: ', stat.postID)
     return true
   end
   local viewCount = post.views or 1
@@ -101,15 +126,13 @@ function config:ProcessPostView(stat)
 
   --ok, err = redisWrite:InvalidateKey('post', stat.postID)
 
-  ok, err = redisWrite:AddUniquePostView()
+  ok, err = redisWrite:AddUniquePostView(stat.postID, stat.userID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to log unique post view: ', err)
     return nil
   end
 
   return true
-
-
 end
 
 

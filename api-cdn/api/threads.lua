@@ -51,6 +51,7 @@ function api:CreateMessageReply(userID, userMessage)
 	if not ok then
 		return ok, err
 	end
+  self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
 
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
@@ -145,6 +146,9 @@ function api:CreateThread(userID, messageInfo)
     ngx.log(ngx.ERR, 'unable to create message: ',err)
     return nil, 'failed'
 	end
+
+
+  self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
 
   ok, err = self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
   if not ok then
