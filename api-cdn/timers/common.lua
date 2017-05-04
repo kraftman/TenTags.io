@@ -18,10 +18,11 @@ function M:ConvertToUnique(jsonData)
 
     converted = from_json(v)
     converted.json = v
-		if not converted.id then
+		if converted.id then
+      commentVotes[converted.id] = converted
+    else
 			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
 		end
-    commentVotes[converted.id] = converted
   end
   return commentVotes
 end

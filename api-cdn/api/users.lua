@@ -297,7 +297,7 @@ function api:UpdateUser(userID, userToUpdate)
 		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
 
-	return self.redisWrite:UpdateUser(userInfo)
+	return self.userWrite:CreateSubUser(userInfo)
 end
 
 

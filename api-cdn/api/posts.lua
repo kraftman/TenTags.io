@@ -110,6 +110,7 @@ function api:VotePost(userID, postID, direction)
   local postVote = {
     userID = userID,
     postID = postID,
+    id = userID..':'..postID,
     direction = direction
   }
 

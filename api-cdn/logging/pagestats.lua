@@ -21,7 +21,7 @@ function stats:Run()
   }
 
   local rawPath = ngx.var.uri
-  print(rawPath)
+  
   if rawPath:find('^/p/.*') then
     self:ProcessPostPath(stat, rawPath)
   elseif rawPath:find('^/f/.*') then

@@ -1,21 +1,22 @@
 
-<div class='panel panel-default filter-bar'>
+<div class=' filter-bar'>
     <!--
-    
+
   -->
   <div class='filter-nav-bar'>
     <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
         <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
-        <input class='hidden-search-input' type="submit" style="visibility: hidden;" />
+        <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
   </div>
-  <ul>
-    <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
-  </ul>
+
   <div class='filterContainer'>
+    <ul>
+      <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
+    </ul>
     <% for i, filter in pairs(userFilters) do %>
       <% render("views.st.filterbarelement",{filter = filter}) %>
     <% end %>
