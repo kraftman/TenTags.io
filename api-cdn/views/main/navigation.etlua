@@ -21,15 +21,15 @@
 
 
       <% if session.username then %>
-        <li></a> <a href="<%= url_for('logout') %>">Logout</a></li>
+
         <li class="dropdown">
           <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><%= session.username %> <span class="caret"></span></a>
           <ul class="dropdown-menu">
             <% for _,user in pairs(otherUsers) do %>
               <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
             <% end %>
-
             <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
+            <li></a> <a href="<%= url_for('logout') %>">Logout</a></li>
           </ul>
         </li>
         <li><a href="<%= url_for('usersettings') %>">Settings</a></li>
