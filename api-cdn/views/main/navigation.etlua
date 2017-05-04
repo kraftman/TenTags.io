@@ -2,20 +2,12 @@
 
 <div class='navbar navbar-default top-nav'>
 
-  <input class = 'pull-right navbar-right info-burger' type="image" src="/static/icons/menu.png" />
-  <div class="navbar-header">
-    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-      <span class="sr-only">Toggle navigation</span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-    </button>
 
-    <input class = 'pull-left hamburger' type="image" src="/static/icons/hamburger.png" />
-    <a class="navbar-brand" href="<%= url_for('home') %>">Filtta</a>
-  </div>
   <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
     <ul class="nav navbar-nav">
+      <input class = 'pull-left hamburger' type="image" src="/static/icons/hamburger.png" />
+      <li><a class='home-link' href="<%= url_for('home') %>">Filtta</a></li>
 
 
       <li class="dropdown">
@@ -58,10 +50,13 @@
       <% if userHasAlerts then %>
         <li><a href="<%= url_for('viewalerts') %>">New Alert!</a></li>
       <% end %>
-      <li><form class='navbar-form navbar-left' id='search' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
-        <input class='form-control' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search..."/>
-        <input class='btn btn-default email-submit' type='submit' name='Submit' value='Search' />
-      </form></li>
+
+    </ul>
+    <ul class="nav navbar-nav pull-right">
+    <li><form class='navbar-form navbar-right' id='search' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
+      <input class='form-control' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search..."/>
+      <input class='btn btn-default email-submit' type='submit' name='Submit' value='Search' />
+    </form></li>
     </ul>
   </div>
 

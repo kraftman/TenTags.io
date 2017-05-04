@@ -187,9 +187,10 @@ function config:CreateComment(commentInfo)
 
   self:AddAlerts(post, comment)
 
-
-  self.redisWrite:UpdatePostField(comment.postID, 'commentCount',post.commentCount+1)
-
+  ok, err = self.redisWrite:IncrementPostStat(comment.postID, 'commentCount',1)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to incr post field: ', err)
+  end
   return true
 
 end

@@ -61,7 +61,6 @@ end
 
 
 function config:ProcessAccount(session)
-	print('registering account')
 
 	local emailAddr = session.email
 	session.email = nil

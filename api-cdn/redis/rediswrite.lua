@@ -210,10 +210,15 @@ function write:UpdatePostField(postID, field, newValue)
   local red = self:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..postID,field,newValue)
   self:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to update post field: ', err)
-  end
+  
   return ok,err
+end
+
+function write:IncrementPostStat(postID, field, value)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hincrby('post:'..postID, field, value)
+  self:SetKeepalive(red)
+  return ok, err
 end
 
 function write:FilterUnbanDomain(filterID, domainName)

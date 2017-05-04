@@ -32,15 +32,15 @@ function m.ToggleDefault(request)
 
   if request.params.setdefault == 'true' then
     print('this')
-    return filterAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
+    return userAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    return filterAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
+    return userAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
   end
 
   if request.params.subscribe == 'true' then
-    return filterAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return userAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    return filterAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return userAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
   end
 end
 

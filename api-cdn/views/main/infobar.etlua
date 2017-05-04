@@ -21,18 +21,6 @@
         <%= filter.name -%>
       </a>
       <% end %>
-  <% else %>
-    Welcome to filter!
-  <% end %>
-  <% if enableAds then %>
-  <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- sidebarnew1 -->
-<ins class="adsbygoogle"
-     style="display:inline-block;width:300px;height:250px"
-     data-ad-client="ca-pub-5666598062804330"
-     data-ad-slot="5515082005"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-  <% end %>
+  <% else %>Welcome to filter!<% end %>
+  <% if enableAds then %><% end %>
 </div>

@@ -7,7 +7,6 @@ $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
 
 .center-page {
 
-  background-color: $background-color;
   display: flex;
   left: 0;
   right: 0;
@@ -19,8 +18,16 @@ $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
 
 }
 
-html {
+@mixin card1(){
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+html,body {
   //font-family: 'Roboto', sans-serif;
+
+  background-color: $background-color;
 }
 
 a {
@@ -130,13 +137,23 @@ a {
   }
 }
 
+
 .top-nav {
+  margin: 5px;
   margin-bottom: 0px;
+}
+
+.filter-nav {
+  margin: 5px;
+  margin-bottom: 0px;
+  margin-top: 0px;
 }
 
 
 .filter-bar {
   margin: 5px;
+  margin-top: 0px;
+  margin-right: 0px;
   flex: 0 0 250px;
   height: 100%;
   display: block;
@@ -162,8 +179,55 @@ a {
   display: none;
 }
 
+  .filter-nav-bar {
+    margin-bottom: 5px;
+  }
+
+
+.hamburger {
+  padding: 3px;
+  width: 35px;
+  height: 35px;
+}
+
+.navbar-nav > li > a{
+  padding:8px;
+}
+
+.home-link {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.collapse.navbar-collapse {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.navbar-form {
+  margin: 3px;
+  padding: 0px;
+}
+
+.hidden-search-input {
+  position: absolute;
+  left: -9999px
+
+}
+
+.form-control {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  height: 28px;
+}
+
+
+.navbar {min-height:32px !important}
+
 .email-submit {
   display: inline-block;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 
 .info-burger {
@@ -192,16 +256,18 @@ a {
     display: inline;
   }
 
+  .filter-nav-bar {
+    margin-bottom: 5px;
+  }
+
 
 }
 
 .info-bar {
-  float: right;
-  width: 310px;
+  width: auto;
   height: auto;
   margin: 5px;
   padding: 5px;
-  min-height: 250px;
 }
 
 
@@ -220,6 +286,13 @@ a {
 
 #box-one:target, #box-two:target {
   z-index: 1;
+}
+
+.btn {
+  border: 0;
+  background: none;
+  box-shadow:none;
+  @include card1();
 }
 
 
@@ -265,11 +338,29 @@ a {
   flex-wrap: nowrap;
 }
 
-.post {
-  margin-bottom: 5px;
-  padding: 0;
-  background: #fff;
+#posts {
+  padding-bottom: 5px;
+}
 
+
+.post {
+  margin: 5px;
+  margin-bottom: 0px;
+  padding: 0px;
+  padding-left: 5px;
+  background: #fff;
+  @include card1();
+
+
+}
+
+
+.post-HN {
+  padding-left: 8px;
+  .vote-container {
+    width: 20px;
+    min-width: 20px;
+  }
 }
 
 .post-details {
@@ -339,6 +430,26 @@ a {
 
 .filterContainer {
   background: #fff;
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
+  @include card1();
+}
+
+
+
+.navbar {
+  border: none;
+  border-radius: 0px;
+  @include card1();
+
+}
+
+.panel {
+  border: none;
+  border-radius: 0px;
+  @include card1();
+
+}
+
+.form-control {
+  border-radius: 0px;
+  @include card1();
 }
