@@ -11,7 +11,6 @@ local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
 local userAPI = require 'api.users'
 local date = require("date")
-local pageStats = require 'middleware.pagestats'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 app:enable("etlua")
 app.layout = require 'views.layout'
@@ -138,6 +137,7 @@ local function LoadUser(self)
   elseif not self.session.accountID then
     self.session.tempID = self.session.tempID or uuid:generate_random()
   end
+  ngx.ctx.userID = self.session.userID or self.session.tempID
 end
 
 
@@ -175,10 +175,6 @@ app:before_filter(function(self)
 
 end)
 
-app:before_filter(function(request)
-
-  pageStats:LogStats(request)
-end)
 
 -- Random stuff that doesnt go anywhere yet
 app:get('createpage', '/nojs/create', function() return {render = 'createpage'} end)
