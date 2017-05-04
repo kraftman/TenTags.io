@@ -156,6 +156,16 @@ function config:CreateComment(commentInfo)
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
   end
 
+  -- add stats, but dont return if they fail
+	ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'CommentsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat: ', err)
+	end
+	self.redisWrite:IncrementSiteStat('CommentsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat')
+	end
+
   ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
   if not ok then
     return ok, err

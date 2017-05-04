@@ -150,6 +150,14 @@ function userwrite:IncrementUserStat(userID, statName, value)
   return ok, err
 end
 
+
+function userwrite:IncrementAccountStat(userID, statName, value)
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:hincrby('actount:'..userID, statName, value)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function userwrite:CreateSubUser(user)
 
   local hashedUser = {}

@@ -15,10 +15,10 @@ function util:GetLock(key, lockTime)
   return true
 end
 
-
-function util:SplitShortURL(shortURL)
-  return shortURL:sub(1,5),shortURL:sub(6,-1)
+function util:RemLock(key)
+  self.locks:delete(key)
 end
+
 
 
 function util:GetScore(up,down)

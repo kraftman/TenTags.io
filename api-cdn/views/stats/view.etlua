@@ -3,7 +3,12 @@
 this
 
 <div class = 'contents'>
-  <% for _,stat in pairs(stats) do %>
-      <%= stat %></br>
+  <% for k,v in pairs(totals) do %>
+    stat: <%= k %></br> value: <%= v %></br>
   <% end %>
+  
+  <% for time,stat in pairs(stats) do %>
+    time: <%= time %></br> stat: <%= stat %></br>
+  <% end %>
+
 </div>

@@ -88,6 +88,8 @@ function api:CreateFilter(userID, filterInfo)
 	-- auto add the owner to filter subscribers
 	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
   self.userWrite:SubscribeToFilter(userID, newFilter.id)
+	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
+	self.userWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
 
 	-- cant combine, due to other uses of function
 	 ok, err = self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)

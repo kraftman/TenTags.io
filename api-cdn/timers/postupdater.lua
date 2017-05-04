@@ -104,10 +104,16 @@ function config:VotePost(postVote)
 
 	-- filter out the tags they already voted on
 	matchingTags = tagAPI:GetUnvotedTags(user,postVote.postID, matchingTags)
+	if (next(matchingTags)~= nil) then
+		self.userWrite:IncrementUserStat(postVote.userID, 'PostsVoted', 1)
+		self.userWrite:IncrementUserStat(postVote.userID, 'PostsVoted:'..postVote.direction, 1)
+	end
 	for _,tagName in pairs(matchingTags) do
 		for _,tag in pairs(post.tags) do
 			if tag.name == tagName then
 				tagAPI:AddVoteToTag(tag, postVote.direction)
+				self.userWrite:IncrementUserStat(postVote.userID, 'TagVoted', 1)
+				self.userWrite:IncrementUserStat(postVote.userID, 'TagVoted:'..postVote.direction, 1)
 			end
 		end
 	end
@@ -160,6 +166,16 @@ function config:CreatePost(post)
 	end
 
 	local ok, err
+
+	-- add stats, but dont return if they fail
+	ok, err = self.userWrite:IncrementUserStat(post.createdBy, 'PostsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat: ', err)
+	end
+	self.redisWrite:IncrementSiteStat('PostsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat')
+	end
 
 	if post.link and post.link ~= '' then
 		ok, err = self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id})

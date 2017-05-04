@@ -7,6 +7,8 @@ config("development", {
     password = "meep",
     database = "taggr",
   },
+
+  session_name = 'filtta_session',
   secret = "this is my secrarstrstet string 123456",
   num_workers = '1',
   port = 8080

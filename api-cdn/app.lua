@@ -6,6 +6,7 @@
   then load the required information for the page to be rendered
 --]]
 
+
 local lapis = require("lapis")
 local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
@@ -15,6 +16,8 @@ local date = require("date")
 app:enable("etlua")
 app.layout = require 'views.layout'
 local csrf = require("lapis.csrf")
+
+local uuid = require 'lib.uuid'
 
 app.cookie_attributes = function(self)
   local expires = date(true):adddays(365):fmt("${http}")
@@ -76,7 +79,7 @@ end
 local function SignOut(self)
   -- kill the session with the api so it cant be reused
   -- delete everything in the session
-  local ok, err = api:KillSession(self.session.accountID, self.session.sessionID)
+  local ok, err = sessionAPI:KillSession(self.session.accountID, self.session.sessionID)
   if not ok then
     print('error killing session: ',err)
   end
@@ -130,9 +133,14 @@ end
 
 local function LoadUser(self)
   if self.session.userID then
+    self.tempID = nil
     self.userInfo = userAPI:GetUser(self.session.userID)
+  elseif not self.session.accountID then
+    self.session.tempID = self.session.tempID or uuid:generate_random()
   end
+  ngx.ctx.userID = self.session.userID or self.session.tempID
 end
+
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
@@ -167,6 +175,7 @@ app:before_filter(function(self)
 
 
 end)
+
 
 -- Random stuff that doesnt go anywhere yet
 app:get('createpage', '/nojs/create', function() return {render = 'createpage'} end)

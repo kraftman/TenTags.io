@@ -112,6 +112,29 @@ function read:GetOldestJobs(jobName, size)
   end
 end
 
+function read:GetSiteUniqueStats(key)
+  local red = self:GetRedisReadConnection()
+  --print('gettin stats for: ', key)
+  local ok, err = red:zrange(key,0, 100)
+  --print(to_json(ok))
+  local results = {}
+  for k, v in pairs(ok) do
+    --print('getting stat for : ',v)
+    results[v] = red:pfcount(v)
+  end
+  return results
+end
+
+function read:GetSiteStats()
+  local red = self:GetRedisReadConnection()
+  local ok, err = red:hgetall('sitestats')
+  self:SetKeepalive(red)
+  if not ok then
+    return ok, err
+  end
+  return self:ConvertListToTable(ok)
+end
+
 
 function read:ConvertShortURL(shortURL)
   local red = self:GetRedisReadConnection()
