@@ -6,11 +6,11 @@ local RECUR_INTERVAL = 10
 function worker:New()
   local w = setmetatable({}, self)
 
-  w.rediswrite = require 'api.rediswrite'
-  w.redisread = require 'api.redisread'
+  w.rediswrite = (require 'redis.db').redisWrite
+  w.redisread = (require 'redis.db').redisRead
   w.cjson = require 'cjson'
-  w.userwrite = require 'api.userwrite'
-  w.commentwrite = require 'api.commentwrite'
+  w.userwrite = (require 'redis.db').userWrite
+  w.commentwrite = (require 'redis.db').commentWrite
   w.util = require 'util'
 
   -- shared dicts
@@ -24,13 +24,15 @@ function worker:New()
   w.filterUpdater = (require 'timers.filterupdater'):New(w.util)
   w.registerUser = (require 'timers.registeruser'):New(w.util)
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)
+  w.statcollector = (require 'timers.statcollector'):New(w.util)
+  w.commentupdater = (require 'timers.commentupdater'):New(w.util)
 
   return w
 end
 
 function worker:Run()
 
-  local ok, err = ngx.timer.at(0, self.OnServerStart, self)
+  local ok, err = ngx.timer.at(1, self.OnServerStart, self)
   if not ok then
     if not err:find('process exiting') then
       ngx.log(ngx.ERR, 'initialise initman timer failed: '..err)
@@ -63,6 +65,8 @@ function worker.OnServerStart(_,self)
   self.filterUpdater.Run(_,self.filterUpdater)
   self.registerUser.Run(_,self.registerUser)
   self.invalidateCache.Run(_,self.invalidateCache)
+  self.statcollector.Run(_,self.statcollector)
+  self.commentupdater.Run(_,self.commentupdater)
 
   if not self.util:GetLock('l:ServerStart', 5) then
     return

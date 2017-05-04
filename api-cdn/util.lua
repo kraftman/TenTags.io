@@ -2,15 +2,7 @@
 local util = {}
 
 util.locks = ngx.shared.locks
-local redis = require 'resty.redis'
 
-local REDIS_SERVER = 'redis-master'
---REDIS_SERVER = '192.168.1.30'
-
-local sentinels = {
-  { host = "master-sentinel", port = "26379" },
-  { host = "api-sentinel", port = "26379" },
-}
 
 function util:GetLock(key, lockTime)
   local success, err = self.locks:add(key, true, lockTime)
@@ -23,42 +15,44 @@ function util:GetLock(key, lockTime)
   return true
 end
 
-function util:GetRedisConnection(host)
-  local red = redis:new()
+function util:RemLock(key)
+  self.locks:delete(key)
+end
 
-  red:set_timeout(1000)
-  local ok, err = red:connect(host, 6379)
-  if not ok then
-    ngx.log(ngx.ERR, "failed to connect: ", err)
-    return nil
+
+
+function util:GetScore(up,down)
+	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
+	--http://www.evanmiller.org/bayesian-average-ratings.html
+	if up == 0 then
+      return -down
   end
-  return red
+  local n = up + down
+  local z = 1.64485 --1.0 = 85%, 1.6 = 95%
+  local phat = up / n
+  return (phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+
 end
 
 
-function util:GetUserWriteConnection()
-  return self:GetRedisConnection('redis-user')
+
+function util:ConvertToUnique(jsonData)
+  -- this also removes duplicates, using the newest only
+  -- as they are already sorted old -> new by redis
+  local commentVotes = {}
+  local converted
+  for _,v in pairs(jsonData) do
+
+    converted = from_json(v)
+    converted.json = v
+		if not converted.id then
+			ngx.log(ngx.ERR, 'jsonData contains no id: ',v)
+		end
+    commentVotes[converted.id] = converted
+  end
+  return commentVotes
 end
 
-function util:GetUserReadConnection()
-  return self:GetRedisConnection('redis-user')
-end
-
-function util:GetRedisReadConnection()
-  return self:GetRedisConnection('redis-general')
-end
-
-function util:GetRedisWriteConnection()
-  return self:GetRedisConnection('redis-general')
-end
-
-function util:GetCommentWriteConnection()
-  return self:GetRedisConnection('redis-comment')
-end
-
-function util:GetCommentReadConnection()
-  return self:GetRedisConnection('redis-comment')
-end
 
 
 
@@ -103,12 +97,5 @@ function util:GetCommentReadConnection()
 end
 --]]
 
-function util:SetKeepalive(red)
-  local ok, err = red:set_keepalive(10000, 200)
-  if not ok then
-      ngx.log(ngx.ERR, "failed to set keepalive: ", err)
-      return
-  end
-end
 
 return util

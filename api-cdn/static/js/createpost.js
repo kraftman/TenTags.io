@@ -44,13 +44,13 @@ function OverrideSubmit(){
     }
     $.ajax({
       type: "POST",
-      url: '/post/new',
+      url: '/p/new',
       data: form,
       success: function(data) {
         console.log('this '+data)
         console.log(data)
         if (data.id) {
-          window.location.assign('/post/'+data.id);
+          window.location.assign('/p/'+data.id);
         }
         $('#submitError').html(data);
       },

@@ -1,6 +1,7 @@
 
-local api = require 'api.api'
+
 local userAPI = require 'api.users'
+local commentAPI = require 'api.comments'
 
 local m = {}
 
@@ -20,7 +21,7 @@ function m.FrontPage(request)
   --defer until we need it
   if request:GetFilterTemplate():find('filtta') then
     for _,post in pairs(request.posts) do
-      local comments =api:GetPostComments(request.session.userID, post.id, 'best')
+      local comments = commentAPI:GetPostComments(request.session.userID, post.id, 'best')
       _, post.topComment = next(comments[post.id].children)
 
       if post.topComment then

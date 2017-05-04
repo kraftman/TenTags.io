@@ -13,6 +13,18 @@ local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
 
+function m:Register(app)
+  app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
+  app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
+  app:match('updatefilter','/filters/:filterlabel',respond_to({GET = self.ViewFilterSettings,POST = self.UpdateFilter}))
+  app:get('allfilters','/f',self.LoadAllFilters)
+  app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',self.UnbanUser)
+  app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',self.UnbanDomain)
+  app:get('banpost', '/filters/:filterlabel/banpost/:postID', self.BanPost)
+  app:match('searchfilters', '/filters/search', self.SearchFilters)
+
+end
+
 function m.ToggleDefault(request)
   if not request.session.userID then
     return { render = 'pleaselogin' }
@@ -20,15 +32,15 @@ function m.ToggleDefault(request)
 
   if request.params.setdefault == 'true' then
     print('this')
-    return filterAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
+    return userAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    return filterAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
+    return userAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
   end
 
   if request.params.subscribe == 'true' then
-    return filterAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return userAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
   elseif request.params.setdefault == 'false' then
-    return filterAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
+    return userAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
   end
 end
 
@@ -80,7 +92,7 @@ function m.CreateFilter(request)
     print('no user id')
     return { render = 'pleaselogin' }
   end
-  request.tags = filterAPI:GetAllTags()
+  request.tags = tagAPI:GetAllTags()
   return {render = 'filter.create'}
 end
 
@@ -390,16 +402,5 @@ function m.SearchFilters(request)
   return {render = 'filter.all'}
 end
 
-function m:Register(app)
-  app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
-  app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
-  app:match('updatefilter','/filters/:filterlabel',respond_to({GET = self.ViewFilterSettings,POST = self.UpdateFilter}))
-  app:get('allfilters','/f',self.LoadAllFilters)
-  app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',self.UnbanUser)
-  app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName',self.UnbanDomain)
-  app:get('banpost', '/filters/:filterlabel/banpost/:postID', self.BanPost)
-  app:match('searchfilters', '/filters/search', self.SearchFilters)
-
-end
 
 return m

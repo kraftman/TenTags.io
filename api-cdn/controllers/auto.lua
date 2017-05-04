@@ -3,8 +3,8 @@ local m = {}
 
 
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
 local tinsert = table.insert
+local postAPI = require 'api.posts'
 
 local filters = {
   {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
@@ -76,7 +76,7 @@ end
 function m.CreatePosts(self)
   local userID = self.session.userID
 
-  for i = 1, 10 do
+  for i = 1, 1000 do
     local info = {
       title = 'post:456:'..i,
       text = 'text:'..i,
@@ -84,7 +84,7 @@ function m.CreatePosts(self)
       tags = {'456'}
     }
 
-    local ok, err = api:CreatePost(userID, info)
+    local ok, err = postAPI:CreatePost(userID, info)
 
     if not ok then
       ngx.log(ngx.ERR, 'error from api: ',err or 'none')

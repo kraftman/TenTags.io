@@ -1,15 +1,13 @@
 
 local cache = require 'api.cache'
-local util = require 'api.util'
-local worker = require 'api.worker'
-local api = {}
+local uuid = require 'lib.uuid'
+local base = require 'api.base'
+local api = setmetatable({}, base)
 local tinsert = table.insert
 
 
-
-
 function api:UserCanVoteTag(userID, postID, tagName)
-	if self:UserHasVotedTag(userID, postID, tagName) and (not UNLIMITED_VOTING) then
+	if self:UserHasVotedTag(userID, postID, tagName) then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'admin' then
 			return false
@@ -18,23 +16,7 @@ function api:UserCanVoteTag(userID, postID, tagName)
 	return true
 end
 
-
 function api:GetUserFrontPage(userID,filter,startAt, endAt)
-	-- can only get own
-	if not userID then
-		return nil, 'no userID'
-	end
-	startAt,endAt = tonumber(startAt), tonumber(endAt)
-	if not startAt or not endAt then
-		return nil, 'no range'
-	end
-	if startAt >= endAt then
-		return nil, 'start must be lower than end'
-	end
-	if (endAt - startAt) > 100 then
-		return nil, 'cannot requset range > 100'
-	end
-
 
   return cache:GetUserFrontPage(userID,filter,startAt, endAt)
 end
@@ -42,12 +24,12 @@ end
 
 function api:LabelUser(userID, targetUserID, label)
 
-	local ok, err = util.RateLimit('UpdateUser:',userID, 1, 60)
+	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
 	if not ok then
 		return ok, err
 	end
 
-	ok, err = worker:LabelUser(userID, targetUserID, label)
+	ok, err = self.userWrite:LabelUser(userID, targetUserID, label)
 	return ok, err
 
 end
@@ -69,13 +51,18 @@ end
 
 
 function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
+
+	local ok, err = self:RateLimit('subscribefilter:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
 	if userID ~= subscriberID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
 			return nil, 'you must be admin to change another users subscriptions'
 		end
 	end
-
 
   local filterIDs = cache:GetUserFilterIDs(userID)
   local found = nil
@@ -85,12 +72,21 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
     end
   end
   if not found then
-    -- no need to unsubscribe
     return
   end
 
-  worker:UnsubscribeFromFilter(subscriberID,filterID)
+	ok, err = self.redisWrite:IncrementFilterSubs(filterID, -1)
+	if not ok then
+		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
+	end
 
+	ok, err = self.redisWrite:UnsubscribeFromFilter(userID,filterID)
+	if not ok then
+		ngx.log(ngx.ERR, 'error unsubbing user: ', err)
+		return nil, 'error unsubbing'
+	end
+
+	return true
 
 end
 
@@ -99,8 +95,13 @@ end
 
 function api:SubscribeToFilter(userID, userToSubID, filterID)
 
+
+	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
   local filterIDs = cache:GetUserFilterIDs(userID)
-	print(to_json(filterIDs))
 
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
@@ -117,20 +118,10 @@ function api:SubscribeToFilter(userID, userToSubID, filterID)
     end
   end
 
-  worker:SubscribeToFilter(userToSubID,filterID)
+  self.redisWrite:SubscribeToFilter(userToSubID,filterID)
 
 end
 
-
-
-function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = util:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
-	-- can only edit their own
-  return worker:UpdateLastUserAlertCheck(userID)
-end
 
 
 
@@ -150,7 +141,7 @@ function api:CreateSubUser(accountID, username)
 
   local subUser = {
     id = uuid.generate(),
-    username = SanitiseHTML(username,20),
+    username = self:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
     parentID = accountID,
     enablePM = 1
@@ -168,11 +159,17 @@ function api:CreateSubUser(accountID, username)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
 	account.currentUserID = subUser.id
-	local ok, err = worker:UpdateAccount(account)
+	local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
-  local ok, err = worker:CreateSubUser(subUser)
+
+	ok, err = self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'couldnt set stat: ', err)
+	end
+
+	ok, err = self.userWrite:CreateSubUser(subUser)
 	if ok then
 		return subUser
 	else
@@ -220,11 +217,25 @@ end
 
 
 function api:GetUserAlerts(userID)
+	local ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
 	-- can only get their own
   local alerts = cache:GetUserAlerts(userID)
 
   return alerts
 end
+
+function api:UpdateLastUserAlertCheck(userID)
+	local ok, err = self:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
+	if not ok then
+		return ok, err
+	end
+	-- can only edit their own
+  return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+end
+
 
 
 function api:SwitchUser(accountID, userID)
@@ -238,7 +249,7 @@ function api:SwitchUser(accountID, userID)
 	account.currentUserID = user.id
 	account.currentUsername = user.username
 
-	local ok, err = worker:UpdateAccount(account)
+	local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
 	end
@@ -254,7 +265,7 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
-	local ok, err = util.RateLimit('UpdateUser:',userID, 3, 30)
+	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
@@ -273,7 +284,7 @@ function api:UpdateUser(userID, userToUpdate)
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username,
-		bio = util:SanitiseUserInput(userToUpdate.bio, 1000)
+		bio = self:SanitiseUserInput(userToUpdate.bio, 1000)
 	}
 
 	for k,v in pairs(userToUpdate) do
@@ -282,8 +293,11 @@ function api:UpdateUser(userID, userToUpdate)
 			userInfo[k] = v:sub(1,100)
 		end
 	end
+	if (userID == userToUpdate) then
+		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
+	end
 
-	return worker:UpdateUser(userInfo)
+	return self.userWrite:CreateSubUser(userInfo)
 end
 
 
@@ -301,15 +315,17 @@ end
 
 
 function api:GetUserSettings(userID)
-	local ok, err = util.RateLimit('GetUserSettings', 5, 1)
+	local ok, user, err
+
+	ok, err = self:RateLimit('GetUserSettings', 5, 1)
 	if not ok then
-		return nil, "you're doing that too much"
+		return nil, err
 	end
 	if not userID or userID:gsub(' ', '') == '' then
 		return nil, 'no userID given'
 	end
 
-	local user, err = cache:GetUser(userID)
+	user, err = cache:GetUser(userID)
 	return user, err
 
 end

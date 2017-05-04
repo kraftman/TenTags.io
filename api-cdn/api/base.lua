@@ -1,12 +1,20 @@
-local util = {}
-local rateDict = ngx.shared.ratelimit
+
+
 local trim = (require 'lapis.util').trim
+local rateDict = ngx.shared.ratelimit
 
 
 local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 local TAG_BOUNDARY = 0.15
 
-function util:SanitiseHTML(str)
+local M = {}
+local db = require 'redis.db'
+
+for k,v in pairs(db) do
+	M[k] = v
+end
+
+function M:SanitiseHTML(str)
 	local html = {
 		["<"] = "&lt;",
 		[">"] = "&gt;",
@@ -18,29 +26,13 @@ function util:SanitiseHTML(str)
 end
 
 
-function util:SanitiseUserInput(msg, length)
-	if type(msg) ~= 'string' then
-		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
-		return ''
-	end
-	msg = trim(msg)
 
-	if msg == '' then
-		ngx.log(ngx.ERR, 'string is blank')
-		return ''
-	end
-
-	msg = self:SanitiseHTML(msg)
-	if not length then
-		return msg
-	end
-
-	return msg:sub(1, length)
-
+function M:GetDomain(url)
+  return url:match('^%w+://([^/]+)')
 end
 
 
-function util:GetScore(up,down)
+function M:GetScore(up,down)
 	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
 	--http://www.evanmiller.org/bayesian-average-ratings.html
 	if up == 0 then
@@ -53,14 +45,9 @@ function util:GetScore(up,down)
 
 end
 
-
-function util:GetDomain(url)
-  return url:match('^%w+://([^/]+)')
-end
-
-function util:SanitiseUserInput(msg, length)
+function M:SanitiseUserInput(msg, length)
 	if type(msg) ~= 'string' then
-		ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
+		--ngx.log(ngx.ERR, 'string expected, got: ',type(msg))
 		return ''
 	end
 	msg = trim(msg)
@@ -79,7 +66,8 @@ function util:SanitiseUserInput(msg, length)
 
 end
 
-function util:RateLimit(action, userID, limit, duration)
+
+function M:RateLimit(action, userID, limit, duration)
 	if DISABLE_RATELIMIT then
 		return true
 	end
@@ -112,7 +100,8 @@ function util:RateLimit(action, userID, limit, duration)
 
 end
 
-util.AverageTagScore = function(filterrequiredTagNames,postTags)
+
+function M.AverageTagScore(filterrequiredTagNames,postTags)
 
 	local score = 0
 	local count = 0
@@ -137,5 +126,7 @@ util.AverageTagScore = function(filterrequiredTagNames,postTags)
 	return score / count
 end
 
+M.__index = M
 
-return util
+
+return M

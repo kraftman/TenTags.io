@@ -1,10 +1,7 @@
 
 
-local redis = require "resty.redis"
-local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
-local util = require 'util'
-local commentwrite = {}
+local base = require 'redis.base'
+local commentwrite = setmetatable({}, base)
 
 
 function commentwrite:ConvertListToTable(list)
@@ -18,19 +15,19 @@ end
 function commentwrite:UpdateCommentField(postID,commentID,field,newValue)
   --print(postID, commentID)
   --get the comment, update, rediswrite
-  local red = util:GetCommentWriteConnection()
+  local red = self:GetCommentWriteConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
   if err then
     ngx.log(ngx.ERR, 'error getting comment: ',err)
     return ok, err
   end
 
-  local comment  = from_json(ok)
+  local comment  = self:from_json(ok)
   comment[field] = newValue
-  local serialComment = to_json(comment)
+  local serialComment = self:to_json(comment)
 
   ok, err = red:hmset('postComment:'..comment.postID,comment.id,serialComment)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to write comment info: ',err)
     return false
@@ -39,7 +36,7 @@ function commentwrite:UpdateCommentField(postID,commentID,field,newValue)
 end
 
 function commentwrite:LoadScript(script)
-  local red = util:GetCommentWriteConnection()
+  local red = self:GetCommentWriteConnection()
   local ok, err = red:script('load',script)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add script to redis:',err)
@@ -51,13 +48,14 @@ function commentwrite:LoadScript(script)
   return ok
 end
 
+
 function commentwrite:CreateComment(commentInfo)
 
-  local red = util:GetCommentWriteConnection()
-  local serialComment = to_json(commentInfo)
-  print('creating comment: ',commentInfo.postID,commentInfo.id)
+  local red = self:GetCommentWriteConnection()
+  local serialComment = self:to_json(commentInfo)
+
   local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
-  util:SetKeepalive(red)
+  self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to write comment info: ',err)
     return false, err

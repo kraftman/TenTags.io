@@ -16,6 +16,30 @@ local respond_to = (require 'lapis.application').respond_to
 local trim = util.trim
 
 
+function m:Register(app)
+  app:match('newpost','/p/new', respond_to({
+    GET = self.CreatePostForm,
+    POST = self.CreatePost
+  }))
+  app:match('viewpost','/p/:postID', respond_to({
+    GET = self.GetPost,
+    POST = self.EditPost,
+  }))
+  app:match('deletepost','/p/delete/:postID', respond_to({
+    GET = self.DeletePost,
+    POST = self.DeletePost,
+  }))
+
+  app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
+  app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
+  app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
+  app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
+  app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
+
+end
+
+
 function m.CreatePost(request)
 
   if trim(request.params.link) == '' then
@@ -53,6 +77,10 @@ end
 function m.GetPost(request)
   local sortBy = request.params.sort or 'best'
   sortBy = sortBy:lower()
+
+  if not request.session.userID then
+    return 'no userID'
+  end
 
   local postID = request.params.postID
   if #postID < 10 then
@@ -184,13 +212,13 @@ end
 
 function m.UpvoteTag(request)
 
-  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
+  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
 
 end
 
 function m.DownvoteTag(request)
-  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
+  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
 end
@@ -343,27 +371,5 @@ function m.SubscribePost(request)
   end
 end
 
-function m:Register(app)
-  app:match('newpost','/p/new', respond_to({
-    GET = self.CreatePostForm,
-    POST = self.CreatePost
-  }))
-  app:match('viewpost','/p/:postID', respond_to({
-    GET = self.GetPost,
-    POST = self.EditPost,
-  }))
-  app:match('deletepost','/p/delete/:postID', respond_to({
-    GET = self.DeletePost,
-    POST = self.DeletePost,
-  }))
-
-  app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
-  app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
-  app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
-  app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
-  app:get('geticon', '/icon/:postID', self.GetIcon)
-  app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
-
-end
 
 return m

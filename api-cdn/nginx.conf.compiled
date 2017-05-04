@@ -1,12 +1,11 @@
 env LAPIS_ENVIRONMENT=development;
-worker_processes auto;
+worker_processes 1;
 error_log stderr notice;
 daemon off;
 pid logs/nginx.pid;
 user root;
 env DISABLE_CACHE;
 env DISABLE_RATELIMIT;
-env UNLIMITED_VOTING;
 env EMAIL_CREDENTIALS;
 
 events {
@@ -25,11 +24,13 @@ http {
   lua_shared_dict scripts 1m;
   lua_shared_dict userupdates 1m;
   lua_shared_dict usersessionseen 1m;
+  lua_shared_dict searchresults 1m;
   lua_shared_dict userInfo 1m;
   lua_shared_dict comments 5m;
   lua_shared_dict userVotes 5m;
   lua_shared_dict ratelimit 1m;
   lua_shared_dict emailQueue 1m;
+  lua_shared_dict pageStatLog 5m;
 
   lua_shared_dict testusers 1m;
 
@@ -48,6 +49,17 @@ http {
   server {
     listen 8081;
 
+    gzip on;
+    gzip_proxied any;
+    gzip_types
+        text/css
+        text/javascript
+        text/xml
+        text/plain
+        application/javascript
+        application/x-javascript
+        application/json;
+
     location / {
       proxy_set_header       Host $host;
       proxy_cache            STATIC;
@@ -63,9 +75,8 @@ http {
 
     location / {
       default_type text/html;
-      content_by_lua '
-        require("lapis").serve("app")
-      ';
+      content_by_lua 'require("lapis").serve("app")';
+      log_by_lua 'require("logging.pagestats"):Run()';
     }
 
 

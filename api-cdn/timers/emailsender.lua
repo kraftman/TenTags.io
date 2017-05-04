@@ -1,5 +1,5 @@
 
-local CONFIG_CHECK_INTERVAL = 5
+local CONFIG_CHECK_INTERVAL = 1
 
 local config = {}
 config.__index = config
