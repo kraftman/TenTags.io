@@ -50,10 +50,13 @@
       <% if userHasAlerts then %>
         <li><a href="<%= url_for('viewalerts') %>">New Alert!</a></li>
       <% end %>
-      <li><form class='navbar-form navbar-left' id='search' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
-        <input class='form-control' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search..."/>
-        <input class='btn btn-default email-submit' type='submit' name='Submit' value='Search' />
-      </form></li>
+
+    </ul>
+    <ul class="nav navbar-nav pull-right">
+    <li><form class='navbar-form navbar-right' id='search' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
+      <input class='form-control' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search..."/>
+      <input class='btn btn-default email-submit' type='submit' name='Submit' value='Search' />
+    </form></li>
     </ul>
   </div>
 

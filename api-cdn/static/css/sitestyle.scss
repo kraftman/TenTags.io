@@ -173,9 +173,10 @@ a {
   display: none;
 }
 
-.filter-nav-bar {
-  margin-bottom: 5px;
-}
+  .filter-nav-bar {
+    margin-bottom: 5px;
+  }
+
 
 .hamburger {
   padding: 3px;
@@ -194,11 +195,12 @@ a {
 
 .collapse.navbar-collapse {
   padding-left: 2px;
+  padding-right: 2px;
 }
 
 .navbar-form {
-  margin-top: 3px;
-  margin-bottom: 3px;
+  margin: 3px;
+  padding: 0px;
 }
 
 .hidden-search-input {
@@ -330,7 +332,8 @@ a {
 .post {
   margin: 5px;
   margin-bottom: 0px;
-  padding: 0;
+  padding: 0px;
+  padding-left: 5px;
   background: #fff;
 
 
