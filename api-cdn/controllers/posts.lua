@@ -212,13 +212,13 @@ end
 
 function m.UpvoteTag(request)
 
-  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
+  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
 
 end
 
 function m.DownvoteTag(request)
-  postAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
+  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
 end

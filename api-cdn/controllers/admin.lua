@@ -69,10 +69,27 @@ local function SiteStats(request)
   return {render = 'stats.view'}
 end
 
+
+local function GetScore(request)
+	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
+	--http://www.evanmiller.org/bayesian-average-ratings.html
+
+  local up = request.params.up or 0
+  local down = request.params.down or 0
+	if up == 0 then
+      return -down
+  end
+  local n = up + down
+  local z = 1.64485 --1.0 = 85%, 1.6 = 95%
+  local phat = up / n
+  return ''..(phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+
+end
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
   app:get('ele', '/ele', SearchTitle)
   app:get('stat', '/admin/stats', SiteStats)
+  app:get('score', '/admin/score/:up/:down', GetScore)
 end
 
 return m

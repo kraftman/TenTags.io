@@ -166,25 +166,49 @@ function read:GetInvalidationRequests(startTime, endTime)
 end
 
 function read:GetFilterIDsByTags(tags)
-
   local red = self:GetRedisReadConnection()
-  red:init_pipeline()
-    for _,v in pairs(tags) do
-      --print('tag:filters:'..v.id)
-      red:hgetall('tag:filters:'..v.name)
+  -- for each tag
+  -- load all of the filters that care about the tag
+  -- if they want the tag , add them to the list
+  -- if they dont want the tag, mark them as out of the list
+  -- purge marked tags
+
+  local newList = {}
+
+  for _,tag in pairs(tags) do
+    local ok, err = red:hgetall('tag:filters:'..tag.name)
+
+    ok = self:ConvertListToTable(ok)
+    if not ok then
+      return ok, err
     end
-  local results, err = red:commit_pipeline()
+
+    for filterID,filterType in pairs(ok) do
+      if filterType == 'required' then
+        if not newList[filterID] then
+          newList[filterID] = filterID
+        end
+      elseif filterType == 'banned' then
+        -- we need to be confident so we dont accidentally hide the post
+        -- see issue gh-30
+        print(tag.up)
+        if tonumber(tag.up) > 20 then
+          newList[filterID] = 'banned'
+        end
+      end
+    end
+
+    for k,v in pairs(newList) do
+      if v == 'banned' then
+        newList[k] = nil
+      end
+    end
+
+  end
+
+
   self:SetKeepalive(red)
-
-  for k,v in pairs(results) do
-    results[k] = self:ConvertListToTable(v)
-  end
-
-  if err then
-    ngx.log(ngx.ERR, 'error retrieving filters for tags:',err)
-  end
-
-  return results
+  return newList
 end
 
 function read:VerifyReset(emailAddr, resetKey)

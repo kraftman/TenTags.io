@@ -12,8 +12,8 @@ local tinsert = table.insert
 local POST_TITLE_LENGTH = 300
 local COMMENT_LENGTH_LIMIT = 2000
 
-local TAG_START_DOWNVOTES = 0
-local TAG_START_UPVOTES = 1
+local TAG_START_DOWNVOTES = 10
+local TAG_START_UPVOTES = 11
 local MAX_ALLOWED_TAG_COUNT = 30
 
 local function UserCanAddSource(tags, userID)
@@ -161,13 +161,6 @@ function api:CreatePostTags(userID, postInfo)
 	end
 end
 
-function api:FindPostTag(post, tagName)
-	for _, tag in pairs(post.tags) do
-		if tag.name == tagName then
-			return tag
-		end
-	end
-end
 
 
 function api:AddSource(userID, postID, sourceURL)

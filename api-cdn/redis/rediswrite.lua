@@ -210,7 +210,7 @@ function write:UpdatePostField(postID, field, newValue)
   local red = self:GetRedisWriteConnection()
   local ok, err = red:hset('post:'..postID,field,newValue)
   self:SetKeepalive(red)
-  
+
   return ok,err
 end
 
@@ -644,6 +644,7 @@ function write:CreateTempFilterPosts(tempKey, requiredTagNames, bannedTagNames)
   return ok
 
 end
+
 
 function write:GetSetDiff(key1, key2)
   local red = self:GetRedisWriteConnection()

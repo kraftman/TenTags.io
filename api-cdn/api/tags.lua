@@ -5,6 +5,7 @@ local base = require 'api.base'
 local api = setmetatable({}, base)
 local tinsert = table.insert
 local SOURCE_POST_THRESHOLD = 0.75
+local userAPI = require 'api.users'
 
 
 function api:SearchTags(searchString)
@@ -14,6 +15,15 @@ end
 
 function api:GetAllTags()
   return cache:GetAllTags()
+end
+
+
+function api:FindPostTag(post, tagName)
+	for _, tag in pairs(post.tags) do
+		if tag.name == tagName then
+			return tag
+		end
+	end
 end
 
 
@@ -83,7 +93,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 		return nil, 'rate limited'
 	end
 
-	if not self:UserCanVoteTag(userID, postID, tagName) then
+	if not userAPI:UserCanVoteTag(userID, postID, tagName) then
 		return nil, 'cannot vote again!'
 	end
 

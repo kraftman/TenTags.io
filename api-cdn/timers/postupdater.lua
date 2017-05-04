@@ -10,7 +10,7 @@ local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
 local tinsert = table.insert
-local TAG_BOUNDARY = 0.15
+local TAG_BOUNDARY = 0.25
 local to_json = (require 'lapis.util').to_json
 local elastic = require 'lib.elasticsearch'
 
@@ -231,7 +231,7 @@ function config:GetValidFilters(filter, post)
 end
 
 function config:TagsMatch(filter, post)
-  -- the post needs to have all of the tags that the filter has in order to be valid
+  -- the post needs to have all of the tags that the filter wants in order to be valid
   local found
   for _,filterTagName in pairs(filter.requiredTagNames) do
     found = false
@@ -259,56 +259,33 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
-		--print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
 	end
 
   --get all filters that match any of these tags
-	local filterIDs = cache:GetFilterIDsByTags(validTags)
-  -- cant flatten this table yet as it would remove duplicates
-
-  local chosenFilterIDs = {}
-
-  -- add all the filters that actually want these tags
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'required' then
-        chosenFilterIDs[filterID] = filterID
-      end
-    end
-  end
+	local chosenFilterIDs, err = cache:GetFilterIDsByTags(validTags)
+	if not chosenFilterIDs then
+		print(err)
+	end
+	-- we need a list of filters, and the tags they are interested in,
+	-- and why they are interested in them
 
   local chosenFilters = {}
-  -- if a filter doesnt want any of the tags, remove it
+  -- if there are any tags the filter doesnt want, remove it
   -- else load it
-	--print('this')
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType ~= 'banned' then
-        chosenFilters[filterID] = cache:GetFilterByID(filterID)
-        if not chosenFilters[filterID] then
-          ngx.log(ngx.ERR,'filter not found: ',filterID)
-        end
-      end
+	for _,filterID in pairs(chosenFilterIDs) do
+    chosenFilters[filterID] = cache:GetFilterByID(filterID)
+    if not chosenFilters[filterID] then
+      ngx.log(ngx.ERR,'filter not found: ',filterID)
     end
   end
-
-	--remove banned
-	for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'banned' then
-        chosenFilters[filterID] = nil
-      end
-    end
-  end
-  --print('potential filters: ',to_json(chosenFilters))
 
   --at this point we know that the filters want at least one tag
   --that the post has
 
-  for filterID,filter in pairs(chosenFilters) do
+  for filterID, filter in pairs(chosenFilters) do
     if self:TagsMatch(filter, post) then
 		  chosenFilters[filterID] = self:GetValidFilters(filter, post)
     else
