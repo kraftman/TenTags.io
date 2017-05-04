@@ -18,6 +18,12 @@ $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
 
 }
 
+@mixin card1(){
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
 html,body {
   //font-family: 'Roboto', sans-serif;
 
@@ -215,9 +221,6 @@ a {
   height: 28px;
 }
 
-.btn {
-  height: 28px;
-}
 
 .navbar {min-height:32px !important}
 
@@ -285,6 +288,13 @@ a {
   z-index: 1;
 }
 
+.btn {
+  border: 0;
+  background: none;
+  box-shadow:none;
+  @include card1();
+}
+
 
 .info-box {
   position: absolute;
@@ -328,6 +338,10 @@ a {
   flex-wrap: nowrap;
 }
 
+#posts {
+  padding-bottom: 5px;
+}
+
 
 .post {
   margin: 5px;
@@ -335,6 +349,7 @@ a {
   padding: 0px;
   padding-left: 5px;
   background: #fff;
+  @include card1();
 
 
 }
@@ -415,4 +430,26 @@ a {
 
 .filterContainer {
   background: #fff;
+  @include card1();
+}
+
+
+
+.navbar {
+  border: none;
+  border-radius: 0px;
+  @include card1();
+
+}
+
+.panel {
+  border: none;
+  border-radius: 0px;
+  @include card1();
+
+}
+
+.form-control {
+  border-radius: 0px;
+  @include card1();
 }
