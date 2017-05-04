@@ -6,6 +6,7 @@
   then load the required information for the page to be rendered
 --]]
 
+
 local lapis = require("lapis")
 local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
