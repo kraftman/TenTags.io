@@ -146,10 +146,19 @@ function api:CreateSubUser(accountID, username)
     parentID = accountID,
     enablePM = 1
   }
+	subUser.lowerUsername = subUser.username:lower()
+
+	if #subUser.username < 3 then
+		return nil, 'username too short'
+	end
 
 	local existingUserID = cache:GetUserID(subUser.username)
 	if existingUserID then
 		return nil, 'username is taken'
+	end
+
+	if reserved[subUser.lowerUsername] then
+		return nil, 'reserved'
 	end
 
 	--TODO limit number of subusers allowed
