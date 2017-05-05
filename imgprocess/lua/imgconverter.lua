@@ -7,6 +7,7 @@ local redis = require 'redis'
 local http = require("socket.http")
 local ltn12 = require("ltn12")
 local giflib = require("giflib")
+local cjson = require('cjson')
 
 --[[
 local redisURL = 'localhost'
@@ -22,19 +23,23 @@ local imgHostPort = '80'
 
 local red = redis.connect(redisURL, redisPort)
 
+local loader = {}
 
-local function LoadPost(postID)
+
+function loader:LoadPost(postID)
+
   local post, err = red:hgetall('post:'..postID)
-  if not post then
-    return post, err
+
+  if not post or (next(post) == nil) then
+    print('error loading post: ',postID,' ', err)
+    return nil, err
   end
   return post.link
 end
 
-local ok, err
 
-local function LoadImage(imageInfo)
-  local res, c, h = http.request ( imageInfo.link )
+function loader:LoadImage(imageLink)
+  local res, c = http.request ( imageLink )
 
 	if c ~= 200 then
 		--print(' cant laod image: ',imageInfo.link, ' err: ',err)
@@ -50,7 +55,7 @@ local function LoadImage(imageInfo)
 	return nil
 end
 
-local function GetImageLinks(res)
+function loader:GetImageLinks(res)
   local imageLinks = {}
   --print(res)
 	for imgTag in res:gmatch('<img.-src=[\'"](.-)[\'"].->') do
@@ -66,7 +71,7 @@ local function GetImageLinks(res)
   return imageLinks
 end
 
-local function SendImage(image, postID)
+function loader:SendImage(image, postID)
   print('sending image')
   local resp = {}
   local body,code,headers,status = http.request{
@@ -80,9 +85,10 @@ local function SendImage(image, postID)
   source = ltn12.source.string(image:get_blob()),
   sink = ltn12.sink.table(resp)
   }
-  print(postID)
-  print(body,code,status)
-  print(table.concat(resp))
+  if code ~= 200 then
+    print(body, code, status)
+    return nil, 'unable to send image to backend'
+  end
 
   if headers then
       for k,v in pairs(headers) do
@@ -92,13 +98,11 @@ local function SendImage(image, postID)
   return true
 end
 
-local function AddImgURLToPost(postID, imgURL)
+function loader:AddImgURLToPost(postID, imgURL)
   red:hset('post:'..postID,'imgURL', imgURL)
-
-
 end
 
-local function ProcessImgur(postURL, postID)
+function loader:ProcessImgur(postURL, postID)
   local handle = io.popen('python pygur.py '..postURL..' '..postID)
   local imgURL = handle:read("*a")
   imgURL = imgURL:gsub('\n','')
@@ -106,7 +110,7 @@ local function ProcessImgur(postURL, postID)
   imgURL = imgURL:gsub(' ','')
   handle:close()
   print('adding ',imgURL,' to post')
-  AddImgURLToPost(postID, imgURL)
+  self:AddImgURLToPost(postID, imgURL)
 
 
   local image = magick.load_image('/lua/out/'..postID..'.jpg')
@@ -116,7 +120,7 @@ local function ProcessImgur(postURL, postID)
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
 
   image:resize_and_crop(100,100)
-  ok, err = SendImage(image,postID)
+  local ok, err = self:SendImage(image,postID)
   if ok then
     os.remove('out/'..postID..'.jpg')
   end
@@ -125,58 +129,62 @@ local function ProcessImgur(postURL, postID)
 
 end
 
-local function GetPostIcon(postURL, postID)
-  print(postURL, postID)
+function loader:ProcessGfycat(postURL)
+  local gfyName = postURL:match('gfycat.com/(%w+)')
+  local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-thumb100.jpg'
+  print(newURL)
+  local imageBlob, err = self:LoadImage(newURL)
+  if not imageBlob then
+    return imageBlob, err
+  end
 
-  if postURL:find('imgur.com') then
-    if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
-      return ProcessImgur(postURL, postID)
+  local loadedImage  = assert(magick.load_image_from_blob(imageBlob))
+
+  return {link = newURL, image = loadedImage}
+
+end
+
+function loader:NormalPage(postURL, postID)
+
+    local res, c, h = http.request ( postURL )
+    if c ~= 200 then
+      print(c, ' ', res)
     end
-  end
-
-  local res, c, h = http.request ( postURL )
-
-  if c ~= 200 then
-    print(c, ' ', r)
-  end
 
 
-  local imageLinks = {}
-  if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
-    imageLinks = {{link = postURL}}
-  else
-    imageLinks = GetImageLinks(res)
-  end
+    local imageLinks
+    if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+      imageLinks = {{link = postURL}}
+    else
+      imageLinks = self:GetImageLinks(res)
+    end
 
-  for _, imageInfo in pairs(imageLinks) do
-		local imageBlob = LoadImage(imageInfo)
-		imageInfo.size = 0
-		if imageBlob then
-        imageInfo.blob = imageBlob
-			local image = assert(magick.load_image_from_blob(imageBlob))
+    for _, imageInfo in pairs(imageLinks) do
+  		local imageBlob = self:LoadImage(imageInfo.link)
+  		imageInfo.size = 0
+  		if imageBlob then
+          imageInfo.blob = imageBlob
+  			local image = assert(magick.load_image_from_blob(imageBlob))
 
-			if image then
-				imageInfo.image = image
-				local w, h = image:get_width(), image:get_height()
-				imageInfo.size = w*h
-			end
-		end
-	end
+  			if image then
+  				imageInfo.image = image
+  				local w = image:get_width(), image:get_height()
+  				imageInfo.size = w*h
+  			end
+  		end
+  	end
 
-	table.sort(imageLinks, function(a,b) return a.size > b.size end)
+  	table.sort(imageLinks, function(a,b) return a.size > b.size end)
 
-	local finalImage
+  	local finalImage
 
-	for _,v in pairs(imageLinks) do
-		if v.image then
-			finalImage = v
-			break
-		end
-	end
+  	for _,v in pairs(imageLinks) do
+  		if v.image then
+  			finalImage = v
+  			break
+  		end
+  	end
 
-	if not finalImage then
-		return nil
-	end
 
 	if finalImage.link:find('.gif') then
     local tempGifLoc = '/lua/out/tempgif-'..postID..'.gif'
@@ -204,53 +212,101 @@ local function GetPostIcon(postURL, postID)
 
 	end
 
-    finalImage.image:resize_and_crop(100,100)
-  	finalImage.image:set_format('png')
+  return finalImage
+end
+
+function loader:GetPostIcon(postURL, postID)
+  print(postURL, postID)
+  local finalImage
+  if postURL:find('imgur.com') then
+    if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+      return self:ProcessImgur(postURL, postID)
+    end
+  elseif postURL:find('gfycat.com/%w+') then
+    finalImage = self:ProcessGfycat(postURL)
+  else
+    finalImage = self:NormalPage(postURL, postID)
+  end
+
+	if not finalImage then
+		return nil
+	end
+
+  finalImage.image:resize_and_crop(100,100)
+  finalImage.image:set_format('png')
 
 
-  AddImgURLToPost(postID, finalImage.link)
+  self:AddImgURLToPost(postID, finalImage.link)
 
-  SendImage(finalImage.image, postID)
+  ok ,err = self:SendImage(finalImage.image, postID)
+  if not ok then
+    return nil
+  end
 
   return true
 end
 
-local function ProcessPostIcon(postID)
-  local postURL, err = LoadPost(postID)
+function loader:ProcessPostIcon(postID)
+  local postURL, err = self:LoadPost(postID)
   if not postURL then
-    return nil, err
+    return true, err
   end
 
-   ok, err = GetPostIcon(postURL, postID)
+  local ok, err = self:GetPostIcon(postURL, postID)
   if not ok then
-     return nil, ok
+     return nil, err
   end
+  print('got post icon')
   return true
 end
 
-
-local function GetNextPost()
-  local queueName = 'queue:GeneratePostIcon'
-  ok, err = red:zrevrange(queueName, 0, 10)
+function loader:GetUpdates()
+  local ok, err = red:zrevrange(self.queueName, 0, 10)
   if not ok then
-    print('couldnt get next posts: ', err)
+    return ok, err
+  end
+  for k,v in pairs(ok) do
+    red:zrem(self.queueName,v)
+    ok[k] = cjson.decode(v)
+  end
+
+  return ok, err
+end
+
+
+function loader:Requeue(postInfo)
+  -- add retries
+  postInfo.retries = postInfo.retries or 0
+  postInfo.retries = postInfo.retries + 1
+  if postInfo.retries > 3 then
+    --give up
     return
   end
 
-  for _,postID in pairs(ok) do
-    ok, err = ProcessPostIcon(postID)
-    if ok then
-      --remove from queue
-      ok, err = red:zrem(queueName, postID)
-      if not ok then
-      --  print('cant remove from redis! ', err)
-      else
-        print('removed: '..postID..' from redis after processing')
-      end
-    else
-      -- add back into queue but later
-      print('couldnt process, requeueing')
-      --ok, err = red:zadd(queueName, os.time(), postID)
+  local delay = postInfo.retries * 30
+
+  local ok, err = red:zadd(self.queueName, delay, cjson.encode(postInfo))
+  if not ok then
+    print('error requueuing: ',err)
+  end
+  return ok, err
+end
+
+function loader:GetNextPost()
+  local updates, ok, err
+
+  updates, err = self:GetUpdates()
+  if not updates then
+    print('couldnt load updates: ', err)
+    return
+  end
+
+  for _,postUpdate in pairs(updates) do
+
+    ok, err = self:ProcessPostIcon(postUpdate.id)
+    if not ok then
+      print('couldnt req: ', err)
+      self:Requeue(postUpdate)
     end
  end
 end
@@ -261,8 +317,10 @@ end
 --=====================================================
 
 
+loader.queueName = 'queue:GeneratePostIcon'
+
 while true do
   socket.sleep(1)
   print('this')
-  GetNextPost()
+  loader:GetNextPost()
 end

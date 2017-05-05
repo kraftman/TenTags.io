@@ -42,7 +42,7 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
     pip install imgurpython
 
-
+RUN luarocks install lua-cjson
 
 RUN mkdir -p /var/www && mkdir /lua
 WORKDIR /lua

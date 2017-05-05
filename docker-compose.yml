@@ -26,6 +26,7 @@ services:
      - ./www:/var/www
     entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
   imgprocess:
+    tty: true
     privileged: true
     build: imgprocess/.
     volumes:
@@ -33,6 +34,7 @@ services:
      - ./www:/var/www
     links:
       - redis-general
+      - imghost
   redis-general:
     build: redis
     volumes:
