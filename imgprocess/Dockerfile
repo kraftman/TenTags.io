@@ -15,7 +15,7 @@ RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 
 
-RUN apt-get install -y libmagickwand-dev curl libssl-dev
+RUN apt-get update && apt-get install -y libmagickwand-dev curl libssl-dev
 
 RUN luarocks install --server=http://luarocks.org/dev giflib && \
     luarocks install redis-lua && \
@@ -25,7 +25,7 @@ RUN luarocks install --server=http://luarocks.org/dev giflib && \
     luarocks install luasec && \
     luarocks install magick
 
-RUN apt-get build-dep -y giflib-dbg
+RUN apt-get update && apt-get build-dep -y giflib-dbg
 
 ENV GIFLIB_VERSION 5.1.4
 WORKDIR /tmp
@@ -42,7 +42,7 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
     pip install imgurpython
 
-
+RUN luarocks install lua-cjson
 
 RUN mkdir -p /var/www && mkdir /lua
 WORKDIR /lua
