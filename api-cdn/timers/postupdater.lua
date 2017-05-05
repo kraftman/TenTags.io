@@ -64,7 +64,7 @@ function config:ReIndexPost(data)
 		createdBy = post.createdBy,
 		id = post.id,
 		shortURL = post.shortURL or nil,
-		url = post.url or nil
+		url = post.link or nil
 	}
 	local ok, err = elastic:Index('post',indexable)
 	if not ok then
