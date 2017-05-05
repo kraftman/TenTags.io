@@ -2,6 +2,7 @@ local worker = {}
 worker.__index = worker
 
 local RECUR_INTERVAL = 10
+local elastic = require 'lib.elasticsearch'
 
 function worker:New()
   local w = setmetatable({}, self)
@@ -26,6 +27,7 @@ function worker:New()
   w.invalidateCache = (require 'timers.cacheinvalidator'):New(w.util)
   w.statcollector = (require 'timers.statcollector'):New(w.util)
   w.commentupdater = (require 'timers.commentupdater'):New(w.util)
+  self.elasticDone = false
 
   return w
 end
@@ -53,13 +55,22 @@ end
 
 
 function worker.ProcessRecurring(_,self)
+  if not self.elasticDone then
+
+    print('creating elastic')
+    local ok, err = elastic:CreateIndex()
+    print(ok, err)
+    if ok then
+      self.elasticDone = true
+      print('done ============= ')
+    end
+  end
   self:ScheduleTimer()
   self:FlushUserSeen()
 end
 
 
 function worker.OnServerStart(_,self)
-
   self.emailer.Run(_,self.emailer)
   self.postUpdater.Run(_,self.postUpdater)
   self.filterUpdater.Run(_,self.filterUpdater)

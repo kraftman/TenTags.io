@@ -25,6 +25,18 @@ function api:SearchPost(queryString)
     return nil, 'failed to search posts'
   end
 
+
+  if ok.hits.total < 1 then
+    ok, err = cache:SearchURL(queryString)
+    if not ok then
+      ngx.log(ngx.ERR, 'failed to search posts: ', err)
+      return nil, 'failed to search posts'
+    end
+    ok = from_json(ok)
+    return ok
+
+  end
+
   return ok, err
 
 end

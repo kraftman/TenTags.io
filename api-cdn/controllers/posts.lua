@@ -117,14 +117,14 @@ function m.GetPost(request)
   for _,v in pairs(post.tags) do
     if v.name:find('^meta:sourcePost:') then
       post.containsSources = true
-      local postID = v.name:match('meta:sourcePost:(%w+)')
-      if postID then
-        print(postID)
-        local parentPost = (postAPI:GetPost(request.session.userID, postID))
+      local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
+      if sourcePostID then
+        print(sourcePostID)
+        local parentPost = (postAPI:GetPost(request.session.userID, sourcePostID))
         print(to_json(parentPost))
         if v.name and parentPost.title then
           v.fakeName = parentPost.title
-          v.postID = postID
+          v.postID = sourcePostID
         end
       end
     end
@@ -199,6 +199,7 @@ function m.CreatePostForm(request)
   if not request.session.userID then
     return { render = 'pleaselogin' }
   end
+
 
   local tags = tagAPI:GetAllTags(api)
 

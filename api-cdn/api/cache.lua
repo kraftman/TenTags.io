@@ -78,6 +78,10 @@ function cache:GetUser(userID)
 
 end
 
+function cache:SearchURL(queryString)
+  return elastic:SearchURL(queryString)
+end
+
 function cache:SearchPost(queryString)
   local results, ok, err
   if not DISABLE_CACHE then
