@@ -141,6 +141,13 @@ local function LoadUser(self)
   ngx.ctx.userID = self.session.userID or self.session.tempID
 end
 
+local function TagColor(_,score)
+  local offset = 100
+  local r = offset+ math.floor((1 - score)*(255-offset))
+  local g = offset+ math.floor(score*(255-offset))
+  local b = 100
+  return 'style="background-color: rgb('..r..','..g..','..b..')"'
+end
 
 app:before_filter(function(self)
   --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
@@ -172,6 +179,7 @@ app:before_filter(function(self)
   self.GetStyleSelected = GetStyleSelected
   self.filterStyles = filterStyles
   self.CalculateColor = CalculateColor
+  self.TagColor = TagColor
 
 
 end)

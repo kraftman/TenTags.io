@@ -1,4 +1,5 @@
-<div class='tag' data-id='<%= tag.name %>'>
+<% print(tag.name, tag.up, tag.down,' ',tag.score) %>
+<div class='tag' data-id='<%= tag.name %>' <%- TagColor(tag.score) %>>
   <% if not tag.userHasVoted then %>
     <a class = 'upvote'  href='#'>&#10004</a>
   <% end %>
