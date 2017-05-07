@@ -4,7 +4,8 @@ local uuid = require 'lib.uuid'
 local base = require 'api.base'
 local api = setmetatable({}, base)
 local tinsert = table.insert
-
+local userlib = require 'lib.userlib'
+local trim = (require 'lapis.util').trim
 
 function api:UserCanVoteTag(userID, postID, tagName)
 	if self:UserHasVotedTag(userID, postID, tagName) then
@@ -138,7 +139,7 @@ end
 
 
 function api:CreateSubUser(accountID, username)
-
+	username = trim(username)
   local subUser = {
     id = uuid.generate(),
     username = self:SanitiseHTML(username,20),
@@ -157,8 +158,8 @@ function api:CreateSubUser(accountID, username)
 		return nil, 'username is taken'
 	end
 
-	if reserved[subUser.lowerUsername] then
-		return nil, 'reserved'
+	if userlib:IsReserved(subUser.lowerUsername) then
+		return nil, 'username is taken'
 	end
 
 	--TODO limit number of subusers allowed

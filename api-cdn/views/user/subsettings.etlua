@@ -1,3 +1,9 @@
+<% if account.role == 'Admin' then %>
+<div class = 'contents panel panel-default'>
+  <h2>Admin Settings</h2>
+
+</div>
+<% end %>
 
 <div class = 'contents panel panel-default'>
   <h2>User Settings</h2>
