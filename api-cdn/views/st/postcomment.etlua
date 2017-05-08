@@ -27,7 +27,7 @@
         <% else %>
           <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
         <% end %>
-        <% if child.createdBy == session.userID then %>
+        <% if child.createdBy == session.userID or account.role == 'Admin' then %>
           <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>">delete</a>
         <% end %>
       </div>

@@ -21,7 +21,7 @@
   <a href="<%= post.link -%>"> <%= post.title -%></a>
 
   <%= creatorName %>
-  <% if post.createdBy == session.userID then %>
+  <% if post.createdBy == session.userID or account.role == 'Admin' then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>

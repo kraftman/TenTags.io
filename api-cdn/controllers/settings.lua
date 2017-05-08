@@ -54,7 +54,7 @@ function m.UpdateSettings(request)
 
   local ok, err = userAPI:UpdateUser(request.session.userID, user)
   if not ok then
-    print(err)
+    
     return 'eek'
   end
   return {redirect_to = request:url_for('usersettings')}
