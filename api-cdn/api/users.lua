@@ -173,6 +173,9 @@ function api:CreateSubUser(accountID, username)
 	if not ok then
 		return ok, err
 	end
+	if account.role == 'Admin' then
+		subUser.role = 'Admin'
+	end
 
 	ok, err = self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
 	if not ok then

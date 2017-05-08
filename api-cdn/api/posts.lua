@@ -302,17 +302,14 @@ function api:ConvertUserPostToPost(userID, post)
 
 	post.createdBy = post.createdBy or userID
   local user = cache:GetUser(userID)
-  local account = cache:GetAccount(user.parentID)
-  if account.role == 'Admin' then
-    print('user is admin')
-
-      local newUserName = userlib:GetRandom()
-      print(newUserName)
-      user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
-      if user then
-        post.createdBy = user.id
-      end
-
+  if user.role == 'Admin' then
+    local account = cache:GetAccount(user.parentID)
+    local newUserName = userlib:GetRandom()
+    print(newUserName)
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+    if user then
+      post.createdBy = user.id
+    end
   else
     post.createdBy = userID
   end

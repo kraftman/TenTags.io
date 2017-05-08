@@ -8,6 +8,8 @@ local api = setmetatable({}, base)
 local COMMENT_START_DOWNVOTES = 0
 local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
+local userlib = require 'lib.userlib'
+local userAPI = require 'api.users'
 
 
 
@@ -38,11 +40,17 @@ end
 function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
-	if comment.createdBy ~= userID then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
-			return nil, 'you cannot create a comment on behalf of someone else'
-		end
+	local user = cache:GetUser(userID)
+	if user.role == 'Admin' then
+		local account = cache:GetAccount(user.parentID)
+    local newUserName = userlib:GetRandom()
+    print(newUserName)
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+    if user then
+      comment.createdBy = user.id
+    end
+	else
+		comment.createdBy = userID
 	end
 
 	local newComment = {
