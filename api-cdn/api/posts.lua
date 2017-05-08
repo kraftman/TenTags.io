@@ -11,10 +11,11 @@ local api = setmetatable({}, base)
 local tinsert = table.insert
 local POST_TITLE_LENGTH = 300
 local COMMENT_LENGTH_LIMIT = 2000
-
+local userlib = require 'lib.userlib'
 local TAG_START_DOWNVOTES = 10
 local TAG_START_UPVOTES = 11
 local MAX_ALLOWED_TAG_COUNT = 30
+local userAPI = require 'api.users'
 
 local function UserCanAddSource(tags, userID)
   for _,tag in pairs(tags) do
@@ -300,12 +301,22 @@ function api:ConvertUserPostToPost(userID, post)
 	end
 
 	post.createdBy = post.createdBy or userID
-	if userID ~= post.createdBy then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
-			post.createdBy = userID
-		end
-	end
+  local user = cache:GetUser(userID)
+  local account = cache:GetAccount(user.parentID)
+  if account.role == 'Admin' then
+    print('user is admin')
+
+      local newUserName = userlib:GetRandom()
+      print(newUserName)
+      user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+      if user then
+        post.createdBy = user.id
+      end
+
+  else
+    post.createdBy = userID
+  end
+
 
 	local newID = uuid.generate_random()
 
@@ -313,6 +324,7 @@ function api:ConvertUserPostToPost(userID, post)
 		id = newID,
 		parentID = newID,
 		createdBy = post.createdBy,
+    creatorName = user.username,
 		commentCount = 0,
 		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
 		link = self:SanitiseUserInput(post.link, 400),

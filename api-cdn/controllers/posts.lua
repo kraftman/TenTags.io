@@ -82,15 +82,27 @@ function m.GetPost(request)
     return 'no userID'
   end
 
+  local post
   local postID = request.params.postID
+
+  -- get the post
   if #postID < 10 then
     postID = postAPI:ConvertShortURL(postID) or postID
+    post = postAPI:GetPost(request.session.userID, postID)
   else
-    local post = postAPI:GetPost(request.session.userID, postID)
+    post = postAPI:GetPost(request.session.userID, postID)
+
     if post.shortURL then
       return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
     end
   end
+
+  if not post then
+    return 'unable to find post'
+  end
+
+  print(post.createdBy)
+  request.creatorName = userAPI:GetUser(post.createdBy).username
 
   local comments = commentAPI:GetPostComments(request.session.userID, postID,sortBy)
 
@@ -104,7 +116,7 @@ function m.GetPost(request)
 
   request.comments = comments
 
-  local post,err = postAPI:GetPost(request.session.userID, postID)
+  --local post,err = postAPI:GetPost(request.session.userID, postID)
   --print(to_json(post))
 
   if not post then
