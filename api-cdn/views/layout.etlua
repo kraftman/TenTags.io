@@ -13,19 +13,14 @@
   <script src="/static/chosen/chosen.jquery.js"  ></script>
   <script src="/static/js/mousetrap.min.js"  ></script>
   <!-- Latest compiled and minified CSS -->
-  <script src="/static/owlcarousel/owl.carousel.min.js"></script>
   <script src="/static/js/site.js"  ></script>
 
-
-  <link rel="stylesheet" type="text/css" href="/static/css/theme-light.min.css">
-  <link rel="stylesheet" href="/static/owlcarousel/assets/owl.carousel.min.css" />
-  <link rel="stylesheet" href="/static/owlcarousel/assets/owl.carousel.min.css" />
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
-  
+
 
   <div class = 'main'>
     <% render("views.main.navigation") %>

@@ -1,0 +1,12 @@
+<div class = 'panel filter-styles'>
+
+    <% for styleName,_ in pairs(filterStyles) do %>
+
+      <form class = 'filterstyle-button' action="/settings/filterstyle" method="POST">
+        <input type=hidden name="filterName" value="<%= thisfilter and thisfilter.name or 'frontPage' -%>"/>
+        <button class='btn filterstyle-button' type="submit" name='styleselect' value="<%= styleName -%>" class="btn-link"><%= styleName -%></button>
+      </form>
+
+    <% end %>
+
+</div>

@@ -1,28 +1,16 @@
 <div class='info-bar'>
-  <div class= 'contents'>
   <% if thisfilter then %>
-    Subs:
-    <%= thisfilter.subs-%>
-    Description:
-    </br>
-    <%= thisfilter.description -%>
-    </br>
-    Owner:
-    <%= thisfilter.ownerName -%>
-    </br>
-    Mods:
-    </br>
-    <% for _,mod in pairs(thisfilter.mods) do %>
-      <%= mod.username -%>
+    <h3> <%= thisfilter.name-%></h3>
+    <p><%= thisfilter.description -%></p>
+    <% if next(thisfilter.relatedFilters) then %>
+      Related Filters:
+        </br>
+        <% for _,filter in pairs(thisfilter.relatedFilters) do %>
+        <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+          <%= filter.name -%>
+        </a>
+        <% end %>
     <% end %>
-    Related Filters:
-      </br>
-      <% for _,filter in pairs(thisfilter.relatedFilters) do %>
-      <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
-        <%= filter.name -%>
-      </a>
-      <% end %>
   <% else %>Welcome to filter!<% end %>
   <% if enableAds then %><% end %>
-  </div>
 </div>
