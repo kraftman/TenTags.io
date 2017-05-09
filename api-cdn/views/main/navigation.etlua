@@ -6,14 +6,9 @@
     <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
   </div>
 
-  <% if session.accountID then %>
 
-  <% else %>
-    <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
-      <input class='form-control form-search' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
-      <input class='login-button btn' type='submit' name='Submit' value='Sign Up/In' />
-    </form>
-  <% end %>
+
+
 
   <% if account and account.role == 'Admin' then %>
     <div><a href="<%= url_for('adminpanel') %>">Admin</a></div>
@@ -27,6 +22,15 @@
     <input class='form-control form-search' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search/Post"/>
     <input class='hidden-search-input' tabindex="-1" type='submit' style="visibility:hidden" name='Submit' value='Search/Post' />
   </form>
+
+  <% if session.accountID then %>
+
+  <% else %>
+    <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
+      <input class='form-control form-search' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
+      <input class='login-button btn' type='submit' name='Submit' value='Sign Up/In' />
+    </form>
+  <% end %>
 
   <% if session.username then %>
     <div class = 'settings-link' ><a  href="<%= url_for('usersettings') %>" ><%= session.username %></a></div>
