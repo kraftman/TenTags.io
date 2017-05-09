@@ -6,10 +6,11 @@ local sessionAPI = require 'api.sessions'
 local date = require("date")
 local util = require 'util'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
-app:enable("etlua")
-app.layout = require 'views.layout'
 local checksession = require 'middleware.checksession'
 
+
+app:enable("etlua")
+app.layout = require 'views.layout'
 app.cookie_attributes = function(self)
   local expires = date(true):adddays(365):fmt("${http}")
   return "Expires=" .. expires .. "; Path=/; HttpOnly"
@@ -25,9 +26,8 @@ app:before_filter(function(self)
 end)
 
 app:before_filter(function(self)
-  --ngx.log(ngx.ERR, self.session.userID, to_json(self.session.username)
 
-  self.enableAds = true
+  self.enableAds = false
 
   self.GetFilterTemplate = util.GetFilterTemplate
   self.GetStyleSelected = util.GetStyleSelected

@@ -278,17 +278,25 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
+	print(userID)
 	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
 
-	if userID ~= userToUpdate.id then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
+	local user = cache:GetUser(userID)
+	if not user then
+		print(userID,' not found')
+	end
+	if user.role == 'Admin' then
+
+	else
+		userToUpdate.fakeNames = nil
+		if userID ~= userToUpdate.id then
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
+
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
@@ -297,7 +305,8 @@ function api:UpdateUser(userID, userToUpdate)
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username,
-		bio = self:SanitiseUserInput(userToUpdate.bio, 1000)
+		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
+		fakeNames = userToUpdate.fakeNames == 0 and 0 or 1
 	}
 
 	for k,v in pairs(userToUpdate) do

@@ -9,56 +9,46 @@ local csrf = require("lapis.csrf")
 local uuid = require 'lib.uuid'
 
 
-local filterStyles = {
-  default = 'views.st.postelement',
-  minimal = 'views.st.postelement-min',
-  HN = 'views.st.postelement-HN',
-  full = 'views.st.postelement-full',
-  filtta = 'views.st.postelement-filtta'
-}
 
-
-
-local function RemoveSession(self)
-  self.session.accountID = nil
-  self.session.userID = nil
-  self.session.sessionID = nil
-  self.session.username = nil
+function M:RemoveSession(request)
+  request.session.accountID = nil
+  request.session.userID = nil
+  request.session.sessionID = nil
+  request.session.username = nil
 end
 
 
-function M:ValidateSession(self)
-  if self.session.accountID then
-    local account,err = sessionAPI:ValidateSession(self.session.accountID, self.session.sessionID)
+function M:ValidateSession(request)
+  if request.session.accountID then
+    local account,err = sessionAPI:ValidateSession(request.session.accountID, request.session.sessionID)
     if account then
-      self.account = account
+      request.account = account
       return
     end
 
-    print('invalid session: ',err)
-    RemoveSession(self)
-    return {redirect_to = self:url_for('home')}
+    self:RemoveSession(request)
+    return {redirect_to = request:url_for('home')}
 
-  end
-  if self.session.username or self.session.userID then
-    RemoveSession()
+  elseif request.session.username or request.session.userID then
+    self:RemoveSession(request)
   end
 end
 
 
-function M:LoadUser(self)
-  if self.session.userID then
-    self.tempID = nil
-    self.userInfo = userAPI:GetUser(self.session.userID)
-  elseif not self.session.accountID then
-    self.session.tempID = self.session.tempID or uuid:generate_random()
+function M:LoadUser(request)
+  if request.session.userID then
+    request.tempID = nil
+    request.userInfo = userAPI:GetUser(request.session.userID)
+  elseif not request.session.accountID then
+    request.session.tempID = request.session.tempID or uuid:generate_random()
   end
-  ngx.ctx.userID = self.session.userID or self.session.tempID
+  ngx.ctx.userID = request.session.userID or request.session.tempID
+  request.cookies.cacheKey = ngx.md5(ngx.ctx.userID)
 end
 
 function M:Run(request)
-  request:ValidateSession()
-  self:LoadUser()
+  self:ValidateSession(request)
+  self:LoadUser(request)
 
 
     if request.session.accountID then

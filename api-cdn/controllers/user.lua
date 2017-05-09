@@ -11,9 +11,11 @@ local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 
 function m.LogOut(request)
-  request.session.username = nil
-  request.session.userID = nil
-  request.session.accountID = nil
+  self.session.accountID = nil
+  self.session.userID = nil
+  self.session.sessionID = nil
+  self.session.username = nil
+  self.account = nil
   return { redirect_to = request:url_for("home") }
 end
 
@@ -109,8 +111,6 @@ function m.ConfirmLogin(request)
     return { redirect_to = request:url_for("home") }
   end
 
-  print(to_json(account))
-  print(sessionID)
   request.session.accountID = account.id
   request.session.userID = account.currentUserID
   request.session.username = account.currentUsername

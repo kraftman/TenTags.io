@@ -1,6 +1,9 @@
 <% if account.role == 'Admin' then %>
 <div class = 'contents panel panel-default'>
   <h2>Admin Settings</h2>
+  <div class="checkbox">
+    <label><input type="checkbox" name='fakeNames' <%= fakeNames -%>>Use fake usernames</label>
+  </div>
 
 </div>
 <% end %>

@@ -4,6 +4,17 @@ local util = {}
 util.locks = ngx.shared.locks
 
 
+
+local filterStyles = {
+  default = 'views.st.postelement',
+  minimal = 'views.st.postelement-min',
+  HN = 'views.st.postelement-HN',
+  full = 'views.st.postelement-full',
+  filtta = 'views.st.postelement-filtta'
+}
+
+util.filterStyles = filterStyles
+
 function util:GetLock(key, lockTime)
   local success, err = self.locks:add(key, true, lockTime)
   if not success then

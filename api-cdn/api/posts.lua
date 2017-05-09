@@ -302,7 +302,7 @@ function api:ConvertUserPostToPost(userID, post)
 
 	post.createdBy = post.createdBy or userID
   local user = cache:GetUser(userID)
-  if user.role == 'Admin' then
+  if user.role == 'Admin' and user.fakeNames then
     local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
     print(newUserName)
