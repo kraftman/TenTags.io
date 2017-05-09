@@ -15,19 +15,9 @@ config("development", {
 })
 
 config("production", {
-  mysql = {
-    host = "127.0.0.1",
-    user = "root",
-    password = "meep",
-    database = "taggr"
-  },
-  logging = {
-    queries = false,
-    requests = false
-  },
   code_cache = "on",
-  secret = "this is my secrarstrstet string 123456",
-  port = 80,
+  secret = os.getenv('LAPIS_SECRET'),
+  port = 8080,
   num_workers = 'auto',
   logging = {
     queries = false,

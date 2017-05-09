@@ -1,5 +1,5 @@
-env LAPIS_ENVIRONMENT=development;
-worker_processes 1;
+env LAPIS_ENVIRONMENT=production;
+worker_processes auto;
 error_log stderr notice;
 daemon off;
 pid logs/nginx.pid;
@@ -65,13 +65,13 @@ http {
       proxy_cache            STATIC;
       proxy_cache_valid      200  30s;
       proxy_no_cache $no_cache;
-      proxy_pass http://localhost:8080;
+      proxy_pass http://localhost:80;
     }
   }
 
   server {
-    listen 8080;
-    lua_code_cache off;
+    listen 80;
+    lua_code_cache on;
 
     location / {
       default_type text/html;

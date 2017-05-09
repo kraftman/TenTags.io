@@ -3,7 +3,7 @@ services:
   filtta:
     build: api-cdn/.
     ports:
-      - "80:8080"
+      - "8080:8080"
       - "8081:8081"
     links:
       - imghost
