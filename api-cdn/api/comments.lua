@@ -41,7 +41,8 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
 	local user = cache:GetUser(userID)
-	if user.role == 'Admin' and user.fakeNames then
+	if user.role == 'Admin' and user.fakeNames == 1 then
+		print(user.fakeNames)
 		local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
     print(newUserName)
