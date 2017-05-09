@@ -19,7 +19,9 @@
     <a href="<%= url_for('subscribepost',{ postID = post.id}) %> ">subscribe</a>
 
   <a href="<%= post.link -%>"> <%= post.title -%></a>
-  <% if post.createdBy == session.userID then %>
+
+  <%= creatorName %>
+  <% if post.createdBy == session.userID or account.role == 'Admin' then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>

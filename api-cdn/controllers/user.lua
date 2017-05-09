@@ -10,10 +10,31 @@ local sessionAPI = require 'api.sessions'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 
+
+
+function m:Register(app)
+
+  app:match('newsubuser','/sub/new', respond_to({
+    GET = self.NewSubUser,
+    POST = self.CreateSubUser
+  }))
+
+  app:post('login','/login',self.NewLogin)
+  app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
+  app:post('taguser', '/user/tag/:userID', self.TagUser)
+  app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('logout','/logout', self.LogOut)
+  app:get('switchuser','/user/switch/:userID', self.SwitchUser)
+  app:get('listusers','/user/list',function() return {render = 'listusers'} end)
+
+end
+
 function m.LogOut(request)
-  request.session.username = nil
-  request.session.userID = nil
   request.session.accountID = nil
+  request.session.userID = nil
+  request.session.sessionID = nil
+  request.session.username = nil
+  request.account = nil
   return { redirect_to = request:url_for("home") }
 end
 
@@ -109,8 +130,6 @@ function m.ConfirmLogin(request)
     return { redirect_to = request:url_for("home") }
   end
 
-  print(to_json(account))
-  print(sessionID)
   request.session.accountID = account.id
   request.session.userID = account.currentUserID
   request.session.username = account.currentUsername
@@ -128,23 +147,6 @@ function m.ConfirmLogin(request)
 
 end
 
-
-function m:Register(app)
-
-  app:match('newsubuser','/sub/new', respond_to({
-    GET = self.NewSubUser,
-    POST = self.CreateSubUser
-  }))
-
-  app:post('login','/login',self.NewLogin)
-  app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
-  app:post('taguser', '/user/tag/:userID', self.TagUser)
-  app:get('viewuser','/user/:username', self.ViewUser)
-  app:get('logout','/logout', self.LogOut)
-  app:get('switchuser','/user/switch/:userID', self.SwitchUser)
-  app:get('listusers','/user/list',function() return {render = 'listusers'} end)
-
-end
 
 
 return m

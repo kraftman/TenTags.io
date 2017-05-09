@@ -74,6 +74,7 @@ function api:ValidateSession(accountID, sessionID)
 	if not account then
 		return nil, 'account not found'
 	end
+
 	local session = account.sessions[sessionID]
 	if not session then
 		return nil, 'session not found'
@@ -82,6 +83,7 @@ function api:ValidateSession(accountID, sessionID)
 	if not session.activated then
 		return nil, 'session not validated yet'
 	end
+
 	if session.validUntil < ngx.time() then
 		return nil, 'session has expired'
 	end

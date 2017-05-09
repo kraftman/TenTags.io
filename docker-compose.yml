@@ -35,6 +35,8 @@ services:
     links:
       - redis-general
       - imghost
+    env_file:
+      - filtta.env
   redis-general:
     build: redis
     volumes:

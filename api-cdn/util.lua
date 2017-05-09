@@ -4,6 +4,17 @@ local util = {}
 util.locks = ngx.shared.locks
 
 
+
+local filterStyles = {
+  default = 'views.st.postelement',
+  minimal = 'views.st.postelement-min',
+  HN = 'views.st.postelement-HN',
+  full = 'views.st.postelement-full',
+  filtta = 'views.st.postelement-filtta'
+}
+
+util.filterStyles = filterStyles
+
 function util:GetLock(key, lockTime)
   local success, err = self.locks:add(key, true, lockTime)
   if not success then
@@ -52,6 +63,72 @@ function util:ConvertToUnique(jsonData)
   end
   return commentVotes
 end
+
+
+
+ function util.TagColor(_,score)
+  local offset = 100
+  local r = offset+ math.floor((1 - score)*(255-offset))
+  local g = offset+ math.floor(score*(255-offset))
+  local b = 100
+  return 'style="background-color: rgb('..r..','..g..','..b..')"'
+end
+
+function util.GetStyleSelected(self, styleName)
+
+  if not self.userInfo then
+    return ''
+  end
+
+  local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
+
+  if self.userInfo['filterStyle:'..filterName] and self.userInfo['filterStyle:'..filterName] == styleName then
+    return 'selected="selected"'
+  else
+    return ''
+  end
+
+end
+
+function util.CalculateColor(name)
+  local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
+  local sum = 0
+
+  for i = 1, #name do
+    sum = sum + (name:byte(i))
+  end
+
+  sum = sum % #colors + 1
+
+  return 'style="background: '..colors[sum]..';"'
+
+end
+
+
+function util.GetFilterTemplate(self)
+
+  local filterStyle = 'default'
+  local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
+  if self.session.userID then
+    self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
+
+
+    if self.userInfo then
+      --print('getting filter style for name: '..filterName,', ', self.userInfo['filterStyle:'..filterName])
+      filterStyle = self.userInfo['filterStyle:'..filterName] or 'default'
+    end
+  else
+    filterStyle = 'default'
+  end
+
+  if not filterStyles[filterStyle] then
+    print('filter style not found: ',filterStyle)
+    return filterStyles.default
+  end
+
+  return filterStyles[filterStyle]
+end
+
 
 
 

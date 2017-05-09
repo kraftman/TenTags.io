@@ -1,0 +1,23 @@
+<div class='settings-menu'>
+  <ul>
+    <% if session.username then %>
+      <li><a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a></li>
+      <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
+      <li class="dropdown">
+        <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <% for _,user in pairs(otherUsers) do %>
+            <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
+          <% end %>
+
+        </ul>
+      </li>
+
+      <li><a href="<%= url_for('newmessage') %>">New Message</a></li>
+      <li><a href="<%= url_for('newpost') %>">New Post</a></li>
+      <li><a href="<%= url_for('newfilter') %>">New Filter</a></li>
+      <li><a href="<%= url_for('logout') %>">Logout</a></li>
+    <% end %>
+  </ul>
+
+</div>

@@ -153,7 +153,7 @@ end
 
 function userwrite:IncrementAccountStat(userID, statName, value)
   local red = self:GetUserWriteConnection()
-  local ok, err = red:hincrby('actount:'..userID, statName, value)
+  local ok, err = red:hincrby('account:'..userID, statName, value)
   self:SetKeepalive(red)
   return ok, err
 end

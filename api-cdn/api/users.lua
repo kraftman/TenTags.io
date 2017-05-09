@@ -4,7 +4,8 @@ local uuid = require 'lib.uuid'
 local base = require 'api.base'
 local api = setmetatable({}, base)
 local tinsert = table.insert
-
+local userlib = require 'lib.userlib'
+local trim = (require 'lapis.util').trim
 
 function api:UserCanVoteTag(userID, postID, tagName)
 	if self:UserHasVotedTag(userID, postID, tagName) then
@@ -138,7 +139,7 @@ end
 
 
 function api:CreateSubUser(accountID, username)
-
+	username = trim(username)
   local subUser = {
     id = uuid.generate(),
     username = self:SanitiseHTML(username,20),
@@ -157,8 +158,8 @@ function api:CreateSubUser(accountID, username)
 		return nil, 'username is taken'
 	end
 
-	if reserved[subUser.lowerUsername] then
-		return nil, 'reserved'
+	if userlib:IsReserved(subUser.lowerUsername) then
+		return nil, 'username is taken'
 	end
 
 	--TODO limit number of subusers allowed
@@ -171,6 +172,9 @@ function api:CreateSubUser(accountID, username)
 	local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		return ok, err
+	end
+	if account.role == 'Admin' then
+		subUser.role = 'Admin'
 	end
 
 	ok, err = self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
@@ -274,17 +278,26 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
+	print(userID)
 	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
 
-	if userID ~= userToUpdate.id then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
+	local user = cache:GetUser(userID)
+	if not user then
+		print(userID,' not found')
+	end
+	if user.role == 'Admin' then
+
+	else
+		userToUpdate.fakeNames = nil
+		if userID ~= userToUpdate.id then
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
+	print(userToUpdate.fakeNames)
+
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
@@ -293,7 +306,8 @@ function api:UpdateUser(userID, userToUpdate)
 		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username,
-		bio = self:SanitiseUserInput(userToUpdate.bio, 1000)
+		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
+		fakeNames = userToUpdate.fakeNames == 0 and 0 or 1
 	}
 
 	for k,v in pairs(userToUpdate) do
