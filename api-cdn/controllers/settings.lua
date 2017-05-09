@@ -28,9 +28,6 @@ function m.DisplaySettings(request)
     end
   end
 
-  print(user.fakeNames)
-
-
   request.fakeNames = user.fakeNames == '1' and 'checked' or ''
   request.enablePM = user.enablePM == '1' and 'checked' or ''
   request.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''

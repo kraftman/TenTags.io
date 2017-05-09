@@ -1,10 +1,11 @@
 import re
 import sys
+import os
 from imgurpython import ImgurClient
 from urllib import urlretrieve
 
-client_id = ''
-client_secret = ''
+client_id = os.environ['IMGUR_ID']
+client_secret = os.environ['IMGUR_SECRET']
 
 client = ImgurClient(client_id, client_secret)
 

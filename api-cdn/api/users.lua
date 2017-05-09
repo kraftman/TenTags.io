@@ -296,6 +296,7 @@ function api:UpdateUser(userID, userToUpdate)
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
+	print(userToUpdate.fakeNames)
 
 	local userInfo = {
 		id = userToUpdate.id,
