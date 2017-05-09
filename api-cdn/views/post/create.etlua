@@ -16,8 +16,6 @@
       <legend>Create Post</legend>
       <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-
-
       <div class="input-group">
         <input type="text" class="form-control" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" aria-describedby="basic-addon1">
       </div>
@@ -30,10 +28,13 @@
       <textarea  name='posttext' id='posttext' id="txtArea" rows="10" cols="50"></textarea>
 
       <!--
+      </br>
+      <label for='filterselect'>Filters</label></br>
       <select name='filterselect' id='filterselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add filters'>
       </select>
       </br>
       -->
+
 
         <label for='selectedtags'>Tags</label></br>
         <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />

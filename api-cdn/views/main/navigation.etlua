@@ -1,64 +1,44 @@
 
+<div class='top-nav'>
+  <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
 
-<div class='navbar navbar-default top-nav'>
-
-
-  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-
-    <ul class="nav navbar-nav">
-      <input class = 'pull-left hamburger' type="image" src="/static/icons/hamburger.png" />
-      <li><a class='home-link' href="<%= url_for('home') %>">Filtta</a></li>
-
-
-      <li class="dropdown">
-        <a href="<%= url_for('createpage') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">New<span class="caret"></span></a>
-        <ul class="dropdown-menu">
-          <li><a  href="<%= url_for('newmessage') %>">Message</a></li>
-          <li><a  href="<%= url_for('newpost') %>">Post</a></li>
-          <li><a  href="<%= url_for('newfilter') %>">Filter</a></li>
-        </ul>
-      </li>
-
-
-      <% if session.username then %>
-
-        <li class="dropdown">
-          <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><%= session.username %> <span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <% for _,user in pairs(otherUsers) do %>
-              <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
-            <% end %>
-            <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
-            <li></a> <a href="<%= url_for('logout') %>">Logout</a></li>
-          </ul>
-        </li>
-        <li><a href="<%= url_for('usersettings') %>">Settings</a></li>
-      <% elseif session.accountID then %>
-        <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
-        <li></a> <a href="<%= url_for('logout') %>">Logout</a></li>
-      <% else %>
-        <li><form class='navbar-form navbar-left' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
-          <input class='form-control' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
-          <input class='btn btn-default email-submit' type='submit' name='Submit' value='Sign Up/In' />
-        </form></li>
-      <% end %>
-
-      <% if account and account.role == 'Admin' then %>
-        <li><a href="<%= url_for('adminpanel') %>">Admin</a></li>
-      <% end %>
-
-      <% if userHasAlerts then %>
-        <li><a href="<%= url_for('viewalerts') %>">New Alert!</a></li>
-      <% end %>
-
-    </ul>
-    <ul class="nav navbar-nav pull-right">
-    <li><form class='navbar-form navbar-right' id='search' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
-      <input class='form-control' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search..."/>
-      <input class='btn btn-default email-submit' type='submit' name='Submit' value='Search' />
-    </form></li>
-    </ul>
+  <div>
+    <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
   </div>
+
+  <% if session.accountID then %>
+
+  <% else %>
+    <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
+      <input class='form-control form-search' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
+      <input class='login-button btn' type='submit' name='Submit' value='Sign Up/In' />
+    </form>
+  <% end %>
+
+  <% if account and account.role == 'Admin' then %>
+    <div><a href="<%= url_for('adminpanel') %>">Admin</a></div>
+  <% end %>
+
+  <% if userHasAlerts then %>
+    <div><a href="<%= url_for('viewalerts') %>">New Alert!</a></div>
+  <% end %>
+
+  <form class='siteSearch' id='siteSearch' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
+    <input class='form-control form-search' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search/Post"/>
+    <input class='hidden-search-input' tabindex="-1" type='submit' style="visibility:hidden" name='Submit' value='Search/Post' />
+  </form>
+
+  <% if session.username then %>
+    <div class = 'settings-link' ><a  href="<%= url_for('usersettings') %>" ><%= session.username %></a></div>
+  <% end %>
 
 
 </div>
+
+<!--
+
+  <% if userHasAlerts then %>
+    <li><a href="<%= url_for('viewalerts') %>">New Alert!</a></li>
+  <% end %>
+
+-->

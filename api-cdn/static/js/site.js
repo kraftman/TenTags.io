@@ -1,3 +1,4 @@
+
 var userSettings = {};
 var newPosts = {};
 var maxPosts = 10;
@@ -6,6 +7,7 @@ var userID;
 var postIndex = 0;
 
 $(function() {
+  $('.owl-carousel').owlCarousel({items: 3,autoWidth: true,margin: 15});
   userID = $('#userID').val()
   AddTagVoteListener();
   AddPostVoteListener();
@@ -279,6 +281,12 @@ function AddFilterSearch(){
 }
 
 function AddMenuHandler(){
+  $('.settings-link a').click(function(e){
+    
+    $('.settings-menu').toggle('slide','right',200)
+
+    e.preventDefault();
+  })
   $('#box-two').hide();
   $('#infoBoxLink').click(function(e){
     e.preventDefault();
