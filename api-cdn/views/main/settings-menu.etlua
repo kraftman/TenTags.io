@@ -2,6 +2,7 @@
   <ul>
     <% if session.username then %>
       <li><a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a></li>
+      <li><a  href="<%= url_for('usersettings') %>" >Settings</a></li>
       <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
       <li class="dropdown">
         <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>

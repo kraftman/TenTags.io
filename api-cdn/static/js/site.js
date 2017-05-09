@@ -32,6 +32,11 @@ function FilterToggle(){
     filterBar.toggle('slide','left',200)
   });
 
+  $('.toggle-filterstyle').click(function(e){
+    $('.filter-styles').toggle()
+    e.preventDefault();
+  })
+
 }
 
 function DraggablePosts(){
@@ -282,8 +287,8 @@ function AddFilterSearch(){
 
 function AddMenuHandler(){
   $('.settings-link a').click(function(e){
-    
-    $('.settings-menu').toggle('slide','right',200)
+
+    $('.settings-menu').toggle()
 
     e.preventDefault();
   })

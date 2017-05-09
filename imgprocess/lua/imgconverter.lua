@@ -321,6 +321,5 @@ loader.queueName = 'queue:GeneratePostIcon'
 
 while true do
   socket.sleep(1)
-  print('this')
   loader:GetNextPost()
 end

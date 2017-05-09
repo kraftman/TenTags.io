@@ -6,6 +6,6 @@
   <% end %>
 <% elseif post.postType == 'self' then %>
   <img class = 'post-icon' src="/static/icons/self.svg" height="40" width="40">
-<% else print(to_json(post)) %>
+<% else %>
   <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
 <% end %>
