@@ -6,9 +6,6 @@
     <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
   </div>
 
-  <% if account and account.role == 'Admin' then %>
-    <div><a href="<%= url_for('adminpanel') %>">Admin</a></div>
-  <% end %>
 
   <% if userHasAlerts then %>
     <div><a href="<%= url_for('viewalerts') %>">New Alert!</a></div>

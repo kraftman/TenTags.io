@@ -14,6 +14,10 @@
         </ul>
       </li>
 
+      <% if account and account.role == 'Admin' then %>
+        <li><a href="<%= url_for('adminpanel') %>">Admin</a></li>
+      <% end %>
+
       <li><a href="<%= url_for('newmessage') %>">New Message</a></li>
       <li><a href="<%= url_for('newpost') %>">New Post</a></li>
       <li><a href="<%= url_for('newfilter') %>">New Filter</a></li>
