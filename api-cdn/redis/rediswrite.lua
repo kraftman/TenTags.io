@@ -317,7 +317,7 @@ end
 
 function write:UpdateRelatedFilters(filter, relatedFilters)
   local red = self:GetRedisWriteConnection()
-
+  red:init_pipeline()
   for _,v in pairs(filter.relatedFilterIDs) do
     red:hdel('filter:'..filter.id, 'relatedFilter:'..v)
   end
@@ -325,7 +325,10 @@ function write:UpdateRelatedFilters(filter, relatedFilters)
   for _,v in pairs(relatedFilters) do
     red:hset('filter:'..filter.id,  'relatedFilter:'..v,v)
   end
+  local ok,err = red:commit_pipeline()
+
   self:SetKeepalive(red)
+  return ok,err
 
 end
 

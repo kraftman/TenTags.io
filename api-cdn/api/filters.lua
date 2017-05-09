@@ -101,7 +101,7 @@ function api:CreateFilter(userID, filterInfo)
   -- filter HAS to be updated first
   -- or the job wont use the new tags
 
-  ok,err = self.redisWrite:QueueJob('UpdateFilterTags',{id = newFilter.id})
+  ok,err = self.redisWrite:QueueJob('UpdateFilterPosts',{id = newFilter.id})
 	if not ok then
 		return ok,err
 	end

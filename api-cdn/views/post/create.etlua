@@ -20,7 +20,7 @@
         <input type="text" class="form-control" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" aria-describedby="basic-addon1">
       </div>
       <div class="input-group">
-        <input type="text" class="form-control" name='postlink' id='postlink' maxlength="300" placeholder="<%= params.postLink or 'Liink'%>" aria-describedby="basic-addon1">
+        <input type="text" class="form-control" name='postlink' id='postlink' maxlength="300" placeholder="<%= params.postLink or 'Link'%>" aria-describedby="basic-addon1">
       </div>
 
       <label for='posttext' >Post Text</label>

@@ -173,6 +173,25 @@ function read:GetFilterIDsByTags(tags)
   -- if they dont want the tag, mark them as out of the list
   -- purge marked tags
 
+  red:init_pipeline()
+
+  for _,tag in pairs(tags) do
+    red:hgetall('tag:filters:'..tag.name)
+  end
+
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive(red)
+  return ok, err
+end
+
+function read:GetRelevantFilters(tags)
+  local red = self:GetRedisReadConnection()
+  -- for each tag
+  -- load all of the filters that care about the tag
+  -- if they want the tag , add them to the list
+  -- if they dont want the tag, mark them as out of the list
+  -- purge marked tags
+
   local newList = {}
 
   for _,tag in pairs(tags) do

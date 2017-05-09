@@ -126,7 +126,7 @@ function config:VotePost(postVote)
 	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
-	self.userWrite:AddUserPostVotes(post.Vote.userID, postVote.postID)
+	self.userWrite:AddUserPostVotes(postVote.userID, postVote.postID)
 
 	return true
 
@@ -265,7 +265,7 @@ function config:CalculatePostFilters(post)
 	end
 
   --get all filters that match any of these tags
-	local chosenFilterIDs, err = cache:GetFilterIDsByTags(validTags)
+	local chosenFilterIDs, err = cache:GetRelevantFilters(validTags)
 	if not chosenFilterIDs then
 		print(err)
 	end

@@ -7,7 +7,6 @@ var userID;
 var postIndex = 0;
 
 $(function() {
-  $('.owl-carousel').owlCarousel({items: 3,autoWidth: true,margin: 15});
   userID = $('#userID').val()
   AddTagVoteListener();
   AddPostVoteListener();

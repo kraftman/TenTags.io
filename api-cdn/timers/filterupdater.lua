@@ -91,10 +91,16 @@ function config:GetRelatedFilters(filter)
 	-- for each tag, get filters that also have that tag
 	local tagNames = {}
 	for _,tagName in pairs(filter.requiredTagNames) do
+    print(tagName)
+    -- we need the real tags
 		table.insert(tagNames, {name = tagName})
 	end
 
-	local filterIDs = cache:GetFilterIDsByTags(tagNames)
+	local filterIDs,err = cache:GetFilterIDsByTags(tagNames)
+  if not filterIDs then
+    ngx.log(ngx.ERR,'unable to get filter ids: ',err)
+  end
+  
 	local filters = {}
 	for _,v in pairs(filterIDs) do
 		for filterID,_ in pairs(v) do
@@ -131,7 +137,7 @@ end
 
 function config:UpdateFilterPosts(data)
 
-	local filter = self.redisRead:GetFilterByID(data.id)
+	local filter = self.redisRead:GetFilter(data.id)
 	if not filter then
 		ngx.log(ngx.ERR, 'couldnt load filter id: ', data.id)
 		return true

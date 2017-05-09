@@ -18,7 +18,7 @@ function ConvertTagsToSelect(){
       </select>`)
   $('#selectedtags').chosen()
   var tagSelectChosen = $('#selectedtags_chosen')
-  tagSelectChosen.bind('keyup',function(e) {
+  tagSelectChosen.bind('keydown',function(e) {
     console.log(e)
     if(e.which === 13 || e.which === 32) {
       var newItem = $(e.target).val();

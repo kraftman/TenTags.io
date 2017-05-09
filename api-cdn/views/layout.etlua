@@ -6,14 +6,6 @@
   <meta charset="UTF-8">
   <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
   <title><%= page_title or "Filtta" %></title>
-  <script src="/static/js/jquery-2.1.4.js" ></script>
-  <script src="/static/js/jquery-ui.js" ></script>
-  <script src="/static/js/jquery.ui.touch-punch.js"></script>
-  <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
-  <script src="/static/chosen/chosen.jquery.js"  ></script>
-  <script src="/static/js/mousetrap.min.js"  ></script>
-  <!-- Latest compiled and minified CSS -->
-  <script src="/static/js/site.js"  ></script>
 
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
@@ -33,5 +25,14 @@
     </div>
 
   </div>
+
+  <script src="/static/js/jquery-2.1.4.js" ></script>
+  <script src="/static/js/jquery-ui.js" ></script>
+  <script src="/static/js/jquery.ui.touch-punch.js"></script>
+  <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
+  <script src="/static/chosen/chosen.jquery.js"  ></script>
+  <script src="/static/js/mousetrap.min.js"  ></script>
+  <!-- Latest compiled and minified CSS -->
+  <script src="/static/js/site.js"  ></script>
 </body>
 </html>

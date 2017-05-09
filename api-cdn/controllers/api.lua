@@ -7,6 +7,7 @@ local respond_to = (require 'lapis.application').respond_to
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local tinsert = table.insert
+local postAPI = require 'api.posts'
 
 function m.SearchFilter(request)
   if not request.params.searchString then
@@ -49,7 +50,7 @@ function m.UpvotePost(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = userAPI:VotePost(request.session.userID, request.params.postID, 'up')
+  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'up')
   if ok then
     return { json = {status = 'success', data = {}} }
   else
