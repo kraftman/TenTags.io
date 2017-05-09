@@ -14,12 +14,13 @@
   </div>
 
   <div class='filterContainer'>
-    <ul>
-      <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
-    </ul>
+
     <% for i, filter in pairs(userFilters) do %>
       <% render("views.st.filterbarelement",{filter = filter}) %>
     <% end %>
+    <ul>
+      <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
+    </ul>
   </div>
 
 

@@ -29,7 +29,7 @@ function FilterToggle(){
     console.log('that')
     // Do something else, like open/close menu
     var filterBar = $('.filter-bar')
-    filterBar.toggle('slide','left',200)
+    filterBar.toggle()
   });
 
   $('.toggle-filterstyle').click(function(e){

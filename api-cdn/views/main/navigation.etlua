@@ -5,7 +5,7 @@
   <div>
     <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
   </div>
-  
+
   <% if account and account.role == 'Admin' then %>
     <div><a href="<%= url_for('adminpanel') %>">Admin</a></div>
   <% end %>
@@ -14,10 +14,12 @@
     <div><a href="<%= url_for('viewalerts') %>">New Alert!</a></div>
   <% end %>
 
+  <% if session.username then %>
   <form class='siteSearch' id='siteSearch' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
     <input class='form-control form-search' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search/Post"/>
     <input class='hidden-search-input' tabindex="-1" type='submit' style="visibility:hidden" name='Submit' value='Search/Post' />
   </form>
+  <% end %>
 
   <% if session.accountID then %>
 
