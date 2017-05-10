@@ -39,3 +39,11 @@ async function test() {
   }
 }
 test()
+
+/*
+make a timer, every X minutes to:
+get all redis dumps
+encrypt them
+save them to backblaze
+delete old from backblaze
+*/
