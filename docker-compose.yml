@@ -51,6 +51,13 @@ services:
     build: redis
     volumes:
       - ./redis/user:/data
+  backup:
+    build: backup/.
+    ports:
+      - "80:80"
+    volumes:
+     - ./backup:/usr/src/app
+    command: ['nodemon', 'server.js']
   # phantom:
   #   image: cmfatih/phantomjs
   #   volumes:
