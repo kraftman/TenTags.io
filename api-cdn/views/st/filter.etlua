@@ -9,11 +9,11 @@
 
 
 
-<% if isAdmin then %>
+<% if isAdmin then print(filter.default)%>
   <form action="/f/<%= filter.title -%>" method="post">
     <input type="hidden" name="setdefault" value="true">
     <input type="hidden" name="filterID" value="<%= filter.id -%>">
-    <button type="submit">Default</button>
+    <button class='btn' type="submit"><%= filter.default and 'Remove Default' or 'Set Default' -%></button>
   </form>
 <% end %>
 
@@ -21,7 +21,7 @@
   <form action="/f/<%= filter.title -%>" method="post">
     <input type="hidden" name="subscribe" value="true">
     <input type="hidden" name="filterID" value="<%= filter.id -%>">
-    <button type="submit">Subscribe</button>
+    <button class = 'btn' type="submit"><%= userFilterIDs[filter.id] and 'Unsubscribe' or 'Subscribe' -%></button>
   </form>
 
   <% if isAdmin or isMod then %>

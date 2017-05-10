@@ -77,10 +77,8 @@ end
 function m.GetPost(request)
   local sortBy = request.params.sort or 'best'
   sortBy = sortBy:lower()
+  local userID = userID or 'default'
 
-  if not request.session.userID then
-    return 'no userID'
-  end
 
   local post
   local postID = request.params.postID
@@ -88,9 +86,9 @@ function m.GetPost(request)
   -- get the post
   if #postID < 10 then
     postID = postAPI:ConvertShortURL(postID) or postID
-    post = postAPI:GetPost(request.session.userID, postID)
+    post = postAPI:GetPost(userID, postID)
   else
-    post = postAPI:GetPost(request.session.userID, postID)
+    post = postAPI:GetPost(userID, postID)
 
     if post.shortURL then
       return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
@@ -104,13 +102,13 @@ function m.GetPost(request)
   print(post.createdBy)
   request.creatorName = userAPI:GetUser(post.createdBy).username
 
-  local comments = commentAPI:GetPostComments(request.session.userID, postID,sortBy)
+  local comments = commentAPI:GetPostComments(userID, postID,sortBy)
 
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
-    if v.id and request.session.userID then
-      v.commentHash = ngx.md5(v.id..request.session.userID)
+    if v.id and userID then
+      v.commentHash = ngx.md5(v.id..userID)
     end
   end
 
@@ -132,7 +130,7 @@ function m.GetPost(request)
       local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
       if sourcePostID then
         print(sourcePostID)
-        local parentPost = (postAPI:GetPost(request.session.userID, sourcePostID))
+        local parentPost = (postAPI:GetPost(userID, sourcePostID))
         print(to_json(parentPost))
         if v.name and parentPost.title then
           v.fakeName = parentPost.title
@@ -145,9 +143,9 @@ function m.GetPost(request)
   request.filters = filterAPI:GetFilterInfo(post.filters)
 
   if request.session.userID then
-    post.hash = ngx.md5(post.id..request.session.userID)
-    post.userHasVoted = userAPI:UserHasVotedPost(request.session.userID, post.id)
-    request.userLabels = userAPI:GetUser(request.session.userID).userLabels
+    post.hash = ngx.md5(post.id..userID)
+    post.userHasVoted = userAPI:UserHasVotedPost(userID, post.id)
+    request.userLabels = userAPI:GetUser(userID).userLabels
   end
 
   request.post = post

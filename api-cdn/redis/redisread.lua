@@ -486,9 +486,8 @@ function read:GetFilter(filterID)
   else
     filter.requiredTagNames = ok
   end
+  
   return filter
-
-
 end
 
 function read:SearchFilters(searchString)

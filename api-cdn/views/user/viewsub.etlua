@@ -1,24 +1,24 @@
 
 
-<% if userInfo.bio then %>
+<% if userInfo.bio ~= '' then %>
   <h1> User Bio: </h1>
   <div class = "panel panel-default">
     <%= userInfo.bio %>
   </div>
-
-
 <% end %>
 
 <% if session.userID and (userInfo.enablePM == '1') then %>
-  <div>
-    <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
+  <div class = 'panel panel-default' >
+    <div>
+      <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
+    </div>
+    <h3>Tag User</h3>
+    <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
+      <textarea name='tagUser' id='tagUser' rows="1" cols="50"></textarea>
+      </br>
+      <input class = 'btn' type='submit' value="Add Tag"></input>
+    </form>
   </div>
-
-  <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
-    <textarea name='tagUser' id='tagUser' rows="4" cols="50"></textarea>
-    </br>
-    <input type='submit' value="Tag User"></input>
-  </form>
 <% end %>
 
 

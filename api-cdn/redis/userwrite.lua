@@ -191,22 +191,20 @@ function userwrite:CreateSubUser(user)
 
 end
 
-function userwrite:SubscribeToFilter(userID,filterID)
-  userID = userID or 'default'
-  local red = self:GetUserWriteConnection()
-  --print('adding filter ',filterID, ' to ',userID)
-  local ok, err = red:sadd('userfilters:'..userID, filterID)
+function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
 
-  if not ok then
-    self:SetKeepalive(red)
-    ngx.log(ngx.ERR, 'unable to add filter to list: ',err)
-    return
+  local red = self:GetUserWriteConnection()
+  red:init_pipeline()
+  if subscribe then
+    red:sadd('userfilters:'..userID, filterID)
+  else
+    red:srem('userfilter:'..userID,filterID)
   end
 
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive()
 
-  self:SetKeepalive(red)
   return ok, err
-
 end
 
 function userwrite:UnsubscribeFromFilter(userID, filterID)

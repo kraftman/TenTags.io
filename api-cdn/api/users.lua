@@ -81,7 +81,7 @@ function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
 		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
 	end
 
-	ok, err = self.redisWrite:UnsubscribeFromFilter(userID,filterID)
+	ok, err = self.userWrite:UnsubscribeFromFilter(userID,filterID)
 	if not ok then
 		ngx.log(ngx.ERR, 'error unsubbing user: ', err)
 		return nil, 'error unsubbing'
@@ -94,7 +94,7 @@ end
 
 
 
-function api:SubscribeToFilter(userID, userToSubID, filterID)
+function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
 
 	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
@@ -111,16 +111,18 @@ function api:SubscribeToFilter(userID, userToSubID, filterID)
 		end
 	end
 
-
+	local subscribe = true
   for _, v in pairs(filterIDs) do
     if v == filterID then
       -- they are already subbed
-      return nil, userToSubID..' is already subbed!'
+      subscribe = false
+			break
     end
   end
 
-  self.redisWrite:SubscribeToFilter(userToSubID,filterID)
-
+	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
+  ok, err = self.userWrite:SubscribeToFilter(userToSubID, filterID, subscribe)
+	return ok, err
 end
 
 
@@ -334,6 +336,16 @@ function api:GetUserFilters(userID)
 	local filters = cache:GetFilterInfo(filterIDs)
 	--print(to_json(filters))
 	return filters
+end
+
+function api:GetIndexedUserFilterIDs(userID)
+	local ok, err = self:RateLimit('GetIndexedUserFilterIDs', 5, 1)
+	if not ok then
+		return nil, err
+	end
+
+	return cache:GetIndexedUserFilterIDs(userID) or {}
+
 end
 
 

@@ -6,10 +6,10 @@
 <script src="/static/js/mousetrap.min.js"  ></script>
 <script src="/static/js/post.js"  ></script>
 
-<div class = 'contents'>
+<div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>">
+    <h3><a href="<%= post.link or  url_for('viewpost',{ postID = post.id}) -%>"> <%= post.title -%></a></h3>
 
-  <div>
     <% if not post.userHasVoted then %>
       <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
       </br>
@@ -18,15 +18,15 @@
 
     <a href="<%= url_for('subscribepost',{ postID = post.id}) %> ">subscribe</a>
 
-  <a href="<%= post.link -%>"> <%= post.title -%></a>
 
-  <%= creatorName %>
-  <% if post.createdBy == session.userID or account.role == 'Admin' then %>
+
+    <a href="<%= url_for('viewuser',{ userID = post.createdBy}) -%>"> <%= creatorName -%></a>
+    <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
-      <fieldset >
-      <legend>Edit Post</legend>
+
+      <h3>Edit Post</h3>
 
       <label for='posttitle' >Post Title:</label>
       <input type='text' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
@@ -37,7 +37,7 @@
 
       <input id='submitButton' type='submit' name='Submit' value='Edit' />
 
-      </fieldset>
+
     </form>
   <% else %>
     <% if post.deleted then %>
@@ -54,27 +54,27 @@
       <% end %>
     <% end %>
   <% end %>
+  <% if session.userID then %>
+    <form id='addsource' action='' method='post'accept-charset='UTF-8'>
 
-  <form id='addsource' action='' method='post'accept-charset='UTF-8'>
-    <fieldset >
-    <legend>Add Repost Source</legend>
+      <h3>Add Repost Source</h3>
 
+      <label for='sourceurl' >Source URL:</label>
+      <input type='text' name='sourceurl' id='sourceurl' value=""/>
 
-    <label for='sourceurl' >Source URL:</label>
-    <input type='text' name='sourceurl' id='sourceurl' value=""/>
-
-    <input id='submitButton' type='submit' name='Submit' value='Submit' />
-
-    </fieldset>
-  </form>
-
-  <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
-    <fieldset >
-      <label for='addtag' >Add Tag:</label>
-      <input type='text' name='addtag' id='addtag' value=""/>
       <input id='submitButton' type='submit' name='Submit' value='Submit' />
-    </fieldset>
-  </form>
+
+    </form>
+
+
+    <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
+      <fieldset >
+        <label for='addtag' >Add Tag:</label>
+        <input type='text' name='addtag' id='addtag' value=""/>
+        <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      </fieldset>
+    </form>
+  <% end %>
 
   Filters:</br>
   <% for _,filter in pairs(filters or {}) do %>
@@ -108,15 +108,16 @@
       <% end %>
   >Top</option>
   </select>
+  Show comments by filter:</br>
   <div>
     <% for _,filter in pairs(filters or {}) do print(filter.title)%>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
   </div>
 
-  <div id = "comments">
-    <% render("views.st.postcomment", { key = post.id }) %>
-  </div>
+
+  <% render("views.st.postcomment", { key = post.id }) %>
+
   <% render("views.st.newcomment") %>
-  </div>
+
 </div>

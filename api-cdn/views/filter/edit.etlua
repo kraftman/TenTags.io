@@ -6,8 +6,23 @@
 <script src="/static/js/jquery.form.js"></script>
 <script src="/static/js/updatefilter.js"></script>
 
-<div class = 'contents'>
+  <div class = 'panel panel-default'>
+    <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
 
+      <label for='filtertitle' >Filter Title:</label></br>
+      <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
+      </br>
+      <label for='filterdescription' >Filter Description</label></br>
+      <input type='textarea' rows="10" cols="50" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  />
+      </br>
+      <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+
+    </form>
+  </div>
+
+<div class = 'panel panel-default'>
+
+  <h2>Tags:</h2>
   <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
     <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
     <label for='plustagselect'>Required Tags</label>
@@ -31,9 +46,13 @@
       ><%= tag.name -%></option>
       <% end %>
     </select>
-    <input id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
+    </br>
+    <input class='btn' id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
 
   </form>
+</div>
+
+<div class = 'panel panel-default'>
   <h2>Mods:</h2>
   <% for _,mod in pairs(selectedFilter.mods) do %>
     <%= mod.username or 'test' -%>
@@ -46,7 +65,7 @@
 
     <label for='addmod' >Username</label>
     <input type='text' name='addmod' id='addmod' maxlength="50" />
-    <input id='addModsButton' type='submit' name='Submit' value='Add Mod' />
+    <input class='btn' id='addModsButton' type='submit' name='Submit' value='Add Mod' />
   </form>
 
 
@@ -64,7 +83,7 @@
       <label for='banUserReason'> Reason: </label>
       <input type='text' name='banUserReason' id='banUserReason' maxlength="50" />
 
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
 
@@ -81,19 +100,8 @@
       <label for='banDomainReason'> Reason: </label>
       <input type='text' name='banDomainReason' id='banDomainReason' maxlength="50" />
 
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
 
-  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
-
-    <label for='filtertitle' >Filter Title:</label>
-    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
-
-    <label for='filterdescription' >Filter Description</label>
-    <input type='text' name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>" maxlength="50" />
-    </br>
-    <input id='submitButton' type='submit' name='Submit' value='Submit' />
-
-  </form>
 </div>
