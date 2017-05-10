@@ -75,6 +75,9 @@ function m.UpdateFilterStyle(request)
   end
 
   local user = request.userInfo
+  if not user then
+    return 'you must be logged in to do that'
+  end
   for k,v in pairs(user) do
     if type(v) == 'string' then
       print(k,v)

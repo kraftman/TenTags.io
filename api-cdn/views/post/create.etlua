@@ -17,10 +17,10 @@
       <input type='hidden' name='submitted' id='submitted' value='1'/>
 
       <div class="input-group">
-        <input type="text"  name='posttitle' id='posttitle' maxlength="300" placeholder="Title" aria-describedby="basic-addon1">
+        <input type="text"  name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
       </div>
       <div class="input-group">
-        <input type="text"  name='postlink' id='postlink' maxlength="300" placeholder="<%= params.postLink or 'Link'%>" aria-describedby="basic-addon1">
+        <input type="text"  name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
       </div>
 
       <label for='posttext' >Post Text</label>

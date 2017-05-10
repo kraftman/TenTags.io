@@ -3,6 +3,9 @@ $background-color: #d6ecf2;
 $title-box-color: #add8e6;
 $black: #000;
 $white: #fff;
+$upvote: #beb;
+$downvote: #ebb;
+$postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
 
 .center-page {
@@ -85,17 +88,9 @@ a {
   padding: 0;
   border: 0;
   margin: 0;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
-.vote-container {
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-  width: 50px;
-  height:100%;
-  min-width: 50px;
-}
 
 .navbarscroller {
   min-width: 900px;
@@ -107,6 +102,7 @@ a {
 
 .post-body {
   display: inline-block;
+  vertical-align: top;
 }
 
 .filter-style-select {
@@ -235,6 +231,58 @@ a {
     margin-bottom: 0;
   }
 }
+
+
+.vote-container {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 50px;
+  height:100%;
+  min-width: 50px;
+
+  .post-upvote {
+  }
+
+  .post-upvote-default {
+    display: inline-block;
+    background-color: $upvote;
+    width: 50%;
+    height: 100%;
+    text-align: center;
+    a {
+    }
+  }
+
+  .post-downvote-default {
+    display: inline-block;
+    background-color: $downvote;
+    width: 50%;
+    height: 100%;
+  }
+}
+
+.post-upvote-default-img, .post-downvote-default-img {
+  display: block;
+  width: 100%;
+  margin-top: 15px;
+  vertical-align: middle;
+  text-align:left;
+  line-height: 100%;
+  font-size: 20px;
+  margin-left: 2px;
+}
+
+.post-upvote-default-img {
+  color: lighten($upvote, 10%);
+
+}
+
+.post-downvote-default-img {
+  color: lighten($downvote, 10%);
+}
+
+
 
 .settings-menu {
   @include card1();
@@ -508,6 +556,7 @@ ul {
 }
 
 .linkImg {
+  display: block;
   max-width: 100%;
 }
 
@@ -522,14 +571,34 @@ ul {
 
 
 .post {
+  @include card1();
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
-  padding-left: 5px;
   background: #fff;
-  @include card1();
 
 
+}
+
+.post-full-topbar {
+  background-color: $postborder;
+  min-height: 20px;
+  padding: 5px;
+}
+
+.post-full-bottombar {
+  background-color: $postborder;
+  min-height: 20px;
+  padding: 5px;
+
+  a {
+    display: inline-block;
+    min-width: 10px;
+  }
+}
+
+.post-default {
+  height: 50px;
 }
 
 

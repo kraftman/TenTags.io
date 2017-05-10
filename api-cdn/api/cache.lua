@@ -82,6 +82,10 @@ function cache:SearchURL(queryString)
   return elastic:SearchURL(queryString)
 end
 
+function cache:GetRelevantFilters(validTags)
+  return redisread:GetRelevantFilters(validTags)
+end
+
 function cache:SearchPost(queryString)
   local results, ok, err
   if not DISABLE_CACHE then

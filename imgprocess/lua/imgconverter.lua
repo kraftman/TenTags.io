@@ -114,16 +114,21 @@ function loader:ProcessImgur(postURL, postID)
 
 
   local image = magick.load_image('/lua/out/'..postID..'.jpg')
+  if not image then
+    print('couldnt load image for :',postID)
+    return nil
+  end
   image:coalesce()
   image:set_format('png')
   --finalImage.image:write('/lua/out/p2-'..postID..'.png')
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
 
-  image:resize_and_crop(100,100)
-  local ok, err = self:SendImage(image,postID)
-  if ok then
-    os.remove('out/'..postID..'.jpg')
-  end
+  self:SendImage(image,postID..'b')
+  image:resize_and_crop(200,200)
+  self:SendImage(image,postID)
+
+  os.remove('out/'..postID..'.jpg')
+
 
   return ok, err
 
@@ -168,7 +173,7 @@ function loader:NormalPage(postURL, postID)
 
   			if image then
   				imageInfo.image = image
-  				local w = image:get_width(), image:get_height()
+  				local w,h = image:get_width(), image:get_height()
   				imageInfo.size = w*h
   			end
   		end
@@ -205,7 +210,6 @@ function loader:NormalPage(postURL, postID)
     finalImage.image:write('/lua/out/p2-'..postID..'.png')
     finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
 
-    finalImage.image:resize_and_crop(100,100)
     os.remove(tempGifLoc)
     os.remove('/lua/out/processedgif-'..postID..'.gif')
     os.remove('/lua/out/p2-'..postID..'.png')
@@ -219,9 +223,10 @@ function loader:GetPostIcon(postURL, postID)
   print(postURL, postID)
   local finalImage
   if postURL:find('imgur.com') then
-    if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+    if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
       return self:ProcessImgur(postURL, postID)
     end
+    return nil, 'imgur gallery'
   elseif postURL:find('gfycat.com/%w+') then
     finalImage = self:ProcessGfycat(postURL)
   else
@@ -232,13 +237,19 @@ function loader:GetPostIcon(postURL, postID)
 		return nil
 	end
 
-  finalImage.image:resize_and_crop(100,100)
   finalImage.image:set_format('png')
+
+  local ok ,err = self:SendImage(finalImage.image, postID..'b')
+  if not ok then
+    return nil
+  end
+
+  finalImage.image:resize_and_crop(100,100)
 
 
   self:AddImgURLToPost(postID, finalImage.link)
 
-  ok ,err = self:SendImage(finalImage.image, postID)
+  ok , err = self:SendImage(finalImage.image, postID)
   if not ok then
     return nil
   end
