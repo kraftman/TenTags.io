@@ -2,5 +2,5 @@ version: '2'
 services:
   filtta:
     ports:
-      - "80:80"
+      - "80:8081"
     command: bash -c "lapis server production"
