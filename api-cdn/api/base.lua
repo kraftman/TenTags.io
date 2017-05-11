@@ -4,7 +4,7 @@ local trim = (require 'lapis.util').trim
 local rateDict = ngx.shared.ratelimit
 
 
-local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
+
 local TAG_BOUNDARY = 0.15
 
 local M = {}
@@ -68,7 +68,12 @@ end
 
 
 function M:RateLimit(action, userID, limit, duration)
-	if DISABLE_RATELIMIT then
+
+	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
+
+	if DISABLE_RATELIMIT == 'true' then
+		print(DISABLE_RATELIMIT)
+		print('not rate limiting')
 		return true
 	end
 
@@ -92,7 +97,7 @@ function M:RateLimit(action, userID, limit, duration)
 		return true
 	end
 
-	if ok <= limit then
+	if ok < limit then
 		return ok
 	else
 		return nil, 429

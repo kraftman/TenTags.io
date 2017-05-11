@@ -7,7 +7,7 @@ config("development", {
     password = "meep",
     database = "taggr",
   },
-  hide_errors = true,
+  hide_errors = false,
   session_name = 'filtta_session',
   secret = "this is my secrarstrstet string 123456",
   num_workers = '1',

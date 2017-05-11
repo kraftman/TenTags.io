@@ -1,6 +1,6 @@
 
 
-<% if userInfo.bio ~= '' then %>
+<% if userInfo.bio and userInfo.bio ~= '' then %>
   <h1> User Bio: </h1>
   <div class = "panel panel-default">
     <%= userInfo.bio %>

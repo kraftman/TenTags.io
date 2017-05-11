@@ -98,9 +98,29 @@ function api:ValidateSession(accountID, sessionID)
 end
 
 
+function api:GetHash(values)
+  --TODO: merge all of these duplicates
+  local str = require 'resty.string'
+  local resty_sha1 = require 'resty.sha1'
+  local sha1 = resty_sha1:new()
+
+  local ok, err = sha1:update(values)
+
+  local digest = sha1:final()
+
+  return str.to_hex(digest)
+end
+
 
 function api:RegisterAccount(session, confirmURL)
 	-- TODO rate limit
+  local tempID = ngx.ctx.userID
+
+  local ok, err = self:RateLimit('registerAccount:', tempID, 1, 300)
+  print(ok)
+	if not ok then
+		return ok, 429, err
+	end
 
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
@@ -111,7 +131,16 @@ function api:RegisterAccount(session, confirmURL)
 		return false, 'Email provided is invalid'
 	end
 
-	ok, err = self.redisWrite:QueueJob('registeraccount',session)
+  local accountID = self:GetHash(session.email)
+  local account = self.userRead:GetAccount(accountID)
+  if account then
+    -- no worries, send them the email
+  else
+    -- make them answer a captcha
+  end
+
+
+	--ok, err = self.redisWrite:QueueJob('registeraccount',session)
   if not ok then
     ngx.log(ngx.ERR, 'error processing registration: ',err)
     return nil, 'error setting up account'
