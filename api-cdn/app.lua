@@ -8,6 +8,7 @@ local util = require 'util'
 --local errorHandler = require 'middleware.errorhandler'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 local checksession = require 'middleware.checksession'
+local config = require("lapis.config").get()
 
 
 app:enable("etlua")
@@ -57,10 +58,12 @@ require 'filters':Register(app)
 require 'comments':Register(app)
 require 'alerts':Register(app)
 require 'api':Register(app)
-require 'auto':Register(app)
 require 'admin':Register(app)
 require 'search':Register(app)
 
+if config._name == 'Development' then
+  require 'auto':Register(app)
+end
 
 -- TESTING
 --require 'testing.perftest':Register(app)

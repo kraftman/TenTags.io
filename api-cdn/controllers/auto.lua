@@ -1,6 +1,6 @@
 
 local m = {}
-
+local config = require("lapis.config").get()
 
 local respond_to = (require 'lapis.application').respond_to
 local tinsert = table.insert
@@ -95,8 +95,10 @@ function m.CreatePosts(self)
 end
 
 function m:Register(app)
-  app:get('/auto/all', self.AutoContent)
-  app:get('/auto/posts', self.CreatePosts)
+  if config._name == 'Development' then
+    app:get('/auto/all', self.AutoContent)
+    app:get('/auto/posts', self.CreatePosts)
+  end
 end
 
 return m
