@@ -5,7 +5,7 @@ local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
 local date = require("date")
 local util = require 'util'
-local errorHandler = require 'middleware.errorhandler'
+--local errorHandler = require 'middleware.errorhandler'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 local checksession = require 'middleware.checksession'
 
@@ -38,7 +38,7 @@ app:before_filter(function(self)
 
 end)
 
-app.handle_error = errorHandler
+--app.handle_error = errorHandler
 
 
 -- Random stuff that doesnt go anywhere yet

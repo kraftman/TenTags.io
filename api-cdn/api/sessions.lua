@@ -52,7 +52,7 @@ function api:SanitiseSession(session)
 		ip = session.ip,
 		userAgent = session.userAgent,
 		id = id,
-		email = session.email:lower(),
+		email = session.email:lower():gsub(' ', ''),
 		createdAt = ngx.time(),
 		activated = false,
 		validUntil = ngx.time()+5184000,
@@ -140,7 +140,7 @@ function api:RegisterAccount(session, confirmURL)
   end
 
 
-	--ok, err = self.redisWrite:QueueJob('registeraccount',session)
+	ok, err = self.redisWrite:QueueJob('registeraccount',session)
   if not ok then
     ngx.log(ngx.ERR, 'error processing registration: ',err)
     return nil, 'error setting up account'

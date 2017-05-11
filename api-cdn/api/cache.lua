@@ -287,6 +287,21 @@ function cache:GetPostComments(postID)
 
 end
 
+function cache:GetNewUsers()
+  local ok, err =  userRead:GetNewUsers()
+  print(to_json(ok))
+  for k,v in pairs(ok )do
+    print(k,'  ==== '  ,v )
+  end
+
+  if ok == 0 then
+    return {}
+  end
+
+  return ok,err
+end
+
+
 function cache:ConvertShortURL(shortURL)
   return redisread:ConvertShortURL(shortURL)
 end
