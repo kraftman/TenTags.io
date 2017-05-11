@@ -16,21 +16,21 @@ if 'imgur.com/a/' in imgURL:
     match = re.search(r'(imgur.com/a/)(\w+)', imgURL)
 
     info = client.get_album(match.group(2))
-    imgURL = 'http://i.imgur.com/'+info.cover+'b.jpg'
+    imgURL = 'http://i.imgur.com/'+info.cover+'l.jpg'
     imgID = info.cover
 elif 'imgur.com/gallery' in imgURL:
     match = re.search(r'(imgur.com/gallery/)(\w+)', imgURL)
 
     try:
         info = client.get_album(match.group(2))
-        imgURL = 'http://i.imgur.com/'+info.cover+'b.jpg'
+        imgURL = 'http://i.imgur.com/'+info.cover+'l.jpg'
         imgID = info.cover
     except:
-        imgURL = 'http://i.imgur.com/'+match.group(2)+'b.jpg'
+        imgURL = 'http://i.imgur.com/'+match.group(2)+'l.jpg'
         imgID = match.group(2)
 else:
     match = re.search(r'(imgur.com/)(\w+)', imgURL)
-    imgURL = 'http://i.imgur.com/'+match.group(2)+'b.jpg'
+    imgURL = 'http://i.imgur.com/'+match.group(2)+'l.jpg'
     imgID = match.group(2)
 
 

@@ -332,6 +332,25 @@ function write:UpdateRelatedFilters(filter, relatedFilters)
 
 end
 
+
+function write:FilterSetDefault(filterID, setDefault)
+  local red = self:GetRedisWriteConnection()
+  print(setDefault)
+  red:init_pipeline()
+  if setDefault then
+    red:sadd('defaultFilters',filterID)
+    red:hset('filter:'..filterID,'default',true)
+  else
+
+    print('deleting')
+    red:srem('defaultFilters',filterID)
+    red:hdel('filter:'..filterID, 'default')
+  end
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:CreateFilter(filter)
 
   local hashFilter = {}

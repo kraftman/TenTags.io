@@ -6,7 +6,6 @@ local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 
-
 local util = require("lapis.util")
 local from_json = util.from_json
 local to_json = util.to_json
@@ -30,17 +29,25 @@ function m.ToggleDefault(request)
     return { render = 'pleaselogin' }
   end
 
+  local userID = request.session.userID
+  if not userID then
+    return 'unauthorised'
+  end
+  local filterID = request.params.filterID
+  if not filterID then
+    return 'no filter ID given'
+  end
+
   if request.params.setdefault == 'true' then
-    print('this')
-    return userAPI:SubscribeToFilter(request.session.userID, 'default',request.params.filterID)
-  elseif request.params.setdefault == 'false' then
-    return userAPI:UnsubscribeFromFilter(request.session.userID,'default',request.params.filterID)
+    userAPI:SubscribeToFilter(userID, 'default',filterID)
+    filterAPI:SetToggleDefault(userID,filterID, true)
+    return
   end
 
   if request.params.subscribe == 'true' then
-    return userAPI:SubscribeToFilter(request.session.userID, request.session.userID,request.params.filterID)
-  elseif request.params.setdefault == 'false' then
-    return userAPI:UnsubscribeFromFilter(request.session.userID, request.session.userID,request.params.filterID)
+    userAPI:SubscribeToFilter(userID, userID,filterID)
+  elseif request.params.subscribe == 'false' then
+    userAPI:UnsubscribeFromFilter(userID, userID,filterID)
   end
 end
 
@@ -136,8 +143,7 @@ function m.LoadAllFilters(request)
     request.isAdmin = true
   end
 
-  --TODO: also get all user filters
-  -- so we can change 'subscribe'  to 'unsubscribe'
+  request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(user.id)
 
   request.filters = filterAPI:GetFiltersBySubs()
   --print(to_json(request.filters))
@@ -387,7 +393,7 @@ function m.SearchFilters(request)
   if not request.session.userID then
     return 'you must be logged in!'
   end
-  local filters, err =filterAPISearchFilters(request.session.userID, request.params.searchString)
+  local filters, err = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
 
   if not filters then
     ngx.log(ngx.ERR, 'unable to search filters:',err)
@@ -398,6 +404,8 @@ function m.SearchFilters(request)
   if not next(filters) then
     return 'no filters found matching '..request.params.searchString
   end
+
+  request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(request.session.userID)
   request.searchString = request.params.searchString
   return {render = 'filter.all'}
 end

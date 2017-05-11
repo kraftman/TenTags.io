@@ -7,18 +7,18 @@
 <script src="/static/js/createfilter.js"></script>
 
 
+<div class = 'panel panel-default'>
+  <h3>Create Filter</h3>
+  <form id='createfilter' action='' method='post' accept-charset='UTF-8'>
 
-<div class = 'contents'>
-<form id='createfilter' action='' method='post' accept-charset='UTF-8'>
-  <fieldset >
-    <legend>Create Filter</legend>
+
     <div class='warningText'></div>
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
     <label for='filterName' >Filter Name</label>
-      </br>
+    </br>
     <input type='text' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
-
+    
     </br>
     <label for='filtertitle' >Filter Title:</label>
       </br>
@@ -44,6 +44,6 @@
     </br>
     <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Submit' />
 
-  </fieldset>
-</form>
+
+  </form>
 </div>

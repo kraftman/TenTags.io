@@ -3,16 +3,16 @@
   <form action="<%= url_for('usersettings') %>" method = 'POST'>
 
     <div class='textbox'>
-      <label>Maxixum subs to be mod of: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
+      <label>Max subs to be mod of: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
     </div>
     <div class='textbox'>
-      <label>Maxixum coment length: <input type='text' name='commentlength' id='commentlength' maxlength="300" value="test"/></label>
+      <label>Max coment length: <input type='text' name='commentlength' id='commentlength' maxlength="300" value="test"/></label>
     </div>
     <div class='textbox'>
-      <label>Maxixum post title length: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
+      <label>Max post title length: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
     </div>
     <div class='textbox'>
-      <label>Maxixum tags allowed: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
+      <label>Max tags allowed: <input type='text' name='modlimit' id='posttitle' maxlength="300" value="test"/></label>
     </div>
 
     <button class='btn btn-default' type="submit" value="Submit">submit</button>

@@ -20,6 +20,33 @@ function api:GetFilters(filterIDs)
 	return filters
 end
 
+function api:SetToggleDefault(userID, filterID)
+	local user, err, ok
+
+	ok, err = self:RateLimit('CreateFilter:', userID, 1, 600)
+	if not ok then
+		return ok, err
+	end
+
+	user = cache:GetUser(userID)
+	if not user then
+		return nil, 'user not found'
+	end
+
+	if user.role ~= 'Admin' then
+		return nil, 'no auth'
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+	if not filter then
+		return nil, 'unknown filter'
+	end
+
+	ok, err = self.redisWrite:FilterSetDefault(filterID, not filter.default)
+
+	return ok, err
+end
+
 
 function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)

@@ -12,6 +12,6 @@
   Killed: <%= accountSession.killed and 'yes' or 'no' -%>
   <br>
   <% if not accountSession.killed then %>
-    <a href="<%= url_for('killsession',{sessionID = accountSession.id}) %>">Kill</a>
+    <a class = 'btn' href="<%= url_for('killsession',{sessionID = accountSession.id}) %>">Kill</a>
   <% end %>
 </div>
