@@ -142,9 +142,11 @@ function m.LoadAllFilters(request)
   if user and user.role == 'Admin' then
     request.isAdmin = true
   end
-
-  request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(user.id)
-
+  if user then
+    request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(user.id)
+  else
+    request.userFilterIDs = {}
+  end
   request.filters = filterAPI:GetFiltersBySubs()
   --print(to_json(request.filters))
 

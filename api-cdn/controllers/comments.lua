@@ -29,7 +29,9 @@ end
 
 -- needs moving to comments controller
 function m.CreateComment(request)
-
+  if not request.userInfo then
+    return 'You must be logged in to do that'
+  end
 
   local commentInfo = {
     parentID = request.params.parentID,

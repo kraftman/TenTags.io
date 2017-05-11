@@ -35,12 +35,28 @@ function M:ValidateSession(request)
 end
 
 
+function M:GetHash(values)
+  local str = require 'resty.string'
+  local resty_sha1 = require 'resty.sha1'
+  local sha1 = resty_sha1:new()
+
+  local ok, err = sha1:update(values)
+
+  local digest = sha1:final()
+
+  return str.to_hex(digest)
+end
+
+
 function M:LoadUser(request)
   if request.session.userID then
     request.tempID = nil
     request.userInfo = userAPI:GetUser(request.session.userID)
   elseif not request.session.accountID then
-    request.session.tempID = request.session.tempID or uuid:generate_random()
+    local unique = ngx.var.remote_addr..ngx.var.http_user_agent
+    print('ua:', ngx.var.http_user_agent)
+
+    request.session.tempID = request.session.tempID or self:GetHash(unique)
   end
   ngx.ctx.userID = request.session.userID or request.session.tempID
   request.cookies.cacheKey = ngx.md5(ngx.ctx.userID)
