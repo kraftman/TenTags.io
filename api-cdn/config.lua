@@ -11,13 +11,13 @@ config("development", {
   session_name = 'filtta_session',
   secret = "this is my secrarstrstet string 123456",
   num_workers = '1',
-  port = 8080
+  port = 80
 })
 
 config("production", {
   code_cache = "on",
   secret = os.getenv('LAPIS_SECRET'),
-  port = 8080,
+  port = 80,
   hide_errors = true,
   num_workers = 'auto',
   logging = {

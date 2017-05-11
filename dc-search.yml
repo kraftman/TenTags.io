@@ -20,8 +20,6 @@ services:
       - IPC_LOCK
     volumes:
       - ./search/es1:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
     depends_on:
       - elasticsearch2
   elasticsearch2:

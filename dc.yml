@@ -2,9 +2,6 @@ version: '2'
 services:
   filtta:
     build: api-cdn/.
-    ports:
-      - "8080:8080"
-      - "8081:8081"
     links:
       - imghost
       - redis-general
@@ -19,8 +16,6 @@ services:
 
   imghost:
     image: tenstartups/openresty
-    expose:
-      - "80"
     volumes:
      - ./imghost:/imghost
      - ./www:/var/www
@@ -41,8 +36,6 @@ services:
     build: redis
     volumes:
       - ./redis/general:/data
-    expose:
-      - '6379'
   redis-comment:
     build: redis
     volumes:
@@ -53,8 +46,6 @@ services:
       - ./redis/user:/data
   backup:
     build: backup/.
-    ports:
-      - "80:80"
     volumes:
      - ./backup:/usr/src/app
      - ./redis:/data

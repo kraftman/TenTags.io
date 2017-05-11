@@ -1,0 +1,24 @@
+version: '2'
+services:
+  filtta:
+    build: api-cdn/.
+    ports:
+      - "80:80"
+      - "81:8081"
+    entrypoint: ""
+    command:  bash -c "lapis server"
+  imghost:
+    expose:
+      - "80"
+  redis-general:
+    expose:
+      - '6379'
+  redis-user:
+    expose:
+      - '6379'
+  redis-comment:
+    expose:
+      - '6379'
+  elasticsearch1:
+    ports:
+      - 9200:9200
