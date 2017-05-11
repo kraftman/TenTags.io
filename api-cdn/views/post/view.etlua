@@ -20,7 +20,7 @@
 
 
 
-    <a href="<%= url_for('viewuser',{ userID = post.createdBy}) -%>"> <%= creatorName -%></a>
+    <a href="<%= url_for('viewuser',{ username = creatorName}) -%>"> <%= creatorName -%></a>
     <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>

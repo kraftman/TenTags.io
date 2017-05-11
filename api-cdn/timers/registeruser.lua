@@ -67,8 +67,14 @@ function config:ProcessAccount(session)
 
   local accountID = self:GetHash(emailAddr)
   local account = self.userRead:GetAccount(accountID)
+
   if not account then
+    print('account not found, creating')
     account = self:CreateAccount(accountID, session)
+    ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    print(ok, err)
+  else
+    print('account found ',to_json(account))
   end
 	account.id = accountID
 
@@ -83,6 +89,10 @@ function config:ProcessAccount(session)
 		return
 	end
 
+  if true then
+    return true
+  end
+
   -- TODO: move to other function
 
   local url = session.confirmURL..'?key='..session.id..'-'..accountID
@@ -91,15 +101,16 @@ function config:ProcessAccount(session)
   email.body = [[ Please click this link to login: ]]
   email.body = email.body..url
   email.subject = 'Login email'
+  email.recipient = emailAddr
 
-  local ok, err, forced = emailDict:set(emailAddr, to_json(email))
+  local ok, err = emailDict:lpush('registrationEmails', to_json(email))
 
   if (not ok) and err then
     ngx.log(ngx.ERR, 'unable to set emaildict: ', err)
     return nil, 'unable to send email'
   end
-  if forced then
-    ngx.log(ngx.ERR, 'WARNING! forced email dict! needs to be bigger!')
+  if err == 'no memory' then
+    ngx.log(ngx.ERR, 'WARNING: emailDict is full!')
   end
 
   -- Create the Account

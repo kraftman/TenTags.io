@@ -19,4 +19,9 @@
 
   </form>
 
+  <% for k,v in pairs(newUsers) do %>
+
+    <p>Date: <%= v.date %> email: <%= v.email %> accountID: <%= v.id %> </p>
+  <% end %>
+
 </div>

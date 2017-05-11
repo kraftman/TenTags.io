@@ -234,8 +234,9 @@ function m.DownvoteTag(request)
 
 end
 
-function HashIsValid(request)
+local function HashIsValid(request)
   --print(request.params.postID, request.session.userID)
+
   local realHash = ngx.md5(request.params.postID..request.session.userID)
   if realHash ~= request.params.hash then
     ngx.log(ngx.ERR, 'hashes dont match!')
@@ -246,6 +247,9 @@ end
 
 
 function m.UpvotePost(request)
+  if not request.session.userID then
+    return 'You must be logged in to vote'
+  end
   if not HashIsValid(request) then
     return 'invalid hash'
   end
@@ -260,6 +264,9 @@ end
 
 
 function m.DownvotePost(request)
+  if not request.session.userID then
+    return 'You must be logged in to vote'
+  end
   if not HashIsValid(request) then
     return 'invalid hash'
   end

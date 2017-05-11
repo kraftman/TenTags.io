@@ -22,6 +22,14 @@ function userread:ConvertListToTable(list)
   return info
 end
 
+function userread:GetNewUsers()
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrange('newAccounts', 0, 50,'WITHSCORES')
+  self:SetKeepalive(red)
+  ok = self:ConvertListToTable(ok)
+  return ok, err
+end
+
 function userread:GetUserAlerts(userID, startAt, endAt)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrangebyscore('UserAlerts:'..userID,startAt,endAt)
@@ -57,7 +65,9 @@ function userread:GetAccount(accountID)
   end
 
   local account = self:ConvertListToTable(ok)
-
+  if next(account) == nil then
+    return nil
+  end
   account.sessions = {}
   account.users = {}
 
