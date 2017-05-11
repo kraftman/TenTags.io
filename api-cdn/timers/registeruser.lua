@@ -89,10 +89,6 @@ function config:ProcessAccount(session)
 		return
 	end
 
-  if true then
-    return true
-  end
-
   -- TODO: move to other function
 
   local url = session.confirmURL..'?key='..session.id..'-'..accountID
