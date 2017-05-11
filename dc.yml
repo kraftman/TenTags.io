@@ -9,8 +9,6 @@ services:
       - redis-user
     volumes:
       - ./api-cdn:/opt/openresty/nginx/conf
-    entrypoint: ""
-    command:  bash -c "lapis server"
     env_file:
       - filtta.env
 
