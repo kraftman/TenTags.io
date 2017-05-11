@@ -30,6 +30,7 @@
 		"cookie-session": "^2.0.0-beta.1",
 		"webpack": "^2.3.3",
 		"react-redux": "5.0.3",
-		"backblaze-b2": "^1.0.2"
+		"backblaze-b2": "^1.0.2",
+		"node-sha1": "^1.0.1"
 	}
 }

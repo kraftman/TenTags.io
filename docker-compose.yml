@@ -57,6 +57,7 @@ services:
       - "80:80"
     volumes:
      - ./backup:/usr/src/app
+     - ./redis:/data
     command: ['nodemon', 'server.js']
   # phantom:
   #   image: cmfatih/phantomjs
