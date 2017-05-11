@@ -6,5 +6,3 @@ redis/general/dump.rdb
 redis/user/dump.rdb
 filtta.env
 api-cdn/nginx.conf.compiled
-search/es1/*
-search/es2/*
