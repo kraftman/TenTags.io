@@ -18,7 +18,9 @@
   <% if post.imgURL then %>
     <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
   <% end %>
+
   <div class = 'post-full-bottombar'>
+
     <% if not post.userHasVoted then %>
       <a class =' upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
         <span class="ti-angle-up"></span>
@@ -28,6 +30,7 @@
         <span class="ti-angle-down"></span>
       </a>
     <% end %>
+    <span class="ti-eye"></span><a> <%= post.views %></a>
     <% if isMod then %>
       <a class ='banButton' href=" <%= url_for('banpost',{postID = post.id, filterlabel= thisfilter.name}) %>">ban</a>
     <% end %>
