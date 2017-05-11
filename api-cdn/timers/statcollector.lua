@@ -118,8 +118,8 @@ function config:ProcessPostView(stat)
     print('couldnt find post: ', stat.postID)
     return true
   end
-  local viewCount = post.views or 1
-  local ok, err = redisWrite:UpdatePostField(stat.postID, 'views', viewCount)
+  
+  local ok, err = redisWrite:IncrementPostStat(stat.postID, 'views', 1)
   if not ok then
     ngx.log(ngx.ERR, 'unable to update post view count ',err)
   end
