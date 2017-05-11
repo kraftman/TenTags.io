@@ -1,6 +1,7 @@
 var B2 = require('backblaze-b2');
 var fs = require ('fs')
 var sha1 = require ('node-sha1')
+var splitSync = require('node-split').splitSync;
 
 
 var bucketID = '7af8c7029115f53e52b90d17'
@@ -18,10 +19,10 @@ function loadFileAsync(path) {
   });
 }
 
-var Module = function(filePath) {
+var Module = function(file) {
   this.time = (new Date).getTime()
-  this.filePath = filePath
-  this.fileName = 'backup-'+this.time
+  this.filePath = file.filePath
+  this.fileName = this.time+file.fileName
   this.bucketID = bucketID
 
   this.b2 = new B2({
@@ -34,21 +35,23 @@ Module.prototype = function() {
 
   var Run = async function(position){
     try {
-    var test = await this.b2.authorize();
-    await loadFile.call(this)
+      getBucketName.call(this);
+      var test = await this.b2.authorize();
+      var fileSize = fs.statSync(this.filePath).size / 1000000.0 //megabytes
+      //console.log(fileSize,fs.statSync(this.filePath))
+      if (fileSize > 10) {
+        await loadLargFile.call(this)
+        await startLargeFile.call(this);
+        await uploadParts.call(this);
+        await finishLargeFile.call(this);
+      } else {
 
-    var bucketName = await getBucketName.call(this)
-    await loadFile.call(this);
-    await getBucketName.call(this);
-    //await createBucket.call(this);
-    //await getUploadUrl.call(this);
-    //await uploadFile.call(this);
-    await startLargeFile.call(this);
-    await getUploadPartUrl.call(this);
-    await uploadPart.call(this);
-    await finishLargeFile.call(this);
+        await loadFile.call(this);
+        await getUploadUrl.call(this);
+        await uploadFile.call(this);
+      }
 
-
+      //await createBucket.call(this);
 
     } catch (e){
       console.log('ERRRR ============')
@@ -58,6 +61,14 @@ Module.prototype = function() {
   loadFile = async function() {
 
     this.fileBuffer = await loadFileAsync(this.filePath);
+  },
+  loadLargFile = async function() {
+    var fileBuffer = await loadFileAsync(this.filePath);
+    this.splitted = splitSync(fileBuffer, {
+        bytes: '10M' // 20 * 1024 bytes per files
+    });
+    console.log('splitted: ',this.splitted.length)
+
   },
   getBucketName = async function() {
     this.bucketName = 'filttatest-'+this.time
@@ -85,29 +96,29 @@ Module.prototype = function() {
       console.log('unable to get upload url:', e)
     }
   },
-  getUploadPartUrl = async function() {
+  uploadParts = async function(partNum){
     try {
-      var uploadURL = await this.b2.getUploadPartUrl({fileId: this.fileID})
-      this.uploadURL = uploadURL.data.uploadUrl
-      this.authToken = uploadURL.data.authorizationToken
-    } catch (e) {
-      console.log('unable to get upload url:', e)
-    }
-  },
-  uploadPart = async function() {
-    try {
-      var response = await this.b2.uploadPart({
-        partNumber: 1,
-        uploadUrl: this.uploadURL,
-        uploadAuthToken: this.authToken,
-        data: this.fileBuffer,
-        onUploadProgress: function(event){console.log(event)}
-      })
+      for (var i = 0; i < this.splitted.length; i++) {
+        let buf = this.splitted[i]
+        console.log('getting upload part')
+        let resp = await this.b2.getUploadPartUrl({fileId: this.fileID})
+        let uploadURL = resp.data.uploadUrl
+        let authToken = resp.data.authorizationToken
+        console.log(uploadURL, authToken)
+        console.log('uploading part')
 
-    } catch(e) {
-      console.log('error uploading part: ', e)
+        let response = await this.b2.uploadPart({
+          partNumber: i+1,
+          uploadUrl: uploadURL,
+          uploadAuthToken: authToken,
+          data: buf
+        })
+
+      }
+    } catch (e) {
+      console.log('unable to upload multi part: ', e)
     }
-  },
+  }
   startLargeFile = async function() {
     try {
       var response = await this.b2.startLargeFile({bucketId: this.bucketID,fileName: this.fileName })
@@ -118,9 +129,12 @@ Module.prototype = function() {
   },
   finishLargeFile = async function() {
     try {
-      var resp = await this.b2.finishLargeFile({fileId: this.fileID,partSha1Array: [sha1(this.fileBuffer)] })
+      var resp = await this.b2.finishLargeFile({
+        fileId: this.fileID,
+        partSha1Array: this.splitted.map(function(buf) {return sha1(buf)})
+      })
     } catch (e) {
-
+      console.log(e)
     }
   },
   uploadFile = async function() {
@@ -129,12 +143,22 @@ Module.prototype = function() {
         uploadUrl: this.uploadURL,
 
         uploadAuthToken: this.authToken,
-        filename: 'Dockerfile',
+        filename: this.fileName,
         mime: '', // optonal mime type, will default to 'b2/x-auto' if not provided
         data: this.fileBuffer, // this is expecting a Buffer not an encoded string,
         onUploadProgress: null
       })
-      console.log(response)
+      if (response.status == 200 ) {
+        console.log(response.data)
+
+        Object.keys(response).forEach(function(key) {
+          console.log(key)
+        });
+      } else {
+        console.log('non 200 status code returned: ', response.status)
+        console.log(response.data)
+
+      }
     } catch (e) {
       console.log('unable to upload file: ', e)
     }

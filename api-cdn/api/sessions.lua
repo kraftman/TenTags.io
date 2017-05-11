@@ -101,6 +101,7 @@ end
 
 function api:RegisterAccount(session, confirmURL)
 	-- TODO rate limit
+
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
 	local emailLib = require 'email'

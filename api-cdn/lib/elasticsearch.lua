@@ -20,7 +20,7 @@ function M:CreateIndex()
       })
 
   if not res or res.status > 300 and res.status ~= 404 then
-    print(res.status)
+    --print(res.status)
     return nil, res.body
   end
   path = "http://elasticsearch1:9200"..'/'..index

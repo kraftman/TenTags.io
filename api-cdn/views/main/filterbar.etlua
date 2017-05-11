@@ -17,7 +17,7 @@
     <ul>
       <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
     </ul>
-    <% for i, filter in pairs(userFilters) do %>
+    <% for i, filter in pairs(userFilters or {}) do %>
       <% render("views.st.filterbarelement",{filter = filter}) %>
     <% end %>
 

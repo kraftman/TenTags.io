@@ -1,7 +1,14 @@
 
 
 var bb = require('./bb')
+var filesTobackup = [
+  {fileName: 'redis-general.rdb', filePath: '/data/general/dump.rdb'},
+  {fileName: 'redis-user.rdb', filePath: '/data/comment/dump.rdb'},
+  {fileName: 'redis-comment.rdb', filePath: '/data/user/dump.rdb'},
+]
 
-var newBB = new bb('/data/general/dump.rdb')
+filesTobackup.forEach(function(item) {
 
-newBB.Run()
+  var newBB = new bb(item)
+  //newBB.Run()
+})
