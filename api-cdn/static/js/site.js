@@ -26,6 +26,7 @@ function Drag2(){
   console.log('this')
   interact('.post').draggable({
     inertia: true,
+    ignoreFrom: 'a',
     onmove: dragMoveListener,
     onend: onEndListener,
     restrict: {
