@@ -9,7 +9,7 @@
 
 
 <div class = 'contents'>
-  <form class="panel panel-default" id='createpost' action='/post/new' method='post' accept-charset='UTF-8'>
+  <form class="panel panel-default" id='createpost' action='/p/new' method='post' accept-charset='UTF-8'>
 
 
       <div id="submitError"></div>
@@ -37,6 +37,7 @@
 
 
         <label for='selectedtags'>Tags</label></br>
+
         <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />
 
         </br>

@@ -68,20 +68,12 @@ function m.NewFilter(request)
     requiredTagNames = {}
   }
 
-  if to_json(request.params.requiredTagNames) ~= -1 then
-    info.requiredTagNames = from_json(request.params.requiredTagNames)
-  else
-    for word in request.params.requiredTagNames:gmatch('%S+') do
-      table.insert(info.requiredTagNames, word)
-    end
+  for word in request.params.requiredTagNames:gmatch('%S+') do
+    table.insert(info.requiredTagNames, word)
   end
 
-  if to_json(request.params.bannedTagNames) ~= -1 then
-    info.bannedTagNames = from_json(request.params.bannedTagNames)
-  else
-    for word in request.params.bannedTagNames:gmatch('%S+') do
-      table.insert(info.bannedTagNames, word)
-    end
+  for word in request.params.bannedTagNames:gmatch('%S+') do
+    table.insert(info.bannedTagNames, word)
   end
 
 
@@ -316,13 +308,18 @@ function m.ViewFilterSettings(request)
   -- get key indexed tags
   request.requiredTagKeys = {}
   for k, v in pairs(filter.requiredTagNames) do
-    request.requiredTagKeys[v] = true
+    if not v:find('meta:') then
+      print(v)
+      request.requiredTagKeys[v] = true
+    end
   end
   print(to_json(request.requiredTagKeys))
 
   request.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTagNames) do
-    request.bannedTagKeys[v] = true
+    if not v:find('meta:') then
+      request.bannedTagKeys[v] = true
+    end
   end
 
   -- add usernames to list of banned users

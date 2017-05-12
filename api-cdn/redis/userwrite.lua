@@ -211,7 +211,7 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   end
 
   local ok, err = red:commit_pipeline()
-  self:SetKeepalive()
+  self:SetKeepalive(red)
 
   return ok, err
 end

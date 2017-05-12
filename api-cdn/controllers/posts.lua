@@ -54,22 +54,17 @@ function m.CreatePost(request)
     tags = {}
   }
 
-  if to_json(request.params.selectedtags) ~= -1 then
-    info.tags = from_json(request.params.selectedtags)
-  else
-    --print(request.params.selectedtags)
-    for word in request.params.selectedtags:gmatch('%S+') do
-      table.insert(request.params.selectedtags, word)
-    end
+  for word in request.params.selectedtags:gmatch('%S+') do
+    table.insert(info.tags, word)
   end
 
   local ok, err = postAPI:CreatePost(request.session.userID, info)
 
   if ok then
-    return {json = ok}
+    return {redirect_to = request:url_for("viewpost",{postID = ok.id})}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-    return {json = err}
+    return 'error creating post: '.. err
   end
 
 end
