@@ -25,7 +25,7 @@
       <input class='form-control form-search' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
 
       <button
-      class="g-recaptcha"
+      class="g-recaptcha btn"
       data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
       data-callback="SubmitLogin">
       Submit
