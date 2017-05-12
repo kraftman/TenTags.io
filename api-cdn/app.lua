@@ -40,6 +40,10 @@ app:before_filter(function(self)
 end)
 
 app.handle_error = errorHandler
+app.handle_404 = function(self)
+  ngx.log(ngx.NOTICE, 'Accessed unkown route: ',self.req.cmd_url)
+  return {render = 'errors.404'}
+end
 
 
 -- Random stuff that doesnt go anywhere yet

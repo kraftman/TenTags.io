@@ -53,7 +53,7 @@ function M:LoadUser(request)
     request.tempID = nil
     request.userInfo = userAPI:GetUser(request.session.userID)
   elseif not request.session.accountID then
-    local unique = ngx.var.remote_addr..ngx.var.http_user_agent
+    local unique = ngx.var.remote_addr..(ngx.var.http_user_agent or '')
 
     request.session.tempID = request.session.tempID or self:GetHash(unique)
   end

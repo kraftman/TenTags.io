@@ -17,9 +17,62 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
-  DraggablePosts();
+//  DraggablePosts();
+  Drag2();
   FilterToggle()
 })
+
+function Drag2(){
+  console.log('this')
+  interact('.post').draggable({
+    inertia: true,
+    onmove: dragMoveListener,
+    onend: onEndListener,
+    restrict: {
+      restriction: "parent",
+      endOnly: true,
+      elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+
+    }
+  })
+
+}
+
+function onEndListener(event){
+  var target = event.target
+  var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+  var y = 0;
+  console.log(x, x < 100, typeof(x))
+  console.log(event)
+  if ((x>=0 && x > -200)) {
+    console.log('resetting')
+    target.style.webkitTransform =
+    target.style.transform =
+    'translate(' + 0 + 'px, ' + y + 'px)';
+
+    target.setAttribute('data-x', 0);
+    target.setAttribute('data-y', 0);
+  }
+
+}
+
+
+  function dragMoveListener (event) {
+    var target = event.target,
+        // keep the dragged position in the data-x/data-y attributes
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+        y = 0 //(parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+
+    // translate the element
+    target.style.webkitTransform =
+    target.style.transform =
+      'translate(' + x + 'px, ' + y + 'px)';
+
+    // update the posiion attributes
+    target.setAttribute('data-x', x);
+    target.setAttribute('data-y', y);
+  }
 
 function SubmitLogin(){
 
