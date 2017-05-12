@@ -23,7 +23,13 @@
   <% else %>
     <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
       <input class='form-control form-search' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
-      <input class='login-button btn' type='submit' name='Submit' value='Sign Up/In' />
+
+      <button
+      class="g-recaptcha"
+      data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
+      data-callback="SubmitLogin">
+      Submit
+    </button>
     </form>
   <% end %>
 

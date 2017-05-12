@@ -21,6 +21,12 @@ $(function() {
   FilterToggle()
 })
 
+function SubmitLogin(){
+
+  console.log('done')
+  document.getElementById("register").submit();
+}
+
 function FilterToggle(){
   var $hamburger = $(".hamburger");
   $hamburger.on("click", function(e) {

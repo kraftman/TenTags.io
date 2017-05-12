@@ -9,6 +9,8 @@ local commentAPI = require 'api.comments'
 local sessionAPI = require 'api.sessions'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
+local http = require 'lib.http'
+local encode_query_string = (require 'lapis.util').encode_query_string
 
 
 
@@ -107,13 +109,42 @@ function m.NewLogin(request)
     userAgent = ngx.var.http_user_agent,
     email = request.params.email
   }
+  local body = {remoteip = session.ip,
+                response = request.params['g-recaptcha-response'],
+                secret = os.getenv('RECAPTCHA_SECRET')}
+  -- local body = 'remoteip='..session.ip..
+  -- '&response='..request.params['g-recaptcha-response']..
+  -- '&secret='..os.getenv('RECAPTCHA_SECRET')
+  local body = encode_query_string(body)
+
+
+  local httpc = http.new()
+  local res, err = httpc:request_uri("https://www.google.com/recaptcha/api/siteverify",{
+    method='POST',
+    body=body,
+    headers = {
+      ["Content-Type"] = "application/x-www-form-urlencoded",
+    }
+  })
+  print(to_json(res),err)
+  if not res then
+    ngx.log(ngx.ERR, 'error processing request: ', err)
+    return 'error'
+  end
+  local response = from_json(res.body)
+  if response.success == true then
+    print('success')
+  else
+    print('failed')
+    return 'aparently you arent human.'
+  end
 
   local confirmURL = request:build_url("confirmlogin")
   local ok,code, err = sessionAPI:RegisterAccount(session, confirmURL)
   if code == 429 then
     return {render = 'errors.'..code}
   end
-  
+
   if not ok then
     return 'There was an error registering you, please try again later'
   else
