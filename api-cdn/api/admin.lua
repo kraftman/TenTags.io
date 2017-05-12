@@ -1,6 +1,7 @@
 
 
 local redisRead = (require 'redis.db').redisRead
+local cache = require 'api.cache'
 
 local M = {}
 
@@ -21,6 +22,15 @@ end
 
 function M:GetSiteStats()
   return redisRead:GetSiteStats()
+end
+
+function M:GetNewUsers(userID)
+  local user = cache:GetUser(userID)
+  if not user.role == 'Admin' then
+    return nil, 'no admin'
+  end
+
+  return cache:GetNewUsers()
 end
 
 return M

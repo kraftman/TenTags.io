@@ -67,8 +67,14 @@ function config:ProcessAccount(session)
 
   local accountID = self:GetHash(emailAddr)
   local account = self.userRead:GetAccount(accountID)
+
   if not account then
+    print('account not found, creating')
     account = self:CreateAccount(accountID, session)
+    ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    print(ok, err)
+  else
+    print('account found ',to_json(account))
   end
 	account.id = accountID
 
@@ -82,6 +88,10 @@ function config:ProcessAccount(session)
 		ngx.log(ngx.ERR, err)
 		return
 	end
+
+  if true then
+    return true
+  end
 
   -- TODO: move to other function
 

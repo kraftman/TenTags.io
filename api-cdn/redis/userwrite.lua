@@ -24,6 +24,15 @@ function userwrite:LoadScript(script)
   return ok
 end
 
+-- TODO:remove this
+function userwrite:AddNewUser(time, accountID, email)
+  local red = self:GetUserWriteConnection()
+  print(accountID, email)
+  local ok, err = red:zadd('newAccounts', time, accountID..':'..email)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function userwrite:AddUserTagVotes(userID, postID, tagNames)
   local red = self:GetUserWriteConnection()
   for k,v in pairs(tagNames) do

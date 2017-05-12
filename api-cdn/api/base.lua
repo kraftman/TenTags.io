@@ -72,8 +72,6 @@ function M:RateLimit(action, userID, limit, duration)
 	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 
 	if DISABLE_RATELIMIT == 'true' then
-		print(DISABLE_RATELIMIT)
-		print('not rate limiting')
 		return true
 	end
 

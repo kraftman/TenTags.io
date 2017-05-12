@@ -13,11 +13,23 @@ function m.ViewSettings(request)
   if not request.account then
     return 'you must be logged in to access this'
   end
-  if request.account.role == 'Admin' then
-    return {render = 'admin.view'}
-  else
+  if request.account.role ~= 'Admin' then
     return 'you suck go away'
   end
+  local newUsers = adminAPI:GetNewUsers(request.session.userID) or {}
+  request.newUsers = {}
+  local accountID, email
+  for v,date in pairs(newUsers) do
+    accountID, email = v:match("(%w+):(.+)")
+    table.insert(request.newUsers,{
+      id = accountID,
+      email = email,
+
+      date = os.date('%x %X',tonumber(date))
+    })
+  end
+  return {render = 'admin.view'}
+
 
 end
 
