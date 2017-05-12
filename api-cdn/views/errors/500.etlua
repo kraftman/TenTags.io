@@ -1,0 +1,9 @@
+
+<div class = 'panel panel-default' >
+  <h1>We're doomed</h1>
+  <p> The terrible code that just about holds this site together has finally failed entirely. </p>
+  <p>Someone is getting an automatic angry email about this as we speak, but if that's not
+  enough for you, you can send this magic code:</p>
+    <%= error.id %> 
+  <p>to admin@filtta.com</p>
+</div>
