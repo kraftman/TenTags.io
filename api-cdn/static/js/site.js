@@ -24,9 +24,8 @@ $(function() {
 
 function Drag2(){
   console.log('this')
-  interact('.post').draggable({
+  interact('.post').ignoreFrom('a').draggable({
     inertia: true,
-    ignoreFrom: 'a',
     onmove: dragMoveListener,
     onend: onEndListener,
     restrict: {
