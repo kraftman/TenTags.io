@@ -28,6 +28,7 @@ function Drag2(){
     inertia: true,
     onmove: dragMoveListener,
     onend: onEndListener,
+    axis: 'x',
     restrict: {
       restriction: "parent",
       endOnly: true,
