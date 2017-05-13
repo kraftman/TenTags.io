@@ -1,4 +1,4 @@
-<li class='post'>
+<li class='panel panel-default'>
 
   <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
