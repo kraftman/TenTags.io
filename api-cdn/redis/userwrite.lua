@@ -207,7 +207,7 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   if subscribe then
     red:sadd('userfilters:'..userID, filterID)
   else
-    red:srem('userfilter:'..userID,filterID)
+    red:srem('userfilters:'..userID,filterID)
   end
 
   local ok, err = red:commit_pipeline()
