@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
   <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
-  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.css">
+  <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
 </head>
 <body>
