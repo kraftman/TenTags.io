@@ -121,7 +121,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
   end
 
 	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
-  ok, err = self.userWrite:SubscribeToFilter(userToSubID, filterID, subscribe)
+  ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
 	return ok, err
 end
 

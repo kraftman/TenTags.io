@@ -1,12 +1,11 @@
-<li class='panel panel-default'>
+<li class='panel panel-default filter-item'>
 
   <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
-  <p class = 'filterDescription'>
+  <p class = 'filter-description'>
     <%= filter.description -%>
   </p>
-
 
 
 <% if isAdmin then print(filter.default)%>

@@ -39,16 +39,16 @@ function m.ToggleDefault(request)
   end
 
   if request.params.setdefault == 'true' then
-    userAPI:SubscribeToFilter(userID, 'default',filterID)
+    userAPI:ToggleFilterSubscription(userID, 'default',filterID)
     filterAPI:SetToggleDefault(userID,filterID, true)
-    return
+    return {redirect_to = request:url_for("allfilters") }
   end
 
-  if request.params.subscribe == 'true' then
-    userAPI:SubscribeToFilter(userID, userID,filterID)
-  elseif request.params.subscribe == 'false' then
-    userAPI:UnsubscribeFromFilter(userID, userID,filterID)
+  local ok, err = userAPI:ToggleFilterSubscription(userID, userID,filterID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to toggle filter sub: ',err)
   end
+  return {redirect_to = request:url_for("allfilters") }
 end
 
 function m.NewFilter(request)
