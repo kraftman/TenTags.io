@@ -627,12 +627,19 @@ ul {
 
 .post-full-bottombar {
   background-color: $postborder;
-  min-height: 20px;
-  padding: 5px;
+  min-height: 25px;
 
   a {
     display: inline-block;
     min-width: 10px;
+    padding-right: 8px;
+    padding-left: 8px;
+    line-height: 25px;
+    min-height: 25px;
+    vertical-align: middle;
+  }
+  .comment-link {
+    font-size: 14px;
   }
 }
 
