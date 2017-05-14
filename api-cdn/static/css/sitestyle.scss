@@ -173,26 +173,45 @@ a {
 
   margin: 5px;
   margin-bottom: 0px;
-  div {
-    display: inline-block;
-    vertical-align: top;
-    padding-right: 10px;
-    height: 100%;
-    padding-top: 12px;
-  }
   .siteSearch {
     display: inline-block;
     vertical-align: top;
     padding-top: 7px;
   }
-  .form-login {
+  .gin {
+    display: inline-block;
     padding-top: 7px;
     float:right;
     margin-right:10px;
   }
-  .login-button {
+}
 
-  }
+
+.home-link {
+  display: inline-block;
+  vertical-align: top;
+  padding-right: 10px;
+  height: 100%;
+  padding-top: 12px;
+}
+.form-login {
+  float: right;
+  margin-right: 10px;
+  vertical-align: top;
+  padding-top: 8px;
+}
+
+
+.form-login > div {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 55px;
+
+  z-index: 5;
+}
+.grecaptcha-logo {
+  margin: 0px;
 }
 
 .filter-nav {
@@ -470,12 +489,24 @@ a {
       padding-right: 0;
     }
 
-    .form-login {
+    .gin {
       vertical-align:top;
       padding-top: 3px;
       float:none;
       margin: 5px;
-      margin-left: 10px;
+      margin-left: 0px;
+    }
+
+
+
+    .form-login > div {
+      display: none;
+      position: absolute;
+      right: 10px;
+      top: auto;
+      bottom: 50px;
+
+      z-index: 5;
     }
   }
 

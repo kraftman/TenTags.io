@@ -20,14 +20,26 @@ $(function() {
 //  DraggablePosts();
   Drag2();
   FilterToggle()
+  Recaptcha()
 })
+
+function Recaptcha(){
+  $('.form-login').focusin(function(){
+    $('.form-login > div').show()
+  })
+
+  $('.form-login').focusout(function(){
+    $('.form-login > div').hide();
+  })
+}
 
 function Drag2(){
   console.log('this')
-  interact('.post').ignoreFrom('a').draggable({
+  interact('.post').draggable({
     inertia: true,
     onmove: dragMoveListener,
     onend: onEndListener,
+    onstart: onStartListener,
     axis: 'x',
     restrict: {
       restriction: "parent",
@@ -39,10 +51,20 @@ function Drag2(){
 
 }
 
+function onStartListener(event){
+
+  $(event.target).children('a').click(function(e){e.preventDefault()})
+  console.log('this started')
+}
+
 function onEndListener(event){
   var target = event.target
   var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+
+  $(event.target).children('a').off('click');
   var y = 0;
+
+  event.preventDefault();
   console.log(x, x < 100, typeof(x))
   console.log(event)
   if ((x>=0 && x > -200)) {
