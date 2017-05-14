@@ -21,6 +21,10 @@ $(function() {
   Drag2();
   FilterToggle()
   Recaptcha()
+
+  $('.settings-menu').focutout(function(){
+    $('.settings-menu').hide()
+  })
 })
 
 function Recaptcha(){
@@ -68,13 +72,18 @@ function onEndListener(event){
   console.log(x, x < 100, typeof(x))
   console.log(event)
   if ((x>=0 && x > -200)) {
-    console.log('resetting')
-    target.style.webkitTransform =
-    target.style.transform =
-    'translate(' + 0 + 'px, ' + y + 'px)';
+    VotePost($(event.target),'down')
+  } else if ((x>0 && x> 200)){
+    VotePost($(event.target),'up')
 
-    target.setAttribute('data-x', 0);
-    target.setAttribute('data-y', 0);
+  } else {
+
+      target.style.webkitTransform =
+      target.style.transform =
+      'translate(' + 0 + 'px, ' + y + 'px)';
+
+      target.setAttribute('data-x', 0);
+      target.setAttribute('data-y', 0);
   }
 
 }
@@ -238,7 +247,11 @@ function LoadNewPosts(startAt = 0, endAt = 100){
   $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
+      console.log(data.data)
       newPosts = data.data
+      if (data.data == 'undefined') {
+        newPosts = []
+      }
       console.log(newPosts.length+ ' new posts got from server')
     }
   })
@@ -368,6 +381,7 @@ function AddFilterSearch(){
 
 function AddMenuHandler(){
   $('.settings-link a').click(function(e){
+    $('.settings-menu').focus()
 
     $('.settings-menu').toggle()
 
