@@ -47,6 +47,9 @@ end
 
 
 function m.UpvotePost(request)
+  if not request.session.userID then
+    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
+  end
   if not HashIsValid(request) then
     return 'invalid hash'
   end
