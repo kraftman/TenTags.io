@@ -4,7 +4,7 @@
 
 
     <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
-  
+
 
 
   <% if userHasAlerts then %>
@@ -13,7 +13,7 @@
 
   <% if session.username then %>
   <form class='siteSearch' id='siteSearch' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
-    <input class='form-control form-search' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Search/Post"/>
+    <input class='form-control form-search' type='text' name='searchquery' id='searchquery' maxlength="50" placeholder="Submit/Search"/>
     <input class='hidden-search-input' tabindex="-1" type='submit' style="visibility:hidden" name='Submit' value='Search/Post' />
   </form>
   <% end %>

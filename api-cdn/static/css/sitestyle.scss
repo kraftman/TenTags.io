@@ -171,8 +171,8 @@ a {
   @include card1();
   height: auto;
 
-  margin: 5px;
-  margin-bottom: 0px;
+  margin: 0px;
+  border-radius: 0px;
   .siteSearch {
     display: inline-block;
     vertical-align: top;
@@ -239,7 +239,8 @@ a {
 
 .settings-link {
   float:right;
-  margin-right:10px;
+  margin-right:12px;
+  margin-top: 12px;
   clear:both;
 }
 
@@ -426,12 +427,16 @@ a {
 @media only screen and (max-width: 1026px) {
   .filter-bar {
     @include card1();
+    border-radius: 0px;
     float: none;
     display: none;
     width: 250px;
     position: absolute;
-    top: 8px;
-    left: 2px;
+    margin-left: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    top: 0px;
+    left: 0px;
     bottom: 0px;
     z-index: 10;
   }
@@ -484,7 +489,7 @@ a {
     left: 0;
     z-index: 9;
 
-    margin: 5px;
+    margin: 0px;
     div {
       padding-right: 0;
     }
