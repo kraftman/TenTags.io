@@ -3,6 +3,8 @@
 local trim = (require 'lapis.util').trim
 local rateDict = ngx.shared.ratelimit
 
+local web_sanitize = require "web_sanitize"
+
 
 
 local TAG_BOUNDARY = 0.15
@@ -15,14 +17,16 @@ for k,v in pairs(db) do
 end
 
 function M:SanitiseHTML(str)
-	local html = {
-		["<"] = "&lt;",
-		[">"] = "&gt;",
-		["&"] = "&amp;",
-	}
-	return string.gsub(tostring(str), "[<>&]", function(char)
-		return html[char] or char
-	end)
+	return str
+	-- local html = {
+	-- 	["<"] = "&lt;",
+	-- 	--[">"] = "&gt;",
+	-- 	["&"] = "&amp;",
+	-- }
+	-- return string.gsub(tostring(str), "[<>&]", function(char)
+	-- 	return html[char] or char
+	-- end)
+	--return web_sanitize.sanitize_html(str)
 end
 
 

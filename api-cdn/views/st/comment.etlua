@@ -1,6 +1,6 @@
 <div class = 'contents panel panel-default'>
   <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
-
-  <p> <%= commentInfo.text -%></p>
+  <% print(markdown(commentInfo.text)) %>
+  <p> <%= render_html(commentInfo.text) -%></p>
 
 </div>

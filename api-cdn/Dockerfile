@@ -20,3 +20,4 @@ make install
 RUN apt-get update && apt-get install ca-certificates
 
 RUN luarocks install https://raw.githubusercontent.com/toritori0318/lua-resty-woothee/master/lua-resty-woothee-dev-1.rockspec
+RUN luarocks install web_sanitize

@@ -137,7 +137,7 @@ function config:AddAlerts(post, comment)
 			self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
-    local parentComment = self:GetComment(comment.postID, comment.parentID)
+    local parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
       self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
@@ -150,7 +150,10 @@ end
 function config:CreateComment(commentInfo)
   print('creating comment')
   local ok, err
-  local comment = cache:GetComment(commentInfo.postID, commentInfo.commentID)
+  local comment = self.commentRead:GetComment(commentInfo.postID, commentInfo.commentID)
+  if not comment then
+    return true, 'comment not found'
+  end
   local post = cache:GetPost(comment.postID)
   if not post then
     return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
