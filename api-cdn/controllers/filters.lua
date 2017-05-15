@@ -39,8 +39,8 @@ function m.ToggleDefault(request)
   end
 
   if request.params.setdefault == 'true' then
-    userAPI:ToggleFilterSubscription(userID, 'default',filterID)
-    filterAPI:SetToggleDefault(userID,filterID, true)
+    userAPI:ToggleFilterSubscription(userID, 'default', filterID)
+    filterAPI:SetToggleDefault(userID,filterID)
     return {redirect_to = request:url_for("allfilters") }
   end
 

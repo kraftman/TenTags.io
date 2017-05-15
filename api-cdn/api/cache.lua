@@ -480,10 +480,9 @@ function cache:GetFiltersBySubs(startAt,endAt)
 
   local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
   if not filterIDs then
-    print('none found')
     return {}
   end
-  print(to_json(filterIDs))
+
   return self:GetFilterInfo(filterIDs)
 end
 
@@ -738,6 +737,7 @@ function cache:GetUserFilterIDs(userID)
     end
 
     if ok then
+      --print(ok)
       return from_json(ok)
     end
   end
@@ -753,7 +753,7 @@ function cache:GetUserFilterIDs(userID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user filter: ',err)
   end
-
+  --print(to_json(res))
   return res
 
 end

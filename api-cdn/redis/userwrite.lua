@@ -205,9 +205,11 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   local red = self:GetUserWriteConnection()
   red:init_pipeline()
   if subscribe then
+    print('adding ',userID, ' to ',filterID)
     red:sadd('userfilters:'..userID, filterID)
   else
-    red:srem('userfilters:'..userID,filterID)
+    print('removing ',userID, ' from ',filterID)
+    red:srem('userfilters:'..userID, filterID)
   end
 
   local ok, err = red:commit_pipeline()

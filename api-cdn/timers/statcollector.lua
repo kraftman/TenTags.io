@@ -84,7 +84,6 @@ function config:ProcessAllViews(stat)
 end
 
 function config:ProcessFilterView(stat)
-  print('porcessing filter ')
   if not stat.filterName or #stat.filterName < 3 then
     return true
   end

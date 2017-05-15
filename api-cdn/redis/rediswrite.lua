@@ -335,7 +335,7 @@ end
 
 function write:FilterSetDefault(filterID, setDefault)
   local red = self:GetRedisWriteConnection()
-  print(setDefault)
+
   red:init_pipeline()
   if setDefault then
     red:sadd('defaultFilters',filterID)
@@ -417,14 +417,14 @@ function write:IncrementFilterSubs(filterID, value)
   local ok, err = red:hincrby('filter:'..filterID, 'subs', value)
   if not ok then
     self:SetKeepalive(red)
-    print('error updating subcount ', err)
+    ngx.log(ngx.ERR,'error updating subcount ', err)
     return ok, err
   end
-  print('adding ',ok,' to filtersubs')
+
   ok,err = red:zadd('filtersubs',ok, filterID)
   self:SetKeepalive(red)
   if not ok then
-    print('moop : ',err)
+    ngx.log(ngx.ERR,'moop : ',err)
   end
   return ok,err
 end
