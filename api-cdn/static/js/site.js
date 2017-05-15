@@ -183,12 +183,14 @@ function VotePost(post, direction){
 
   var uri;
   if (direction == 'up'){
-    $(post).css('border', 'solid 1px green');
+    $(post).css('background-color', '#b3ffb3');
     uri = '/api/post/'+postID+'/upvote?hash='+postHash
   } else {
-    $(post).css('border', 'solid 1px red');
+    $(post).css('background-color', '#ffb3b3');
     uri = '/api/post/'+postID+'/downvote?hash='+postHash
   }
+  $(post).find('.post-upvote').hide();
+  $(post).find('.post-downvote').hide();
 
   $.get(uri,function(data){
     //console.log(data);
