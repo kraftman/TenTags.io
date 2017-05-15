@@ -26,7 +26,7 @@
       <label for='posttext' >Post Text</label>
         </br>
       <textarea  name='posttext' id='posttext' id="txtArea" rows="10" cols="50"></textarea>
-
+      <
       <!--
       </br>
       <label for='filterselect'>Filters</label></br>
@@ -35,8 +35,12 @@
       </br>
       -->
 
-
-        <label for='selectedtags'>Tags</label></br>
+        <p>Add Filters</p>
+        <input type='text' name='selectedfilters' id='selectedfilters' placeholder="Add filters or tags" />
+        </br>
+        </br>
+        </br>
+        <label for='selectedtags'>Or add tags:</label></br>
 
         <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />
 

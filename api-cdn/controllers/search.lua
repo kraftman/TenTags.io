@@ -12,6 +12,9 @@ local trim = (require 'lapis.util').trim
 
 function m.SearchPosts(request)
   local search = trim(request.params.searchquery or '')
+  if search == '' then
+    return {redirect_to = request:url_for("newpost")}
+  end
 
   local ok, err = searchAPI:SearchPost(search)
 

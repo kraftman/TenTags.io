@@ -9,6 +9,20 @@ local userAPI = require 'api.users'
 local tinsert = table.insert
 local postAPI = require 'api.posts'
 
+
+function m:Register(app)
+  app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
+  app:match('userfilters', '/api/user/filters', self.GetUserFilters)
+  app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
+  app:match('/api/post/:postID/upvote', self.UpvotePost)
+  app:match('/api/post/:postID/downvote', self.DownvotePost)
+  app:match('/api/user/:userID/settings', self.GetUserSettings)
+  app:match('/api/frontpage', self.GetFrontPage)
+  app:match('/api/f/:filterName/posts', self.GetFilterPosts)
+  app:match('/api/filters/create', self.CreateFilter)
+  app:match('/api/tags/:searchString', self.SearchTags)
+end
+
 function m.SearchFilter(request)
   if not request.params.searchString then
     return {json = {error = 'no searchString provided', data = {}}}
@@ -20,7 +34,7 @@ function m.SearchFilter(request)
   local ok, err = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
 
   if ok then
-    return {json ={error = {}, data = ok} }
+    return {json ={error = false, data = ok} }
   else
     return {json = {error = {err}, data = {}}}
   end
@@ -145,17 +159,5 @@ function m.SearchTags(request)
   end
 end
 
-function m:Register(app)
-  app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
-  app:match('userfilters', '/api/user/filters', self.GetUserFilters)
-  app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
-  app:match('/api/post/:postID/upvote', self.UpvotePost)
-  app:match('/api/post/:postID/downvote', self.DownvotePost)
-  app:match('/api/user/:userID/settings', self.GetUserSettings)
-  app:match('/api/frontpage', self.GetFrontPage)
-  app:match('/api/f/:filterName/posts', self.GetFilterPosts)
-  app:match('/api/filters/create', self.CreateFilter)
-  app:match('/api/tags/:searchString', self.SearchTags)
-end
 
 return m

@@ -1,5 +1,6 @@
 var knownFilters = [];
 
+
 $(function() {
 
   //$("#tagselect").chosen();
@@ -14,64 +15,136 @@ $(function() {
             text: input
         }
     }});
+
+
+      var tagSelect = $('#selectedtags')[0].selectize
+        tagSelect.addOption({text: 'foo',value: 'fee'})
+  AddNewPostFilterSearch()
   AddPostFilterSearch()
-  //ConvertTagsToSelect();
-  //OverrideSubmit();
 
 });
 
-
-//<option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-function ConvertTagsToSelect(){
+function GetPostFilters(input, callback){
   console.log('this')
-  $('#selectedtags').replaceWith(`<select name='tagselect' id='selectedtags' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
-  </select>`);
-  $('#selectedtags').chosen();
-  var tagSelectChosen = $('#selectedtags_chosen')
-  tagSelectChosen.bind('keydown',function(e) {
-    console.log(e)
-    if(e.which === 13 || e.which === 32) {
-      var newItem = $(e.target).val();
-      var mySelect = $(".chosen-select option[value='"+newItem+"']");
-      if (mySelect.length == 0) {
-        $('#selectedtags').append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
-        $('#selectedtags').trigger("chosen:updated");
-      }
+  $.get('/api/filter/search/'+input, {
+          search: input
+       }, function(filters){
+         console.log(filters);
+         callback({})
+       });
+}
+
+function AddOptions(query){
+
+  var select = $('#selectedfilters')[0].selectize
+
+  $.get('/api/filter/search/'+query, {
+      search: query
+  }, function(filters){
+
+    if (filters.error == false){
+      $.each(filters.data,function(k,v) {
+
+        knownFilters.push(v)
+        console.log('adding: ',v.name)
+        select.addOption({text: v.name,value: v.name})
+      })
+      select.refreshOptions()
+      console.log(filters)
     }
   });
+}
+
+function FilterSelected(value, item){
+  console.log(value)
+  console.log(item)
+
+  var selectedFilter = $.grep(knownFilters, function(n,i){
+    console.log(n,i)
+    return n.name == value
+  })[0]
+
+  var tagSelect = $('#selectedtags')[0].selectize
+    tagSelect.addOption({text: 'foo',value: 'fee'})
+
+    tagSelect.refreshOptions()
+
+  $.each(selectedFilter.requiredTagNames,function(k,v){
+    tagSelect.addOption({text: v,value: v})
+
+    tagSelect.refreshOptions()
+    tagSelect.addItem(v)
+    console.log('adding ',v,' to tagSelect')
+  })
+  tagSelect.refreshOptions()
+
+  UpdateFilterStyles()
+
 
 }
 
-function OverrideSubmit(){
-  $('input#submitButton').click( function(e) {
-    e.preventDefault();
-    var selectedtags =  $("#selectedtags").val()
-    var form = {
-      selectedtags: JSON.stringify(selectedtags),
-      posttitle: $('#posttitle').val(),
-      postlink: $('#postlink').val(),
-      posttext: $('#posttext').val(),
+function SetBanned(filterName, tagName){
+  console.log('this ', filterName, tagName)
+  var filterSelect = $('#selectedfilters')[0].selectize
+  var tagSelect = $('#selectedtags')[0].selectize
+
+  var filterItem = filterSelect.getItem(filterName)
+  var tagItem = tagSelect.getItem(tagName)
+
+  $(tagItem).addClass('banned');
+  $(filterItem).addClass('banned');
+}
+
+function UpdateFilterStyles(){
+
+  //get all the selected filters
+  //get all the selected tags
+  // for each tag, check if they are banned
+  // color them
+
+  var filterSelect = $('#selectedfilters')[0].selectize
+  var tagSelect = $('#selectedtags')[0].selectize
+  var chosenFilters = filterSelect.getValue().split(' ')
+  var chosenTags = tagSelect.getValue().split(' ')
+
+
+
+  $.each(chosenFilters,function(k,filterName){
+    let selectedFilter = $.grep(knownFilters, function(n,i){
+      return n.name == filterName
+    })[0]
+    if (selectedFilter === undefined) {
+      console.log('couldnt find filter: ', filterName)
     }
-    $.ajax({
-      type: "POST",
-      url: '/p/new',
-      data: form,
-      success: function(data) {
-        console.log('this '+data)
-        console.log(data)
-        if (data.id) {
-          window.location.assign('/p/'+data.id);
+    $.each(selectedFilter.bannedTagNames,function(k,bannedTag){
+
+      $.each(chosenTags,function(k,tagName){
+        if (bannedTag == tagName ){
+          SetBanned(filterName, tagName)
         }
-        $('#submitError').html(data);
-      },
-      error: function(data) {
-        console.log('that');
-        console.log(data.responseText);
-      },
-      dataType: 'json'
-    });
-  });
+      })
+    })
+  })
+
+
 }
+
+function AddNewPostFilterSearch() {
+
+  var filterSelect = $('#selectedfilters').selectize({
+    plugins: ['remove_button'],
+    delimiter: ' ',
+    persist: false,
+    create: false,
+    onType: AddOptions,
+    onItemAdd: FilterSelected
+
+  })
+
+}
+
+
+
 
 function UpdateFilterSelect(filters){
   var filterContainer  = $('#filterselect')
@@ -84,19 +157,6 @@ function UpdateFilterSelect(filters){
 
 function AddFilterToTags(e,p){
 
-  var selectedFilter = $.grep(knownFilters, function(n,i){
-    console.log(n,i)
-    return n.name == p.selected
-  })[0]
-
-  if (p.selected){
-    var tagSelectChosen = $('#tagselect')
-    $.each(selectedFilter.requiredTagNames,function(k,v){
-      console.log(k,v)
-      tagSelectChosen.append('<option selected="selected" value="'+v+'">'+v+'</option>');
-      tagSelectChosen.trigger("chosen:updated");
-    })
-  }
 
   //update all the other filters
   $.each($('#filterselect_chosen').find('li.search-choice'), function(k,filterElement){
