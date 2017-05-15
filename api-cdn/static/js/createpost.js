@@ -97,22 +97,18 @@ function SetBanned(filterName, tagName){
 
 function UpdateFilterStyles(){
 
-  //get all the selected filters
-  //get all the selected tags
-  // for each tag, check if they are banned
-  // color them
 
   var filterSelect = $('#selectedfilters')[0].selectize
   var tagSelect = $('#selectedtags')[0].selectize
   var chosenFilters = filterSelect.getValue().split(' ')
   var chosenTags = tagSelect.getValue().split(' ')
 
-
-
   $.each(chosenFilters,function(k,filterName){
     let selectedFilter = $.grep(knownFilters, function(n,i){
       return n.name == filterName
     })[0]
+    var filterItem = filterSelect.getItem(filterName)
+    filterItem.removeClass('banned')
     if (selectedFilter === undefined) {
       console.log('couldnt find filter: ', filterName)
     }
