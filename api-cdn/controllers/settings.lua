@@ -34,6 +34,7 @@ function m.DisplaySettings(request)
   request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
   request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
   request.showNSFW = user.showNSFW == '1' and 'checked' or ''
+  request.showNSFL = user.showNSFL == '1' and 'checked' or ''
   request.userBio = user.bio
 
   ngx.log(ngx.ERR, user.enablePM)

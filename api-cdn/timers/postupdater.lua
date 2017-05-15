@@ -15,7 +15,12 @@ local to_json = (require 'lapis.util').to_json
 local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
+	nsfw = 'nsfw',
+	nsfl = 'nsfl',
+	nsfw1 = 'nsfw1',
+	nsfw2 = 'nsfw2',
+	nsfw3 = 'nsfw3'
+
 }
 
 local common = require 'timers.common'
@@ -419,7 +424,6 @@ function config:UpdatePostFilters(data)
 
   for k,v in pairs(SPECIAL_TAGS) do
     if specialTagFound[k] then
-			print('found special tag: ',v)
       post['specialTag:'..v] = 'true'
     else
       post['specialTag:'..v] = 'false'

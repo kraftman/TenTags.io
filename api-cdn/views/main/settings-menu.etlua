@@ -21,6 +21,7 @@
       <li><a href="<%= url_for('newmessage') %>">New Message</a></li>
       <li><a href="<%= url_for('newpost') %>">New Post</a></li>
       <li><a href="<%= url_for('newfilter') %>">Create Filter</a></li>
+      <li><a href="<%= url_for('about') %>">About</a></li>
       <li><a href="<%= url_for('logout') %>">Logout</a></li>
     <% end %>
   </ul>
