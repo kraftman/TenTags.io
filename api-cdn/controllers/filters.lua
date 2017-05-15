@@ -12,6 +12,16 @@ local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
 
+local Sanitizer = require("web_sanitize.html").Sanitizer
+local whitelist = require "web_sanitize.whitelist"
+
+local my_whitelist = whitelist:clone()
+
+my_whitelist.tags.img = false
+
+local sanitize_html = Sanitizer({whitelist = my_whitelist})
+
+
 function m:Register(app)
   app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
@@ -112,12 +122,14 @@ function m.DisplayFilter(request)
 
   filter.ownerName = userAPI:GetUser(filter.ownerID or filter.createdBy).username
   filter.relatedFilters = filterAPI:GetFilters(filter.relatedFilterIDs)
+  filter.description = request.markdown.markdown(filter.description)
+  filter.description = sanitize_html(filter.description)
   request.thisfilter = filter
   if request.session.userID then
     request.isMod = userAPI:UserCanEditFilter(request.session.userID, filter.id)
   end
   local sortBy = request.params.sortBy or 'fresh'
-  request.posts = filterAPI:GetFilterPosts(userID, filter, sortBy)
+  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy)
   --(to_json(request.posts))
   if request.session.userID then
     for k,v in pairs(request.posts) do
@@ -241,7 +253,7 @@ end
 
 function m.UpdateFilter(request)
   --print(request.params.filterlabel)
-  local filter =filterAPIGetFilterByName(request.params.filterlabel)
+  local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     print('filter not found')
     return m.CreateFilter(request)

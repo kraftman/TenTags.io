@@ -21,11 +21,20 @@ $(function() {
   Drag2();
   FilterToggle()
   Recaptcha()
+  AddInfoBar();
 
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()
   //})
 })
+
+function AddInfoBar(){
+  $('.infobar-title').click(function(e){
+    $('.infobar-body').toggle()
+    e.preventDefault()
+  })
+
+}
 
 function Recaptcha(){
   $('.form-login').focusin(function(){

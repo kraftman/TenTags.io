@@ -55,6 +55,7 @@ function m.UpdateSettings(request)
   user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
   user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
   user.showNSFW = request.params.showNSFW and 1 or 0
+  user.showNSFL = request.params.showNSFL and 1 or 0
   user.bio = request.params.userbio or ''
 
   local ok, err = userAPI:UpdateUser(user.id, user)

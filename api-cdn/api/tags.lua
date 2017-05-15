@@ -53,6 +53,7 @@ function api:CreateTag(userID, tagName)
 
 
 	tagName = tagName:gsub(' ','')
+	tagName = tagName:lower()
 
   if tagName == '' then
     return nil

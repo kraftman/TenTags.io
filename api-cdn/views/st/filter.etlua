@@ -3,9 +3,6 @@
   <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
-  <p class = 'filter-description'>
-    <%= filter.description -%>
-  </p>
 
 
 <% if isAdmin then %>

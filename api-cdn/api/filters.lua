@@ -152,7 +152,7 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		return nil, 'filter name cannot be blank or special characters'
 	end
 
-		userFilter.name = userFilter.name:lower()
+	userFilter.name = userFilter.name:lower()
 
 
 	local newFilter = {

@@ -12,13 +12,6 @@ local whitelist = require "web_sanitize.whitelist"
 
 local my_whitelist = whitelist:clone()
 
--- let iframes be used in sanitzied HTML
-my_whitelist.tags.iframe = {
-  width = true,
-  height = true,
-  frameborder = true,
-  src = true,
-}
 my_whitelist.tags.img = false
 
 local sanitize_html = Sanitizer({whitelist = my_whitelist})

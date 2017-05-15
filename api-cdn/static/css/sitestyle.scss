@@ -530,7 +530,7 @@ a {
 .info-bar {
   @include card1();
   margin: 5px;
-  padding: 5px;
+
 }
 
 .contents {
@@ -621,8 +621,17 @@ ul {
   margin-bottom: 0px;
   padding: 0px;
   background: #fff;
+}
 
+.infobar-title{
+  display: inline-block;
+  width: 100%;
+  padding: 5px;
+  min-height: 20px;
+}
 
+.infobar-body{
+  padding: 5px;
 }
 
 .post-full-topbar {
