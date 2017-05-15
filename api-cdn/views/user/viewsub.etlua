@@ -21,6 +21,13 @@
   </div>
 <% end %>
 
+  <div class = 'panel panel-default' >
+    Posts created: <%= userInfo.PostsCreated or 0%></br>
+    Comments created: <%= userInfo.CommentsCreated or 0%></br>
+    Posts voted: <%= userInfo.PostsVoted or 0%></br>
+    Tags added: <%= userInfo.TagsAdded or 0%>
+  </div>
+
 
 <% for i, comment in pairs(comments) do %>
   <% render("views.st.comment",{commentInfo = comment}) %>
