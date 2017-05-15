@@ -1,4 +1,4 @@
-<div class='settings-menu'>
+<div class='settings-menu' tabindex="-1">
   <ul>
     <% if session.username then %>
       <li><a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a></li>

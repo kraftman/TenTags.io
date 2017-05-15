@@ -22,9 +22,9 @@ $(function() {
   FilterToggle()
   Recaptcha()
 
-  $('.settings-menu').focutout(function(){
-    $('.settings-menu').hide()
-  })
+  //$('.settings-menu').focusout(function(){
+  //  $('.settings-menu').hide()
+  //})
 })
 
 function Recaptcha(){
@@ -44,15 +44,9 @@ function Drag2(){
     onmove: dragMoveListener,
     onend: onEndListener,
     onstart: onStartListener,
-    axis: 'x',
-    restrict: {
-      restriction: "parent",
-      endOnly: true,
-      elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
-
-    }
+    axis: 'x'
   })
-
+//
 }
 
 function onStartListener(event){
@@ -64,27 +58,31 @@ function onStartListener(event){
 function onEndListener(event){
   var target = event.target
   var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+  console.log(x)
 
   $(event.target).children('a').off('click');
   var y = 0;
 
   event.preventDefault();
-  console.log(x, x < 100, typeof(x))
-  console.log(event)
-  if ((x>=0 && x > -200)) {
-    VotePost($(event.target),'down')
-  } else if ((x>0 && x> 200)){
-    VotePost($(event.target),'up')
+  console.log(event.dx)
+  if ((event.dx<=0 && event.dx < -200)) {
+    console.log('voting down')
+    VotePost(event.target,'down')
+  } else if ((event.dx>0 && event.dx> 200)){
+    console.log('voting up')
+    VotePost(event.target,'up')
 
   } else {
 
-      target.style.webkitTransform =
-      target.style.transform =
-      'translate(' + 0 + 'px, ' + y + 'px)';
-
-      target.setAttribute('data-x', 0);
-      target.setAttribute('data-y', 0);
   }
+
+
+  target.style.webkitTransform =
+  target.style.transform =
+  'translate(' + 0 + 'px, ' + y + 'px)';
+
+  target.setAttribute('data-x', 0);
+  target.setAttribute('data-y', 0);
 
 }
 
@@ -102,6 +100,7 @@ function onEndListener(event){
       'translate(' + x + 'px, ' + y + 'px)';
 
     // update the posiion attributes
+
     target.setAttribute('data-x', x);
     target.setAttribute('data-y', y);
   }
@@ -129,22 +128,6 @@ function FilterToggle(){
 
 }
 
-function DraggablePosts(){
-  $('.post').draggable({
-    axis: "x",
-    stop: function( event, ui ) {
-
-      if(ui.position.left > 100) {
-        VotePost(this,'up')
-      } else if (ui.position.left < -100){
-        VotePost(this,'down')
-      }
-      $(ui.helper).animate({ left: '0px'}, 200)
-    }
-  })
-}
-
-
 function Upvote(e) {
   var post = $(':focus')
 
@@ -164,11 +147,11 @@ function Downvote(e) {
 
 
 function AddPostVoteListener(){
-  $(".postUpvote").click(function(e) {
+  $(".post-upvote").click(function(e) {
     e.preventDefault()
     VotePost($(this).parent().parent(), 'up')
   })
-  $(".postDownvote").click(function(e){
+  $(".post-downvote").click(function(e){
     e.preventDefault()
     VotePost($(this).parent().parent(),'down')
   })
@@ -180,6 +163,7 @@ function VotePost(post, direction){
   //get the post
   var postID = $(post).children('.postID').val()
   var postHash = $(post).children('.postHash').val()
+  console.log(postID, postHash)
 
   if (userSettings.hideVotedPosts == '1') {
     if ($.inArray(postID, seenPosts) == -1){
@@ -189,17 +173,12 @@ function VotePost(post, direction){
 
     LoadMorePosts($(post).parents('.post'));
 
-    $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
+    $(post).hide(0, function() {
       var nextPost = $(post).next()
-      console.log(nextPost)
       if (nextPost.length) {
         nextPost.focus()
       }
       $(post).remove();});
-    //$(post).show("slide", { direction: "right" }, 100);
-    // $(post).parents('.post').slideUp('fast',function() {
-    //   $(post).remove();
-    // })
   }
 
   var uri;
@@ -238,7 +217,6 @@ function AddToSeenPosts(){
     var postID = $(v).find('.postID').val()
     seenPosts.push(postID)
   })
-  console.log(seenPosts)
 }
 
 function LoadNewPosts(startAt = 0, endAt = 100){
@@ -321,7 +299,7 @@ function GetUserSettings(){
     return;
   }
   $.getJSON('/api/user/'+userID+'/settings',function(data){
-    console.log(data)
+
     if (data.status == 'success'){
       userSettings = data.data
     }
@@ -355,7 +333,7 @@ function UpdateSidebar(filters){
 }
 
 function AddFilterSearch(){
-  console.log('adding this')
+
   $('.filter-search-form').submit(function(e){
     e.preventDefault()
   })
@@ -381,22 +359,11 @@ function AddFilterSearch(){
 
 function AddMenuHandler(){
   $('.settings-link a').click(function(e){
-    $('.settings-menu').focus()
 
     $('.settings-menu').toggle()
+    $('.settings-menu').focus()
 
     e.preventDefault();
-  })
-  $('#box-two').hide();
-  $('#infoBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').show();
-    $('#box-two').hide();
-  })
-  $('#filterBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').hide();
-    $('#box-two').show();
   })
 }
 
