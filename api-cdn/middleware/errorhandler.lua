@@ -11,7 +11,8 @@ local function HandleError(self,err, trace)
       time = ngx.time(),
       trace = trace,
       error = err,
-      id = uuid.generate_random()
+      id = uuid.generate_random(),
+      path = ngx.var.uri
     }
     self.error = error
     local ok, newerr = emailDict:lpush('errorEmails', to_json(error))

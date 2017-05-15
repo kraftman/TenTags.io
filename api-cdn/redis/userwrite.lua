@@ -216,20 +216,5 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   return ok, err
 end
 
-function userwrite:UnsubscribeFromFilter(userID, filterID)
-  local red = self:GetUserWriteConnection()
-  local ok, err = red:srem('userfilters:'..userID,filterID)
-  if not ok then
-    self:SetKeepalive(red)
-    ngx.log(ngx.ERR, 'unable to remove filter from users list:',err)
-    return
-  end
-
-  self:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to incr subs: ',err)
-  end
-
-end
 
 return userwrite

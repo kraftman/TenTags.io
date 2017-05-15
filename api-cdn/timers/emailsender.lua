@@ -73,7 +73,8 @@ function config:SendErrorEmails()
     body = body.. 'Error: '..error.error..'\n'..
     'Trace: '..error.trace..'\n'..
     'Time: '..error.time..'\n'..
-    'ID: '..error.id..'\n'
+    'ID: '..error.id..'\n'..
+    'Path: '..error.path..'\n'
     count = count + 1
   end
 

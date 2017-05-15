@@ -51,49 +51,6 @@ function api:UserHasVotedTag(userID, postID, tagName)
 end
 
 
-function api:UnsubscribeFromFilter(userID, subscriberID,filterID)
-
-	local ok, err = self:RateLimit('subscribefilter:',userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
-
-	if userID ~= subscriberID then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
-			return nil, 'you must be admin to change another users subscriptions'
-		end
-	end
-
-  local filterIDs = cache:GetUserFilterIDs(userID)
-  local found = nil
-  for _,v in pairs(filterIDs) do
-    if v == filterID then
-      found = true
-    end
-  end
-  if not found then
-    return
-  end
-
-	ok, err = self.redisWrite:IncrementFilterSubs(filterID, -1)
-	if not ok then
-		ngx.log(ngx.ERR, 'error incr filter subs: ', err)
-	end
-
-	ok, err = self.userWrite:UnsubscribeFromFilter(userID,filterID)
-	if not ok then
-		ngx.log(ngx.ERR, 'error unsubbing user: ', err)
-		return nil, 'error unsubbing'
-	end
-
-	return true
-
-end
-
-
-
-
 function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
 
@@ -102,7 +59,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 		return ok, err
 	end
 
-  local filterIDs = cache:GetUserFilterIDs(userID)
+
 
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
@@ -110,6 +67,8 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 			return nil, 'you must be admin to do that'
 		end
 	end
+
+	local filterIDs = cache:GetUserFilterIDs(userToSubID)
 
 	local subscribe = true
   for _, v in pairs(filterIDs) do
