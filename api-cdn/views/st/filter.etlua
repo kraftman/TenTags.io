@@ -1,15 +1,14 @@
-<li class='post'>
+<li class='panel panel-default filter-item'>
 
   <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
-  <p class = 'filterDescription'>
+  <p class = 'filter-description'>
     <%= filter.description -%>
   </p>
 
 
-
-<% if isAdmin then print(filter.default)%>
+<% if isAdmin then %>
   <form action="/f/<%= filter.title -%>" method="post">
     <input type="hidden" name="setdefault" value="true">
     <input type="hidden" name="filterID" value="<%= filter.id -%>">

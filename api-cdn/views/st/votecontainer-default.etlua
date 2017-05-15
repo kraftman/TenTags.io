@@ -1,0 +1,13 @@
+<div class = 'vote-container'>
+  <% if not post.userHasVoted then %>
+    <a class = 'post-downvote post-downvote-default' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+      <span class="ti-angle-left post-downvote-default-img"></span>
+    </a><a class ='post-upvote post-upvote-default' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+      <span class="ti-angle-right post-upvote-default-img"></span>
+    </a>
+  <% else %>
+    <a class ='post-upvote' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> " style='display:none'></a>
+
+    <a class = 'post-downvote' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> " style='display:none'></a>
+  <% end %>
+</div>

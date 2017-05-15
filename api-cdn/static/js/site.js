@@ -17,9 +17,99 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
-  DraggablePosts();
+//  DraggablePosts();
+  Drag2();
   FilterToggle()
+  Recaptcha()
+
+  //$('.settings-menu').focusout(function(){
+  //  $('.settings-menu').hide()
+  //})
 })
+
+function Recaptcha(){
+  $('.form-login').focusin(function(){
+    $('.form-login > div').show()
+  })
+
+  $('.form-login').focusout(function(){
+    $('.form-login > div').hide();
+  })
+}
+
+function Drag2(){
+  console.log('this')
+  interact('.post').draggable({
+    inertia: true,
+    onmove: dragMoveListener,
+    onend: onEndListener,
+    onstart: onStartListener,
+    axis: 'x'
+  })
+//
+}
+
+function onStartListener(event){
+
+  $(event.target).children('a').click(function(e){e.preventDefault()})
+  console.log('this started')
+}
+
+function onEndListener(event){
+  var target = event.target
+  var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+  console.log(x)
+
+  $(event.target).children('a').off('click');
+  var y = 0;
+
+  event.preventDefault();
+  console.log(event.dx)
+  if ((event.dx<=0 && event.dx < -200)) {
+    console.log('voting down')
+    VotePost(event.target,'down')
+  } else if ((event.dx>0 && event.dx> 200)){
+    console.log('voting up')
+    VotePost(event.target,'up')
+
+  } else {
+
+  }
+
+
+  target.style.webkitTransform =
+  target.style.transform =
+  'translate(' + 0 + 'px, ' + y + 'px)';
+
+  target.setAttribute('data-x', 0);
+  target.setAttribute('data-y', 0);
+
+}
+
+
+  function dragMoveListener (event) {
+    var target = event.target,
+        // keep the dragged position in the data-x/data-y attributes
+        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+        y = 0 //(parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+
+    // translate the element
+    target.style.webkitTransform =
+    target.style.transform =
+      'translate(' + x + 'px, ' + y + 'px)';
+
+    // update the posiion attributes
+
+    target.setAttribute('data-x', x);
+    target.setAttribute('data-y', y);
+  }
+
+function SubmitLogin(){
+
+  console.log('done')
+  document.getElementById("register").submit();
+}
 
 function FilterToggle(){
   var $hamburger = $(".hamburger");
@@ -37,22 +127,6 @@ function FilterToggle(){
   })
 
 }
-
-function DraggablePosts(){
-  $('.post').draggable({
-    axis: "x",
-    stop: function( event, ui ) {
-
-      if(ui.position.left > 100) {
-        VotePost(this,'up')
-      } else if (ui.position.left < -100){
-        VotePost(this,'down')
-      }
-      $(ui.helper).animate({ left: '0px'}, 200)
-    }
-  })
-}
-
 
 function Upvote(e) {
   var post = $(':focus')
@@ -73,11 +147,11 @@ function Downvote(e) {
 
 
 function AddPostVoteListener(){
-  $(".postUpvote").click(function(e) {
+  $(".post-upvote").click(function(e) {
     e.preventDefault()
     VotePost($(this).parent().parent(), 'up')
   })
-  $(".postDownvote").click(function(e){
+  $(".post-downvote").click(function(e){
     e.preventDefault()
     VotePost($(this).parent().parent(),'down')
   })
@@ -89,6 +163,7 @@ function VotePost(post, direction){
   //get the post
   var postID = $(post).children('.postID').val()
   var postHash = $(post).children('.postHash').val()
+  console.log(postID, postHash)
 
   if (userSettings.hideVotedPosts == '1') {
     if ($.inArray(postID, seenPosts) == -1){
@@ -98,27 +173,24 @@ function VotePost(post, direction){
 
     LoadMorePosts($(post).parents('.post'));
 
-    $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
+    $(post).hide(0, function() {
       var nextPost = $(post).next()
-      console.log(nextPost)
       if (nextPost.length) {
         nextPost.focus()
       }
       $(post).remove();});
-    //$(post).show("slide", { direction: "right" }, 100);
-    // $(post).parents('.post').slideUp('fast',function() {
-    //   $(post).remove();
-    // })
   }
 
   var uri;
   if (direction == 'up'){
-    $(post).css('border', 'solid 1px green');
+    $(post).css('background-color', '#b3ffb3');
     uri = '/api/post/'+postID+'/upvote?hash='+postHash
   } else {
-    $(post).css('border', 'solid 1px red');
+    $(post).css('background-color', '#ffb3b3');
     uri = '/api/post/'+postID+'/downvote?hash='+postHash
   }
+  $(post).find('.post-upvote').hide();
+  $(post).find('.post-downvote').hide();
 
   $.get(uri,function(data){
     //console.log(data);
@@ -147,7 +219,6 @@ function AddToSeenPosts(){
     var postID = $(v).find('.postID').val()
     seenPosts.push(postID)
   })
-  console.log(seenPosts)
 }
 
 function LoadNewPosts(startAt = 0, endAt = 100){
@@ -156,7 +227,11 @@ function LoadNewPosts(startAt = 0, endAt = 100){
   $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
+      console.log(data.data)
       newPosts = data.data
+      if (data.data == 'undefined') {
+        newPosts = []
+      }
       console.log(newPosts.length+ ' new posts got from server')
     }
   })
@@ -226,7 +301,7 @@ function GetUserSettings(){
     return;
   }
   $.getJSON('/api/user/'+userID+'/settings',function(data){
-    console.log(data)
+
     if (data.status == 'success'){
       userSettings = data.data
     }
@@ -260,7 +335,7 @@ function UpdateSidebar(filters){
 }
 
 function AddFilterSearch(){
-  console.log('adding this')
+
   $('.filter-search-form').submit(function(e){
     e.preventDefault()
   })
@@ -288,19 +363,9 @@ function AddMenuHandler(){
   $('.settings-link a').click(function(e){
 
     $('.settings-menu').toggle()
+    $('.settings-menu').focus()
 
     e.preventDefault();
-  })
-  $('#box-two').hide();
-  $('#infoBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').show();
-    $('#box-two').hide();
-  })
-  $('#filterBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').hide();
-    $('#box-two').show();
   })
 }
 

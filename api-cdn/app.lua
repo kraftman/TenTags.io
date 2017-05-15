@@ -5,10 +5,11 @@ local app = lapis.Application()
 local sessionAPI = require 'api.sessions'
 local date = require("date")
 local util = require 'util'
---local errorHandler = require 'middleware.errorhandler'
+local errorHandler = require 'middleware.errorhandler'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 local checksession = require 'middleware.checksession'
 local config = require("lapis.config").get()
+local markdown = require 'lib.markdown'
 
 
 app:enable("etlua")
@@ -17,6 +18,7 @@ app.cookie_attributes = function(self)
   local expires = date(true):adddays(365):fmt("${http}")
   return "Expires=" .. expires .. "; Path=/; HttpOnly"
 end
+
 
 
 -- DEV ONLY
@@ -36,10 +38,15 @@ app:before_filter(function(self)
   self.filterStyles = util.filterStyles
   self.CalculateColor = util.CalculateColor
   self.TagColor = util.TagColor
+  self.markdown = markdown
 
 end)
 
---app.handle_error = errorHandler
+app.handle_error = errorHandler
+app.handle_404 = function(self)
+  ngx.log(ngx.NOTICE, 'Accessed unkown route: ',self.req.cmd_url)
+  return {render = 'errors.404'}
+end
 
 
 -- Random stuff that doesnt go anywhere yet

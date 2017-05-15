@@ -64,7 +64,7 @@ function api:CreateFilter(userID, filterInfo)
 	local user = cache:GetUser(userID)
 	local account = cache:GetAccount(user.parentID)
 
-	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
+	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'Admin') then
 		return nil, 'you cant mod any more subs!'
 	end
 
@@ -114,7 +114,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	-- auto add the owner to filter subscribers
 	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
-  self.userWrite:SubscribeToFilter(userID, newFilter.id)
+  self.userWrite:ToggleFilterSubscription(userID, newFilter.id,true)
 
 	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
 	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)

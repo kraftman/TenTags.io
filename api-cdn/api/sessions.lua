@@ -139,7 +139,6 @@ function api:RegisterAccount(session, confirmURL)
     -- make them answer a captcha
   end
 
-
 	ok, err = self.redisWrite:QueueJob('registeraccount',session)
   if not ok then
     ngx.log(ngx.ERR, 'error processing registration: ',err)

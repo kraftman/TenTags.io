@@ -8,6 +8,9 @@ local to_json = (require 'lapis.util').to_json
 function stats:Run()
   local uniqueID = ngx.ctx.userID
   local r = woothee.parse(ngx.var.http_user_agent)
+  if r.category == 'crawler' or r.category == 'UNKNOWN' then
+    return
+  end
 
 
   local stat = {
@@ -21,7 +24,7 @@ function stats:Run()
   }
 
   local rawPath = ngx.var.uri
-  
+
   if rawPath:find('^/p/.*') then
     self:ProcessPostPath(stat, rawPath)
   elseif rawPath:find('^/f/.*') then

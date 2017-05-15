@@ -16,7 +16,9 @@
 
 
   <% if post.imgURL then %>
-    <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+      <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+    </a>
   <% end %>
 
   <div class = 'post-full-bottombar'>

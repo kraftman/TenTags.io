@@ -38,7 +38,9 @@
         <% if child.deleted then %>
           <p>[deleted]</p>
         <% else %>
-          <p class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> "><%= child.text -%></p>
+          <div class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
+            <%- markdown.markdown(child.text) -%>
+          </div>
         <% end %>
 
         filters:
@@ -52,11 +54,11 @@
       </div>
 
   <% end %>
-  <% if child then %>
+
     <% for _,child in pairs(comments[key].children or {}) do local depth = depth and depth+1 or 1 print(depth) %>
       <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
     <% end %>
-  <% end %>
+
   </div>
 
 </div>

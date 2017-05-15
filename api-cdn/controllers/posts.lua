@@ -7,6 +7,22 @@ local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local util = require("lapis.util")
 
+local Sanitizer = require("web_sanitize.html").Sanitizer
+local whitelist = require "web_sanitize.whitelist"
+
+local my_whitelist = whitelist:clone()
+
+-- let iframes be used in sanitzied HTML
+my_whitelist.tags.iframe = {
+  width = true,
+  height = true,
+  frameborder = true,
+  src = true,
+}
+my_whitelist.tags.img = false
+
+local sanitize_html = Sanitizer({whitelist = my_whitelist})
+
 local from_json = util.from_json
 local to_json = util.to_json
 
@@ -54,22 +70,17 @@ function m.CreatePost(request)
     tags = {}
   }
 
-  if to_json(request.params.selectedtags) ~= -1 then
-    info.tags = from_json(request.params.selectedtags)
-  else
-    --print(request.params.selectedtags)
-    for word in request.params.selectedtags:gmatch('%S+') do
-      table.insert(request.params.selectedtags, word)
-    end
+  for word in request.params.selectedtags:gmatch('%S+') do
+    table.insert(info.tags, word)
   end
 
   local ok, err = postAPI:CreatePost(request.session.userID, info)
 
   if ok then
-    return {json = ok}
+    return {redirect_to = request:url_for("viewpost",{postID = ok.id})}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-    return {json = err}
+    return 'error creating post: '.. err
   end
 
 end
@@ -107,6 +118,10 @@ function m.GetPost(request)
   for _,v in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
+    if v.text then
+      v.text = request.markdown.markdown(v.text)
+      v.text = sanitize_html(v.text)
+    end
     if v.id and userID then
       v.commentHash = ngx.md5(v.id..userID)
     end
@@ -152,6 +167,7 @@ function m.GetPost(request)
 
   request.GetColorForDepth =function(_,child, depth)
     depth = depth or 1
+    depth = (depth % 7) +1
     if not child then
       return ''
     end
@@ -182,7 +198,6 @@ function m.GetPost(request)
 
     depth = 4 + depth*2
     depth = DEC_HEX(depth)
-    print(depth )
     depth = '#'..depth..depth..depth..depth..depth..depth
     return 'style="background: '..depth..';"'
   end

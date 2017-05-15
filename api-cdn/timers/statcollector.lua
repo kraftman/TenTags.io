@@ -84,7 +84,6 @@ function config:ProcessAllViews(stat)
 end
 
 function config:ProcessFilterView(stat)
-  print('porcessing filter ')
   if not stat.filterName or #stat.filterName < 3 then
     return true
   end
@@ -107,7 +106,6 @@ end
 
 function config:ProcessPostView(stat)
   if not stat.postID or #stat.postID < 5 then
-    print('post id too short')
     return true
   end
   if #stat.postID < 30 then
@@ -118,7 +116,7 @@ function config:ProcessPostView(stat)
     print('couldnt find post: ', stat.postID)
     return true
   end
-  
+
   local ok, err = redisWrite:IncrementPostStat(stat.postID, 'views', 1)
   if not ok then
     ngx.log(ngx.ERR, 'unable to update post view count ',err)

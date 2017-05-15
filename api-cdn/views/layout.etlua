@@ -8,13 +8,12 @@
   <title><%= page_title or "Filtta" %></title>
 
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
+  <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
-
-
   <div class = 'main'>
     <% render("views.main.navigation") %>
 
@@ -27,14 +26,17 @@
 
   </div>
 
+
   <script src="/static/js/jquery-2.1.4.js" ></script>
-  <script src="/static/js/jquery-ui.js" ></script>
-  <script src="/static/js/jquery.ui.touch-punch.js"></script>
+  <!--<script src="/static/js/jquery-ui.js" ></script>
+  <script src="/static/js/jquery.ui.touch-punch.js"></script>-->
+  <script src="/static/js/interact.min.js"></script>
   <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
-  <script src="/static/chosen/chosen.jquery.js"  ></script>
   <script src="/static/js/mousetrap.min.js"  ></script>
   <!-- Latest compiled and minified CSS -->
+  <script src="/static/selectize/js/standalone/selectize.min.js"  ></script>
   <script src="/static/js/site.js"  ></script>
+  <script src='https://www.google.com/recaptcha/api.js'></script>
   <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -45,5 +47,6 @@
   ga('send', 'pageview');
 
 </script>
+
 </body>
 </html>

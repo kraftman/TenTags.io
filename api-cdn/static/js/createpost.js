@@ -2,11 +2,21 @@ var knownFilters = [];
 
 $(function() {
 
-  $("#tagselect").chosen();
-  $('#filterselect').chosen();
+  //$("#tagselect").chosen();
+  //$('#filterselect').chosen();
+  $('#selectedtags').selectize({
+    plugins: ['remove_button'],
+    delimiter: ' ',
+    persist: false,
+      create: function(input) {
+        return {
+            value: input,
+            text: input
+        }
+    }});
   AddPostFilterSearch()
-  ConvertTagsToSelect();
-  OverrideSubmit();
+  //ConvertTagsToSelect();
+  //OverrideSubmit();
 
 });
 
@@ -15,8 +25,8 @@ $(function() {
 function ConvertTagsToSelect(){
   console.log('this')
   $('#selectedtags').replaceWith(`<select name='tagselect' id='selectedtags' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
-      </select>`)
-  $('#selectedtags').chosen()
+  </select>`);
+  $('#selectedtags').chosen();
   var tagSelectChosen = $('#selectedtags_chosen')
   tagSelectChosen.bind('keydown',function(e) {
     console.log(e)

@@ -1,6 +1,7 @@
 
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
+local render_html = (require 'lapis.html').render_html
 
 local base = require 'api.base'
 local api = setmetatable({}, base)
@@ -42,10 +43,10 @@ function api:ConvertUserCommentToComment(userID, comment)
 	comment.createdBy = comment.createdBy or userID
 	local user = cache:GetUser(userID)
 	if user.role == 'Admin' and user.fakeNames == 1 then
-		print(user.fakeNames)
+
 		local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
-    print(newUserName)
+
     user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
     if user then
       comment.createdBy = user.id
@@ -118,7 +119,7 @@ function api:EditComment(userID, userComment)
 	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-  ok, err = self.self.commentWrite:CreateComment(comment)
+  ok, err = self.commentWrite:CreateComment(comment)
   if not ok then
     return ok, err
   end

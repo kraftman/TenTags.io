@@ -1,0 +1,7 @@
+<div class = 'panel panel-default'>
+  <% if success then %>
+    <p>Thanks, we've sent you a confirmation link via email, please click it to log in.</p>
+  <% else %>
+    <p><%= errorMessage %></p>
+  <% end %>
+<div>

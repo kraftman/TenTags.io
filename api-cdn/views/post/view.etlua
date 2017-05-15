@@ -6,17 +6,21 @@
 <script src="/static/js/mousetrap.min.js"  ></script>
 <script src="/static/js/post.js"  ></script>
 
+<% render("views.st.postelement",{post = post}) %>
+
+
+<% if post.imgURL then %>
+
+  <div class = 'panel panel-default'>
+    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+      <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+    </a>
+  </div>
+<% end %>
+
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>">
-    <h3><a href="<%= post.link or  url_for('viewpost',{ postID = post.id}) -%>"> <%= post.title -%></a></h3>
 
-    <% if not post.userHasVoted then %>
-      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
-      </br>
-      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
-    <% end %>
-
-    <a href="<%= url_for('subscribepost',{ postID = post.id}) %> ">subscribe</a>
 
 
 
@@ -89,7 +93,8 @@
   <% end %>
 
 
-  </br>
+  </div>
+  <div class = 'panel panel-default post-comments'>
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >
     <option value="<%= url_for('viewpost',{postID = post.id})%>?sort=best"

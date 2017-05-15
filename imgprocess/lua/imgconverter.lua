@@ -136,7 +136,7 @@ end
 
 function loader:ProcessGfycat(postURL)
   local gfyName = postURL:match('gfycat.com/(%w+)')
-  local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-thumb100.jpg'
+  local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
   print(newURL)
   local imageBlob, err = self:LoadImage(newURL)
   if not imageBlob then
