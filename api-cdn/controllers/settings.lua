@@ -9,6 +9,21 @@ local sessionAPI = require 'api.sessions'
 local respond_to = (require 'lapis.application').respond_to
 local to_json = (require 'lapis.util').to_json
 
+
+
+function m:Register(app)
+  app:match('usersettings','/settings', respond_to({
+    GET = self.DisplaySettings,
+    POST = self.UpdateSettings
+  }))
+
+  app:match('/settings/filterstyle',respond_to({
+    POST = self.UpdateFilterStyle
+  }))
+
+  app:get('killsession', '/sessions/:sessionID/kill', self.KillSession)
+end
+
 function m.DisplaySettings(request)
 
   local user = request.userInfo
@@ -28,16 +43,16 @@ function m.DisplaySettings(request)
     end
   end
 
-  request.fakeNames = user.fakeNames == '1' and 'checked' or ''
-  request.enablePM = user.enablePM == '1' and 'checked' or ''
-  request.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
-  request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
-  request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
-  request.showNSFW = user.showNSFW == '1' and 'checked' or ''
-  request.showNSFL = user.showNSFL == '1' and 'checked' or ''
+  request.fakeNames = user.fakeNames and 'checked' or ''
+  request.enablePM = user.enablePM and 'checked' or ''
+  request.hideSeenPosts = user.hideSeenPosts and 'checked' or ''
+  request.hideVotedPosts = user.hideVotedPosts and 'checked' or ''
+  request.hideClickedPosts = user.hideClickedPosts and 'checked' or ''
+  request.showNSFW = user.showNSFW and 'checked' or ''
+  request.showNSFL = user.showNSFL and 'checked' or ''
   request.userBio = user.bio
 
-  ngx.log(ngx.ERR, user.enablePM)
+
   return {render = 'user.subsettings'}
 end
 
@@ -49,21 +64,27 @@ function m.UpdateSettings(request)
     print('no user')
   end
 
-  user.enablePM = request.params.EnablePM and 1 or 0
-  user.fakeNames = request.params.fakeNames and 1 or 0
-  user.hideSeenPosts = request.params.hideSeenPosts and 1 or 0
-  user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
-  user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
-  user.showNSFW = request.params.showNSFW and 1 or 0
-  user.showNSFL = request.params.showNSFL and 1 or 0
+  user.enablePM = request.params.enablePM and true or false
+  user.fakeNames = request.params.fakeNames and true or false
+
+  user.hideSeenPosts = request.params.hideSeenPosts and true or false
+  user.hideVotedPosts = request.params.hideVotedPosts and true or false
+  user.hideClickedPosts = request.params.hideClickedPosts and true or false
+  user.showNSFW = request.params.showNSFW and true or false
+  user.showNSFL = request.params.showNSFL and true or false
   user.bio = request.params.userbio or ''
 
   local ok, err = userAPI:UpdateUser(user.id, user)
   if not ok then
-
+    print('err')
     return 'eek'
   end
-  return {redirect_to = request:url_for('usersettings')}
+
+  if request.params.stage=='1' then
+    return {redirect_to = request:url_for('home')}
+  else
+    return {redirect_to = request:url_for('usersettings')}
+  end
 
 end
 
@@ -103,26 +124,13 @@ function m.KillSession(request)
 
   local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
   if ok then
-    return 'killed!'
+    return {redirect_to = request:url_for('usersettings')}
   else
     print(err)
     return 'not killed!'
   end
 end
 
-
-function m:Register(app)
-  app:match('usersettings','/settings', respond_to({
-    GET = self.DisplaySettings,
-    POST = self.UpdateSettings
-  }))
-
-  app:match('/settings/filterstyle',respond_to({
-    POST = self.UpdateFilterStyle
-  }))
-
-  app:get('killsession', '/sessions/:sessionID/kill', self.KillSession)
-end
 
 
 return m

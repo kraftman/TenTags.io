@@ -116,7 +116,7 @@ function api:VotePost(userID, postID, direction)
   }
 
   local user = cache:GetUser(userID)
-	if tonumber(user.hideVotedPosts) == 1 then
+	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 
@@ -171,7 +171,7 @@ function api:AddSource(userID, postID, sourceURL)
 		return ok, err
 	end
 
-	local sourcePostID = sourceURL:match('/post/(%w+)')
+	local sourcePostID = sourceURL:match('/p/(%w+)')
 	if not sourcePostID then
 		return nil, 'source must be a post from this site!'
 	end
@@ -239,7 +239,7 @@ function api:GetPost(userID, postID)
 
 	local user = cache:GetUser(userID)
 
-	if user.hideClickedPosts == '1' then
+	if user.hideClickedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 
@@ -306,10 +306,12 @@ function api:ConvertUserPostToPost(userID, post)
 	post.createdBy = post.createdBy or userID
   local user = cache:GetUser(userID)
   if user.role == 'Admin' and user.fakeNames then
+
+    print('using fake name')
     local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
-    print(newUserName)
-    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUser(cache:GetUserID(newUserName))
     if user then
       post.createdBy = user.id
     end
@@ -383,6 +385,28 @@ function api:ConvertUserPostToPost(userID, post)
 
 	return newPost
 
+end
+
+function api:GetUserPosts(userID, targetUserID, startAt, range)
+  startAt = startAt or 0 -- 0 index for redis
+  range = range or 20
+
+  -- check if they allow it
+  local targetUser = cache:GetUser(targetUserID)
+  if not targetUser then
+    return nil, 'could not find user by ID '..targetUserID
+  end
+
+  if targetUser.hidePosts then
+    local user = cache:GetUser(userID)
+    if not user.role == 'Admin' then
+      return nil, 'user has disabled comment viewing'
+    end
+  end
+
+  local posts = cache:GetUserPosts(targetUserID, startAt, range)
+
+  return posts
 end
 
 

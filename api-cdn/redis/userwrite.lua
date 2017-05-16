@@ -58,6 +58,29 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
+function userwrite:AddSavedPost(userID, postID)
+  print('=========================adding saved post: ', postID)
+  local red = self:GetUserWriteConnection()
+  local key = 'userSavedPost:'..userID
+
+  local ok, err = red:sadd(key, postID)
+
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
+function userwrite:RemoveSavedPost(userID, postID)
+  local red = self:GetUserWriteConnection()
+  local key = 'userSavedPost:'..userID
+
+  local ok, err = red:srem(key, postID)
+
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = self:GetUserWriteConnection()
@@ -92,6 +115,13 @@ function userwrite:AddComment(commentInfo)
   local red = self:GetUserWriteConnection()
   local ok, err = red:zadd('userComments:date:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
   ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
+  return ok, err
+end
+
+function userwrite:AddPost(post)
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
+  -- post has no score since its per-filter
   return ok, err
 end
 

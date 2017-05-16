@@ -90,6 +90,42 @@ function util.GetStyleSelected(self, styleName)
 
 end
 
+function util.UserHasFilter(self, filterID)
+  if not self.session.userID then
+    return false
+  end
+  for k,v in pairs(self.userFilters) do
+    if v.id == filterID then
+      return true
+    end
+  end
+  return false
+
+end
+
+function util.TimeAgo(_,epochTime)
+  local value, unit
+  if epochTime < 60 then
+    return 'Just now'
+  elseif epochTime < 3600 then
+    value, unit = math.floor(epochTime/60), 'minute'
+  elseif epochTime < 86400 then
+   value, unit = math.floor(epochTime/60/60), 'hour'
+  elseif epochTime < 2592000 then
+    value, unit = math.floor(epochTime/60/60/24), 'day'
+  elseif epochTime < 31536000 then
+    value, unit = math.floor(epochTime/60/60/24/30), 'month'
+  else
+    value, unit = math.floor(epochTime/60/60/24/365), 'year'
+  end
+
+  if value > 1 then
+    return value..' '..unit..'s ago'
+  else
+    return value..' '..unit..' ago'
+  end
+end
+
 function util.CalculateColor(name)
   local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
   local sum = 0

@@ -1,6 +1,9 @@
 <div class='settings-menu' tabindex="-1">
   <ul>
     <% if session.username then %>
+    <% if userHasAlerts then %>
+      <li><a href="<%= url_for('viewalerts') %>" class ='settings-alert'>New Alert!</a></li>
+    <% end %>
       <li><a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a></li>
       <li><a  href="<%= url_for('usersettings') %>" >Settings</a></li>
       <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>

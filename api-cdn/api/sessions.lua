@@ -50,7 +50,9 @@ function api:SanitiseSession(session)
 
 	local newSession = {
 		ip = session.ip,
-		userAgent = session.userAgent,
+    category = session.category,
+    os = session.os,
+    browser = session.browser,
 		id = id,
 		email = session.email:lower():gsub(' ', ''),
 		createdAt = ngx.time(),
@@ -92,6 +94,7 @@ function api:ValidateSession(accountID, sessionID)
 	end
 
 	session.lastSeen = ngx.time()
+  self.userWrite:CreateAccount(account)
 
 	return account
 
@@ -133,11 +136,7 @@ function api:RegisterAccount(session, confirmURL)
 
   local accountID = self:GetHash(session.email)
   local account = self.userRead:GetAccount(accountID)
-  if account then
-    -- no worries, send them the email
-  else
-    -- make them answer a captcha
-  end
+
 
 	ok, err = self.redisWrite:QueueJob('registeraccount',session)
   if not ok then

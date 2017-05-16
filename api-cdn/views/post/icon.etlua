@@ -1,5 +1,6 @@
+<a class='post-icon-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
 <% if post['specialTag:nsfw'] then %>
-  <% if userInfo.showNSFW == '1' and post.postType ~= 'self' then %>
+  <% if userInfo.showNSFW and post.postType ~= 'self' then %>
     <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
   <% else %>
     <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="40" width="40">
@@ -9,3 +10,4 @@
 <% else %>
   <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
 <% end %>
+</a>

@@ -5,6 +5,7 @@ var maxPosts = 10;
 var seenPosts = [];
 var userID;
 var postIndex = 0;
+var userFilters = [];
 
 $(function() {
   userID = $('#userID').val()
@@ -17,16 +18,58 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
+  LoadUserFilters();
 //  DraggablePosts();
   Drag2();
   FilterToggle()
   Recaptcha()
   AddInfoBar();
+  HookSubClick();
 
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()
   //})
 })
+
+function HookSubClick(){
+  $('.filterbar-subscribe').click(function(e){
+    e.preventDefault();
+
+    var button = $(e.currentTarget)
+
+    var buttonChild = button.children('span')
+    if (buttonChild.hasClass('ti-minus')){
+      buttonChild.removeClass('ti-minus')
+      buttonChild.addClass('ti-plus')
+    } else {
+      buttonChild.removeClass('ti-plus')
+      buttonChild.addClass('ti-minus')
+    }
+    var filterID = button.attr('data-filterid')
+    console.log(filterID)
+    if (filterID != undefined ){
+      $.get('/api/filter/'+filterID+'/sub', function(data){
+        console.log(data)
+      });
+    }
+
+  })
+}
+
+function LoadUserFilters(){
+  var userID = $('#userID').val()
+  if (!userID) {
+    console.log('couldnt get userID')
+    return;
+  }
+
+  $.get('/api/user/filters', function(data){
+    console.log(data)
+    if(data.error == false) {
+      userFilters = data.data
+    }
+  });
+}
 
 function AddInfoBar(){
   $('.infobar-title').click(function(e){
@@ -174,7 +217,7 @@ function VotePost(post, direction){
   var postHash = $(post).children('.postHash').val()
   console.log(postID, postHash)
 
-  if (userSettings.hideVotedPosts == '1') {
+  if (userSettings.hideVotedPosts == true) {
     if ($.inArray(postID, seenPosts) == -1){
       seenPosts.push(postID)
     }
@@ -327,20 +370,47 @@ function ChangeFocus(value) {
   $('#posts').children().eq(index).focus();
 }
 
+function UserHasFilter(filterID){
+  var found = null;
+  $.each(userFilters, function(k,v){
+
+    if (v.id == filterID) {
+      console.log('found')
+      found = true;
+      return;
+    }
+
+  })
+  return found;
+}
+
 function UpdateSidebar(filters){
-  var filterContainer  = $('.filterContainer')
+  var filterContainer  = $('.filterbar-results')
   filterContainer.empty()
   $.each(filters.data, function(index,value){
-    console.log(index,value)
 
-    filterContainer.append(" \
-    <ul> \
-      <a href ='/f/"+value.name+"' class='filterbarelement'> \
-        <span > "+value.name+"</span> \
-      </a> \
-    </ul> \
-    ")
+
+    //filterContainer.append(
+    var filterBarElement = `
+    <ul class = 'filterbarelement'>
+      <a href ='/f/`+value.id+`/sub' class = 'filterbar-subscribe' data-filterid="`+value.id+`"> `
+      console.log(UserHasFilter(value.id))
+      if (UserHasFilter(value.id) == true) {
+        console.log('minus')
+        filterBarElement += '<span class="ti-minus"></span>'
+      } else {
+        console.log('plus')
+        filterBarElement += '<span class="ti-plus"></span>'
+      }
+      filterBarElement +=`
+      <a href ='/f/`+value.name+`' class='filterbar-link'>
+        <span > `+value.name+`</span>
+      </a>
+    </ul>`;
+
+    filterContainer.append(filterBarElement);
   })
+  HookSubClick()
 }
 
 function AddFilterSearch(){

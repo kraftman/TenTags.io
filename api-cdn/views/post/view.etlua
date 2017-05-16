@@ -21,10 +21,6 @@
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>">
 
-
-
-
-    <a href="<%= url_for('viewuser',{ username = creatorName}) -%>"> <%= creatorName -%></a>
     <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
@@ -51,7 +47,8 @@
     <% end %>
   <% end %>
 
-  <% if post.containsSources then %>
+  <% if post.containsSources then print('has sources')%>
+    <h3> Sources: </h3>
     <% for _,tag in pairs(post.tags or {}) do %>
       <% if tag.name:find('^meta:sourcePost') then %>
         <% render("views.st.tag",{tag = tag}) %>
@@ -115,7 +112,7 @@
   </select>
   Show comments by filter:</br>
   <div>
-    <% for _,filter in pairs(filters or {}) do print(filter.title)%>
+    <% for _,filter in pairs(filters or {}) do %>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
   </div>

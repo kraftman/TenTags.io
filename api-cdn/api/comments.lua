@@ -42,7 +42,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
 	local user = cache:GetUser(userID)
-	if user.role == 'Admin' and user.fakeNames == 1 then
+	if user.role == 'Admin' and user.fakeNames then
 
 		local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
@@ -211,6 +211,10 @@ function api:GetUserComments(userID, targetUserID, sortBy, startAt, range)
 	end
 
   local comments = cache:GetUserComments(targetUserID, sortBy,startAt, range)
+	for _,v in pairs(comments) do
+    v.username = cache:GetUser(v.createdBy).username
+		v.post = cache:GetPost(v.postID)
+  end
   return comments
 end
 

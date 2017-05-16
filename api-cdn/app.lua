@@ -39,6 +39,8 @@ app:before_filter(function(self)
   self.CalculateColor = util.CalculateColor
   self.TagColor = util.TagColor
   self.markdown = markdown
+  self.UserHasFilter = util.UserHasFilter
+  self.TimeAgo = util.TimeAgo
 
 end)
 

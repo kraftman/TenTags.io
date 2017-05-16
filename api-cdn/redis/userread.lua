@@ -43,6 +43,25 @@ function userread:GetUserAlerts(userID, startAt, endAt)
   end
 end
 
+function userread:SavedPostExists(userID, postID)
+  local red = self:GetUserWriteConnection()
+  local key = 'userSavedPost:'..userID
+
+  local ok, err = red:sismember(key, postID)
+
+
+  self:SetKeepalive(red)
+  if not ok then
+    return nil, err
+  end
+  print(ok,  tonumber(ok) == 0)
+  if tonumber(ok) == 0 then
+    return false
+  end
+  return ok, err
+
+end
+
 function userread:GetUserCommentVotes(userID)
   local red = self:GetUserReadConnection()
   local ok, err = red:smembers('userCommentVotes:'..userID)
@@ -145,6 +164,14 @@ function userread:GetUser(userID)
     end
   end
 
+  user.fakeNames = user.fakeNames == '1' and true or false
+  user.enablePM = user.enablePM == '1' and true or false
+  user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
+  user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
+  user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
+  user.showNSFW = user.showNSFW == '1' and true or false
+  user.showNSFL = user.showNSFL == '1' and true or false
+
   return user
 
 end
@@ -176,6 +203,18 @@ function userread:GetUserComments(userID, sortBy,startAt, range)
     ngx.log(ngx.ERR, 'unable to get user comments, ',err)
     return {}
   end
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
+function userread:GetUserPosts(userID,startAt, range)
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
+  self:SetKeepalive(red)
+  
   if ok == ngx.null then
     return nil
   else

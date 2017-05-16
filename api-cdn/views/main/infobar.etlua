@@ -15,6 +15,19 @@
           <% end %>
       <% end %>
     </div>
-  <% else %>Welcome to filter!<% end %>
+  <% else %>
+  <p>Welcome to filter!</p>
+  <% if not session.userID then %>
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- top-ad -->
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:728px;height:90px"
+         data-ad-client="ca-pub-5666598062804330"
+         data-ad-slot="3229235607"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  <% end %>
+  <% end %>
   <% if enableAds then %><% end %>
 </div>
