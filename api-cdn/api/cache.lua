@@ -368,10 +368,13 @@ function cache:GetPosts(postIDs)
 end
 
 function cache:GetPost(postID)
-  local ok, err,result
+  local ok, err, result
 
   if #postID < 10 then
     postID = self:ConvertShortURL(postID)
+    if not postID then
+      return nil, 'no post found'
+    end
   end
 
   if not DISABLE_CACHE then
