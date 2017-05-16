@@ -309,7 +309,7 @@ function api:ConvertUserPostToPost(userID, post)
     local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
     print(newUserName)
-    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUser(cache:GetUserID(newUserName))
     if user then
       post.createdBy = user.id
     end
