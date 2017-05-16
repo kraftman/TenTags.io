@@ -110,6 +110,9 @@ function config:ProcessPostView(stat)
   end
   if #stat.postID < 30 then
     stat.postID = redisRead:ConvertShortURL(stat.postID)
+    if not stat.postID then
+      return true
+    end
   end
   local post = redisRead:GetPost(stat.postID)
   if not post then

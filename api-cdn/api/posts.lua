@@ -224,6 +224,9 @@ end
 
 
 function api:GetPost(userID, postID)
+  if not postID then
+    return nil, 'no post id'
+  end
 
 	local post = cache:GetPost(postID)
 
