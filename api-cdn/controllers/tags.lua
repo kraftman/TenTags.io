@@ -30,7 +30,7 @@ function m.CreateTag(request)
     createdBy = request.session.userID
   }
 
-  local ok, err = tagAPI:CreateTag(request.session.userID, info)
+  local ok, err = tagAPI:CreateTag(request.session.userID, info.name)
   if ok then
     return 'tag created!'
   else

@@ -144,6 +144,7 @@ function userread:GetUser(userID)
       user[k] = nil
     end
   end
+  user.fakeNames = user.fakeNames == '1' and true or false
 
   return user
 

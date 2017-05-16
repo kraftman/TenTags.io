@@ -51,6 +51,8 @@ function m.UpdateSettings(request)
 
   user.enablePM = request.params.EnablePM and 1 or 0
   user.fakeNames = request.params.fakeNames and 1 or 0
+  print(user.fakeNames)
+
   user.hideSeenPosts = request.params.hideSeenPosts and 1 or 0
   user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
   user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0

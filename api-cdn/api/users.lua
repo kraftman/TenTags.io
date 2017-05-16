@@ -59,8 +59,6 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 		return ok, err
 	end
 
-
-
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
@@ -257,6 +255,7 @@ function api:UpdateUser(userID, userToUpdate)
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
+
 	print(userToUpdate.fakeNames)
 
 	local userInfo = {
@@ -268,7 +267,7 @@ function api:UpdateUser(userID, userToUpdate)
 		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
 		username = userToUpdate.username,
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
-		fakeNames = userToUpdate.fakeNames == 0 and 0 or 1
+		fakeNames = (userToUpdate.fakeNames == 0) and 0 or 1
 	}
 
 	for k,v in pairs(userToUpdate) do

@@ -103,8 +103,6 @@ function m.GetPost(request)
     return 'unable to find post'
   end
 
-  print(post.createdBy)
-  request.creatorName = userAPI:GetUser(post.createdBy).username
 
   local comments = commentAPI:GetPostComments(userID, postID,sortBy)
 
@@ -133,14 +131,17 @@ function m.GetPost(request)
   end
 
   for _,v in pairs(post.tags) do
-    if v.name:find('^meta:sourcePost:') then
+    print(v.name)
+    if v.name:find('^meta:sourcepost:') then
+      
       post.containsSources = true
-      local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
+      local sourcePostID = v.name:match('meta:sourcepost:(%w+)')
+
       if sourcePostID then
-        print(sourcePostID)
+
         local parentPost = (postAPI:GetPost(userID, sourcePostID))
-        print(to_json(parentPost))
-        if v.name and parentPost.title then
+
+        if v.name and parentPost and parentPost.title then
           v.fakeName = parentPost.title
           v.postID = sourcePostID
         end
@@ -309,7 +310,7 @@ function m.GetIcon(request)
 end
 
 function m.AddSource(request)
-  print('adding source')
+
   local sourceURL = request.params.sourceurl
   local userID = request.session.userID
   if not sourceURL then
