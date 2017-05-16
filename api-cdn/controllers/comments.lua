@@ -86,22 +86,11 @@ function m.HashIsValid(request)
 end
 
 
-local function HashIsValid(request)
-  --print(request.params.postID, request.session.userID)
-  local realHash = ngx.md5(request.params.postID..request.session.userID)
-  if realHash ~= request.params.hash then
-    ngx.log(ngx.ERR, 'hashes dont match!')
-    return false
-  end
-  return true
-end
-
-
 function m.UpvoteComment(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  if not HashIsValid(request) then
+  if not m.HashIsValid(request) then
     return 'hashes dont match'
   end
   local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
@@ -116,7 +105,7 @@ function m.DownVoteComment(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  if not HashIsValid(request) then
+  if not m.HashIsValid(request) then
     return 'hashes dont match'
   end
 
