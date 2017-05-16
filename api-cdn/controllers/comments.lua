@@ -67,6 +67,9 @@ function m.EditComment(request)
 end
 
 function m.SubscribeComment(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
   return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
@@ -82,7 +85,22 @@ function m.HashIsValid(request)
   return true
 end
 
+
+local function HashIsValid(request)
+  --print(request.params.postID, request.session.userID)
+  local realHash = ngx.md5(request.params.postID..request.session.userID)
+  if realHash ~= request.params.hash then
+    ngx.log(ngx.ERR, 'hashes dont match!')
+    return false
+  end
+  return true
+end
+
+
 function m.UpvoteComment(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   if not HashIsValid(request) then
     return 'hashes dont match'
   end
@@ -95,6 +113,9 @@ function m.UpvoteComment(request)
 end
 
 function m.DownVoteComment(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   if not HashIsValid(request) then
     return 'hashes dont match'
   end
