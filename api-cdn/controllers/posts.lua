@@ -45,6 +45,22 @@ function m:Register(app)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
+  app:get('savepost','/post/:postID/save',self.ToggleSavePost)
+
+end
+
+function m.ToggleSavePost(request)
+  local userID = request.session.userID
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  local postID =  request.params.postID
+  local ok, err = userAPI:ToggleSavePost(userID, postID)
+  if not ok then
+    print('error saving post, ',err)
+    return 'error saving post'
+  end
+  return 'succes'
 
 end
 

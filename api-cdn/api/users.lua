@@ -50,6 +50,39 @@ function api:UserHasVotedTag(userID, postID, tagName)
 
 end
 
+function api:ToggleSavePost(userID,postID)
+	local ok, err = self:RateLimit('ToggleSavePost:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	if not user then
+		return nil, 'user not found'
+	end
+
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
+	ok, err = self.userRead:SavedPostExists(userID, post.id)
+	print('saved post exists: ',ok)
+	if ok == nil then
+		print('couldnt get savedpost exits')
+		return nil, err
+	end
+
+	if ok == true then
+		print('removing saved post')
+		ok, err = self.userWrite:RemoveSavedPost(userID, post.id)
+	else
+	print('addingsaved post')
+	ok, err = self.userWrite:AddSavedPost(userID, post.id)
+	end
+
+	return ok, err
+end
+
 
 function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 

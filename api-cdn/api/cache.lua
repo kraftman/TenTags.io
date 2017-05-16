@@ -51,6 +51,10 @@ function cache:GetThreads(userID, startAt, range)
   return threads
 end
 
+function cache:SavedPostExists(userID, postID)
+  return userRead:SavedPostExists(userID, postID)
+end
+
 function cache:GetUser(userID)
   local ok, err
 
@@ -409,9 +413,15 @@ function cache:GetFilterPosts(userID, filter, sortBy)
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
+    if self:SavedPostExists(userID, post.id) then
+      
+      post.userSaved = true
+    end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
   end
+
+  --TODO   check this hides userseen
 
   return posts
 end
