@@ -1,6 +1,6 @@
 <form method="POST" class='panel panel-default'>
   <h3>Send Message</h3>
-    <input type="text"  name='recipient' placeholder="Recipient" aria-describedby="basic-addon1">
+    <input type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
     </br>
     <input type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
     </br>

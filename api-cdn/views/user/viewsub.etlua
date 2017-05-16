@@ -1,4 +1,14 @@
 
+<div class = 'panel panel-default' >
+  Posts created: <%= userInfo.PostsCreated or 0%></br>
+  Comments created: <%= userInfo.CommentsCreated or 0%></br>
+  Posts voted: <%= userInfo.PostsVoted or 0%></br>
+  Tags added: <%= userInfo.TagsAdded or 0%>
+  <form id="tagform" method="get" action="<%= url_for('viewuserposts',{username = params.username}) %>" >
+
+    <input class = 'btn' type='submit' value="Posts"></input>
+  </form>
+</div>
 
 <% if userInfo.bio and userInfo.bio ~= '' then %>
   <h1> User Bio: </h1>
@@ -8,10 +18,14 @@
 <% end %>
 
 <% if session.userID and (userInfo.enablePM) then %>
+  <div class = 'panel panel-default'>
+    <% render("views.message.create",{recipient = params.username}) %>
+  </div>
+<% end %>
+
+<% if session.userID then %>
   <div class = 'panel panel-default' >
-    <div>
-      <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
-    </div>
+
     <h3>Tag User</h3>
     <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
       <textarea name='tagUser' id='tagUser' rows="1" cols="50"></textarea>
@@ -21,16 +35,10 @@
   </div>
 <% end %>
 
-  <div class = 'panel panel-default' >
-    Posts created: <%= userInfo.PostsCreated or 0%></br>
-    Comments created: <%= userInfo.CommentsCreated or 0%></br>
-    Posts voted: <%= userInfo.PostsVoted or 0%></br>
-    Tags added: <%= userInfo.TagsAdded or 0%>
-  </div>
 
 
-<% for i, comment in pairs(comments) do %>
-  <% render("views.st.comment",{commentInfo = comment}) %>
+<% for i, comment in pairs(comments) do print(to_json(comment))%>
+  <% render("views.st.comment",{comment = comment}) %>
 <% end %>
 
 <% if params.startAt and tonumber(params.startAt) >= 20 then %>

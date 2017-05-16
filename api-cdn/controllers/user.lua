@@ -5,12 +5,14 @@ m.__index = m
 
 local respond_to = (require 'lapis.application').respond_to
 local userAPI = require 'api.users'
+local postAPI = require 'api.posts'
 local commentAPI = require 'api.comments'
 local sessionAPI = require 'api.sessions'
 local trim = (require 'lapis.util').trim
 local to_json = (require 'lapis.util').to_json
 local http = require 'lib.http'
 local encode_query_string = (require 'lapis.util').encode_query_string
+local woothee = require "resty.woothee"
 
 
 
@@ -25,6 +27,7 @@ function m:Register(app)
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', self.TagUser)
   app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
   app:get('listusers','/user/list',function() return {render = 'listusers'} end)
@@ -48,12 +51,24 @@ function m.ViewUser(request)
   local range = request.params.range or 20
   range = math.min(range, 50)
   local sortBy = 'date'
+
   request.comments = commentAPI:GetUserComments(request.session.userID, request.userID, sortBy, startAt, range)
-  for _,v in pairs(request.comments) do
-    v.username = userAPI:GetUser(v.createdBy).username
-  end
 
   return {render = 'user.viewsub'}
+end
+
+function m.ViewUserPosts(request)
+
+  request.userID = userAPI:GetUserID(request.params.username)
+  request.userInfo = userAPI:GetUser(request.userID)
+
+
+    local startAt = request.params.startAt or 0
+    local range = request.params.range or 20
+    range = math.min(range, 50)
+
+  request.posts = postAPI:GetUserPosts(request.session.userID, request.userID, startAt,range)
+  return {render = 'user.viewsubposts'}
 end
 
 
@@ -65,11 +80,12 @@ function m.CreateSubUser(request)
   if not request.params.username or trim(request.params.username) == '' then
     return 'no username!'
   end
+
   local succ,err = userAPI:CreateSubUser(request.session.accountID,request.params.username)
   if succ then
     request.session.username = succ.username
     request.session.userID = succ.id
-    return { redirect_to = request:url_for("usersettings") }
+    return { redirect_to = request:url_for("usersettings")..'?stage=1' }
   else
     return 'fail: '..err
   end
@@ -104,11 +120,8 @@ end
 
 
 function m.NewLogin(request)
-  local session = {
-    ip = ngx.var.remote_addr,
-    userAgent = ngx.var.http_user_agent,
-    email = request.params.email
-  }
+
+  local session = m.GetSession(request)
   local body = {remoteip = session.ip,
                 response = request.params['g-recaptcha-response'],
                 secret = os.getenv('RECAPTCHA_SECRET')}
@@ -152,12 +165,21 @@ function m.NewLogin(request)
   return {render = 'user.login'}
 end
 
-function m.ConfirmLogin(request)
+function m.GetSession(request)
+  local details = woothee.parse(ngx.var.http_user_agent)
   local session = {
     ip = ngx.var.remote_addr,
-    userAgent = ngx.var.http_user_agent,
-    email = request.params.email
+    email = request.params.email,
+    category = details.category,
+    os = details.os,
+    browser = details.name..' '..details.version
   }
+
+  return session
+end
+
+function m.ConfirmLogin(request)
+  local session = m.GetSession(request)
   local account, sessionID = sessionAPI:ConfirmLogin(session, request.params.key)
 
   if not account then

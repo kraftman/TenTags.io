@@ -1,5 +1,6 @@
 <div class='panel panel-default'>
-  <h3>Create User</h3>
+  <h3>Create New User</h3>
+  <p>You can have up to three usernames per account, for example to seperate home and work filters</p>
   <form id='register' action='<%= url_for('newsubuser') %>' method='post'
       accept-charset='UTF-8'>
 
@@ -7,10 +8,9 @@
       <input type='hidden' name='submitted' id='submitted' value='1'/>
 
       <input type='text' name='username' id='username' maxlength="50" placeholder='Username'/>
-      </br>
-      </br>
-      <input class = 'btn' type='submit' name='Submit' value='Submit' />
+
+      <input class = 'btn' type='submit' name='Submit' value='Create' />
 
 
   </form>
-<div>
+</div>

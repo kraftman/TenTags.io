@@ -211,6 +211,10 @@ function api:GetUserComments(userID, targetUserID, sortBy, startAt, range)
 	end
 
   local comments = cache:GetUserComments(targetUserID, sortBy,startAt, range)
+	for _,v in pairs(comments) do
+    v.username = cache:GetUser(v.createdBy).username
+		v.post = cache:GetPost(v.postID)
+  end
   return comments
 end
 

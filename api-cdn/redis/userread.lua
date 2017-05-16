@@ -210,6 +210,18 @@ function userread:GetUserComments(userID, sortBy,startAt, range)
   end
 end
 
+function userread:GetUserPosts(userID,startAt, range)
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
+  self:SetKeepalive(red)
+  
+  if ok == ngx.null then
+    return nil
+  else
+    return ok
+  end
+end
+
 function userread:GetUnseenPosts(baseKey, elements)
   local red = self:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()

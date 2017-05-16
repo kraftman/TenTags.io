@@ -1,17 +1,11 @@
 <div class = 'contents panel panel-default <%= accountSession.killed and 'session-killed' or 'session-active ' -%>'>
-  Session:
-  <br>
-  Created At: <%= os.date('%c',accountSession.createdAt) -%>
-  <br>
-  Last accessed: <%= os.date('%c',accountSession.lastSeen) -%>
-  <br>
-  Device: <%= accountSession.userAgent -%>
+  <span><%= accountSession.os or '' %> | </span><span><%= accountSession.browser or '' %></span>
+  | <span><%= TimeAgo(ngx.time() - accountSession.lastSeen) %></span>
+
   <br>
   IP: <%= accountSession.ip -%>
   <br>
-  Killed: <%= accountSession.killed and 'yes' or 'no' -%>
-  <br>
   <% if not accountSession.killed then %>
-    <a class = 'btn' href="<%= url_for('killsession',{sessionID = accountSession.id}) %>">Kill</a>
+    <a class = 'btn' href="<%= url_for('killsession',{sessionID = accountSession.id}) %>"><%= accountSession.killed and 'Killed' or 'Kill' -%></a>
   <% end %>
 </div>

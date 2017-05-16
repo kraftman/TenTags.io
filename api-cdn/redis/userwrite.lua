@@ -118,6 +118,13 @@ function userwrite:AddComment(commentInfo)
   return ok, err
 end
 
+function userwrite:AddPost(post)
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
+  -- post has no score since its per-filter
+  return ok, err
+end
+
 function userwrite:CreateAccount(account)
 
   local red = self:GetUserWriteConnection()

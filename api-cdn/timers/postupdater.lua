@@ -128,6 +128,11 @@ function config:VotePost(postVote)
 
 	self.redisWrite:UpdatePostTags(post)
 
+  local ok, err = self.userWrite:AddPost(post)
+  if not ok then
+    return ok, err
+  end
+
 	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
@@ -178,6 +183,13 @@ function config:CreatePost(post)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat: ', err)
 	end
+
+
+  ok, err = self.userWrite:AddPost(post)
+  if not ok then
+    return ok, err
+  end
+
 	self.redisWrite:IncrementSiteStat('PostsCreated', 1)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat')

@@ -225,6 +225,11 @@ function cache:GetUserComments(userID, sortBy, startAt, range)
   return comments
 end
 
+function cache:GetUserPosts(userID, startAt, range)
+  local postIDs = userRead:GetUserPosts(userID, startAt, range)
+  return self:GetPosts(postIDs)
+end
+
 function cache:AddChildren(parentID,flat)
   local t = {}
   for _,v in pairs(flat[parentID]) do
@@ -414,7 +419,7 @@ function cache:GetFilterPosts(userID, filter, sortBy)
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
-      
+
       post.userSaved = true
     end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)

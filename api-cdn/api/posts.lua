@@ -387,6 +387,28 @@ function api:ConvertUserPostToPost(userID, post)
 
 end
 
+function api:GetUserPosts(userID, targetUserID, startAt, range)
+  startAt = startAt or 0 -- 0 index for redis
+  range = range or 20
+
+  -- check if they allow it
+  local targetUser = cache:GetUser(targetUserID)
+  if not targetUser then
+    return nil, 'could not find user by ID '..targetUserID
+  end
+
+  if targetUser.hidePosts then
+    local user = cache:GetUser(userID)
+    if not user.role == 'Admin' then
+      return nil, 'user has disabled comment viewing'
+    end
+  end
+
+  local posts = cache:GetUserPosts(targetUserID, startAt, range)
+
+  return posts
+end
+
 
 function api:CreatePost(userID, postInfo)
 

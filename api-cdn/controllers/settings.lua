@@ -9,6 +9,21 @@ local sessionAPI = require 'api.sessions'
 local respond_to = (require 'lapis.application').respond_to
 local to_json = (require 'lapis.util').to_json
 
+
+
+function m:Register(app)
+  app:match('usersettings','/settings', respond_to({
+    GET = self.DisplaySettings,
+    POST = self.UpdateSettings
+  }))
+
+  app:match('/settings/filterstyle',respond_to({
+    POST = self.UpdateFilterStyle
+  }))
+
+  app:get('killsession', '/sessions/:sessionID/kill', self.KillSession)
+end
+
 function m.DisplaySettings(request)
 
   local user = request.userInfo
@@ -37,7 +52,7 @@ function m.DisplaySettings(request)
   request.showNSFL = user.showNSFL and 'checked' or ''
   request.userBio = user.bio
 
-  ngx.log(ngx.ERR, user.enablePM)
+
   return {render = 'user.subsettings'}
 end
 
@@ -49,9 +64,8 @@ function m.UpdateSettings(request)
     print('no user')
   end
 
-  user.enablePM = request.params.EnablePM and true or false
+  user.enablePM = request.params.enablePM and true or false
   user.fakeNames = request.params.fakeNames and true or false
-  print(user.fakeNames)
 
   user.hideSeenPosts = request.params.hideSeenPosts and true or false
   user.hideVotedPosts = request.params.hideVotedPosts and true or false
@@ -62,10 +76,15 @@ function m.UpdateSettings(request)
 
   local ok, err = userAPI:UpdateUser(user.id, user)
   if not ok then
-
+    print('err')
     return 'eek'
   end
-  return {redirect_to = request:url_for('usersettings')}
+
+  if request.params.stage=='1' then
+    return {redirect_to = request:url_for('home')}
+  else
+    return {redirect_to = request:url_for('usersettings')}
+  end
 
 end
 
@@ -105,26 +124,13 @@ function m.KillSession(request)
 
   local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
   if ok then
-    return 'killed!'
+    return {redirect_to = request:url_for('usersettings')}
   else
     print(err)
     return 'not killed!'
   end
 end
 
-
-function m:Register(app)
-  app:match('usersettings','/settings', respond_to({
-    GET = self.DisplaySettings,
-    POST = self.UpdateSettings
-  }))
-
-  app:match('/settings/filterstyle',respond_to({
-    POST = self.UpdateFilterStyle
-  }))
-
-  app:get('killsession', '/sessions/:sessionID/kill', self.KillSession)
-end
 
 
 return m

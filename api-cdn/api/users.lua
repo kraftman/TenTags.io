@@ -137,7 +137,7 @@ function api:CreateSubUser(accountID, username)
     username = self:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
     parentID = accountID,
-    enablePM = 1
+    enablePM = true
   }
 	subUser.lowerUsername = subUser.username:lower()
 
@@ -270,7 +270,7 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
-	print(userID)
+	
 	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err

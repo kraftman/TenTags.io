@@ -1,6 +1,8 @@
 
+<% render("views.user.createsub") %>
+
 <div class = 'panel panel-default'>
-  <form action="<%= url_for('usersettings') %>" method = 'POST'>
+  <form action="<%= url_for('usersettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
     <% if account.role == 'Admin' then %>
       <h2>Admin Settings</h2>
       <div class="checkbox">
@@ -9,7 +11,7 @@
 
     <% end %>
     <h2>User Settings</h2>
-    <a href="<%= url_for('newsubuser') %>">Add User</a>
+
 
     <label for='userbio' >Bio:</label>
       </br>
@@ -34,7 +36,7 @@
       <label><input type="checkbox" name='showNSFL' <%= showNSFL -%>>Show NSFL</label>
     </div>
 
-    <button class='btn btn-default' type="submit" value="Submit">submit</button>
+    <button class='btn btn-default' type="submit" value="Submit">Save</button>
 
   </form>
 </div>
@@ -42,9 +44,11 @@
 
 
 <div class = 'panel panel-default'>
-  <h2>Account Settings</h2>
+  <h2>Logged in locations:</h2>
 
   <% for k,accountSession in pairs(account.sessions) do %>
-    <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+    <% if accountSession.os then %>
+      <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+    <% end %>
   <% end %>
 </div>
