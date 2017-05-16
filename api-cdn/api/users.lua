@@ -216,7 +216,7 @@ function api:SwitchUser(accountID, userID)
 	local account = cache:GetAccount(accountID)
 	local user = cache:GetUser(userID)
 
-	if user.parentID ~= accountID and account.role ~= 'admin' then
+	if user.parentID ~= accountID and account.role ~= 'Admin' then
 		return nil, 'noooope'
 	end
 
