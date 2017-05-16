@@ -1,0 +1,9 @@
+
+
+<div class = 'panel panel-default'>
+  <h3> User Posts:</h3>
+  <% for k,v in pairs(posts) do %>
+    <% render("views.st.postelement",{post = v}) %>
+  <% end %>
+
+</div>
