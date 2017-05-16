@@ -11,6 +11,7 @@ local postAPI = require 'api.posts'
 
 
 function m:Register(app)
+  app:match('apisubscribefilter', '/api/filter/:filterID/sub', self.SubscribeFilter)
   app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
   app:match('userfilters', '/api/user/filters', self.GetUserFilters)
   app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
@@ -21,6 +22,22 @@ function m:Register(app)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
   app:match('/api/filters/create', self.CreateFilter)
   app:match('/api/tags/:searchString', self.SearchTags)
+end
+
+function m.SubscribeFilter(request)
+  local userID = request.session.userID
+  local filterID = request.params.filterID
+  if not userID then
+    return {json = {error = 'you must be logged in!', data = {}}}
+  end
+  local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
+
+  if ok then
+    return {json = {error = false, data = ok} }
+  else
+    return {json = {error = {err}, data = {}}}
+  end
+
 end
 
 function m.SearchFilter(request)
@@ -41,8 +58,12 @@ function m.SearchFilter(request)
 end
 --
 function m.GetUserFilters(request)
-  local ok, err = filterAPI:GetUserFilters(request.session.userID)
-  return {json = {error = {err}, data = ok or {}}}
+  local ok, err = userAPI:GetUserFilters(request.session.userID)
+  if ok then
+    return {json ={error = false, data = ok} }
+  else
+    return {json = {error = {err}, data = {}}}
+  end
 end
 
 local function GetUserRecentSeen()

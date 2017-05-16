@@ -48,6 +48,7 @@
   <% end %>
 
   <% if post.containsSources then print('has sources')%>
+    <h3> Sources: </h3>
     <% for _,tag in pairs(post.tags or {}) do %>
       <% if tag.name:find('^meta:sourcePost') then %>
         <% render("views.st.tag",{tag = tag}) %>

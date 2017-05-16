@@ -28,13 +28,13 @@ function m.DisplaySettings(request)
     end
   end
 
-  request.fakeNames = user.fakeNames == '1' and 'checked' or ''
-  request.enablePM = user.enablePM == '1' and 'checked' or ''
-  request.hideSeenPosts = user.hideSeenPosts == '1' and 'checked' or ''
-  request.hideVotedPosts = user.hideVotedPosts == '1' and 'checked' or ''
-  request.hideClickedPosts = user.hideClickedPosts == '1' and 'checked' or ''
-  request.showNSFW = user.showNSFW == '1' and 'checked' or ''
-  request.showNSFL = user.showNSFL == '1' and 'checked' or ''
+  request.fakeNames = user.fakeNames and 'checked' or ''
+  request.enablePM = user.enablePM and 'checked' or ''
+  request.hideSeenPosts = user.hideSeenPosts and 'checked' or ''
+  request.hideVotedPosts = user.hideVotedPosts and 'checked' or ''
+  request.hideClickedPosts = user.hideClickedPosts and 'checked' or ''
+  request.showNSFW = user.showNSFW and 'checked' or ''
+  request.showNSFL = user.showNSFL and 'checked' or ''
   request.userBio = user.bio
 
   ngx.log(ngx.ERR, user.enablePM)
@@ -49,15 +49,15 @@ function m.UpdateSettings(request)
     print('no user')
   end
 
-  user.enablePM = request.params.EnablePM and 1 or 0
-  user.fakeNames = request.params.fakeNames and 1 or 0
+  user.enablePM = request.params.EnablePM and true or false
+  user.fakeNames = request.params.fakeNames and true or false
   print(user.fakeNames)
 
-  user.hideSeenPosts = request.params.hideSeenPosts and 1 or 0
-  user.hideVotedPosts = request.params.hideVotedPosts and 1 or 0
-  user.hideClickedPosts = request.params.hideClickedPosts and 1 or 0
-  user.showNSFW = request.params.showNSFW and 1 or 0
-  user.showNSFL = request.params.showNSFL and 1 or 0
+  user.hideSeenPosts = request.params.hideSeenPosts and true or false
+  user.hideVotedPosts = request.params.hideVotedPosts and true or false
+  user.hideClickedPosts = request.params.hideClickedPosts and true or false
+  user.showNSFW = request.params.showNSFW and true or false
+  user.showNSFL = request.params.showNSFL and true or false
   user.bio = request.params.userbio or ''
 
   local ok, err = userAPI:UpdateUser(user.id, user)

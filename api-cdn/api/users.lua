@@ -256,18 +256,18 @@ function api:UpdateUser(userID, userToUpdate)
 		end
 	end
 
-	print(userToUpdate.fakeNames)
 
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
-		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
-		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
-		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
-		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
+		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
+		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,
+		hideClickedPosts = userToUpdate.hideClickedPosts and 1 or 0,
+		showNSFW = userToUpdate.showNSFW and 1 or 0,
+		showNSFL = userToUpdate.showNSFL and 1 or 0,
 		username = userToUpdate.username,
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
-		fakeNames = (userToUpdate.fakeNames == 0) and 0 or 1
+		fakeNames = userToUpdate.fakeNames and 1 or 0
 	}
 
 	for k,v in pairs(userToUpdate) do

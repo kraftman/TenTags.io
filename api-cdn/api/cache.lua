@@ -698,7 +698,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
         break
       end
     end
-    if user.hideSeenPosts == '1' then
+    if user.hideSeenPosts then
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else

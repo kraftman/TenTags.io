@@ -131,17 +131,18 @@ function m.GetPost(request)
   end
 
   for _,v in pairs(post.tags) do
-    print(v.name)
-    if v.name:find('^meta:sourcepost:') then
-      
+    if v.name:find('^meta:sourcePost:') then
+
       post.containsSources = true
-      local sourcePostID = v.name:match('meta:sourcepost:(%w+)')
+      local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
 
       if sourcePostID then
+        print(v.name, sourcePostID)
 
         local parentPost = (postAPI:GetPost(userID, sourcePostID))
 
         if v.name and parentPost and parentPost.title then
+          print(parentPost.title)
           v.fakeName = parentPost.title
           v.postID = sourcePostID
         end

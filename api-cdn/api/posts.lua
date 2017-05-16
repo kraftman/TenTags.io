@@ -116,7 +116,7 @@ function api:VotePost(userID, postID, direction)
   }
 
   local user = cache:GetUser(userID)
-	if tonumber(user.hideVotedPosts) == 1 then
+	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 
@@ -239,7 +239,7 @@ function api:GetPost(userID, postID)
 
 	local user = cache:GetUser(userID)
 
-	if user.hideClickedPosts == '1' then
+	if user.hideClickedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 

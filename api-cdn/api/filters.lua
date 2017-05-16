@@ -153,7 +153,12 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 	end
 
 	userFilter.name = userFilter.name:lower()
-
+	if(#userFilter.name < 2 ) then
+		return nil, 'filter name is too short'
+	end
+	if(#userFilter.name > 20 ) then
+		return nil, 'filter name is too long'
+	end
 
 	local newFilter = {
 		id = uuid.generate_random(),

@@ -23,6 +23,8 @@ local sanitize_html = Sanitizer({whitelist = my_whitelist})
 
 
 function m:Register(app)
+
+  app:get('subscribefilter', '/f/:filterID/sub', self.SubscribeFilter)
   app:match('filter','/f/:filterlabel',respond_to({GET = self.DisplayFilter,POST = self.NewFilter}))
   app:match('newfilter','/filters/create',respond_to({GET = self.CreateFilter,POST = self.NewFilter}))
   app:match('updatefilter','/filters/:filterlabel',respond_to({GET = self.ViewFilterSettings,POST = self.UpdateFilter}))
@@ -34,15 +36,29 @@ function m:Register(app)
 
 end
 
+function m.SubscribeFilter(request)
+  local userID = request.session.userID
+
+  if not userID then
+    return { render = 'pleaselogin' }
+  end
+  local filterID = request.params.filterID
+
+
+  local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to toggle filter sub: ',err)
+  end
+  return {redirect_to = request:url_for("allfilters") }
+end
+
 function m.ToggleDefault(request)
-  if not request.session.userID then
+  local userID = request.session.userID
+
+  if not userID then
     return { render = 'pleaselogin' }
   end
 
-  local userID = request.session.userID
-  if not userID then
-    return 'unauthorised'
-  end
   local filterID = request.params.filterID
   if not filterID then
     return 'no filter ID given'

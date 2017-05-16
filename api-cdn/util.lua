@@ -90,6 +90,19 @@ function util.GetStyleSelected(self, styleName)
 
 end
 
+function util.UserHasFilter(self, filterID)
+  if not self.session.userID then
+    return false
+  end
+  for k,v in pairs(self.userFilters) do
+    if v.id == filterID then
+      return true
+    end
+  end
+  return false
+
+end
+
 function util.CalculateColor(name)
   local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
   local sum = 0

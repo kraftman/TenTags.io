@@ -144,7 +144,14 @@ function userread:GetUser(userID)
       user[k] = nil
     end
   end
+
   user.fakeNames = user.fakeNames == '1' and true or false
+  user.enablePM = user.enablePM == '1' and true or false
+  user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
+  user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
+  user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
+  user.showNSFW = user.showNSFW == '1' and true or false
+  user.showNSFL = user.showNSFL == '1' and true or false
 
   return user
 

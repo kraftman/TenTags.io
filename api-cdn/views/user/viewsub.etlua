@@ -7,7 +7,7 @@
   </div>
 <% end %>
 
-<% if session.userID and (userInfo.enablePM == '1') then %>
+<% if session.userID and (userInfo.enablePM) then %>
   <div class = 'panel panel-default' >
     <div>
       <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
