@@ -30,6 +30,9 @@
     <div class="checkbox">
       <label><input type="checkbox" name='showNSFW' <%= showNSFW -%>>Show NSFW</label>
     </div>
+    <div class="checkbox">
+      <label><input type="checkbox" name='showNSFL' <%= showNSFL -%>>Show NSFL</label>
+    </div>
 
     <button class='btn btn-default' type="submit" value="Submit">submit</button>
 

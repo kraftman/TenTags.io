@@ -21,7 +21,7 @@ function M:CreateIndex()
 
   if not res or res.status > 300 and res.status ~= 404 then
     --print(res.status)
-    return nil, res.body
+    return nil, res and res.body or res.status
   end
   path = "http://elasticsearch1:9200"..'/'..index
   res, err = httpc:request_uri(path, {

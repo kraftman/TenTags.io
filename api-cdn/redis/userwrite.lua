@@ -58,6 +58,29 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
+function userwrite:AddSavedPost(userID, postID)
+  print('=========================adding saved post: ', postID)
+  local red = self:GetUserWriteConnection()
+  local key = 'userSavedPost:'..userID
+
+  local ok, err = red:sadd(key, postID)
+
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
+function userwrite:RemoveSavedPost(userID, postID)
+  local red = self:GetUserWriteConnection()
+  local key = 'userSavedPost:'..userID
+
+  local ok, err = red:srem(key, postID)
+
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
 
 function userwrite:AddUserPostVotes(userID, postID)
   local red = self:GetUserWriteConnection()

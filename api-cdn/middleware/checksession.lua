@@ -4,6 +4,7 @@ local M = {}
 
 local sessionAPI = require 'api.sessions'
 local userAPI = require 'api.users'
+local filterAPI = require 'api.filters'
 local csrf = require("lapis.csrf")
 
 local uuid = require 'lib.uuid'

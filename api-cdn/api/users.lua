@@ -50,6 +50,39 @@ function api:UserHasVotedTag(userID, postID, tagName)
 
 end
 
+function api:ToggleSavePost(userID,postID)
+	local ok, err = self:RateLimit('ToggleSavePost:',userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	if not user then
+		return nil, 'user not found'
+	end
+
+	local post = cache:GetPost(postID)
+	if not post then
+		return nil, 'post not found'
+	end
+
+	ok, err = self.userRead:SavedPostExists(userID, post.id)
+	print('saved post exists: ',ok)
+	if ok == nil then
+		print('couldnt get savedpost exits')
+		return nil, err
+	end
+
+	if ok == true then
+		print('removing saved post')
+		ok, err = self.userWrite:RemoveSavedPost(userID, post.id)
+	else
+	print('addingsaved post')
+	ok, err = self.userWrite:AddSavedPost(userID, post.id)
+	end
+
+	return ok, err
+end
+
 
 function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
@@ -58,8 +91,6 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 	if not ok then
 		return ok, err
 	end
-
-
 
 	if userID ~= userToSubID then
 		local user = cache:GetUser(userID)
@@ -257,18 +288,19 @@ function api:UpdateUser(userID, userToUpdate)
 			return nil, 'you must be admin to edit a users details'
 		end
 	end
-	print(userToUpdate.fakeNames)
+
 
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
-		hideSeenPosts = tonumber(userToUpdate.hideSeenPosts) == 0 and 0 or 1,
-		hideVotedPosts = tonumber(userToUpdate.hideVotedPosts) == 0 and 0 or 1,
-		hideClickedPosts = tonumber(userToUpdate.hideClickedPosts) == 0 and 0 or 1,
-		showNSFW = tonumber(userToUpdate.showNSFW) == 0 and 0 or 1,
+		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
+		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,
+		hideClickedPosts = userToUpdate.hideClickedPosts and 1 or 0,
+		showNSFW = userToUpdate.showNSFW and 1 or 0,
+		showNSFL = userToUpdate.showNSFL and 1 or 0,
 		username = userToUpdate.username,
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
-		fakeNames = userToUpdate.fakeNames == 0 and 0 or 1
+		fakeNames = userToUpdate.fakeNames and 1 or 0
 	}
 
 	for k,v in pairs(userToUpdate) do

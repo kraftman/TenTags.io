@@ -1,16 +1,33 @@
 <div class='info-bar'>
   <% if thisfilter then %>
-    <h3> <%= thisfilter.name-%></h3>
-    <p><%= thisfilter.description -%></p>
-    <% if next(thisfilter.relatedFilters) then %>
-      Related Filters:
-        </br>
-        <% for _,filter in pairs(thisfilter.relatedFilters) do %>
-        <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
-          <%= filter.name -%>
-        </a>
-        <% end %>
-    <% end %>
-  <% else %>Welcome to filter!<% end %>
+    <a class = 'infobar-title' href='#'>
+      <%= thisfilter.name-%>
+    </a>
+    <div class='infobar-body'>
+      <%- thisfilter.description -%>
+      <% if next(thisfilter.relatedFilters) then %>
+        Related Filters:
+          </br>
+          <% for _,filter in pairs(thisfilter.relatedFilters) do %>
+          <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+            <%= filter.name -%>
+          </a>
+          <% end %>
+      <% end %>
+    </div>
+  <% else %>
+  <p>Welcome to filter!</p>
+  <% if not session.userID then %>
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- top-ad -->
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:728px;height:90px"
+         data-ad-client="ca-pub-5666598062804330"
+         data-ad-slot="3229235607"></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  <% end %>
+  <% end %>
   <% if enableAds then %><% end %>
 </div>

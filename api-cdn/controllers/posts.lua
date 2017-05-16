@@ -12,13 +12,6 @@ local whitelist = require "web_sanitize.whitelist"
 
 local my_whitelist = whitelist:clone()
 
--- let iframes be used in sanitzied HTML
-my_whitelist.tags.iframe = {
-  width = true,
-  height = true,
-  frameborder = true,
-  src = true,
-}
 my_whitelist.tags.img = false
 
 local sanitize_html = Sanitizer({whitelist = my_whitelist})
@@ -52,6 +45,22 @@ function m:Register(app)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
+  app:get('savepost','/post/:postID/save',self.ToggleSavePost)
+
+end
+
+function m.ToggleSavePost(request)
+  local userID = request.session.userID
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  local postID =  request.params.postID
+  local ok, err = userAPI:ToggleSavePost(userID, postID)
+  if not ok then
+    print('error saving post, ',err)
+    return 'error saving post'
+  end
+  return 'succes'
 
 end
 
@@ -110,8 +119,6 @@ function m.GetPost(request)
     return 'unable to find post'
   end
 
-  print(post.createdBy)
-  request.creatorName = userAPI:GetUser(post.createdBy).username
 
   local comments = commentAPI:GetPostComments(userID, postID,sortBy)
 
@@ -141,13 +148,17 @@ function m.GetPost(request)
 
   for _,v in pairs(post.tags) do
     if v.name:find('^meta:sourcePost:') then
+
       post.containsSources = true
       local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
+
       if sourcePostID then
-        print(sourcePostID)
+        print(v.name, sourcePostID)
+
         local parentPost = (postAPI:GetPost(userID, sourcePostID))
-        print(to_json(parentPost))
-        if v.name and parentPost.title then
+
+        if v.name and parentPost and parentPost.title then
+          print(parentPost.title)
           v.fakeName = parentPost.title
           v.postID = sourcePostID
         end
@@ -316,7 +327,7 @@ function m.GetIcon(request)
 end
 
 function m.AddSource(request)
-  print('adding source')
+
   local sourceURL = request.params.sourceurl
   local userID = request.session.userID
   if not sourceURL then

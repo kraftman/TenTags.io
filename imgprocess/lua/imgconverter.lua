@@ -34,6 +34,10 @@ function loader:LoadPost(postID)
     print('error loading post: ',postID,' ', err)
     return nil, err
   end
+  if not post.link then
+    print('no post link found!')
+    return true
+  end
   return post.link
 end
 
@@ -43,7 +47,8 @@ function loader:LoadImage(imageLink)
 
 	if c ~= 200 then
 		--print(' cant laod image: ',imageInfo.link, ' err: ',err)
-		return nil
+    print(c)
+		return nil, 'cant load image:'
 	end
 	--print(imageInfo.link, type(res.body), res.body)
 	if res:len() > 0 then
@@ -52,7 +57,7 @@ function loader:LoadImage(imageLink)
 		print ('empty image')
 	end
 
-	return nil
+	return nil, 'empty image'
 end
 
 function loader:GetImageLinks(res)
@@ -116,21 +121,29 @@ function loader:ProcessImgur(postURL, postID)
   local image = magick.load_image('/lua/out/'..postID..'.jpg')
   if not image then
     print('couldnt load image for :',postID)
-    return nil
+    return nil, 'unable to load image from file'
   end
   image:coalesce()
   image:set_format('png')
   --finalImage.image:write('/lua/out/p2-'..postID..'.png')
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
 
-  self:SendImage(image,postID..'b')
+  local ok, err = self:SendImage(image,postID..'b')
+  if not ok then
+    print('error sending image: ',err)
+    return nil, 'couldnt send imgur full image'
+  end
   image:resize_and_crop(200,200)
-  self:SendImage(image,postID)
+  ok , err = self:SendImage(image,postID)
+  if not ok then
+    print('error sending image: ',err)
+    return nil, 'couldnt send imgur thumb image'
+  end
 
   os.remove('out/'..postID..'.jpg')
 
 
-  return ok, err
+  return true
 
 end
 
@@ -234,14 +247,14 @@ function loader:GetPostIcon(postURL, postID)
   end
 
 	if not finalImage then
-		return nil
+		return nil, 'no final image!'
 	end
 
   finalImage.image:set_format('png')
 
   local ok ,err = self:SendImage(finalImage.image, postID..'b')
   if not ok then
-    return nil
+    return nil, err
   end
 
   finalImage.image:resize_and_crop(100,100)
@@ -251,7 +264,7 @@ function loader:GetPostIcon(postURL, postID)
 
   ok , err = self:SendImage(finalImage.image, postID)
   if not ok then
-    return nil
+    return nil, err
   end
 
   return true

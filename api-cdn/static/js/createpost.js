@@ -62,9 +62,6 @@ function FilterSelected(value, item){
   })[0]
 
   var tagSelect = $('#selectedtags')[0].selectize
-    tagSelect.addOption({text: 'foo',value: 'fee'})
-
-    tagSelect.refreshOptions()
 
   $.each(selectedFilter.requiredTagNames,function(k,v){
     tagSelect.addOption({text: v,value: v})

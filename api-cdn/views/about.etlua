@@ -1,22 +1,26 @@
 
 
 <div class = 'panel panel-default'>
-  <h3> What is Filtta? </h3>
-  <p>Filtta is a content aggregration site heavily inspired by reddit and hacker news, but with a few differences</p>
+  <h2> What is Filtta? </h2>
+  <p>Filtta is a content aggregration site heavily inspired by reddit and hacker news, but with a few differences:</p>
   <h3> Post Once </h3>
-  <p>With fillta, you don't post to a specific subreddit, you post directly to the site.
-    
-    Filters then search for posts with tags they want, and display a list of them by tag rating
-  Other users can add tags to your post to effectively 'cross-post' them to other filters,
-add tags can be voted on in case they arent relevant </p>
+  <p>With fillta, you don't post to a specific subreddit, you post directly to the site, and tag your post with relevant tags.
+  </p><p>
+    Filters are lists of similar posts based on the rating of the tags.  </br>
+    Anyone can add tags to a post to effectively 'cross-post' them to other filters,
+add the tag rating defines which filter and position the post will be displayed. </p>
 
   <h3>See Once</h3>
-  <p>You can opt to never see a post again after clicking it, voting on it, or even just seeing it.</p>
-  <h3>No reposts<h3>
-  <p> Reposts can be linked directly to their original post, only people who haven't seen the original will see the repost</p>
+  <p>Fed up of stale content? You can opt to never see a post again after clicking it, voting on it, or even just seeing it.</p>
+  <h3>No reposts</h3>
+  <p>No one likes reposts, but there's <a href='https://xkcd.com/1053/'>always someone who hasn't seen it.</a>
+   Reposts can be linked directly to their original post; only people who haven't seen the original will see the repost.</p>
   <h3>All the comments in one place</h3>
   <p>Rather than spreading the comments acrosse different reposts in different places, all comments are on the same post, and can optionally
     be hidden based on the filter they came from</p>
+
+  <h3>Subscribe to posts/comments</h3>
+  <p> Subscribe to entire posts, or individual comments, to get updates on any new replies</p>
 
   <h3>The rest</h3>
   <p>Turn off PM's</p>

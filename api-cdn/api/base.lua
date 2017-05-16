@@ -3,10 +3,6 @@
 local trim = (require 'lapis.util').trim
 local rateDict = ngx.shared.ratelimit
 
-local web_sanitize = require "web_sanitize"
-
-
-
 local TAG_BOUNDARY = 0.15
 
 local M = {}

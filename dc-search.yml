@@ -18,8 +18,8 @@ services:
     mem_limit: 1g
     cap_add:
       - IPC_LOCK
-    # volumes:
-    #   - ./search/es1:/usr/share/elasticsearch/data
+    volumes:
+      - ./search/es1:/usr/share/elasticsearch/data
     depends_on:
       - elasticsearch2
   elasticsearch2:
@@ -40,8 +40,8 @@ services:
     mem_limit: 1g
     cap_add:
       - IPC_LOCK
-    # volumes:
-    #   - ./search/es2:/usr/share/elasticsearch/data
+    volumes:
+      - ./search/es2:/usr/share/elasticsearch/data
   # search:
   #   tty: true
   #   build: .

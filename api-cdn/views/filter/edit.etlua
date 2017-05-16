@@ -13,8 +13,8 @@
       <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
       </br>
       <label for='filterdescription' >Filter Description</label></br>
-      <input type='textarea' rows="10" cols="50" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  />
-      </br>
+      <textarea rows="10" cols="50" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  >
+      </textarea></br>
       <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
     </form>
