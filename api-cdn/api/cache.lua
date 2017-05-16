@@ -52,6 +52,9 @@ function cache:GetThreads(userID, startAt, range)
 end
 
 function cache:SavedPostExists(userID, postID)
+  if not userID then
+    return false
+  end
   return userRead:SavedPostExists(userID, postID)
 end
 
@@ -415,11 +418,11 @@ function cache:GetFilterPosts(userID, filter, sortBy)
   local filterIDs = redisread:GetFilterPosts(filter, sortBy)
   local posts = {}
   local post
+
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
-
       post.userSaved = true
     end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)
