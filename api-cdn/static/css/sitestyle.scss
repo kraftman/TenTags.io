@@ -8,6 +8,7 @@ $downvote: #ebb;
 $postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
 $panel-color: #fff;
+$alert-green: green;
 
 .center-page {
 
@@ -274,6 +275,13 @@ a {
   display: none;
 }
 
+.post-icon-link {
+    display: inline-block;
+    vertical-align: top;
+    margin-top: 5px;
+}
+
+
 .filterstyle-button {
   display: inline-block;
 }
@@ -283,6 +291,10 @@ a {
   margin-right:12px;
   margin-top: 12px;
   clear:both;
+}
+
+.settings-alert {
+  color: $alert-green;
 }
 
 

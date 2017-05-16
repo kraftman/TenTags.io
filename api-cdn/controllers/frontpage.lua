@@ -51,8 +51,13 @@ function m.FrontPage(request)
   return {render = 'frontpage'}
 end
 
+function m.StopIt()
+  return 'stop it'
+end
+
 function m:Register(app)
   app:get('home','/',self.FrontPage)
+  app:post('home', '/',self.StopIt)
   app:get('new','/new',self.FrontPage)
   app:get('best','/best',self.FrontPage)
   app:get('seen','/seen',self.FrontPage)

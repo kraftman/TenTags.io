@@ -7,9 +7,7 @@
 
 
 
-  <% if userHasAlerts then %>
-    <div><a href="<%= url_for('viewalerts') %>">New Alert!</a></div>
-  <% end %>
+
 
   <% if session.username then %>
   <form class='siteSearch' id='siteSearch' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
@@ -35,7 +33,9 @@
   <% end %>
 
   <% if session.username then %>
-    <div class = 'settings-link' ><a  href="<%= url_for('usersettings') %>" ><%= session.username %></a></div>
+    <div class = 'settings-link ' >
+      <a  class='<%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('usersettings') %>" ><%= session.username %></a>
+    </div>
   <% end %>
 
 

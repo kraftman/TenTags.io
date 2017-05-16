@@ -8,6 +8,13 @@ local respond_to = (require 'lapis.application').respond_to
 local to_json = (require 'lapis.util').to_json
 
 
+function m:Register(app)
+  app:match('viewmessages','/messages',respond_to({GET = self.ViewMessages}))
+  app:match('newmessage','/messages/new',respond_to({GET = self.NewMessage, POST = self.CreateThread}))
+  app:match('replymessage','/messages/reply/:threadID',respond_to({GET = self.MessageReply,POST = self.CreateMessageReply}))
+end
+
+
 function m.NewMessage(request)
   if not request.session.userID then
     return { render = 'pleaselogin' }
@@ -60,12 +67,6 @@ end
 function m.MessageReply(request)
   request.thread = threadAPI:GetThread(request.params.threadID)
   return {render = 'message.reply'}
-end
-
-function m:Register(app)
-  app:match('viewmessages','/messages',respond_to({GET = self.ViewMessages}))
-  app:match('newmessage','/messages/new',respond_to({GET = self.NewMessage, POST = self.CreateThread}))
-  app:match('replymessage','/messages/reply/:threadID',respond_to({GET = self.MessageReply,POST = self.CreateMessageReply}))
 end
 
 return m

@@ -7,7 +7,9 @@
     <% render("views.post.icon",{post = post}) %>
 
   <div class = 'post-body'>
-    <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+    <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+      <%= post.title -%>
+    </a>
     </br>
     <span class='comment-link'><%= post.views or 0 %> views</span>
     <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
