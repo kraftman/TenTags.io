@@ -7,7 +7,7 @@ $upvote: #beb;
 $downvote: #ebb;
 $postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
-$panel-color: #edf4fc;
+$panel-color: #f9fbff;
 $highlight-color: #88add8;
 $alert-green: green;
 
@@ -23,6 +23,8 @@ $alert-green: green;
   padding-right: 3px;
 
 }
+
+
 
 @mixin card1(){
   border-radius: 2px;
@@ -48,7 +50,7 @@ a {
   color: $link-color;
   text-decoration: none;
   &:hover {
-    background-color: #eee;
+    background-color: #ffffff;
   }
 }
 
@@ -183,10 +185,10 @@ a {
 .filter-icon {
   display: inline-block;
   background-color: $background-color;
-  padding-left: 3px;
-  padding-right: 3px;
-  padding-top: 2px;
-  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
   border-radius: 3px;
   font-size:  10px;
   text-decoration: none;
@@ -206,19 +208,15 @@ a {
 
 .top-nav {
   @include card1();
-  height: auto;
+  height: 40px;
   background-color: $highlight-color;
-  display: table;
+
   width: 100%;
 
   z-index:11;
   margin: 0px;
   border-radius: 0px;
-  .siteSearch {
-    display: inline-block;
-    vertical-align: top;
-    padding-top: 7px;
-  }
+
   .gin {
     display: inline-block;
     padding-top: 7px;
@@ -231,15 +229,23 @@ a {
 .home-link {
   display: inline-block;
   vertical-align: top;
-  padding-right: 10px;
-  height: 100%;
+  padding-right: 5px;
+  padding-left: 5px;
   padding-top: 12px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.site-search {
+  padding-left: 5px;
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 6px;
 }
 .form-login {
   float: right;
   margin-right: 10px;
   vertical-align: top;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 
@@ -247,7 +253,7 @@ a {
   display: none;
   position: absolute;
   right: 10px;
-  top: 55px;
+  top: 45px;
 
   z-index: 5;
 }
@@ -265,7 +271,10 @@ a {
     height: 25px;
     line-height: 25px;
     text-align: center;
-    margin-left: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 3px;
+    padding-bottom: 3px;
   }
 }
 
@@ -300,7 +309,7 @@ a {
 .filter-bar {
   @include card1();
   display: table-cell;
-  flex: 0 0 250px;
+  width: 200px;
   position: static;
   border-radius: 0px;
   z-index: 8;
@@ -692,7 +701,7 @@ ul {
 
 .post-full-bottombar {
   background-color: $postborder;
-  min-height: 25px;
+  min-height: 30px;
 
   a {
     display: inline-block;
@@ -701,6 +710,7 @@ ul {
     padding-left: 8px;
     line-height: 25px;
     min-height: 25px;
+    height: 100%;
     vertical-align: middle;
   }
   .comment-link {
