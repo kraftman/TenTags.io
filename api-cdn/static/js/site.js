@@ -168,20 +168,31 @@ function FilterToggle(){
   var filterBar = $('.filter-bar')
 
   var $hamburger = $(".hamburger");
-  $hamburger.on("click", function(e) {
+  $hamburger.click(function(e) {
+    e.stopPropagation();
+    console.log('this')
     $hamburger.toggleClass("is-active");
-    console.log('that')
-    // Do something else, like open/close menu
 
     var display = filterBar.css('display');
     if (display === 'flex' || display ==='table-cell') {
       filterBar.css('display',"none");
+      console.log('hiding filtebar')
     } else {
 
       if($(window).width() < 481) {
-        filterBar.css('display',"flex");
-        filterBar.focus();
-        filterBar.focusout(function() {filterBar.css('display', 'none')});
+        filterBar.css('display','flex')
+        filterBar.focus()
+        filterBar.focusout(function(e){
+          console.log(e)
+          if ($(e.relatedTarget).parents('.filter-bar').length){
+            console.log('thisjiuh')
+          } else {
+            console.log('nope')
+            filterBar.hide()
+          }
+        })
+
+
       } else {
         filterBar.css('display',"table-cell");
       }
@@ -456,9 +467,17 @@ function AddFilterSearch(){
 
 function AddMenuHandler(){
   $('.settings-link').click(function(e){
+    var settingsMenu = $('.settings-menu')
+    settingsMenu.toggle()
+    settingsMenu.focus()
+    settingsMenu.focusout(function(e){
+      if ($(e.relatedTarget).parents('.settings-menu').length){
 
-    $('.settings-menu').toggle()
-    $('.settings-menu').focus()
+      } else {
+        
+        settingsMenu.hide()
+      }
+    })
 
     e.preventDefault();
   })
