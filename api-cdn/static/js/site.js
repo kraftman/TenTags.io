@@ -16,7 +16,7 @@ $(function() {
   AddFilterSearch();
   GetUserSettings();
   LoadKeybinds();
-  LoadNewPosts();
+  //LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
   LoadUserFilters();
