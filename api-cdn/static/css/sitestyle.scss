@@ -538,10 +538,18 @@ a {
   }
 
   .site-search {
-
     width: 100px;
     input {
       width: 100px;
+    }
+  }
+  .form-login {
+    input {
+      width: 100px;
+      display: inline-block;
+    }
+    button {
+      display: inline-block;
     }
   }
   .settings-micro {
@@ -551,8 +559,6 @@ a {
   .settings-link p {
     display: none;
   }
-
-
 
   .settings-menu {
     @include card1();
