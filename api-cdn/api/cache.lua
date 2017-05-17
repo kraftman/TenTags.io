@@ -140,14 +140,14 @@ function cache:GetAccount(accountID)
   if not DISABLE_CACHE then
     ok, err = userInfo:get(accountID)
     if err then
-      ngx.log(ngx.ERR, 'unable to get account: ',err)
+      return nil, 'couldnt load account from shdict'
     end
     if ok then
       return from_json(ok)
     end
   end
 
-  account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  account, err = userRead:GetAccount(accountID)
   if err then
     return account, err
   end
