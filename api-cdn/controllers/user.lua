@@ -141,7 +141,7 @@ function m.NewLogin(request)
       ["Content-Type"] = "application/x-www-form-urlencoded",
     }
   })
-  print(to_json(res),err)
+
   if not res then
     request.success = false
     request.errorMessage = 'There was an error registering you, please try again later'
@@ -190,6 +190,7 @@ function m.ConfirmLogin(request)
     -- TODO: change this to a custom failure page
     return { redirect_to = request:url_for("home") }
   end
+  print('got account: ',account.id)
 
   request.session.accountID = account.id
   request.session.userID = account.currentUserID
