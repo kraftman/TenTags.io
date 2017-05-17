@@ -13,7 +13,7 @@
 
 <% render('views.st.filterstyles') %>
 
-<div id='posts'>
+<div class='posts'>
   <% for i, post in pairs(posts) do %>
     <% render(GetFilterTemplate(),{post = post}) %>
   <% end %>

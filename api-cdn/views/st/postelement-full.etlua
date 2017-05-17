@@ -19,6 +19,10 @@
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
     </a>
+  <% else %>
+  <a class = 'postelement-text' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+    <p ><%= post.text:sub(1,300) %></p>
+  </a>
   <% end %>
 
   <div class = 'post-full-bottombar'>

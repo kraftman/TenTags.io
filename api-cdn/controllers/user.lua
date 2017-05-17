@@ -23,7 +23,11 @@ function m:Register(app)
     POST = self.CreateSubUser
   }))
 
-  app:post('login','/login',self.NewLogin)
+  app:match('login','/login',respond_to({
+    POST = self.NewLogin,
+    GET = function() return 'Please login using the top bar'  end
+  }))
+
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', self.TagUser)
   app:get('viewuser','/user/:username', self.ViewUser)

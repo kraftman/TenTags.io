@@ -8,7 +8,7 @@
 
   <div class = 'post-body'>
     <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-      <%= post.title -%>
+      <p class = 'post-text'><%= post.title -%></p>
     </a>
     </br>
     <span class='comment-link'><%= post.views or 0 %> views</span>
