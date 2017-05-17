@@ -17,7 +17,7 @@ $(function() {
     e.preventDefault();
   })
 
-  $(document).on('click', '.togglefiltercomment', function() {
+  $(document).on('click', '.togglefiltercomment', function(e) {
     $(this).toggleClass('togglefilter-selected');
     var className = '.'+$(this).attr('data-filterID')
     console.log(className);

@@ -42,7 +42,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
 	local user = cache:GetUser(userID)
-	
+
 	if user.role == 'Admin' and user.fakeNames then
 
 		local account = cache:GetAccount(user.parentID)
@@ -153,7 +153,8 @@ function api:CreateComment(userID, userComment)
 			id = newComment.postID..':'..newComment.id,
 			postID = newComment.postID,
 			commentID = newComment.id,
-			userID = userID
+			userID = userID,
+			
 		}
 
 		-- queue the rest

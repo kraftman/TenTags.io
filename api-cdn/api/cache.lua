@@ -335,8 +335,8 @@ function cache:GetSortedComments(userID, postID,sortBy)
   end
 
   for _,v in pairs(flatComments) do
-
     v.username = self:GetUsername(v.createdBy) or 'unknown'
+    v.filters = self:GetFilterInfo(v.filters or {})
 
     if userID and userVotedComments[v.id] then
       v.userHasVoted = true

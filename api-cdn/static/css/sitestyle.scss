@@ -1,5 +1,5 @@
 $link-color: #000;
-$background-color: #e8eff7;
+$background-color: #a6abb5;
 $title-box-color: #add8e6;
 $black: #000;
 $white: #fff;
@@ -7,8 +7,9 @@ $upvote: #beb;
 $downvote: #ebb;
 $postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
-$panel-color: #f9fbff;
-$highlight-color: #88add8;
+$panel-color: #d5d9e2;
+$highlight-color: #424b5b;
+$hight-font-color: #d5d9e2;
 $alert-green: green;
 
 .center-page {
@@ -227,6 +228,7 @@ a {
 
 
 .home-link {
+  color: $hight-font-color;
   display: inline-block;
   vertical-align: top;
   padding-right: 5px;
@@ -302,6 +304,7 @@ a {
   height: 100%;
 }
 .settings-link {
+  color: $hight-font-color;
   display: inline-block;
   height: 100%;
   box-sizing: border-box;
@@ -317,6 +320,7 @@ a {
 }
 
 .settings-micro {
+  color: $hight-font-color;
   text-align: center;
   vertical-align: middle;
   display: none;
