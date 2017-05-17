@@ -26,8 +26,8 @@
   <% end %>
 
   <% if session.username then %>
-    <div class = 'settings-link ' >
-      <a  class='settings-link  <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('usersettings') %>" ><%= session.username %></a>
+    <div class = 'settings-cont ' >
+      <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('usersettings') %>" ><%= session.username %></a>
     </div>
   <% end %>
 

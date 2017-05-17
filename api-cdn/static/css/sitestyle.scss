@@ -294,11 +294,21 @@ a {
   display: inline-block;
 }
 
-.settings-link {
+.settings-cont {
+  display: inline-block;
   float:right;
-  margin-right:12px;
-  margin-top: 12px;
   clear:both;
+  height: 100%;
+}
+.settings-link {
+  display: inline-block;
+  height: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
+  margin-right: 5px;
+  padding-right: 8px;
+  padding-left: 8px;
+  padding-top: 10px;
 }
 
 .settings-alert {
