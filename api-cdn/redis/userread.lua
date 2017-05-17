@@ -82,7 +82,7 @@ function userread:GetAccount(accountID)
   if not ok or ok == ngx.null then
     return nil,err
   end
-  print(to_json(ok))
+  
   local account = self:ConvertListToTable(ok)
 
   account.sessions = {}
