@@ -151,8 +151,9 @@ function cache:GetAccount(accountID)
 
   account, err = userRead:GetAccount(accountID)
   print('getting from userread')
-  print(to_json(account))
+
   if err then
+    print('============ ',err)
     return account, err
   end
   ok, err = userInfo:set(accountID, to_json(account))
