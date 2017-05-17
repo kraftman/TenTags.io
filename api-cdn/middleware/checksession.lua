@@ -25,6 +25,8 @@ function M:ValidateSession(request)
     if account then
       request.account = account
       return
+    else
+      print('failed to validate: ',err)
     end
 
     self:RemoveSession(request)
