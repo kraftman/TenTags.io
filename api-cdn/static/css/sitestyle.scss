@@ -880,6 +880,7 @@ ul {
 
 
 .comment-controls {
+
   display: none;
   span {
     display: inline-block;
@@ -890,6 +891,9 @@ ul {
     vertical-align: middle;
     height: 100%;
   }
+}
+.comment-controls:hover {
+  display: block;
 }
 
 .comment:focus {

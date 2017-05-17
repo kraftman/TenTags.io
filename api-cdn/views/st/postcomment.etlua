@@ -37,7 +37,6 @@
       <% for _,filter in pairs(child.filters or {}) do %>
         <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
       <% end %>
-      <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
 
 
 
@@ -64,6 +63,10 @@
             <span class="ti-trash"></span>
           </a>
         <% end %>
+
+        <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">
+          <span class="ti-plus"></span>
+        </a>
 
 
       </div>
