@@ -1,15 +1,16 @@
 $link-color: #000;
-$background-color: #a6abb5;
+$background-color: #ACBDBA;
 $title-box-color: #add8e6;
 $black: #000;
 $white: #fff;
-$upvote: #beb;
-$downvote: #ebb;
+$upvote: #03191e;
+$downvote: #e54b4b;
 $postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
-$panel-color: #d5d9e2;
-$highlight-color: #424b5b;
-$hight-font-color: #d5d9e2;
+$panel-color: #CDDDDD;
+$postelement-color: #CDDDDD;
+$highlight-color: #03191e;
+$hight-font-color: #e54b4b;
 $alert-green: green;
 
 .center-page {
@@ -37,6 +38,7 @@ $alert-green: green;
 body {
   min-height: 100%;
 }
+
 html,body {
   font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   font-size: 14px;
@@ -69,6 +71,15 @@ a {
   height: 30px;
   width: 100%;
   vertical-align: middle;
+}
+
+.hamburger {
+  font-size: 30px;
+  vertical-align: top;
+  color: $hight-font-color;
+  display: inline-block;
+  padding-top: 4px;
+  padding-left: 5px;
 }
 
 .usercomment-info {
@@ -404,28 +415,26 @@ a {
 
 .settings-menu {
   @include card1();
+
   height: auto;
   width: 170px;
-  display: none;
+
   float: none;
   position: absolute;
   top: 60px;
   right: 5px;
   z-index: 10;
+  padding-bottom: 3px;
+  padding-top: 3px;
 
-  ul {
-    padding-left: 10px;
-    margin-top: 0;
-    margin-bottom: 0;
+  a {
     list-style-type: none;
     display: block;
     width: 100%;
-    line-height: 30px;
+    line-height: 28px;
     text-align: left;
     vertical-align: middle;
-    ul {
-      display: none;
-    }
+    padding-left: 10px;
   }
 }
 
@@ -446,12 +455,6 @@ a {
   }
 
 
-.hamburger {
-  padding: 3px;
-  width: 35px;
-  height: 35px;
-  display: inline-block;
-}
 
 .navbar-nav > li > a{
   padding:8px;
@@ -725,7 +728,7 @@ ul {
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
-  background: #fff;
+  background-color: $postelement-color;
 }
 
 .infobar-title{

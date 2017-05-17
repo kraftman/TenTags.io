@@ -4,7 +4,8 @@
 
   -->
 
-    <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
+
+  <span class="ti-menu hamburger" ></span>
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
         <input class='form-control form-search' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>

@@ -1,31 +1,25 @@
 <div class='settings-menu' tabindex="-1">
-  <ul>
+
     <% if session.username then %>
     <% if userHasAlerts then %>
-      <li><a href="<%= url_for('viewalerts') %>" class ='settings-alert'>New Alert!</a></li>
+      <a href="<%= url_for('viewalerts') %>" class ='settings-alert'>New Alert!</a>
     <% end %>
-      <li><a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a></li>
-      <li><a  href="<%= url_for('usersettings') %>" >Settings</a></li>
-      <li></a> <a href="<%= url_for('newsubuser') %>">Create User</a></li>
-      <li class="dropdown">
-        <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
-        <ul class="dropdown-menu">
-          <% for _,user in pairs(otherUsers or {}) do %>
-            <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
-          <% end %>
+      <a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a>
+      <a  href="<%= url_for('usersettings') %>" >Settings</a>
+      </a> <a href="<%= url_for('newsubuser') %>">Create User</a>
 
-        </ul>
-      </li>
+        <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
+
 
       <% if account and account.role == 'Admin' then %>
-        <li><a href="<%= url_for('adminpanel') %>">Admin</a></li>
+      <a href="<%= url_for('adminpanel') %>">Admin</a>
       <% end %>
 
-      <li><a href="<%= url_for('newmessage') %>">New Message</a></li>
-      <li><a href="<%= url_for('newpost') %>">New Post</a></li>
-      <li><a href="<%= url_for('newfilter') %>">Create Filter</a></li>
-      <li><a href="<%= url_for('about') %>">About</a></li>
-      <li><a href="<%= url_for('logout') %>">Logout</a></li>
+      <a href="<%= url_for('newmessage') %>">New Message</a>
+      <a href="<%= url_for('newpost') %>">New Post</a>
+      <a href="<%= url_for('newfilter') %>">Create Filter</a>
+      <a href="<%= url_for('about') %>">About</a>
+      <a href="<%= url_for('logout') %>">Logout</a>
     <% end %>
   </ul>
 
