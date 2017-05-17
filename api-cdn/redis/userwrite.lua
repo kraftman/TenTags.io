@@ -146,10 +146,13 @@ function userwrite:CreateAccount(account)
     end
   end
 
-
-  local ok, err = red:del('account:'..hashedAccount.id)
+  local ok, err = red:multi()
+  if not ok then
+    return ok, err
+  end
+   ok, err = red:del('account:'..hashedAccount.id)
    ok, err = red:hmset('account:'..hashedAccount.id,hashedAccount)
-
+   ok, err = red:exec()
   return ok, err
 
 end
