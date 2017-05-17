@@ -240,6 +240,7 @@ a {
   display: inline-block;
   vertical-align: top;
   padding-top: 6px;
+
 }
 .form-login {
   float: right;
@@ -309,6 +310,18 @@ a {
   padding-right: 8px;
   padding-left: 8px;
   padding-top: 10px;
+  p {
+    height: 100%;
+    margin: 0px;
+  }
+}
+
+.settings-micro {
+  text-align: center;
+  vertical-align: middle;
+  display: none;
+  height: 100%;
+
 }
 
 .settings-alert {
@@ -504,7 +517,7 @@ a {
     @include card1();
     border-radius: 0px;
     float: none;
-    display: flex;
+    display: none;
     flex-direction: column-reverse;
     width: 250px;
     position: fixed;
@@ -518,6 +531,14 @@ a {
     .hamburger {
       display:inline-block;
     }
+  }
+
+  .settings-micro {
+    display: inline-block;
+  }
+
+  .settings-link p {
+    display: none;
   }
 
 
@@ -819,18 +840,56 @@ ul {
   margin-left: 15px;
 }
 
+.comment-collapse {
+  display: table-cell;
+  height: 100%;
+  width: 20px;
+  border-radius: 2px;
+}
+
+.comment-body {
+  display: table-cell;
+  padding-left: 5px;
+}
+
 .post:focus {
   background: #e5f7ff;
 }
 
 .comment {
-
-  margin-left: 50px;
-  margin: 5px;
-  padding: 5px;
+  display: table;
+  margin: 2px;
+  min-height: 30px;
   background: #fff;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+
+
+}
+
+.comment:focus > .comment-body > .commentInfo > .comment-controls{
+
+  display: block;
+
+}
+
+.comment-title {
+  padding-top: 3px;
+}
+
+
+
+.comment-controls {
+  display: none;
+  span {
+    display: inline-block;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    vertical-align: middle;
+    height: 100%;
+  }
 }
 
 .comment:focus {

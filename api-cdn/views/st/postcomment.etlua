@@ -1,63 +1,80 @@
 
 <div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
 
-  <div class="commentBody <% for _,filter in pairs((child or {}).filters or {}) do %> filter_<%= filter.title -%><% end %>" >
-    <% if child then %>
+  <a href='#' class='comment-collapse' ></a>
+  <div class="comment-body <% for _,filter in pairs((child or {}).filters or {}) do %> filter_<%= filter.title -%><% end %>" >
 
-      <div class="commentTitle" >
-        <a href='#' class='comment-collapse' >-</a>
 
+    <div class="comment-title" >
+
+      <% if child.deleted then %>
+        <p>[deleted]</p>
+      <% else %>
+        <a href="<%= url_for('viewuser',{username = child.username}) %>">
+          <span <%- GetColorForName(child.username) %> ><%= child.username -%> </span>
+          <% if userLabels and userLabels[child.createdBy] then %>
+            <%= userLabels[child.createdBy] -%>
+          <% end %>
+        </a>
+      <% end %>
+
+      <%= (child.up or 0) - (child.down or 0)  -%> votes
+      <%= TimeAgo(ngx.time() - child.createdAt) -%>
+
+
+    </div>
+
+    <div class="commentInfo">
+      <% if child.deleted then %>
+        <p>[deleted]</p>
+      <% else %>
+        <div class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
+          <%- markdown.markdown(child.text) -%>
+        </div>
+      <% end %>
+
+      filters:
+      <% for _,filter in pairs(child.filters or {}) do %>
+        <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
+      <% end %>
+      <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
+
+
+
+      <div class = 'comment-controls'>
         <% if not child.userHasVoted then %>
-          <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">up</a>
-          <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">down</a>
+          <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
+            <span class="ti-angle-down"></span>
+          </a>
+          <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
+            <span class="ti-angle-up"></span>
+          </a>
         <% end %>
-
-        <% if child.deleted then %>
-          <p>[deleted]</p>
+        <% if child.shortURL then %>
+          <a href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
+            <span class="ti-comments"></span>
+          </a
         <% else %>
-          <a href="<%= url_for('viewuser',{username = child.username}) %>">
-            <span <%- GetColorForName(child.username) %> ><%= child.username -%> </span>
-            <% if userLabels and userLabels[child.createdBy] then %>
-              <%= userLabels[child.createdBy] -%>
-            <% end %>
+          <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >
+            <span class="ti-comments"></span>
+          </a>
+        <% end %>
+        <% if session.userID and (child.createdBy == session.userID or account.role == 'Admin') then %>
+          <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>">
+            <span class="ti-trash"></span>
           </a>
         <% end %>
 
-        <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">subscribe</a>
-        <% if child.shortURL then %>
-          <a href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >reply</a
-        <% else %>
-          <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >reply</a>
-        <% end %>
-        <% if session.userID and (child.createdBy == session.userID or account.role == 'Admin') then %>
-          <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>">delete</a>
-        <% end %>
+
       </div>
 
-      <div class="commentInfo">
-        <% if child.deleted then %>
-          <p>[deleted]</p>
-        <% else %>
-          <div class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
-            <%- markdown.markdown(child.text) -%>
-          </div>
-        <% end %>
+      <% for _,child in pairs(comments[key].children or {}) do local depth = depth and depth+1 or 1 print(depth) %>
+        <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
+      <% end %>
 
-        filters:
-        <% for _,filter in pairs(child.filters or {}) do print(filter.title)%>
-          <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
-        <% end %>
-          up: <%= child.up -%>
-          down: <%= child.down -%>
-          score: <%= child.score -%>
-          date: <%= child.createdAt -%>
-      </div>
+    </div>
 
-  <% end %>
 
-    <% for _,child in pairs(comments[key].children or {}) do local depth = depth and depth+1 or 1 print(depth) %>
-      <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
-    <% end %>
 
   </div>
 

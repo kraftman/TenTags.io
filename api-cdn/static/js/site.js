@@ -165,13 +165,28 @@ function SubmitLogin(){
 }
 
 function FilterToggle(){
+  var filterBar = $('.filter-bar')
+
   var $hamburger = $(".hamburger");
   $hamburger.on("click", function(e) {
     $hamburger.toggleClass("is-active");
     console.log('that')
     // Do something else, like open/close menu
-    var filterBar = $('.filter-bar')
-    filterBar.toggle()
+
+    var display = filterBar.css('display');
+    if (display === 'flex' || display ==='table-cell') {
+      filterBar.css('display',"none");
+    } else {
+
+      if($(window).width() < 481) {
+        filterBar.css('display',"flex");
+        filterBar.focus();
+        filterBar.focusout(function() {filterBar.css('display', 'none')});
+      } else {
+        filterBar.css('display',"table-cell");
+      }
+    }
+
   });
 
   $('.toggle-filterstyle').click(function(e){

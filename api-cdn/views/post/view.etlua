@@ -69,11 +69,11 @@
 
 
     <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
-      <fieldset >
-        <label for='addtag' >Add Tag:</label>
-        <input type='text' name='addtag' id='addtag' value=""/>
-        <input id='submitButton' type='submit' name='Submit' value='Submit' />
-      </fieldset>
+
+      <label for='addtag' >Add Tag:</label>
+      <input type='text' name='addtag' id='addtag' value=""/>
+      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+
     </form>
   <% end %>
 
@@ -118,7 +118,9 @@
   </div>
 
 
-  <% render("views.st.postcomment", { key = post.id }) %>
+  <% for _,child in pairs(comments[post.id].children or {}) do local depth = depth and depth+1 or 1  %>
+    <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
+  <% end %>
 
   <% render("views.st.newcomment") %>
 

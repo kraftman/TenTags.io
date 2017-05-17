@@ -68,7 +68,7 @@ function M:Run(request)
 
 
     if request.session.accountID then
-      request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
+      request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID) or {}
     end
 
     if request.session.userID then

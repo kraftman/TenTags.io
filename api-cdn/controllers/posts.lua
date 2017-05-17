@@ -99,26 +99,18 @@ function m.GetPost(request)
   sortBy = sortBy:lower()
   local userID = userID or 'default'
 
-
-  local post
   local postID = request.params.postID
 
-  -- get the post
-  if #postID < 10 then
-    postID = postAPI:ConvertShortURL(postID) or postID
-    post = postAPI:GetPost(userID, postID)
-  else
-    post = postAPI:GetPost(userID, postID)
-
-    if post.shortURL then
-      return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
-    end
-  end
+  local post = postAPI:GetPost(userID, postID)
 
   if not post then
-    return 'unable to find post'
+    return 'post not found'
   end
 
+  if (#postID > 10) and post.shortURL then
+    return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
+  end
+  postID = post.id
 
   local comments = commentAPI:GetPostComments(userID, postID,sortBy)
 
@@ -136,15 +128,6 @@ function m.GetPost(request)
 
   request.comments = comments
 
-  --local post,err = postAPI:GetPost(request.session.userID, postID)
-  --print(to_json(post))
-
-  if not post then
-    if type(err) == 'number' then
-      return {status = err}
-    end
-    return err
-  end
 
   for _,v in pairs(post.tags) do
     if v.name:find('^meta:sourcePost:') then
@@ -183,19 +166,19 @@ function m.GetPost(request)
       return ''
     end
 
-    local username = child.username
-    local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
-    local sum = 0
-
-    for i = 1, #username do
-      sum = sum + (username:byte(i))
-    end
-
-    sum = sum % #colors + 1
-
-    if false then
-      return 'style="background: '..colors[sum]..';"'
-    end
+    -- local username = child.username
+    -- local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
+    -- local sum = 0
+    --
+    -- for i = 1, #username do
+    --   sum = sum + (username:byte(i))
+    -- end
+    --
+    -- sum = sum % #colors + 1
+    --
+    -- if false then
+    --   return 'style="background: '..colors[sum]..';"'
+    -- end
 
     function DEC_HEX(IN)
       local B,K,OUT,I,D=16,"0123456789ABCDEF","",0

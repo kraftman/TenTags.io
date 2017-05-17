@@ -97,6 +97,9 @@ function m.UpvotePost(request)
 end
 
 function m.DownvotePost(request)
+  if not request.session.userID then
+    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
+  end
   if not HashIsValid(request) then
     return 'invalid hash'
   end
@@ -109,6 +112,9 @@ function m.DownvotePost(request)
 end
 
 function m.GetUserSettings(request)
+  if not request.session.userID then
+    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
+  end
   local ok, err = userAPI:GetUserSettings(request.session.userID)
   if ok then
     return {json = {status = 'success', data = ok}}

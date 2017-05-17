@@ -20,14 +20,18 @@
       data-badge="inline"
       data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
       data-callback="SubmitLogin">
-      Submit
+      Sign In/Up
     </button>
     </form>
   <% end %>
 
   <% if session.username then %>
     <div class = 'settings-cont ' >
-      <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('usersettings') %>" ><%= session.username %></a>
+      <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('usersettings') %>" >
+        <p><%= session.username %></p>
+        <span class="ti-more-alt settings-micro"></span>
+      </a>
+
     </div>
   <% end %>
 

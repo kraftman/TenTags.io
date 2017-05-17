@@ -13,7 +13,7 @@ $(function() {
 
   $('.comment-collapse').click( function(e) {
     console.log('hid comment')
-    $(this).parent().parent().children('.commentInfo').toggle()
+    $(this).parent().find('.commentInfo').toggle()
     e.preventDefault();
   })
 

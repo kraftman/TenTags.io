@@ -1,5 +1,5 @@
 
-<div class=' filter-bar'>
+<div tabindex="-1" class=' filter-bar'>
     <!--
 
   -->
@@ -21,7 +21,7 @@
         <% render("views.st.filterbarelement",{filter = filter}) %>
       <% end %>
     </ul>
-  
+
 
 
 

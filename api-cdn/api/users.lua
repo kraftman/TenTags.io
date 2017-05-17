@@ -198,6 +198,9 @@ end
 
 function api:GetAccountUsers(userAccountID, accountID)
 	local userAccount = cache:GetAccount(userAccountID)
+	if not userAccount then
+		return nil, 'couldnt find account'
+	end
 
 	if userAccount.role ~= 'Admin' and userAccountID ~= accountID then
 		return nil, 'must be admin to view other users'
@@ -270,7 +273,7 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
-	
+
 	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
 	if not ok then
 		return ok, err
