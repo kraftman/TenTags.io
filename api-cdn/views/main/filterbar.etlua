@@ -3,7 +3,7 @@
     <!--
 
   -->
-  <div class='filter-nav-bar'>
+
     <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
@@ -11,9 +11,9 @@
         <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
-  </div>
 
-  <div class='filterContainer'>
+
+
 
     <a href="<%= url_for('allfilters') %>" class='filterbar-all' >View All</a>
     <ul class = 'filterbar-results'>
@@ -21,7 +21,7 @@
         <% render("views.st.filterbarelement",{filter = filter}) %>
       <% end %>
     </ul>
-  </div>
+  
 
 
 

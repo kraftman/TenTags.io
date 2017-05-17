@@ -323,7 +323,9 @@ a {
   position: static;
   border-radius: 0px;
   z-index: 8;
-
+  .hamburger {
+    display: none;
+  }
   ul {
     padding-left: 0;
     margin-top: 0;
@@ -420,9 +422,7 @@ a {
   padding: 7px;
 }
 
-.filter-nav-bar .hamburger {
-  display: none;
-}
+
 
   .filter-nav-bar {
     margin-bottom: 5px;
@@ -504,9 +504,10 @@ a {
     @include card1();
     border-radius: 0px;
     float: none;
-    display: none;
+    display: flex;
+    flex-direction: column-reverse;
     width: 250px;
-    position: absolute;
+    position: fixed;
     margin-left: 0px;
     margin-top: 0px;
     margin-bottom: 0px;
@@ -514,7 +515,11 @@ a {
     left: 0px;
     bottom: 0px;
     z-index: 10;
+    .hamburger {
+      display:inline-block;
+    }
   }
+
 
 
   .settings-menu {
@@ -540,11 +545,6 @@ a {
     margin-bottom: 5px;
   }
 
-  .filter-nav-bar {
-    position: absolute;
-    bottom: 0;
-    margin-bottom: 0;
-  }
   .filter-search-form {
     display: inline-block;
     vertical-align: top;

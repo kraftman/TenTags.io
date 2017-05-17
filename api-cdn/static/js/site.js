@@ -1,4 +1,5 @@
 
+
 var userSettings = {};
 var newPosts = {};
 var maxPosts = 10;
@@ -439,7 +440,7 @@ function AddFilterSearch(){
 }
 
 function AddMenuHandler(){
-  $('.settings-link a').click(function(e){
+  $('.settings-link').click(function(e){
 
     $('.settings-menu').toggle()
     $('.settings-menu').focus()
