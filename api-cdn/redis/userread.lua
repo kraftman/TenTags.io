@@ -80,12 +80,12 @@ function userread:GetAccount(accountID)
   local red = self:GetUserReadConnection()
   local ok, err = red:hgetall('account:'..accountID)
   if not ok or ok == ngx.null then
-    return nil
+    return nil,err
   end
 
   local account = self:ConvertListToTable(ok)
   if next(account) == nil then
-    return nil
+    return nil, 'no account'
   end
   account.sessions = {}
   account.users = {}
@@ -214,7 +214,7 @@ function userread:GetUserPosts(userID,startAt, range)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
-  
+
   if ok == ngx.null then
     return nil
   else
