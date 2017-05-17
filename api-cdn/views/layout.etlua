@@ -14,17 +14,19 @@
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
-  <div class = 'main'>
+
     <% render("views.main.navigation") %>
 
-    <% render("views.main.filterbar") %>
     <% render("views.main.settings-menu") %>
-    <div class = 'contents'>
-      <% render("views.main.infobar") %>
-      <% content_for("inner") %>
+    <div class="main">
+      <% render("views.main.filterbar") %>
+      <div class = 'contents'>
+        <% render("views.main.infobar") %>
+        <% content_for("inner") %>
+      </div>
     </div>
 
-  </div>
+
 
 
   <script src="/static/js/jquery-2.1.4.js" ></script>
