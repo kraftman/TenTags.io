@@ -1,5 +1,5 @@
 
-<div class='top-nav'>
+<header class='top-nav'>
 
   <span class="ti-menu hamburger" ></span>
   <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
@@ -35,4 +35,4 @@
 
     </div>
   <% end %>
-</div>
+</header>

@@ -46,7 +46,22 @@ function m:Register(app)
   app:get('geticon', '/icon/:postID', self.GetIcon)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
+  app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
 
+end
+
+function m.ReloadImage(request)
+  local userID = request.session.userID
+  local postID = request.params.postID
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  local ok, err = postAPI:ReloadImage(userID, postID)
+  if ok then
+    return 'success'
+  else
+    return err
+  end
 end
 
 function m.ToggleSavePost(request)

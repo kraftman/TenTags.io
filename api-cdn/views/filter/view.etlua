@@ -1,5 +1,5 @@
 
-<div class='filter-nav'>
+<nav class='filter-nav'>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=fresh'>Fresh</a>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=new'>New</a>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=best'>Best</a>
@@ -9,7 +9,7 @@
     <a href='<%= url_for("updatefilter",{filterlabel = thisfilter.name}) %>'>Filter Settings</a>
   <% end %>
 
-</div>
+</nav>
 
 
 <% render('views.st.filterstyles') %>

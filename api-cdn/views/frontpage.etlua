@@ -1,6 +1,6 @@
 
 
-<div class='filter-nav'>
+<nav class='filter-nav'>
 
     <a href="<%= url_for('home') %>">Fresh</a>
     <a href="<%= url_for('new') %>">New</a>
@@ -9,7 +9,7 @@
     <a href="#" class = 'toggle-filterstyle'>Style</a>
 
   </ul>
-</div>
+</nav>
 
 <% render('views.st.filterstyles') %>
 

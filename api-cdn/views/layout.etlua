@@ -21,10 +21,10 @@
     <% render("views.main.settings-menu") %>
     <div class="main">
       <% render("views.main.filterbar") %>
-      <div class = 'contents'>
+      <main class = 'contents'>
         <% render("views.main.infobar") %>
         <% content_for("inner") %>
-      </div>
+      </main>
     </div>
 
   <script src="/static/js/jquery-2.1.4.js" ></script>

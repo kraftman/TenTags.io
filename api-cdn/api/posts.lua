@@ -51,6 +51,34 @@ function api:UserCanAddTag(userID, newTag, tags)
   return true
 end
 
+function api:ReloadImage(userID, postID)
+  local user = cache:GetUser(userID)
+  if not user then
+    return nil, 'couldnt find user'
+  end
+  if user.role ~= 'Admin' then
+    return nil, 'admins only!'
+  end
+
+  local post = cache:GetPost(postID)
+  if not post then
+    return nil, 'post not found'
+  end
+  if (not post.link) or post.link == "" then
+    return nil, 'post has no link'
+  end
+
+	local ok, err = self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
+	if not ok then
+    ngx.log(ngx.ERR, 'unable to queu job: ', err)
+    return nil, 'error generating post icon'
+  end
+
+  return true
+
+
+end
+
 function api:AddPostTag(userID, postID, tagName)
 
 	local ok, err = self:RateLimit('AddPostTag:', userID, 1, 60)
