@@ -6,10 +6,11 @@
   <meta charset="UTF-8">
   <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
   <title><%= page_title or "Filtta" %></title>
-
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
   <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
+
 
 </head>
 <body>

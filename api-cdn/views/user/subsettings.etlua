@@ -15,7 +15,7 @@
 
     <label for='userbio' >Bio:</label>
       </br>
-    <textarea  name='userbio' id='userbio' id="txtArea" rows="10" cols="50"><%= userBio or '' %></textarea>
+    <textarea  class='form-input' name='userbio' id='userbio' id="txtArea" rows="10" cols="50"><%= userBio or '' %></textarea>
 
     <div class="checkbox">
       <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>

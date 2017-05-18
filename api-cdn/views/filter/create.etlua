@@ -17,28 +17,28 @@
 
     <label for='filterName' >Filter Name</label>
     </br>
-    <input type='text' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
-    
+    <input type='text' class='form-input' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
+
     </br>
     <label for='filtertitle' >Filter Title:</label>
       </br>
-    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
+    <input type='text' class='form-input' name='filtertitle' id='filtertitle' maxlength="50" />
 
     </br>
     <label for='filterdescription' >Filter Description</label>
       </br>
 
-    <textarea name='filterdescription' id='filterdescription' id="txtArea" rows="10" cols="70"></textarea>
+    <textarea name='filterdescription' class='form-input' id='filterdescription' id="txtArea" rows="10" cols="70"></textarea>
 
     </br>
 
     <label for='requiredTagNames'>Required Tags</label>
-    <input type='text' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
+    <input type='text' class='form-input' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
 
     </select>
     </br>
     <label for='bannedTagNames'>Excluded Tags</label>
-    <input type='text' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
+    <input type='text' class='form-input' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
 
     </select>
     </br>

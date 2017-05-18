@@ -16,7 +16,7 @@
 
   <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-  <input class = 'form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
+  <input class='form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
 
   <input type="text" class='form-input' name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
 

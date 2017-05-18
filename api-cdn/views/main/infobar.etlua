@@ -1,9 +1,11 @@
 <div class='info-bar'>
   <% if thisfilter then %>
     <a class = 'infobar-title' href='#'>
+      <span class='ti-arrow-circle-down'></span>
       <%= thisfilter.name-%>
     </a>
     <div class='infobar-body'>
+
       <%- thisfilter.description -%>
       <% if next(thisfilter.relatedFilters) then %>
         Related Filters:

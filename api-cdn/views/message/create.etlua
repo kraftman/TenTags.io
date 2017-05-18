@@ -1,10 +1,10 @@
 <form method="POST" class='panel panel-default' action="<%= url_for('newmessage') %>">
   <h3>Send Message</h3>
-    <input type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
+    <input class='form-input' type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
     </br>
-    <input type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
+    <input class='form-input' type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
     </br>
-    <textarea name="body" id="messagebody" rows="10" cols="50" placeholder="Message"></textarea>
+    <textarea class='form-input' name="body" id="messagebody" rows="10" cols="50" placeholder="Message"></textarea>
     </br>
     <button class='btn btn-default' type="submit" >Send</button>
 </form>

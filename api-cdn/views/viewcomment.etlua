@@ -1,12 +1,12 @@
-<div class = 'contents'>
+<div class = 'panel panel-default'>
   <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
   <% if commentInfo.createdBy == session.userID then %>
     Edit:
     </br>
     <form id="commentform" method="post" action="" >
-      <textarea name='commentText' id='commentText' rows="4" cols="50"><%= commentInfo.text%></textarea>
+      <textarea class='form-input' name='commentText' id='commentText' rows="4" cols="50"><%= commentInfo.text%></textarea>
       </br>
-      <input type='submit'></input>
+      <input class = 'btn' type='submit' value='Edit'></input>
     </form>
   <% else %>
     <p> <%= commentInfo.text -%></p>
@@ -19,8 +19,8 @@
     <input id="parentID" name='parentID' type="hidden" value="<%= commentInfo.id%>" name="name">
     <input id="postID" name='postID' type="hidden" value="<%= commentInfo.postID%>" name="name">
 
-    <textarea name='commentText' id='commentText' rows="4" cols="50"></textarea>
+    <textarea class='form-input' name='commentText' id='commentText' rows="4" cols="50"></textarea>
     </br>
-    <input type='submit'></input>
+    <input class = 'btn' type='submit' value='Reply'></input>
   </form>
 </div>
