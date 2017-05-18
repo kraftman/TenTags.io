@@ -1,26 +1,24 @@
 <div class='settings-menu' tabindex="-1">
 
-    <% if session.username then %>
+  <% if session.username then %>
     <% if userHasAlerts then %>
       <a href="<%= url_for('viewalerts') %>" class ='settings-alert'>New Alert!</a>
     <% end %>
-      <a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a>
-      <a  href="<%= url_for('usersettings') %>" >Settings</a>
-      </a> <a href="<%= url_for('newsubuser') %>">Create User</a>
+    <a href="<%= url_for('viewuser',{username = session.username}) %>" >Profile</a>
+    <a  href="<%= url_for('usersettings') %>" >Settings</a>
+    <a href="<%= url_for('newsubuser') %>">Create User</a>
 
-        <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
+    <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
 
-
-      <% if account and account.role == 'Admin' then %>
+    <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('adminpanel') %>">Admin</a>
-      <% end %>
-
-      <a href="<%= url_for('newmessage') %>">New Message</a>
-      <a href="<%= url_for('newpost') %>">New Post</a>
-      <a href="<%= url_for('newfilter') %>">Create Filter</a>
-      <a href="<%= url_for('about') %>">About</a>
-      <a href="<%= url_for('logout') %>">Logout</a>
     <% end %>
-  </ul>
+
+    <a href="<%= url_for('newmessage') %>">New Message</a>
+    <a href="<%= url_for('newpost') %>">New Post</a>
+    <a href="<%= url_for('newfilter') %>">Create Filter</a>
+    <a href="<%= url_for('about') %>">About</a>
+    <a href="<%= url_for('logout') %>">Logout</a>
+  <% end %>
 
 </div>

@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
-  
+
   <title><%= page_title or "Filtta" %></title>
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
@@ -27,14 +27,8 @@
       </div>
     </div>
 
-
-
-
   <script src="/static/js/jquery-2.1.4.js" ></script>
-  <!--<script src="/static/js/jquery-ui.js" ></script>
-  <script src="/static/js/jquery.ui.touch-punch.js"></script>-->
   <script src="/static/js/interact.min.js"></script>
-  <!-- <script src="https://code.jquery.com/ui/1.12.0-rc.2/jquery-ui.js" ></script>-->
   <script src="/static/js/mousetrap.min.js"  ></script>
   <!-- Latest compiled and minified CSS -->
   <script src="/static/selectize/js/standalone/selectize.min.js"  ></script>
@@ -52,13 +46,6 @@
     ga('send', 'pageview');
 
   </script>
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "ca-pub-5666598062804330",
-        enable_page_level_ads: true
-      });
-    </script>
   <% end %>
 
 </body>

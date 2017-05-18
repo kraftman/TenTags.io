@@ -52,9 +52,7 @@ html,body {
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
   height: 100%;
-
   margin: 0px;
-
   background-color: $background-color;
 }
 
@@ -670,7 +668,11 @@ a {
 
 .info-bar {
   margin: 5px;
+  width: 100%;
 
+}
+
+.panel-image  {
 }
 
 .contents {

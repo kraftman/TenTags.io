@@ -1,6 +1,6 @@
 
 <div class='top-nav'>
-  
+
   <span class="ti-menu hamburger" ></span>
   <a class='home-link' href="<%= url_for('home') %>">Filtta</a>
   <% if session.username then %>
@@ -21,7 +21,7 @@
       data-badge="inline"
       data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
       data-callback="SubmitLogin">
-      Sign In/Up
+        Sign In/Up
     </button>
     </form>
   <% end %>
@@ -35,14 +35,4 @@
 
     </div>
   <% end %>
-
-
 </div>
-
-<!--
-
-  <% if userHasAlerts then %>
-    <li><a href="<%= url_for('viewalerts') %>">New Alert!</a></li>
-  <% end %>
-
--->

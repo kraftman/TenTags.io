@@ -1,8 +1,4 @@
 
-<link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
-<script src="/static/js/jquery-2.1.4.js"></script>
-<script src="/static/chosen/chosen.jquery.js"></script>
-<script src="/static/js/jquery.form.js"></script>
 <script src="/static/js/mousetrap.min.js"  ></script>
 <script src="/static/js/post.js"  ></script>
 
@@ -11,7 +7,7 @@
 
 <% if post.imgURL then %>
 
-  <div class = 'panel panel-default'>
+  <div class = 'panel panel-default panel-image'>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
     </a>
@@ -19,9 +15,9 @@
 <% end %>
 
 <div class = 'panel panel-default'>
-  <input type="hidden" id='postID' value="<%= post.id -%>">
+  <input type="hidden" id='postID' value="<%= post.id -%>" />
 
-    <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
+  <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
 
     <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
