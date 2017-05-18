@@ -29,7 +29,7 @@
       <h3>Edit Post</h3>
       <% if ((ngx.time() - post.createdAt) < 600) then %>
       <label for='posttitle' >Post Title:</label>
-      <input type='text' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
+      <input type='text' class='form-input' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
       </br>
       <% end %>
 
