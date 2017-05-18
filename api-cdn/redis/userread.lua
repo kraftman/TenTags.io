@@ -54,7 +54,6 @@ function userread:SavedPostExists(userID, postID)
   if not ok then
     return nil, err
   end
-  print(ok,  tonumber(ok) == 0)
   if tonumber(ok) == 0 then
     return false
   end

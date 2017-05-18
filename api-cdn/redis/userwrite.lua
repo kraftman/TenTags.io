@@ -27,7 +27,7 @@ end
 -- TODO:remove this
 function userwrite:AddNewUser(time, accountID, email)
   local red = self:GetUserWriteConnection()
-  print(accountID, email)
+
   local ok, err = red:zadd('newAccounts', time, accountID..':'..email)
   self:SetKeepalive(red)
   return ok, err
@@ -60,7 +60,6 @@ end
 
 function userwrite:DeleteUser(userID, username)
 --local account = cache:GetAccount(accountID)
-  print('deleting username: ', username)
   local red = self:GetUserWriteConnection()
   red:init_pipeline()
   red:hdel('userToID',username:lower())
@@ -71,7 +70,6 @@ function userwrite:DeleteUser(userID, username)
 end
 
 function userwrite:AddSavedPost(userID, postID)
-  print('=========================adding saved post: ', postID)
   local red = self:GetUserWriteConnection()
   local key = 'userSavedPost:'..userID
 
@@ -108,7 +106,6 @@ end
 
 function userwrite:AddUserAlert(createdAt,userID, alert)
   local red = self:GetUserWriteConnection()
-  print('adding user alert for ',userID,self:to_json(alert))
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
 
   self:SetKeepalive(red)
@@ -213,7 +210,7 @@ function userwrite:IncrementAccountStat(userID, statName, value)
 end
 
 function userwrite:CreateSubUser(user)
-  print(to_json(user))
+
   local hashedUser = {}
   hashedUser.filters = {}
 
@@ -250,10 +247,8 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   local red = self:GetUserWriteConnection()
   red:init_pipeline()
   if subscribe then
-    print('adding ',userID, ' to ',filterID)
     red:sadd('userfilters:'..userID, filterID)
   else
-    print('removing ',userID, ' from ',filterID)
     red:srem('userfilters:'..userID, filterID)
   end
 
