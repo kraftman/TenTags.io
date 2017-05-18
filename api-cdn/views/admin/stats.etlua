@@ -2,7 +2,7 @@
 
 <% render('views.admin.adminbar') %>
 
-<div class = 'contents panel panel-default'>
+<div class = 'panel panel-default'>
 
   <div class = 'contents'>
     <% for k,v in pairs(totals) do %>

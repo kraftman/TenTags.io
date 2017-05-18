@@ -19,7 +19,7 @@
 
     </br>
 
-    <textarea name='filterdescription' class='form-input' id='filterdescription' placeholder="Filter Description" id="txtArea" rows="10" cols="70"></textarea>
+    <textarea name='filterdescription' class='form-input textbox-large' id='filterdescription' placeholder="Filter Description" id="txtArea" rows="10" cols="70"></textarea>
 
     </br>
 

@@ -4,7 +4,7 @@
     </br>
     <input class='form-input' type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
     </br>
-    <textarea class='form-input' name="body" id="messagebody" rows="10" cols="50" placeholder="Message"></textarea>
+    <textarea class='form-input textbox-large' name="body" id="messagebody" rows="10"  placeholder="Message"></textarea>
     </br>
     <button class='btn btn-default' type="submit" >Send</button>
 </form>

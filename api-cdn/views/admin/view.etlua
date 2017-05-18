@@ -1,6 +1,6 @@
 
 <% render('views.admin.adminbar') %>
-<div class = 'contents panel panel-default'>
+<div class = 'panel panel-default'>
   <form action="<%= url_for('usersettings') %>" method = 'POST'>
 
     <div class='textbox'>

@@ -33,7 +33,7 @@
 
     <h3>Tag User</h3>
     <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
-      <textarea class='form-input' name='tagUser' id='tagUser' rows="1" cols="50"></textarea>
+      <input type='text' class='form-input' name='tagUser' id='tagUser' ></input>
       </br>
       <input class = 'btn' type='submit' value="Add Tag"></input>
     </form>

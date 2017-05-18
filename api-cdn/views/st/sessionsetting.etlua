@@ -1,4 +1,4 @@
-<div class = 'contents panel panel-default <%= accountSession.killed and 'session-killed' or 'session-active ' -%>'>
+<div class = 'panel panel-default'>
   <span><%= accountSession.os or '' %> | </span><span><%= accountSession.browser or '' %></span>
   | <span><%= TimeAgo(ngx.time() - accountSession.lastSeen) %></span>
 
