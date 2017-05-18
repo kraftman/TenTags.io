@@ -1,0 +1,18 @@
+
+
+
+
+<% for i, comment in pairs(comments) do print(to_json(comment))%>
+  <% render("views.st.comment",{comment = comment}) %>
+<% end %>
+
+
+<% if params.startAt and tonumber(params.startAt) >= 20 then %>
+  <a href="<%= url_for("viewusercomments",{
+  username = params.username}) %>?startAt=<%= params.startAt and params.startAt-20 or 0 %>">Prev</a>
+<% end %>
+
+<% if #comments > 19 then %>
+  <a href="<%= url_for("viewusercomments",{
+  username = params.username}) %>?startAt=<%= params.startAt and params.startAt+20 or 20 %>">Next</a>
+<% end %>

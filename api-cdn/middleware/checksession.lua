@@ -25,6 +25,8 @@ function M:ValidateSession(request)
     if account then
       request.account = account
       return
+    else
+      print('failed to validate ',request.session.accountID,' : ',err)
     end
 
     self:RemoveSession(request)
@@ -32,6 +34,7 @@ function M:ValidateSession(request)
 
   elseif request.session.username or request.session.userID then
     self:RemoveSession(request)
+    return false;
   end
 end
 
@@ -68,7 +71,7 @@ function M:Run(request)
 
 
     if request.session.accountID then
-      request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
+      request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID) or {}
     end
 
     if request.session.userID then

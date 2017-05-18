@@ -4,12 +4,12 @@ local CONFIG_CHECK_INTERVAL = 5
 local config = {}
 config.__index = config
 config.http = require 'lib.http'
-config.cjson = require 'cjson'
 
 local commentAPI = require 'api.comments'
 local userAPI = require 'api.users'
 local cache = require 'api.cache'
 local tinsert = table.insert
+local to_json = (require 'lapis.util').to_json
 
 
 local common = require 'timers.common'
@@ -113,14 +113,13 @@ function config:UpdateFilters(post, comment)
   local filters = {}
 
   local postFilters = post.filters
-
-  local userFilters = userAPI:GetUserFilters(comment.createdBy)
+  local userFilters = cache:GetUserFilterIDs(comment.createdBy)
 
 	-- get shared filters between user and post
-  for _,userFilter in pairs(userFilters) do
+  for _,userFilterID in pairs(userFilters) do
     for _,postFilterID in pairs(postFilters) do
-      if userFilter.id == postFilterID then
-        tinsert(filters, userFilter)
+      if userFilterID == postFilterID then
+        tinsert(filters, userFilterID)
       end
     end
   end
@@ -183,9 +182,18 @@ function config:CreateComment(commentInfo)
 
   ok, err = self:UpdateFilters(post, comment)
   if not ok then
-    return ok, err
+    print('error getting filters: ', err)
+    return nil, err
   else
+    print('addingi fitlrse to comment')
+    print(to_json(ok))
     comment.filters = ok
+  end
+
+  ok, err = self.commentWrite:CreateComment(comment)
+  print('created comment')
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create comment: ', err)
   end
 
   self:AddAlerts(post, comment)

@@ -8,7 +8,7 @@
 
   <div class = 'post-body'>
     <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-      <%= post.title -%>
+      <p class = 'post-text'><%= post.title -%></p>
     </a>
     </br>
     <span class='comment-link'><%= post.views or 0 %> views</span>
@@ -17,8 +17,8 @@
     <% if post.filters then %>
     <% for i = 1,5  do
       local filter = post.filters[i]
-    %>
-      <% if not filter then %>
+      %>
+      <% if not filter or not filter.name then %>
         <a class ='filter-icon' href="" style='display: none'></a>
       <% else %>
         <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>

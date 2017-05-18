@@ -3,7 +3,7 @@
     <% render("views.st.threadelement",{thread = thread}) %>
    <form action= "<%= url_for('replymessage',{threadID = thread.id}) %>" method="POST">
      Message:<br>
-     <input type="text" name="body">
+     <input class='form-input' type="text" name="body">
      <button type="submit" >Send</button>
    </form>
 </div>

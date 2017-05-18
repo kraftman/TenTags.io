@@ -1,19 +1,20 @@
 
-<div class=' filter-bar'>
+<div tabindex="-1" class=' filter-bar'>
     <!--
 
   -->
-  <div class='filter-nav-bar'>
-    <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
+
+
+  <span class="ti-menu hamburger" ></span>
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
         <input class='form-control form-search' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
         <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
-  </div>
 
-  <div class='filterContainer'>
+
+
 
     <a href="<%= url_for('allfilters') %>" class='filterbar-all' >View All</a>
     <ul class = 'filterbar-results'>
@@ -21,7 +22,7 @@
         <% render("views.st.filterbarelement",{filter = filter}) %>
       <% end %>
     </ul>
-  </div>
+
 
 
 

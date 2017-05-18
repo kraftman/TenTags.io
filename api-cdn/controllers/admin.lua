@@ -78,7 +78,7 @@ local function SiteStats(request)
   local totalViews = adminAPI:GetSiteStats()
   request.totals = totalViews
   request.stats = ok
-  return {render = 'stats.view'}
+  return {render = 'admin.stats'}
 end
 
 
@@ -100,7 +100,7 @@ end
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
   app:get('ele', '/ele', SearchTitle)
-  app:get('stat', '/admin/stats', SiteStats)
+  app:get('adminstats', '/admin/stats', SiteStats)
   app:get('score', '/admin/score/:up/:down', GetScore)
 end
 

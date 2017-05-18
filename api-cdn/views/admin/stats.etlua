@@ -1,0 +1,17 @@
+
+
+<% render('views.admin.adminbar') %>
+
+<div class = 'contents panel panel-default'>
+
+  <div class = 'contents'>
+    <% for k,v in pairs(totals) do %>
+      stat: <%= k %></br> value: <%= v %></br>
+    <% end %>
+
+    <% for time,stat in pairs(stats) do %>
+      time: <%= time %></br> stat: <%= stat %></br>
+    <% end %>
+
+  </div>
+</div>

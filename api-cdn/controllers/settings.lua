@@ -108,7 +108,7 @@ function m.UpdateFilterStyle(request)
   end
 
   user['filterStyle:'..filterName] = filterStyle
-  print ('setting filterstyle for filtername '..filterName..' to '..filterStyle)
+  
   userAPI:UpdateUser(request.session.userID, user)
 
   if filterName == 'frontPage' then

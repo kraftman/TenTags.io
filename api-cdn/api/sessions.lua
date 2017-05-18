@@ -72,8 +72,9 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'no sessionID!'
 	end
 
-	local account = cache:GetAccount(accountID)
+	local account, err = cache:GetAccount(accountID)
 	if not account then
+    print('couldnt get account: ', err)
 		return nil, 'account not found'
 	end
 

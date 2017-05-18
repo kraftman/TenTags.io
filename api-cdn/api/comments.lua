@@ -34,7 +34,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 		id = userID..':'..commentID
 	}
 
-	return self.self.self.commentWrite:QueueJob('commentvote', commentVote)
+	return self.redisWrite:QueueJob('commentvote', commentVote)
 
 end
 
@@ -42,6 +42,7 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	comment.createdBy = comment.createdBy or userID
 	local user = cache:GetUser(userID)
+
 	if user.role == 'Admin' and user.fakeNames then
 
 		local account = cache:GetAccount(user.parentID)
@@ -152,7 +153,7 @@ function api:CreateComment(userID, userComment)
 			id = newComment.postID..':'..newComment.id,
 			postID = newComment.postID,
 			commentID = newComment.id,
-			userID = userID
+			userID = userID,
 		}
 
 		-- queue the rest

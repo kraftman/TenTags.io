@@ -1,9 +1,11 @@
 <div class='info-bar'>
   <% if thisfilter then %>
     <a class = 'infobar-title' href='#'>
+      <span class='ti-arrow-circle-down'></span>
       <%= thisfilter.name-%>
     </a>
     <div class='infobar-body'>
+
       <%- thisfilter.description -%>
       <% if next(thisfilter.relatedFilters) then %>
         Related Filters:
@@ -16,18 +18,7 @@
       <% end %>
     </div>
   <% else %>
-  <p>Welcome to filter!</p>
-  <% if not session.userID then %>
-    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <!-- top-ad -->
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:728px;height:90px"
-         data-ad-client="ca-pub-5666598062804330"
-         data-ad-slot="3229235607"></ins>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  <% end %>
+    <p>Welcome to filter!</p>
   <% end %>
   <% if enableAds then %><% end %>
 </div>

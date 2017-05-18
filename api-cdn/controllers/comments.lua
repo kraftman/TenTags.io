@@ -67,6 +67,9 @@ function m.EditComment(request)
 end
 
 function m.SubscribeComment(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
   return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
@@ -82,8 +85,12 @@ function m.HashIsValid(request)
   return true
 end
 
+
 function m.UpvoteComment(request)
-  if not HashIsValid(request) then
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  if not m.HashIsValid(request) then
     return 'hashes dont match'
   end
   local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
@@ -95,7 +102,10 @@ function m.UpvoteComment(request)
 end
 
 function m.DownVoteComment(request)
-  if not HashIsValid(request) then
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  if not m.HashIsValid(request) then
     return 'hashes dont match'
   end
 

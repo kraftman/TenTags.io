@@ -116,6 +116,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 	end
 
 	-- increment how many tags the user has voted on
+	print('voting on tag made by ', cache:GetUsername(thisTag.createdBy))
 	if direction == 'up' then
 		self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:tagvoteup',1)
 	else

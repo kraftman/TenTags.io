@@ -52,6 +52,9 @@ function cache:GetThreads(userID, startAt, range)
 end
 
 function cache:SavedPostExists(userID, postID)
+  if not userID then
+    return false
+  end
   return userRead:SavedPostExists(userID, postID)
 end
 
@@ -137,14 +140,15 @@ function cache:GetAccount(accountID)
   if not DISABLE_CACHE then
     ok, err = userInfo:get(accountID)
     if err then
-      ngx.log(ngx.ERR, 'unable to get account: ',err)
+      return nil, 'couldnt load account from shdict'
     end
     if ok then
       return from_json(ok)
     end
   end
 
-  account, err = userRead:GetAccount(accountID, DEFAULT_CACHE_TIME)
+  account, err = userRead:GetAccount(accountID)
+
   if err then
     return account, err
   end
@@ -255,6 +259,7 @@ end
 function cache:GetUsername(userID)
 
   local user = self:GetUser(userID)
+  print(to_json(user))
   if user then
     return user.username
   end
@@ -332,8 +337,9 @@ function cache:GetSortedComments(userID, postID,sortBy)
   end
 
   for _,v in pairs(flatComments) do
-
-    v.username = self:GetUsername(v.createdBy)
+    v.username = self:GetUsername(v.createdBy) or 'unknown'
+    print(v.username)
+    v.filters = self:GetFilterInfo(v.filters or {})
 
     if userID and userVotedComments[v.id] then
       v.userHasVoted = true
@@ -401,6 +407,7 @@ function cache:GetPost(postID)
   if err then
     return result, err
   end
+  result.creatorName = self:GetUsername(result.createdBy) or 'unknown'
 
   ok, err = postInfo:set(postID,to_json(result))
   if not ok then
@@ -415,11 +422,11 @@ function cache:GetFilterPosts(userID, filter, sortBy)
   local filterIDs = redisread:GetFilterPosts(filter, sortBy)
   local posts = {}
   local post
+
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
-
       post.userSaved = true
     end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)
@@ -693,7 +700,7 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   tinsert(newPosts, post)
 end
 
-function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
+function cache:GetUserFrontPage(userID,sortBy,startAt, range)
 
   local user = self:GetUser(userID)
 
@@ -709,7 +716,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
       self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
 
       -- stop when we have a page worth
-      if #newPosts > (endAt - startAt) then
+      if #newPosts >= (range) then
         break
       end
     end
@@ -717,7 +724,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else
-    for i = startAt, endAt do
+    for i = startAt, startAt+range do
       if freshPosts[i] then
         tinsert(newPosts,self:GetPost(freshPosts[i]))
       end
@@ -734,7 +741,16 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
     end
   end
 
-  return newPosts
+  local distinctPosts = {}
+  local hash = {}
+  for _,v in ipairs(newPosts) do
+    if (not hash[v.id]) then
+      distinctPosts[#distinctPosts+1] = v -- you could print here instead of saving to result table if you wanted
+      hash[v.id] = true
+    end
+  end
+
+  return distinctPosts
 end
 
 

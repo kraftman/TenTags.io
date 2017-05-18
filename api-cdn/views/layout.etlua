@@ -4,27 +4,30 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
-  <!-- <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
+  
   <title><%= page_title or "Filtta" %></title>
-
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
   <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
 
+
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
-  <div class = 'main'>
+
     <% render("views.main.navigation") %>
 
-    <% render("views.main.filterbar") %>
     <% render("views.main.settings-menu") %>
-    <div class = 'contents'>
-      <% render("views.main.infobar") %>
-      <% content_for("inner") %>
+    <div class="main">
+      <% render("views.main.filterbar") %>
+      <div class = 'contents'>
+        <% render("views.main.infobar") %>
+        <% content_for("inner") %>
+      </div>
     </div>
 
-  </div>
+
 
 
   <script src="/static/js/jquery-2.1.4.js" ></script>

@@ -1,5 +1,5 @@
 
-<div class='panel filter-nav'>
+<div class='filter-nav'>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=fresh'>Fresh</a>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=new'>New</a>
   <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=best'>Best</a>

@@ -239,7 +239,8 @@ function api:GetPost(userID, postID)
 
 	local user = cache:GetUser(userID)
 
-	if user.hideClickedPosts then
+
+	if user and user.hideClickedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 
@@ -326,7 +327,6 @@ function api:ConvertUserPostToPost(userID, post)
 		id = newID,
 		parentID = newID,
 		createdBy = post.createdBy,
-    creatorName = user.username,
 		commentCount = 0,
 		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
 		link = self:SanitiseUserInput(post.link, 400),
@@ -362,7 +362,6 @@ function api:ConvertUserPostToPost(userID, post)
     tinsert(newPost.tags,'meta:self')
   end
 	tinsert(newPost.tags, 'meta:all')
-
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
 
   if newPost.link then

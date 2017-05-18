@@ -1,13 +1,18 @@
 
+<% render("views.user.userbar",{username = params.username}) %>
+
 <div class = 'panel panel-default' >
+  <h3>Stats:</h3>
   Posts created: <%= userInfo.PostsCreated or 0%></br>
   Comments created: <%= userInfo.CommentsCreated or 0%></br>
   Posts voted: <%= userInfo.PostsVoted or 0%></br>
-  Tags added: <%= userInfo.TagsAdded or 0%>
-  <form id="tagform" method="get" action="<%= url_for('viewuserposts',{username = params.username}) %>" >
+  Tags added: <%= userInfo.TagsAdded or 0%></br>
 
-    <input class = 'btn' type='submit' value="Posts"></input>
-  </form>
+  Tag votes: <%= (userInfo['stat:tagvoteup'] or 0) - (userInfo['stat:tagvotedown'] or 0) %></br>
+
+  Comment votes: <%= (userInfo['stat:commentvoteup'] or 0) - (userInfo['stat:commentvotedown'] or 0) %>
+
+
 </div>
 
 <% if userInfo.bio and userInfo.bio ~= '' then %>
@@ -18,9 +23,9 @@
 <% end %>
 
 <% if session.userID and (userInfo.enablePM) then %>
-  <div class = 'panel panel-default'>
-    <% render("views.message.create",{recipient = params.username}) %>
-  </div>
+
+  <% render("views.message.create",{recipient = params.username}) %>
+
 <% end %>
 
 <% if session.userID then %>
@@ -28,25 +33,9 @@
 
     <h3>Tag User</h3>
     <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
-      <textarea name='tagUser' id='tagUser' rows="1" cols="50"></textarea>
+      <textarea class='form-input' name='tagUser' id='tagUser' rows="1" cols="50"></textarea>
       </br>
       <input class = 'btn' type='submit' value="Add Tag"></input>
     </form>
   </div>
-<% end %>
-
-
-
-<% for i, comment in pairs(comments) do print(to_json(comment))%>
-  <% render("views.st.comment",{comment = comment}) %>
-<% end %>
-
-<% if params.startAt and tonumber(params.startAt) >= 20 then %>
-  <a href="<%= url_for("viewuser",{
-  username = params.username}) %>?startAt=<%= params.startAt and params.startAt-20 or 0 %>">Prev</a>
-<% end %>
-
-<% if #comments > 19 then %>
-  <a href="<%= url_for("viewuser",{
-  username = params.username}) %>?startAt=<%= params.startAt and params.startAt+20 or 20 %>">Next</a>
 <% end %>

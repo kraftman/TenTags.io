@@ -1,6 +1,6 @@
 
 
-<div class='panel filter-nav'>
+<div class='filter-nav'>
 
     <a href="<%= url_for('home') %>">Fresh</a>
     <a href="<%= url_for('new') %>">New</a>
@@ -13,7 +13,7 @@
 
 <% render('views.st.filterstyles') %>
 
-<div id='posts'>
+<div class='posts'>
   <% for i, post in pairs(posts) do %>
     <% render(GetFilterTemplate(),{post = post}) %>
   <% end %>

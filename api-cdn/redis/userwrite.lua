@@ -27,7 +27,7 @@ end
 -- TODO:remove this
 function userwrite:AddNewUser(time, accountID, email)
   local red = self:GetUserWriteConnection()
-  print(accountID, email)
+
   local ok, err = red:zadd('newAccounts', time, accountID..':'..email)
   self:SetKeepalive(red)
   return ok, err
@@ -58,8 +58,18 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
+function userwrite:DeleteUser(userID, username)
+--local account = cache:GetAccount(accountID)
+  local red = self:GetUserWriteConnection()
+  red:init_pipeline()
+  red:hdel('userToID',username:lower())
+  red:hset('user:'..userID, 'deleted', '1')
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function userwrite:AddSavedPost(userID, postID)
-  print('=========================adding saved post: ', postID)
   local red = self:GetUserWriteConnection()
   local key = 'userSavedPost:'..userID
 
@@ -96,7 +106,6 @@ end
 
 function userwrite:AddUserAlert(createdAt,userID, alert)
   local red = self:GetUserWriteConnection()
-  print('adding user alert for ',userID,self:to_json(alert))
   local ok, err = red:zadd('UserAlerts:'..userID,createdAt,alert)
 
   self:SetKeepalive(red)
@@ -146,10 +155,13 @@ function userwrite:CreateAccount(account)
     end
   end
 
-
-  local ok, err = red:del('account:'..hashedAccount.id)
+  local ok, err = red:multi()
+  if not ok then
+    return ok, err
+  end
+   ok, err = red:del('account:'..hashedAccount.id)
    ok, err = red:hmset('account:'..hashedAccount.id,hashedAccount)
-
+   ok, err = red:exec()
   return ok, err
 
 end
@@ -235,10 +247,8 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   local red = self:GetUserWriteConnection()
   red:init_pipeline()
   if subscribe then
-    print('adding ',userID, ' to ',filterID)
     red:sadd('userfilters:'..userID, filterID)
   else
-    print('removing ',userID, ' from ',filterID)
     red:srem('userfilters:'..userID, filterID)
   end
 

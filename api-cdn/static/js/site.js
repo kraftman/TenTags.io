@@ -1,4 +1,5 @@
 
+
 var userSettings = {};
 var newPosts = {};
 var maxPosts = 10;
@@ -15,7 +16,7 @@ $(function() {
   AddFilterSearch();
   GetUserSettings();
   LoadKeybinds();
-  LoadNewPosts();
+  //LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
   LoadUserFilters();
@@ -38,12 +39,12 @@ function HookSubClick(){
     var button = $(e.currentTarget)
 
     var buttonChild = button.children('span')
-    if (buttonChild.hasClass('ti-minus')){
-      buttonChild.removeClass('ti-minus')
-      buttonChild.addClass('ti-plus')
+    if (buttonChild.hasClass('ti-close')){
+      buttonChild.removeClass('ti-close')
+      buttonChild.addClass('ti-star')
     } else {
-      buttonChild.removeClass('ti-plus')
-      buttonChild.addClass('ti-minus')
+      buttonChild.removeClass('ti-star')
+      buttonChild.addClass('ti-close')
     }
     var filterID = button.attr('data-filterid')
     console.log(filterID)
@@ -164,13 +165,39 @@ function SubmitLogin(){
 }
 
 function FilterToggle(){
+  var filterBar = $('.filter-bar')
+
   var $hamburger = $(".hamburger");
-  $hamburger.on("click", function(e) {
+  $hamburger.click(function(e) {
+    e.stopPropagation();
+    console.log('this')
     $hamburger.toggleClass("is-active");
-    console.log('that')
-    // Do something else, like open/close menu
-    var filterBar = $('.filter-bar')
-    filterBar.toggle()
+
+    var display = filterBar.css('display');
+    if (display === 'flex' || display ==='table-cell') {
+      filterBar.css('display',"none");
+      console.log('hiding filtebar')
+    } else {
+
+      if($(window).width() < 481) {
+        filterBar.css('display','flex')
+        filterBar.focus()
+        filterBar.focusout(function(e){
+          console.log(e)
+          if ($(e.relatedTarget).parents('.filter-bar').length){
+            console.log('thisjiuh')
+          } else {
+            console.log('nope')
+            filterBar.hide()
+          }
+        })
+
+
+      } else {
+        filterBar.css('display',"table-cell");
+      }
+    }
+
   });
 
   $('.toggle-filterstyle').click(function(e){
@@ -235,14 +262,14 @@ function VotePost(post, direction){
 
   var uri;
   if (direction == 'up'){
-    $(post).css('background-color', '#b3ffb3');
+
     uri = '/api/post/'+postID+'/upvote?hash='+postHash
   } else {
-    $(post).css('background-color', '#ffb3b3');
+
     uri = '/api/post/'+postID+'/downvote?hash='+postHash
   }
-  $(post).find('.post-upvote').hide();
-  $(post).find('.post-downvote').hide();
+  $(post).find('.post-upvote').addClass('disable-vote');
+  $(post).find('.post-downvote').addClass('disable-vote');
 
   $.get(uri,function(data){
     //console.log(data);
@@ -439,10 +466,18 @@ function AddFilterSearch(){
 }
 
 function AddMenuHandler(){
-  $('.settings-link a').click(function(e){
+  $('.settings-link').click(function(e){
+    var settingsMenu = $('.settings-menu')
+    settingsMenu.toggle()
+    settingsMenu.focus()
+    settingsMenu.focusout(function(e){
+      if ($(e.relatedTarget).parents('.settings-menu').length){
 
-    $('.settings-menu').toggle()
-    $('.settings-menu').focus()
+      } else {
+
+        settingsMenu.hide()
+      }
+    })
 
     e.preventDefault();
   })
@@ -517,7 +552,8 @@ function LoadMorePosts(template){
 
 
 function AddTagVoteListener(){
-  $(".upvote").click(function(){
+  $(".upvote").click(function(e){
+    e.preventDefault();
     var tagCount = $(this).parent().find('.tagcount')
     tagCount.text(Number(tagCount.text())+1)
     var tagID = $(this).parent().data('id')
@@ -526,7 +562,8 @@ function AddTagVoteListener(){
       console.log(data);
     })
   })
-  $(".downvote").click(function(){
+  $(".downvote").click(function(e){
+    e.preventDefault();
     var tagCount = $(this).parent().find('.tagcount')
     tagCount.text(Number(tagCount.text())-1)
     var tagID = $(this).parent().data('id')

@@ -23,10 +23,18 @@ function m:Register(app)
     POST = self.CreateSubUser
   }))
 
-  app:post('login','/login',self.NewLogin)
+  app:match('login','/login',respond_to({
+    POST = self.NewLogin,
+    GET = function() return 'Please login using the top bar'  end
+  }))
+
+  app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('deleteuser', '/user/:username/delete', self.DeleteUser)
+
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', self.TagUser)
-  app:get('viewuser','/user/:username', self.ViewUser)
+
+  app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
   app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
@@ -43,9 +51,40 @@ function m.LogOut(request)
   return { redirect_to = request:url_for("home") }
 end
 
+function m.DeleteUser(request)
+
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local ok , err = userAPI:DeleteUser(userID, username)
+  if ok then
+    return 'deleted'
+  else
+    print('error: ', err)
+    return 'error deleting user'
+  end
+
+end
+
 function m.ViewUser(request)
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
+  if not request.userInfo then
+    return 'user not found'
+  end
+
+  return {render = 'user.viewsub'}
+end
+
+function m.ViewUserComments(request)
+  request.userID = userAPI:GetUserID(request.params.username)
+  request.userInfo = userAPI:GetUser(request.userID)
+  if not request.userInfo then
+    return 'user not found'
+  end
 
   local startAt = request.params.startAt or 0
   local range = request.params.range or 20
@@ -54,7 +93,7 @@ function m.ViewUser(request)
 
   request.comments = commentAPI:GetUserComments(request.session.userID, request.userID, sortBy, startAt, range)
 
-  return {render = 'user.viewsub'}
+  return {render = 'user.viewsubcomments'}
 end
 
 function m.ViewUserPosts(request)
@@ -137,7 +176,7 @@ function m.NewLogin(request)
       ["Content-Type"] = "application/x-www-form-urlencoded",
     }
   })
-  print(to_json(res),err)
+
   if not res then
     request.success = false
     request.errorMessage = 'There was an error registering you, please try again later'
@@ -186,6 +225,7 @@ function m.ConfirmLogin(request)
     -- TODO: change this to a custom failure page
     return { redirect_to = request:url_for("home") }
   end
+  print('got account: ',account.id)
 
   request.session.accountID = account.id
   request.session.userID = account.currentUserID

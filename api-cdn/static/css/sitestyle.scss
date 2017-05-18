@@ -1,14 +1,18 @@
 $link-color: #000;
-$background-color: #d6ecf2;
+$background-color: #ACBDBA;
 $title-box-color: #add8e6;
 $black: #000;
 $white: #fff;
-$upvote: #beb;
-$downvote: #ebb;
+$upvote: #03191e;
+$downvote: #e54b4b;
 $postborder: #eee;
 $drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
-$panel-color: #fff;
+$panel-color: #CDDDDD;
+$postelement-color: #CDDDDD;
+$highlight-color: #03191e;
+$hight-font-color: #e54b4b;
 $alert-green: green;
+
 
 .center-page {
 
@@ -23,6 +27,8 @@ $alert-green: green;
 
 }
 
+
+
 @mixin card1(){
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
@@ -30,11 +36,20 @@ $alert-green: green;
   background-color: $panel-color;
 }
 
+@mixin textInput(){
+  border: none;
+  border-radius: 2px;
+  outline: none;
+  min-height: 25px;
+}
+
 body {
   min-height: 100%;
 }
+
 html,body {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+
+  font-family: 'Roboto', sans-serif;
   font-size: 14px;
   height: 100%;
 
@@ -47,7 +62,7 @@ a {
   color: $link-color;
   text-decoration: none;
   &:hover {
-    background-color: #eee;
+    background-color: #ffffff;
   }
 }
 
@@ -55,6 +70,7 @@ a {
   background: #c17272 !important;;
   background-color: #c17272 !important;;
 }
+
 
 
 .filterbar-all {
@@ -66,21 +82,31 @@ a {
   vertical-align: middle;
 }
 
+.hamburger {
+  font-size: 30px;
+  vertical-align: top;
+  color: $hight-font-color;
+  display: inline-block;
+  padding-top: 4px;
+  padding-left: 5px;
+}
+
 .usercomment-info {
   font-size: 10px;
 }
 
 .filterbarelement {
-  display: block;
-  width: auto;
+  display: table;
+  width: 100%;
   height: 30px;
   line-height: 30px;
   text-align: left;
   vertical-align: middle;
-
+  border-top: 1px solid;
+  border-color: white;
   .filterbar-subscribe {
-    display: inline-block;
-    min-width: 10px;
+    display: table-cell;
+    min: 10px;
     height: 100%;
     padding-left: 5px;
     padding-right: 5px;
@@ -88,12 +114,24 @@ a {
 
 
   .filterbar-link {
-
-    display: inline-block;
+    padding-left: 5px;
+    display: table-cell;
     height: 100%;
-    min-width: 120px;
+    min-width: 170px;
+
 
   }
+}
+
+.form-input {
+  @include textInput();
+  margin: 2px;
+  box-sizing: border-box;
+  padding-left: 3px;
+  &:focus {
+    border: 1px solid $hight-font-color;
+  }
+
 }
 
 .filter-searchbox-main {
@@ -128,9 +166,6 @@ a {
 
 }
 
-.panel {
-  @include card1();
-}
 
 
 
@@ -146,14 +181,7 @@ a {
   min-width: 900px;
 }
 
-.post-link {
-  display: inline-block;
-}
 
-.post-body {
-  display: inline-block;
-  vertical-align: top;
-}
 
 .filter-style-select {
   display: inline;
@@ -188,10 +216,10 @@ a {
 .filter-icon {
   display: inline-block;
   background-color: $background-color;
-  padding-left: 3px;
-  padding-right: 3px;
-  padding-top: 2px;
-  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
   border-radius: 3px;
   font-size:  10px;
   text-decoration: none;
@@ -211,15 +239,15 @@ a {
 
 .top-nav {
   @include card1();
-  height: auto;
+  height: 40px;
+  background-color: $highlight-color;
 
+  width: 100%;
+
+  z-index:11;
   margin: 0px;
   border-radius: 0px;
-  .siteSearch {
-    display: inline-block;
-    vertical-align: top;
-    padding-top: 7px;
-  }
+
   .gin {
     display: inline-block;
     padding-top: 7px;
@@ -230,17 +258,27 @@ a {
 
 
 .home-link {
+  color: $hight-font-color;
   display: inline-block;
   vertical-align: top;
-  padding-right: 10px;
-  height: 100%;
+  padding-right: 5px;
+  padding-left: 5px;
   padding-top: 12px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.site-search {
+  padding-left: 5px;
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 6px;
+
 }
 .form-login {
   float: right;
   margin-right: 10px;
   vertical-align: top;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 
@@ -248,7 +286,7 @@ a {
   display: none;
   position: absolute;
   right: 10px;
-  top: 55px;
+  top: 45px;
 
   z-index: 5;
 }
@@ -266,7 +304,10 @@ a {
     height: 25px;
     line-height: 25px;
     text-align: center;
-    margin-left: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 3px;
+    padding-bottom: 3px;
   }
 }
 
@@ -286,11 +327,35 @@ a {
   display: inline-block;
 }
 
-.settings-link {
+.settings-cont {
+  display: inline-block;
   float:right;
-  margin-right:12px;
-  margin-top: 12px;
   clear:both;
+  height: 100%;
+}
+.settings-link {
+  color: $hight-font-color;
+  display: inline-block;
+  height: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
+  margin-right: 5px;
+  padding-right: 8px;
+  padding-left: 8px;
+  padding-top: 10px;
+  p {
+    height: 100%;
+    margin: 0px;
+  }
+}
+
+.settings-micro {
+  color: $hight-font-color;
+  text-align: center;
+  vertical-align: middle;
+  display: none;
+  height: 100%;
+
 }
 
 .settings-alert {
@@ -299,13 +364,15 @@ a {
 
 
 .filter-bar {
-  margin: 5px;
-  margin-right: 0px;
-  flex: 0 0 250px;
-  display: block;
-  float: left;
+  @include card1();
+  display: table-cell;
+  width: 200px;
   position: static;
-
+  border-radius: 0px;
+  z-index: 8;
+  .hamburger {
+    display: none;
+  }
   ul {
     padding-left: 0;
     margin-top: 0;
@@ -367,6 +434,7 @@ a {
 
 .settings-menu {
   @include card1();
+
   height: auto;
   width: 170px;
   display: none;
@@ -375,47 +443,37 @@ a {
   top: 60px;
   right: 5px;
   z-index: 10;
+  padding-bottom: 3px;
+  padding-top: 3px;
 
-  ul {
-    padding-left: 10px;
-    margin-top: 0;
-    margin-bottom: 0;
+  a {
     list-style-type: none;
     display: block;
     width: 100%;
-    line-height: 30px;
+    line-height: 28px;
     text-align: left;
     vertical-align: middle;
-    ul {
-      display: none;
-    }
+    padding-left: 10px;
   }
 }
 
 .main {
-  flex: 1;
+  display: table;
   min-height: 100%;
+  width: 100%;
 }
 
 .filter-hamburger {
   padding: 7px;
 }
 
-.filter-nav-bar .hamburger {
-  display: none;
-}
+
 
   .filter-nav-bar {
     margin-bottom: 5px;
   }
 
 
-.hamburger {
-  padding: 3px;
-  width: 35px;
-  height: 35px;
-  display: inline-block;
-}
 
 .navbar-nav > li > a{
   padding:8px;
@@ -445,6 +503,7 @@ a {
 }
 
 .form-control {
+  border-radius: 2px;
   padding-top: 0px;
   padding-bottom: 0px;
   height: 28px;
@@ -471,6 +530,7 @@ a {
   margin: 5px;
 }
 
+
 @media only screen and (max-width: 360px) {
   .login-button {
     display: none;
@@ -483,8 +543,9 @@ a {
     border-radius: 0px;
     float: none;
     display: none;
+    flex-direction: column-reverse;
     width: 250px;
-    position: absolute;
+    position: fixed;
     margin-left: 0px;
     margin-top: 0px;
     margin-bottom: 0px;
@@ -492,8 +553,36 @@ a {
     left: 0px;
     bottom: 0px;
     z-index: 10;
+    .hamburger {
+      display:inline-block;
+    }
+  }
+  .main {
+    margin-bottom: 55px;
   }
 
+  .site-search {
+    width: 100px;
+    input {
+      width: 100px;
+    }
+  }
+  .form-login {
+    input {
+      width: 100px;
+      display: inline-block;
+    }
+    button {
+      display: inline-block;
+    }
+  }
+  .settings-micro {
+    display: inline-block;
+  }
+
+  .settings-link p {
+    display: none;
+  }
 
   .settings-menu {
     @include card1();
@@ -518,11 +607,6 @@ a {
     margin-bottom: 5px;
   }
 
-  .filter-nav-bar {
-    position: absolute;
-    bottom: 0;
-    margin-bottom: 0;
-  }
   .filter-search-form {
     display: inline-block;
     vertical-align: top;
@@ -533,6 +617,7 @@ a {
   }
 
   .contents {
+    display: table-cell;
     margin-bottom: 30px;
   }
   .top-nav {
@@ -578,9 +663,12 @@ a {
 
 }
 
+.filter-search-form {
+  padding-left: 8px;
+}
+
 
 .info-bar {
-  @include card1();
   margin: 5px;
 
 }
@@ -611,11 +699,34 @@ ul {
   background: none;
   box-shadow:none;
   @include card1();
-  min-height: 28px;
+  min-height: 25px;
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 6px;
   padding-right: 6px;
+  background-color: white;
+}
+
+.tag-med {
+
+  display: inline-block;
+  background-color: white;
+  min-height: 15px;
+  line-height: 15px;
+  border-radius: 2px;
+  a {
+    display: block;
+    padding-left: 5px;
+    padding-right: 5px;
+    height: 100%;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-radius: 2px;
+  }
+}
+
+.filter-label > a:hover {
+  background-color: $hight-font-color;
 }
 
 
@@ -654,17 +765,14 @@ ul {
   flex-wrap: nowrap;
 }
 
-#posts {
-  padding-bottom: 5px;
-}
 
 
 .post {
-  @include card1();
+  //@include card1();
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
-  background: #fff;
+  background-color: $postelement-color;
 }
 
 .infobar-title{
@@ -683,11 +791,12 @@ ul {
   background-color: $postborder;
   min-height: 20px;
   padding: 5px;
+  word-wrap: break-word;
 }
 
 .post-full-bottombar {
   background-color: $postborder;
-  min-height: 25px;
+  min-height: 30px;
 
   a {
     display: inline-block;
@@ -696,6 +805,7 @@ ul {
     padding-left: 8px;
     line-height: 25px;
     min-height: 25px;
+    height: 100%;
     vertical-align: middle;
   }
   .comment-link {
@@ -703,8 +813,86 @@ ul {
   }
 }
 
+.posts{
+  //margin-left: 5px;
+  //margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.create-post {
+  input {
+    display: block;
+  }
+}
+
+.post-HN {
+  display: table;
+  width: 100%;
+  .vote-container {
+    display: table-cell;
+  }
+  .post-body {
+    display: table-cell;
+  }
+}
+
 .post-default {
-  height: 50px;
+  min-height: 50px;
+  display: table;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 100%;
+  box-sizing: border-box;
+
+  .vote-container {
+    display: table-cell;
+    vertical-align: top;
+    .disable-vote {
+      background-color: #666666;
+
+      color: grey;
+      .post-downvote-default-img {
+        color: grey;
+      }
+
+      .post-upvote-default-img {
+        color: grey;
+      }
+
+    }
+    .post-downvote {
+      height: 50px;
+    }
+    .post-upvote {
+      height: 50px;
+    }
+  }
+  .post-icon-link{
+    display: table-cell;
+    width: 50px;
+    height: 50px;
+    padding-top: 0px;
+    padding-left: 0px;
+  }
+  .post-body {
+    display: table-cell;
+    display: inline-block;
+    //vertical-align: top;
+    height: 100%;
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    .post-text {
+      word-wrap: break-word;
+      margin: 0px;
+    }
+  }
+
+
+  .post-link {
+    display: inline-block;
+    width: 100%;
+  }
 }
 
 
@@ -747,18 +935,60 @@ ul {
   margin-left: 15px;
 }
 
+.comment-collapse {
+  display: table-cell;
+  height: 100%;
+  width: 20px;
+  border-radius: 2px;
+}
+
+.comment-body {
+  display: table-cell;
+  padding-left: 5px;
+}
+
 .post:focus {
   background: #e5f7ff;
 }
 
 .comment {
-
-  margin-left: 50px;
-  margin: 5px;
-  padding: 5px;
+  display: table;
+  margin: 2px;
+  min-height: 30px;
   background: #fff;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+
+
+}
+
+.comment:focus > .comment-body > .commentInfo > .comment-controls{
+
+  display: block;
+
+}
+
+.comment-title {
+  padding-top: 3px;
+}
+
+
+
+.comment-controls {
+
+  display: none;
+  span {
+    display: inline-block;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    vertical-align: middle;
+    height: 100%;
+  }
+}
+.comment-controls:hover {
+  display: block;
 }
 
 .comment:focus {
@@ -770,21 +1000,24 @@ ul {
 }
 
 .tag {
-  display: inline-block;
-  background-color: lightblue;
-  padding-left: 3px;
-  padding-right: 3px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  border-radius: 3px;
-  font-size:  10px;
-  text-decoration: none;
+  span {
+    display: inline-block;
+  }
+  a {
+    display: inline-block;
+    padding: 0px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+
+    span {
+      font-size: 12px;
+    }
+
+  }
+
 }
 
-.filterContainer {
-  background: #fff;
-  @include card1();
-}
+
 
 
 
@@ -798,18 +1031,14 @@ ul {
 .panel {
   border: none;
   border-radius: 0px;
-  @include card1();
+  //@include card1();
 
   overflow: visible;
+  background-color: $panel-color;
 
 }
 
 .panel-default {
   margin: 5px;
   padding: 5px;
-}
-
-.form-control {
-  border-radius: 0px;
-  @include card1();
 }
