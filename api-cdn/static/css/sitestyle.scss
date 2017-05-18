@@ -825,6 +825,17 @@ ul {
   }
 }
 
+.post-HN {
+  display: table;
+  width: 100%;
+  .vote-container {
+    display: table-cell;
+  }
+  .post-body {
+    display: table-cell;
+  }
+}
+
 .post-default {
   min-height: 50px;
   display: table;

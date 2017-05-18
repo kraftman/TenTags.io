@@ -12,7 +12,10 @@
   <div class = 'post-body'>
     <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
     </br>
-    <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+    <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>">
+      <%= post.commentCount -%> comments
+    </a>
+    <span class='comment-link'><%= (TimeAgo(ngx.time() - post.createdAt)) %></span>
 
   </div>
 </div>
