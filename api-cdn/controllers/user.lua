@@ -31,6 +31,7 @@ function m:Register(app)
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', self.TagUser)
   app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
   app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
@@ -50,6 +51,19 @@ end
 function m.ViewUser(request)
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
+  if not request.userInfo then
+    return 'user not found'
+  end
+
+  return {render = 'user.viewsub'}
+end
+
+function m.ViewUserComments(request)
+  request.userID = userAPI:GetUserID(request.params.username)
+  request.userInfo = userAPI:GetUser(request.userID)
+  if not request.userInfo then
+    return 'user not found'
+  end
 
   local startAt = request.params.startAt or 0
   local range = request.params.range or 20
@@ -58,7 +72,7 @@ function m.ViewUser(request)
 
   request.comments = commentAPI:GetUserComments(request.session.userID, request.userID, sortBy, startAt, range)
 
-  return {render = 'user.viewsub'}
+  return {render = 'user.viewsubcomments'}
 end
 
 function m.ViewUserPosts(request)

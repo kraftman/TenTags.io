@@ -1,0 +1,8 @@
+
+<div class='filter-nav'>
+
+    <a href="<%= url_for('adminpanel') %>">Admin</a>
+    <a href="<%= url_for('adminstats') %>">Stats</a>
+
+  </ul>
+</div>

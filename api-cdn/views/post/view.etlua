@@ -27,12 +27,15 @@
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
 
       <h3>Edit Post</h3>
-
+      <% if ((ngx.time() - post.createdAt) < 600) then %>
       <label for='posttitle' >Post Title:</label>
       <input type='text' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
       </br>
-      <label for='posttext' >Post text</label>
-      <input type='text' name='posttext' id='posttext' maxlength="50" value="<%= post.text -%>"/>
+      <% end %>
+
+
+      <textarea  class='form-input' name='posttext' id='posttext' id="txtArea" value="<%= post.text -%>" rows="10" cols="50"></textarea>
+
       </br>
 
       <input id='submitButton' type='submit' name='Submit' value='Edit' />
@@ -61,9 +64,9 @@
       <h3>Add Repost Source</h3>
 
       <label for='sourceurl' >Source URL:</label>
-      <input type='text' name='sourceurl' id='sourceurl' value=""/>
+      <input type='text' class='form-input' name='sourceurl' id='sourceurl' value=""/>
 
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
     </form>
 
@@ -71,25 +74,27 @@
     <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
 
       <label for='addtag' >Add Tag:</label>
-      <input type='text' name='addtag' id='addtag' value=""/>
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input type='text' class='form-input' name='addtag' id='addtag' value=""/>
+      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
     </form>
   <% end %>
 
-  Filters:</br>
-  <% for _,filter in pairs(filters or {}) do %>
-    <% render("views.st.postfilterelement",{filter = filter}) %>
-  <% end %>
-  </br></br>
-  Tags:</br>
-  <% for _,tag in pairs(post.tags or {}) do %>
-    <% if not tag.name:find('^meta:') then %>
-      <% render("views.st.tag",{tag = tag}) %>
+
+
+  </div>
+  <div class = 'panel panel-default'>
+    Filters:</br>
+    <% for _,filter in pairs(filters or {}) do %>
+      <% render("views.st.postfilterelement",{filter = filter}) %>
     <% end %>
-  <% end %>
-
-
+    </br></br>
+    Tags:</br>
+    <% for _,tag in pairs(post.tags or {}) do %>
+      <% if not tag.name:find('^meta:') then %>
+        <% render("views.st.tag",{tag = tag}) %>
+      <% end %>
+    <% end %>
   </div>
   <div class = 'panel panel-default post-comments'>
   Sort comments:

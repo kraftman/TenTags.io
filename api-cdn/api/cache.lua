@@ -138,9 +138,7 @@ end
 function cache:GetAccount(accountID)
   local account, ok, err
   if not DISABLE_CACHE then
-    print('getting from shdict')
     ok, err = userInfo:get(accountID)
-    print(ok)
     if err then
       return nil, 'couldnt load account from shdict'
     end
@@ -150,10 +148,8 @@ function cache:GetAccount(accountID)
   end
 
   account, err = userRead:GetAccount(accountID)
-  print('getting from userread')
 
   if err then
-    print('============ ',err)
     return account, err
   end
   ok, err = userInfo:set(accountID, to_json(account))

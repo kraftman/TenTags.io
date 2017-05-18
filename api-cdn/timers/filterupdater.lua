@@ -65,9 +65,10 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 end
 
 function config:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
-	print(to_json(filter))
+
   local newPostsKey = filter.id..':tempPosts'
 	local oldPostsKey = 'filterposts:'..filter.id
+
 
   local ok, err = self.redisWrite:CreateTempFilterPosts(newPostsKey, requiredTagNames, bannedTagNames)
   if not ok then
@@ -75,9 +76,9 @@ function config:GetUpdatedFilterPosts(filter, requiredTagNames, bannedTagNames)
   end
 
   local oldPostIDs = self.redisWrite:GetSetDiff(oldPostsKey, newPostsKey)
-  --print('old posts:'..to_json(oldPostIDs))
+
   local newPostIDs = self.redisWrite:GetSetDiff(newPostsKey, oldPostsKey)
-  --print('new posts:'..to_json(newPostIDs))
+
 
   local newPosts = cache:GetPosts(newPostIDs)
   self.redisWrite:DeleteKey(newPostsKey)
@@ -100,7 +101,7 @@ function config:GetRelatedFilters(filter)
   if not filterIDs then
     ngx.log(ngx.ERR,'unable to get filter ids: ',err)
   end
-  
+
 	local filters = {}
 	for _,v in pairs(filterIDs) do
 		for filterID,_ in pairs(v) do
@@ -146,6 +147,10 @@ function config:UpdateFilterPosts(data)
 
 	local ok, err
 	local requiredTagNames = filter.requiredTagNames
+  if #requiredTagNames < 1 then
+    return true
+  end
+
 
 	local bannedTagNames = filter.bannedTagNames
 

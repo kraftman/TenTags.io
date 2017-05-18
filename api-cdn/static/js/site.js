@@ -39,12 +39,12 @@ function HookSubClick(){
     var button = $(e.currentTarget)
 
     var buttonChild = button.children('span')
-    if (buttonChild.hasClass('ti-minus')){
-      buttonChild.removeClass('ti-minus')
-      buttonChild.addClass('ti-plus')
+    if (buttonChild.hasClass('ti-close')){
+      buttonChild.removeClass('ti-close')
+      buttonChild.addClass('ti-star')
     } else {
-      buttonChild.removeClass('ti-plus')
-      buttonChild.addClass('ti-minus')
+      buttonChild.removeClass('ti-star')
+      buttonChild.addClass('ti-close')
     }
     var filterID = button.attr('data-filterid')
     console.log(filterID)
@@ -474,7 +474,7 @@ function AddMenuHandler(){
       if ($(e.relatedTarget).parents('.settings-menu').length){
 
       } else {
-        
+
         settingsMenu.hide()
       }
     })

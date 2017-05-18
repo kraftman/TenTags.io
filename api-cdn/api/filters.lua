@@ -82,6 +82,7 @@ function api:CreateFilter(userID, filterInfo)
 		return nil, 'required tags not provided'
 	end
 
+
   for _,tagName in pairs(filterInfo.requiredTagNames) do
 		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
@@ -89,6 +90,10 @@ function api:CreateFilter(userID, filterInfo)
 			tinsert(newFilter.requiredTagNames, tag.name)
 		end
   end
+	if #newFilter.requiredTagNames < 1 then
+		print('not enough tags')
+		return nil, 'not enough tags'
+	end
 
 	if type(filterInfo.bannedTagNames) ~= 'table' then
 		filterInfo.bannedTagNames = {}

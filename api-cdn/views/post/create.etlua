@@ -8,44 +8,31 @@
 <script src="/static/js/createpost.js"></script>
 
 
-<div class = 'contents'>
-  <form class="panel panel-default" id='createpost' action='/p/new' method='post' accept-charset='UTF-8'>
 
+<form class="panel panel-default create-post" id='createpost' action='/p/new' method='post' accept-charset='UTF-8'>
+  <h3>Create Post</h3>
 
-      <div id="submitError"></div>
-      <legend>Create Post</legend>
-      <input type='hidden' name='submitted' id='submitted' value='1'/>
+  <div id="submitError"></div>
 
-      <div class="input-group">
-        <input type="text"  name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
-      </div>
-      <div class="input-group">
-        <input type="text"  name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
-      </div>
+  <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-      <label for='posttext' >Post Text</label>
-        </br>
-      <textarea  name='posttext' id='posttext' id="txtArea" rows="10" cols="50"></textarea>
+  <input class = 'form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
 
-      <!--
-      </br>
-      <label for='filterselect'>Filters</label></br>
-      <select name='filterselect' id='filterselect' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add filters'>
-      </select>
-      </br>
-      -->
+  <input type="text" class='form-input' name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
 
-        <p>Add Filters</p>
-        <input type='text' name='selectedfilters' id='selectedfilters' placeholder="Add filters or tags" />
-        </br>
-        </br>
-        <label for='selectedtags'>Or add tags:</label></br>
+  <textarea  class='form-input' name='posttext' id='posttext' id="txtArea" placeholder="Post Text"rows="10" cols="50"></textarea>
 
-        <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />
+  </br>
+    <p>Add Filters</p>
+    <input type='text' name='selectedfilters' id='selectedfilters' placeholder="Add filters or tags" />
+    </br>
+    </br>
+    <label for='selectedtags'>Or add tags:</label></br>
 
-        </br>
-        </br>
-      <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Submit' />
+    <input type='text' name='selectedtags' id='selectedtags' placeholder="Space seperated tags" />
 
-  </form>
-</div>
+    </br>
+    </br>
+  <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Create!' />
+
+</form>

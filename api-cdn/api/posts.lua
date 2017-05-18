@@ -362,7 +362,6 @@ function api:ConvertUserPostToPost(userID, post)
     tinsert(newPost.tags,'meta:self')
   end
 	tinsert(newPost.tags, 'meta:all')
-
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
 
   if newPost.link then

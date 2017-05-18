@@ -35,6 +35,13 @@ $alert-green: green;
   background-color: $panel-color;
 }
 
+@mixin textInput(){
+  border: none;
+  border-radius: 2px;
+  outline: none;
+  min-height: 25px;
+}
+
 body {
   min-height: 100%;
 }
@@ -87,16 +94,17 @@ a {
 }
 
 .filterbarelement {
-  display: block;
-  width: auto;
+  display: table;
+  width: 100%;
   height: 30px;
   line-height: 30px;
   text-align: left;
   vertical-align: middle;
-
+  border-top: 1px solid;
+  border-color: white;
   .filterbar-subscribe {
-    display: inline-block;
-    min-width: 10px;
+    display: table-cell;
+    min: 10px;
     height: 100%;
     padding-left: 5px;
     padding-right: 5px;
@@ -104,12 +112,22 @@ a {
 
 
   .filterbar-link {
-
-    display: inline-block;
+    padding-left: 5px;
+    display: table-cell;
     height: 100%;
-    min-width: 120px;
+    min-width: 170px;
 
   }
+}
+
+.form-input {
+  @include textInput();
+  margin: 2px;
+  box-sizing: border-box;
+  &:focus {
+    border: 1px solid $hight-font-color;
+  }
+
 }
 
 .filter-searchbox-main {
@@ -485,7 +503,6 @@ a {
 
 .form-control {
   border-radius: 2px;
-
   padding-top: 0px;
   padding-bottom: 0px;
   height: 28px;
@@ -538,6 +555,9 @@ a {
     .hamburger {
       display:inline-block;
     }
+  }
+  .main {
+    margin-bottom: 55px;
   }
 
   .site-search {
@@ -678,11 +698,34 @@ ul {
   background: none;
   box-shadow:none;
   @include card1();
-  min-height: 28px;
+  min-height: 25px;
   padding-top: 1px;
   padding-bottom: 1px;
   padding-left: 6px;
   padding-right: 6px;
+  background-color: white;
+}
+
+.tag-med {
+
+  display: inline-block;
+  background-color: white;
+  min-height: 15px;
+  line-height: 15px;
+  border-radius: 2px;
+  a {
+    display: block;
+    padding-left: 5px;
+    padding-right: 5px;
+    height: 100%;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-radius: 2px;
+  }
+}
+
+.filter-label > a:hover {
+  background-color: $hight-font-color;
 }
 
 
@@ -773,6 +816,12 @@ ul {
   //margin-left: 5px;
   //margin-right: 5px;
   margin-bottom: 5px;
+}
+
+.create-post {
+  input {
+    display: block;
+  }
 }
 
 .post-default {
@@ -925,15 +974,21 @@ ul {
 }
 
 .tag {
-  display: inline-block;
-  background-color: lightblue;
-  padding-left: 3px;
-  padding-right: 3px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  border-radius: 3px;
-  font-size:  10px;
-  text-decoration: none;
+  span {
+    display: inline-block;
+  }
+  a {
+    display: inline-block;
+    padding: 0px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+
+    span {
+      font-size: 12px;
+    }
+
+  }
+
 }
 
 
