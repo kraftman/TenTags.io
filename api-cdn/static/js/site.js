@@ -552,7 +552,8 @@ function LoadMorePosts(template){
 
 
 function AddTagVoteListener(){
-  $(".upvote").click(function(){
+  $(".upvote").click(function(e){
+    e.preventDefault();
     var tagCount = $(this).parent().find('.tagcount')
     tagCount.text(Number(tagCount.text())+1)
     var tagID = $(this).parent().data('id')
@@ -561,7 +562,8 @@ function AddTagVoteListener(){
       console.log(data);
     })
   })
-  $(".downvote").click(function(){
+  $(".downvote").click(function(e){
+    e.preventDefault();
     var tagCount = $(this).parent().find('.tagcount')
     tagCount.text(Number(tagCount.text())-1)
     var tagID = $(this).parent().data('id')
