@@ -836,6 +836,19 @@ ul {
   .vote-container {
     display: table-cell;
     vertical-align: top;
+    .disable-vote {
+      background-color: #666666;
+
+      color: grey;
+      .post-downvote-default-img {
+        color: grey;
+      }
+
+      .post-upvote-default-img {
+        color: grey;
+      }
+
+    }
     .post-downvote {
       height: 50px;
     }
