@@ -6,7 +6,12 @@
   Posts created: <%= userInfo.PostsCreated or 0%></br>
   Comments created: <%= userInfo.CommentsCreated or 0%></br>
   Posts voted: <%= userInfo.PostsVoted or 0%></br>
-  Tags added: <%= userInfo.TagsAdded or 0%>
+  Tags added: <%= userInfo.TagsAdded or 0%></br>
+
+  Tag votes: <%= (userInfo['stat:tagvoteup'] or 0) - (userInfo['stat:tagvotedown'] or 0) %></br>
+
+  Comment votes: <%= (userInfo['stat:commentvoteup'] or 0) - (userInfo['stat:commentvotedown'] or 0) %>
+
 
 </div>
 

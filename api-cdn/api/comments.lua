@@ -34,7 +34,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 		id = userID..':'..commentID
 	}
 
-	return self.self.self.commentWrite:QueueJob('commentvote', commentVote)
+	return self.redisWrite:QueueJob('commentvote', commentVote)
 
 end
 
