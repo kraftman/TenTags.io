@@ -82,7 +82,7 @@ function userread:GetAccount(accountID)
   if not ok or ok == ngx.null then
     return nil,err
   end
-  
+
   local account = self:ConvertListToTable(ok)
 
   account.sessions = {}
@@ -151,6 +151,9 @@ function userread:GetUser(userID)
   end
 
   local user = self:ConvertListToTable(ok)
+  if not user.username then
+    return nil
+  end
 
   user.userLabels = {}
   local targetUserID
@@ -169,6 +172,10 @@ function userread:GetUser(userID)
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
   user.showNSFW = user.showNSFW == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false
+
+  if user.deleted then
+    return nil
+  end
 
   return user
 

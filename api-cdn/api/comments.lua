@@ -154,7 +154,6 @@ function api:CreateComment(userID, userComment)
 			postID = newComment.postID,
 			commentID = newComment.id,
 			userID = userID,
-			
 		}
 
 		-- queue the rest

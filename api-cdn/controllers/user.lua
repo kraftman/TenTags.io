@@ -28,9 +28,12 @@ function m:Register(app)
     GET = function() return 'Please login using the top bar'  end
   }))
 
+  app:get('viewuser','/user/:username', self.ViewUser)
+  app:get('deleteuser', '/user/:username/delete', self.DeleteUser)
+
   app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
   app:post('taguser', '/user/tag/:userID', self.TagUser)
-  app:get('viewuser','/user/:username', self.ViewUser)
+
   app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
   app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
   app:get('logout','/logout', self.LogOut)
@@ -46,6 +49,24 @@ function m.LogOut(request)
   request.session.username = nil
   request.account = nil
   return { redirect_to = request:url_for("home") }
+end
+
+function m.DeleteUser(request)
+
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local ok , err = userAPI:DeleteUser(userID, username)
+  if ok then
+    return 'deleted'
+  else
+    print('error: ', err)
+    return 'error deleting user'
+  end
+
 end
 
 function m.ViewUser(request)

@@ -58,6 +58,18 @@ function userwrite:AddUserCommentVotes(userID, commentID)
   return ok
 end
 
+function userwrite:DeleteUser(userID, username)
+--local account = cache:GetAccount(accountID)
+  print('deleting username: ', username)
+  local red = self:GetUserWriteConnection()
+  red:init_pipeline()
+  red:hdel('userToID',username:lower())
+  red:hset('user:'..userID, 'deleted', '1')
+  local ok, err = red:commit_pipeline()
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function userwrite:AddSavedPost(userID, postID)
   print('=========================adding saved post: ', postID)
   local red = self:GetUserWriteConnection()
@@ -201,7 +213,7 @@ function userwrite:IncrementAccountStat(userID, statName, value)
 end
 
 function userwrite:CreateSubUser(user)
-
+  print(to_json(user))
   local hashedUser = {}
   hashedUser.filters = {}
 

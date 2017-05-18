@@ -97,7 +97,7 @@ end
 function m.GetPost(request)
   local sortBy = request.params.sort or 'best'
   sortBy = sortBy:lower()
-  local userID = userID or 'default'
+  local userID = request.session.userID or 'default'
 
   local postID = request.params.postID
 

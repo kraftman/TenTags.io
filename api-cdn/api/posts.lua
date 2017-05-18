@@ -326,7 +326,6 @@ function api:ConvertUserPostToPost(userID, post)
 		id = newID,
 		parentID = newID,
 		createdBy = post.createdBy,
-    creatorName = user.username,
 		commentCount = 0,
 		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
 		link = self:SanitiseUserInput(post.link, 400),

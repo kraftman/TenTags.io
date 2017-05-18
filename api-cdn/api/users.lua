@@ -50,6 +50,69 @@ function api:UserHasVotedTag(userID, postID, tagName)
 
 end
 
+function api:DeleteUser(userID, username)
+	local ok, err = self:RateLimit('DeleteUser:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+	local userToDeleteID = cache:GetUserID(username)
+	if not userToDeleteID then
+		return nil, 'couldnt find user'
+	end
+
+	if userID == userToDeleteID then
+		return nil, 'cannot delete the current user, switch to delete'
+	end
+
+	local user = cache:GetUser(userID)
+	if not user then
+		return nil, 'unknown users'
+	end
+
+	local account = cache:GetAccount(user.parentID)
+
+	-- check they can
+	if user.role ~= 'Admin' then
+		local found = false
+		for _,id in pairs(account.users) do
+			if id == userToDeleteID then
+				found = true
+				break
+			end
+		end
+		if not found then
+			return nil, 'must be admin to do that'
+		end
+	end
+
+	for i = 1, #account.users do
+		if account.users[i] == userToDeleteID then
+			table.remove(account.users, i)
+		end
+	end
+	account.userCount = account.userCount - 1
+	ok, err = self.userWrite:CreateAccount(account)
+	if not ok then
+		ngx.log(ngx.ERR, 'error deleting user:', userToDeleteID, ' from account ', account.id, err )
+		return nil, 'failed to delete users'
+	end
+
+
+	local userToDelete = cache:GetUser(userToDeleteID)
+	if not userToDelete then
+		return nil, 'couldnt find user to delete'
+	end
+	ok, err = self.userWrite:DeleteUser(userToDeleteID, userToDelete.username)
+
+	if ok then
+		return true
+	else
+		print('error from redis: ', err)
+		return nil, 'error deleting user'
+	end
+
+end
+
 function api:ToggleSavePost(userID,postID)
 	local ok, err = self:RateLimit('ToggleSavePost:',userID, 1, 60)
 	if not ok then

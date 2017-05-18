@@ -259,6 +259,7 @@ end
 function cache:GetUsername(userID)
 
   local user = self:GetUser(userID)
+  print(to_json(user))
   if user then
     return user.username
   end
@@ -337,6 +338,7 @@ function cache:GetSortedComments(userID, postID,sortBy)
 
   for _,v in pairs(flatComments) do
     v.username = self:GetUsername(v.createdBy) or 'unknown'
+    print(v.username)
     v.filters = self:GetFilterInfo(v.filters or {})
 
     if userID and userVotedComments[v.id] then
@@ -405,6 +407,7 @@ function cache:GetPost(postID)
   if err then
     return result, err
   end
+  result.creatorName = self:GetUsername(result.createdBy) or 'unknown'
 
   ok, err = postInfo:set(postID,to_json(result))
   if not ok then
