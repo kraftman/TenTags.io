@@ -15,12 +15,12 @@
     <div class='warningText'></div>
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-    <label for='filterName' >Filter Name</label>
+    <label for='filterName' >Filter Name (url)</label>
     </br>
     <input type='text' class='form-input' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
 
     </br>
-    <label for='filtertitle' >Filter Title:</label>
+    <label for='filtertitle' >Filter Title (headline)</label>
       </br>
     <input type='text' class='form-input' name='filtertitle' id='filtertitle' maxlength="50" />
 

@@ -119,6 +119,7 @@ a {
     height: 100%;
     min-width: 170px;
 
+
   }
 }
 
@@ -126,6 +127,7 @@ a {
   @include textInput();
   margin: 2px;
   box-sizing: border-box;
+  padding-left: 3px;
   &:focus {
     border: 1px solid $hight-font-color;
   }
@@ -843,9 +845,10 @@ ul {
   }
   .post-icon-link{
     display: table-cell;
-    width: 45px;
-    padding-top: 5px;
-    padding-left: 5px;
+    width: 50px;
+    height: 50px;
+    padding-top: 0px;
+    padding-left: 0px;
   }
   .post-body {
     display: table-cell;
