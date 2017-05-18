@@ -34,7 +34,7 @@
       <% end %>
 
 
-      <textarea  class='form-input' name='posttext' id='posttext' id="txtArea" value="<%= post.text -%>" rows="10" cols="50"></textarea>
+      <textarea  class='form-input' name='posttext' id='posttext' id="txtArea" value="<%= post.text -%>" rows="10" cols="30"></textarea>
 
       </br>
 
