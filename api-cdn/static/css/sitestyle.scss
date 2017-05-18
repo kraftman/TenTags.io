@@ -162,9 +162,6 @@ a {
 
 }
 
-.panel {
-  @include card1();
-}
 
 
 
@@ -767,7 +764,7 @@ ul {
 
 
 .post {
-  @include card1();
+  //@include card1();
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
@@ -1005,9 +1002,10 @@ ul {
 .panel {
   border: none;
   border-radius: 0px;
-  @include card1();
+  //@include card1();
 
   overflow: visible;
+  background-color: $panel-color;
 
 }
 
