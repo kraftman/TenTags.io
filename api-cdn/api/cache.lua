@@ -697,7 +697,7 @@ function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
   tinsert(newPosts, post)
 end
 
-function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
+function cache:GetUserFrontPage(userID,sortBy,startAt, range)
 
   local user = self:GetUser(userID)
 
@@ -713,7 +713,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
       self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
 
       -- stop when we have a page worth
-      if #newPosts > (endAt - startAt) then
+      if #newPosts >= (range) then
         break
       end
     end
@@ -721,7 +721,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
   else
-    for i = startAt, endAt do
+    for i = startAt, startAt+range do
       if freshPosts[i] then
         tinsert(newPosts,self:GetPost(freshPosts[i]))
       end
@@ -738,7 +738,16 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, endAt)
     end
   end
 
-  return newPosts
+  local distinctPosts = {}
+  local hash = {}
+  for _,v in ipairs(newPosts) do
+    if (not hash[v.id]) then
+      distinctPosts[#distinctPosts+1] = v -- you could print here instead of saving to result table if you wanted
+      hash[v.id] = true
+    end
+  end
+
+  return distinctPosts
 end
 
 

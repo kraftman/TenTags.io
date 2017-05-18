@@ -486,7 +486,7 @@ function read:GetFilter(filterID)
   else
     filter.requiredTagNames = ok
   end
-  
+
   return filter
 end
 
@@ -608,6 +608,7 @@ function read:GetAllNewPosts(rangeStart,rangeEnd)
 end
 
 function read:GetAllFreshPosts(rangeStart,rangeEnd)
+  print(rangeStart, rangeEnd)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:datescore',rangeStart,rangeEnd)
   self:SetKeepalive(red)

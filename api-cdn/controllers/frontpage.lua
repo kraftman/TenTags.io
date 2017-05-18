@@ -13,7 +13,7 @@ function m.FrontPage(request)
   request.pageNum = request.params.page or 1
   local range = 10*(request.pageNum-1)
   local filter = request.req.parsed_url.path:match('/(%w+)$')
-
+  print('getting user front page')
   request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default',filter,range, range+10)
 
   --print(to_json(request.posts))
