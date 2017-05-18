@@ -239,7 +239,8 @@ function api:GetPost(userID, postID)
 
 	local user = cache:GetUser(userID)
 
-	if user.hideClickedPosts then
+
+	if user and user.hideClickedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
 
