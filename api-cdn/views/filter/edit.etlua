@@ -1,6 +1,6 @@
 
 
-<script src="/static/js/updatefilter.js"></script>
+<script src="/static/js/updatefilter.js" defer></script>
 
   <div class = 'panel panel-default'>
     <form id='editfilter' action='' method='post' accept-charset='UTF-8'>

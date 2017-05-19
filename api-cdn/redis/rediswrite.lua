@@ -368,10 +368,11 @@ function write:CreateFilter(filter)
       for _,banInfo in pairs(v) do
         hashFilter['bannedDomains:'..banInfo.domainName] = self:to_json(banInfo)
       end
-    elseif type(v) == 'string' then
+    elseif type(v) == 'string' or type(v) == 'number' then
       hashFilter[k] = v
     end
   end
+  hashFilter.createdAt = filter.createdAt or ngx.time()
 
 
   -- add id to name conversion table
@@ -384,6 +385,7 @@ function write:CreateFilter(filter)
     red:zadd('filtersubs',hashFilter.subs, hashFilter.id)
 
     -- add to list of filters
+    print('adding to filters: ', hashFilter.createdAt, ' ', hashFilter.id)
     red:zadd('filters',hashFilter.createdAt,hashFilter.id)
     red:sadd('filterNames',hashFilter.name)
 
@@ -400,16 +402,91 @@ function write:CreateFilter(filter)
   return results
 end
 
+function write:EmptyFilter()
+
+  local ranges = {}
+  ranges['hour:'] = 3600
+  ranges['day:'] = 86400
+  ranges['week:'] = 604800
+  ranges['month:'] = 2592000
+  ranges['year:'] = 31622400
+
+
+  local time = ngx.time()
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:zcard('filters')
+  if not ok then
+    self:SetKeepalive(red)
+    return nil, 'couldnt zcard filters: '..err
+  end
+  local position = math.random(ok)-1
+  ok, err = red:zrange('filters', position, position)
+  if not ok then
+    self:SetKeepalive(red)
+    return nil, 'couldnt get random filter: '..err
+  end
+  if not next(ok) then
+    print('no filters found')
+    return true
+  end
+  -- we've now chosen a random filters
+  print(self:to_json(ok),' ', position)
+
+  local filterID = ok[1]
+  print('got filter:', filterID)
+  ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
+  print(ok)
+  if not ok or ok == ngx.null then
+    print('couldnt get lock')
+    return true
+  end
+
+
+  for range,interval in pairs(ranges) do
+    if interval > 0 then
+      ok, err = red:zrangebyscore('filterposts:date:'..range, (time-interval), 0)
+      if not ok then
+        self:SetKeepalive(red)
+        return nil, 'error getting filterposts:'..err
+      end
+      red:init_pipeline()
+        for _,postID in pairs(ok) do
+          red:zrem('filterposts:date:'..range, postID)
+          red:zrem('filterposts:score:'..range, postID)
+        end
+      ok, err = red:commit_pipeline()
+      if not ok then
+        self:SetKeepalive(red)
+        return nil, 'couldnt pipeline deletion: '..err
+      end
+    end
+  end
+  print('done')
+
+  return true
+
+  -- get a random filter
+  -- for each range, get all the expired posts
+  -- remove them from both sorted sets
+
+end
+
 function write:CreateFilterPostInfo(red, filter,postInfo)
-  --print('updating filter '..filter.title..'with new score: '..filter.score)
-  --print(filter.id, postInfo.id)
+  -- is this set useless?
   red:sadd('filterposts:'..filter.id, postInfo.id)
-  red:zadd('filterposts:date:'..filter.id,postInfo.createdAt,postInfo.id)
-  red:zadd('filterposts:score:'..filter.id,filter.score,postInfo.id)
+  local ranges = {'','hour:', 'day:', 'week:', 'month:', 'year:'}
+
+  for _,v in pairs(ranges) do
+    red:zadd('filterposts:date:'..v..filter.id,postInfo.createdAt,postInfo.id)
+    red:zadd('filterposts:score:'..v..filter.id,filter.score,postInfo.id)
+    red:zadd('filterpostsall:date:'..v,postInfo.createdAt,filter.id..':'..postInfo.id)
+    red:zadd('filterpostsall:score:'..v,filter.score,filter.id..':'..postInfo.id)
+  end
+
   red:zadd('filterposts:datescore:'..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR,postInfo.id)
+
   red:zadd('filterpostsall:datescore',postInfo.createdAt + filter.score*SCORE_FACTOR,filter.id..':'..postInfo.id)
-  red:zadd('filterpostsall:date',postInfo.createdAt,filter.id..':'..postInfo.id)
-  red:zadd('filterpostsall:score',filter.score,filter.id..':'..postInfo.id)
+
 end
 
 function write:IncrementFilterSubs(filterID, value)
@@ -483,13 +560,18 @@ function write:AddPostToFilters(post, filters)
 end
 
 function write:RemoveFilterPostInfo(red, filterID,postID)
+  local ranges = {'','hour:', 'day:', 'week:', 'month:', 'year:'}
+
+  for _,v in pairs(ranges) do
+    red:zrem('filterposts:date:'..v..filterID, postID)
+    red:zrem('filterposts:score:'..v..filterID, postID)
+    red:zrem('filterpostsall:date'..v, filterID..':'..postID)
+    red:zrem('filterpostsall:score'..v, filterID..':'..postID)
+  end
   red:srem('filterposts:'..filterID, postID)
-  red:zrem('filterposts:date:'..filterID, postID)
-  red:zrem('filterposts:score:'..filterID, postID)
+
   red:zrem('filterposts:datescore:'..filterID, postID)
   red:zrem('filterpostsall:datescore', filterID..':'..postID)
-  red:zrem('filterpostsall:date', filterID..':'..postID)
-  red:zrem('filterpostsall:score', filterID..':'..postID)
 end
 
 function write:RemovePostFromFilters(postID, filterIDs)

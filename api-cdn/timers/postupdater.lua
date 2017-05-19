@@ -53,8 +53,16 @@ function config.Run(_,self)
 	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
 	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
 	self:ProcessJob('ReIndexPost', 'ReIndexPost')
+	self:EmptyOldFilters()
 	--self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
+end
+
+function config:EmptyOldFilters()
+	local ok, err = self.redisWrite:EmptyFilter()
+	if not ok then
+		ngx.log(ngx.ERR,'error emptying filters: ',err)
+	end
 end
 
 function config:ReIndexPost(data)

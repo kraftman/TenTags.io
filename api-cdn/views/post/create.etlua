@@ -1,6 +1,6 @@
 
 
-<script src="/static/js/createpost.js"></script>
+<script src="/static/js/createpost.js" defer></script>
 
 
 

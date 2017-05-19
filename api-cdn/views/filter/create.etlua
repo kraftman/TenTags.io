@@ -1,6 +1,6 @@
 
 
-<script src="/static/js/createfilter.js"></script>
+<script src="/static/js/createfilter.js" defer></script>
 
 
 <div class = 'panel panel-default'>
