@@ -5,4 +5,5 @@ redis/comment/dump.rdb
 redis/general/dump.rdb
 redis/user/dump.rdb
 filtta.env
+stunnel.pem
 api-cdn/nginx.conf.compiled

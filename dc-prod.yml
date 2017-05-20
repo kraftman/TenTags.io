@@ -4,5 +4,8 @@ services:
     ports:
       - "80:8081"
 
-    entrypoint: ""
-    command: bash -c "lapis server production"
+    #entrypoint: ""
+    #command: bash -c "lapis server production"
+    volumes:
+      - ./stunnel.conf:/etc/stunnel/stunnel.conf
+      - ./stunnel.pem:/etc/stunnel/stunnel.pem
