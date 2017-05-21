@@ -42,11 +42,11 @@ function M:GetUserReadConnection()
 end
 
 function M:GetRedisReadConnection()
-  return self:GetRedisConnection('redis-general')
+  return self:GetRedisConnection('127.0.0.1')
 end
 
 function M:GetRedisWriteConnection()
-  return self:GetRedisConnection('redis-general')
+  return self:GetRedisConnection('127.0.0.1')
 end
 
 function M:GetCommentWriteConnection()

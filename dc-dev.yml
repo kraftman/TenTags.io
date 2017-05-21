@@ -5,8 +5,8 @@ services:
     ports:
       - "80:80"
       - "81:8081"
-    entrypoint: ""
-    command:  bash -c "lapis server"
+    #entrypoint: ""
+    #command:  bash -c "lapis server"
   imghost:
     expose:
       - "80"
