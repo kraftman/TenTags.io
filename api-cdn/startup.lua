@@ -54,16 +54,16 @@ end
 
 
 function worker.ProcessRecurring(_,self)
-  if not self.elasticDone then
-
-    print('creating elastic')
-    local ok, err = elastic:CreateIndex()
-    print(ok, err)
-    if ok then
-      self.elasticDone = true
-      print('done ============= ')
-    end
-  end
+  -- if not self.elasticDone then
+  --
+  --   print('creating elastic')
+  --   local ok, err = elastic:CreateIndex()
+  --   print(ok, err)
+  --   if ok then
+  --     self.elasticDone = true
+  --     print('done ============= ')
+  --   end
+  -- end
   self:ScheduleTimer()
   self:FlushUserSeen()
 end

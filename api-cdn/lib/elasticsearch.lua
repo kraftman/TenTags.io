@@ -6,11 +6,13 @@ local M = {}
 
 local index = 'testindex'
 
+local basePath = os.getenv('ELASTIC_HOST') or "http://elasticsearch1:9200/"
+
 function M:CreateIndex()
 
   local httpc = http.new()
 
-  local path = "http://elasticsearch1:9200"..'/'..index
+  local path = basePath..index
   local res, err = httpc:request_uri(path, {
         method = "DELETE",
         body = to_json(data),
@@ -23,7 +25,7 @@ function M:CreateIndex()
     --print(res.status)
     return nil, res and res.body or res.status
   end
-  path = "http://elasticsearch1:9200"..'/'..index
+  path = basePath..index
   res, err = httpc:request_uri(path, {
         method = "PUT",
         body = to_json({
@@ -54,7 +56,7 @@ end
 function M:Index(indexType, data)
   local httpc = http.new()
 
-  local path = "http://elasticsearch1:9200"..'/'..index..'/'..indexType
+  local path = basePath..index..'/'..indexType
   local res, err = httpc:request_uri(path, {
         method = "POST",
         body = to_json(data),
@@ -81,7 +83,7 @@ end
 
 function M:SearchPostTitle(searchString)
   local httpc = http.new()
-  local path = "http://elasticsearch1:9200"..'/_search'
+  local path = basePath..'_search'
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({
@@ -107,7 +109,7 @@ end
 
 function M:SearchPostBody(searchString)
   local httpc = http.new()
-  local path = "http://elasticsearch1:9200"..'/_search'
+  local path = basePath..'_search'
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({
@@ -134,7 +136,7 @@ end
 
 function M:SearchURL(searchString)
   local httpc = http.new()
-  local path = "http://elasticsearch1:9200"..'/_search'
+  local path = basePath..'_search'
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({
@@ -165,7 +167,7 @@ end
 
 function M:SearchWholePostFuzzy(searchString)
   local httpc = http.new()
-  local path = "http://elasticsearch1:9200"..'/_search'
+  local path = basePath..'_search'
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({
@@ -200,7 +202,7 @@ end
 
 function M:SearchPostTitleFuzzy(searchString)
   local httpc = http.new()
-  local path = "http://elasticsearch1:9200"..'/_search'
+  local path = basePath..'_search'
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({

@@ -2,11 +2,6 @@ version: '2'
 services:
   filtta:
     build: api-cdn/.
-    links:
-      - imghost
-      - redis-general
-      - redis-comment
-      - redis-user
     volumes:
       - ./api-cdn:/opt/openresty/nginx/conf
     env_file:
@@ -18,30 +13,6 @@ services:
      - ./imghost:/imghost
      - ./www:/var/www
     entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
-  imgprocess:
-    tty: true
-    privileged: true
-    build: imgprocess/.
-    volumes:
-     - ./imgprocess/lua:/lua
-     - ./www:/var/www
-    links:
-      - redis-general
-      - imghost
-    env_file:
-      - filtta.env
-  redis-general:
-    build: redis
-    volumes:
-      - ./redis/general:/data
-  redis-comment:
-    build: redis
-    volumes:
-      - ./redis/comment:/data
-  redis-user:
-    build: redis
-    volumes:
-      - ./redis/user:/data
   backup:
     build: backup/.
     volumes:

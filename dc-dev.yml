@@ -7,6 +7,24 @@ services:
       - "81:8081"
     #entrypoint: ""
     #command:  bash -c "lapis server"
+    links:
+      - imghost
+      - redis-general
+      - redis-comment
+      - redis-user
+
+  imgprocess:
+    tty: true
+    privileged: true
+    build: imgprocess/.
+    volumes:
+     - ./imgprocess/lua:/lua
+     - ./www:/var/www
+    links:
+      - redis-general
+      - imghost
+    env_file:
+      - filtta.env
   imghost:
     expose:
       - "80"
