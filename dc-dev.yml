@@ -22,3 +22,15 @@ services:
   elasticsearch1:
     ports:
       - 9200:9200
+  redis-general:
+    build: redis
+    volumes:
+      - ./redis/general:/data
+  redis-comment:
+    build: redis
+    volumes:
+      - ./redis/comment:/data
+  redis-user:
+    build: redis
+    volumes:
+      - ./redis/user:/data

@@ -426,7 +426,6 @@ function write:EmptyFilter()
     return nil, 'couldnt get random filter: '..err
   end
   if not next(ok) then
-    print('no filters found')
     return true
   end
   -- we've now chosen a random filters

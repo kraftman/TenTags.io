@@ -11,13 +11,41 @@ config("development", {
   session_name = 'filtta_session',
   secret = "this is my secrarstrstet string 123456",
   num_workers = '1',
-  port = 80
+  port = 80,
+  dict_filters = '1m',
+  dict_posts = '1m',
+  dict_locks = '1m',
+  dict_userupdates = '1m',
+  dict_usersessionseen = '1m',
+  dict_searchresults = '1m',
+  dict_users = '1m',
+  dict_comments = '1m',
+  dict_uservotes = '1m',
+  dict_ratelimit = '1m',
+  dict_emailqueue = '1m',
+  dict_pagestatlog = '1m',
+  dict_userfilterids = '1m'
+
 })
 
 config("production", {
   code_cache = "on",
   secret = os.getenv('LAPIS_SECRET'),
   port = 80,
+
+  dict_filters = '100m',
+  dict_posts = '100m',
+  dict_locks = '10m',
+  dict_userupdates = '10m',
+  dict_usersessionseen = '10m',
+  dict_searchresults = '10m',
+  dict_users = '100m',
+  dict_comments = '100m',
+  dict_uservotes = '10m',
+  dict_ratelimit = '10m',
+  dict_emailqueue = '10m',
+  dict_pagestatlog = '10m',
+  dict_userfilterids = '10m',
   hide_errors = true,
   num_workers = 'auto',
   logging = {

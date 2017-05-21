@@ -16,7 +16,6 @@ function worker:New()
 
   -- shared dicts
   w.locks = ngx.shared.locks
-  w.scripts = ngx.shared.scripts
   w.userUpdateDict = ngx.shared.userupdates
   w.userSessionSeenDict = ngx.shared.usersessionseen
 

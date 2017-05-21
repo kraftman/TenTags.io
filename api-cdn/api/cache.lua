@@ -14,13 +14,12 @@ users
 ]]
 
 local cache = {}
-local userFilterIDs = ngx.shared.userFilterIDs
 local filterDict = ngx.shared.filters
---local frontpages = ngx.shared.frontpages
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenDict = ngx.shared.usersessionseen
+local userFilterIDs = ngx.shared.userFilterIDs
 local searchResults = ngx.shared.searchresults
-local postInfo = ngx.shared.postinfo
+local postDict = ngx.shared.posts
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = (require 'redis.db').redisRead
@@ -30,9 +29,9 @@ local lru = require 'api.lrucache'
 
 local elastic = require 'lib.elasticsearch'
 local tinsert = table.insert
-local userInfo = ngx.shared.userInfo
-local commentInfo = ngx.shared.comments
-local voteInfo = ngx.shared.userVotes
+local userDict = ngx.shared.users
+local commentDict = ngx.shared.comments
+local voteDict = ngx.shared.userVotes
 local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
@@ -62,7 +61,7 @@ function cache:GetUser(userID)
   local ok, err
 
   if not DISABLE_CACHE then
-     ok, err = userInfo:get(userID)
+     ok, err = userDict:get(userID)
     if ok then
       return from_json(ok)
     end
@@ -76,7 +75,7 @@ function cache:GetUser(userID)
     return user, err
   end
 
-  ok, err = userInfo:set(userID, to_json(user), DEFAULT_CACHE_TIME)
+  ok, err = userDict:set(userID, to_json(user), DEFAULT_CACHE_TIME)
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user ifno:',err)
     return ok, err
@@ -121,13 +120,13 @@ end
 function cache:PurgeKey(keyInfo)
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
-      userInfo:delete(keyInfo.id)
+      userDict:delete(keyInfo.id)
     else
       self:GetAccount(keyInfo.id)
     end
   elseif keyInfo.keyType == 'comment' then
     local postID, commentID = keyInfo.id:match('(%w+):(%w+)')
-    commentInfo:delete(postID)
+    commentDict:delete(postID)
   end
 end
 
@@ -138,7 +137,7 @@ end
 function cache:GetAccount(accountID)
   local account, ok, err
   if not DISABLE_CACHE then
-    ok, err = userInfo:get(accountID)
+    ok, err = userDict:get(accountID)
     if err then
       return nil, 'couldnt load account from shdict'
     end
@@ -152,7 +151,7 @@ function cache:GetAccount(accountID)
   if err then
     return account, err
   end
-  ok, err = userInfo:set(accountID, to_json(account))
+  ok, err = userDict:set(accountID, to_json(account))
   if not ok then
     ngx.log(ngx.ERR, 'unable to set account info: ',err)
   end
@@ -187,7 +186,7 @@ end
 
 
 function cache:AddPost(post)
-  local result,err = postInfo:set(post.id,to_json(postInfo))
+  local result,err = postDict:set(post.id,to_json(postDict))
   return result, err
 end
 
@@ -270,7 +269,7 @@ function cache:GetPostComments(postID)
   local ok, err,flatComments
 
   if not DISABLE_CACHE then
-    ok, err = commentInfo:get(postID)
+    ok, err = commentDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'could not get post comments: ',err)
     end
@@ -290,7 +289,7 @@ function cache:GetPostComments(postID)
     flatComments[k] = from_json(v)
   end
 
-  ok, err = commentInfo:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
+  ok, err = commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
   if err then
     ngx.log(ngx.ERR, 'error setting postcomments: ', err)
     return ok,err
@@ -393,7 +392,7 @@ function cache:GetPost(postID)
   end
 
   if not DISABLE_CACHE then
-    ok, err = postInfo:get(postID)
+    ok, err = postDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
     end
@@ -409,9 +408,9 @@ function cache:GetPost(postID)
   end
   result.creatorName = self:GetUsername(result.createdBy) or 'unknown'
 
-  ok, err = postInfo:set(postID,to_json(result))
+  ok, err = postDict:set(postID,to_json(result))
   if not ok then
-    ngx.log(ngx.ERR, 'unable to set postInfo: ',err)
+    ngx.log(ngx.ERR, 'unable to set postDict: ',err)
   end
   return result
 
@@ -639,7 +638,7 @@ function cache:GetUserCommentVotes(userID)
 
   if not DISABLE_CACHE then
 
-    ok, err = voteInfo:get('commentVotes:'..userID)
+    ok, err = voteDict:get('commentVotes:'..userID)
 
     if err then
       ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
@@ -652,7 +651,7 @@ function cache:GetUserCommentVotes(userID)
   if not commentVotes then
     ok, err = userRead:GetUserCommentVotes(userID)
     if not err then
-      voteInfo:set('commentVotes:'..userID, to_json(ok), DEFAULT_CACHE_TIME)
+      voteDict:set('commentVotes:'..userID, to_json(ok), DEFAULT_CACHE_TIME)
       commentVotes = ok
     end
   end

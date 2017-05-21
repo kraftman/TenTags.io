@@ -7,11 +7,30 @@ local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 
 
-function M:GetRedisConnection(host)
-  local red = redis:new()
+local function GetConnectionDetails(name)
+  local data = os.getenv(name)
+  if not data then
+    print('no env set')
+    return nil
+  end
+  local host, port = data:match('(.-):(.+)')
+  return host, tonumber(port)
+end
 
-  red:set_timeout(1000)
-  local ok, err = red:connect(host, 6379)
+
+local genReadHost, genReadPort = GetConnectionDetails('REDIS_GENERAL_READ')
+local genWriteHost, genWritePort = GetConnectionDetails('REDIS_GENERAL_WRITE')
+local userReadHost, userReadPort = GetConnectionDetails('REDIS_USER_READ')
+local userWriteHost, userWritePort = GetConnectionDetails('REDIS_USER_WRITE')
+local commentReadHost, commentReadPort = GetConnectionDetails('REDIS_COMMENT_READ')
+local commentWriteHost, commentWritePort = GetConnectionDetails('REDIS_COMMENT_WRITE')
+
+
+function M:GetRedisConnection(host, port)
+  local red = redis:new()
+  port = port or 6379
+  red:set_timeout(2000)
+  local ok, err = red:connect(host, port)
   if not ok then
     ngx.log(ngx.ERR, "failed to connect: ", err)
     return nil
@@ -34,27 +53,27 @@ end
 
 
 function M:GetUserWriteConnection()
-  return self:GetRedisConnection('redis-user')
+  return self:GetRedisConnection(userWriteHost or 'redis-user', userWritePort)
 end
 
 function M:GetUserReadConnection()
-  return self:GetRedisConnection('redis-user')
+  return self:GetRedisConnection(userReadHost  or 'redis-user', userReadPort)
 end
 
 function M:GetRedisReadConnection()
-  return self:GetRedisConnection('127.0.0.1')
+  return self:GetRedisConnection(genReadHost  or 'redis-server', genReadPort)
 end
 
 function M:GetRedisWriteConnection()
-  return self:GetRedisConnection('127.0.0.1')
+  return self:GetRedisConnection(genWriteHost or 'redis-server', genWritePort)
 end
 
 function M:GetCommentWriteConnection()
-  return self:GetRedisConnection('redis-comment')
+  return self:GetRedisConnection(commentWriteHost or 'redis-comment' , commentWritePort)
 end
 
 function M:GetCommentReadConnection()
-  return self:GetRedisConnection('redis-comment')
+  return self:GetRedisConnection(commentReadHost or 'redis-comment', commentReadPort)
 end
 
 
