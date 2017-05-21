@@ -34,10 +34,32 @@ function config.Run(_,self)
   -- no need to lock since we should be grabbing a different one each time anyway
   self:GetStats()
   self:GetPageStats()
+  self:FlushStats()
 
 
 end
 
+function config:FlushStats()
+  local ok, err = self.util:GetLock('FlushStats', 30)
+
+  if not ok then
+    return
+  end
+
+  local ok, err = redisWrite:FlushSiteStats()
+  if not ok then
+    ngx.log(ngx.ERR, 'error flushing site stats: ', err)
+  end
+
+
+  local ok, err = redisWrite:FlushFilterStats()
+
+  if not ok then
+    ngx.log(ngx.ERR, 'error flushing filter stats: ', err)
+  end
+
+
+end
 
 function config:GetPageStats()
   local ok, err = self.util:GetLock('UpdateStats', 5)

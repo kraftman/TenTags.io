@@ -20,12 +20,14 @@ local userSessionSeenDict = ngx.shared.usersessionseen
 local userFilterIDs = ngx.shared.userFilterIDs
 local searchResults = ngx.shared.searchresults
 local postDict = ngx.shared.posts
+local userAlertDict = ngx.shared.userAlerts
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = (require 'redis.db').redisRead
 local userRead = (require 'redis.db').userRead
 local commentRead = (require 'redis.db').commentRead
 local lru = require 'api.lrucache'
+
 
 local elastic = require 'lib.elasticsearch'
 local tinsert = table.insert
@@ -36,7 +38,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local DISABLE_CACHE = os.getenv('DISABLE_CACHE')
+local ENABLE_CACHE = os.getenv('ENABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -60,7 +62,7 @@ end
 function cache:GetUser(userID)
   local ok, err
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
      ok, err = userDict:get(userID)
     if ok then
       return from_json(ok)
@@ -94,7 +96,7 @@ end
 
 function cache:SearchPost(queryString)
   local results, ok, err
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = searchResults:get()
     if err then
       ngx.log(ngx.ERR, 'unable to check searchResults shdict ', err)
@@ -136,7 +138,7 @@ end
 
 function cache:GetAccount(accountID)
   local account, ok, err
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = userDict:get(accountID)
     if err then
       return nil, 'couldnt load account from shdict'
@@ -161,11 +163,34 @@ end
 
 function cache:GetUserAlerts(userID)
   local user = self:GetUser(userID)
+  if not user then
+    return nil, 'no user found'
+  end
   if not user.alertCheck then
     user.alertCheck = 0
   end
+  local ok, err
+
+  if ENABLE_CACHE then
+    ok, err = userAlertDict:get(userID)
+    if err then
+      return nil, 'couldnt load alerts from shdict'
+    end
+    if ok then
+      return from_json(ok)
+    end
+  end
+
   local alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
-  --ngx.log(ngx.ERR, to_json(alerts))
+
+  if err then
+    return alerts, err
+  end
+  ok, err = userAlertDict:set(userID, to_json(alerts), 30)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set alert info: ',err)
+  end
+
   return alerts
 end
 
@@ -268,7 +293,7 @@ function cache:GetPostComments(postID)
 
   local ok, err,flatComments
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = commentDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'could not get post comments: ',err)
@@ -391,7 +416,7 @@ function cache:GetPost(postID)
     end
   end
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = postDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -455,7 +480,7 @@ end
 function cache:GetFilterByID(filterID)
   local ok, err, result
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = filterDict:get(filterID)
 
     if err then
@@ -636,7 +661,7 @@ function cache:GetUserCommentVotes(userID)
 
   local ok, err, commentVotes
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
 
     ok, err = voteDict:get('commentVotes:'..userID)
 
@@ -763,7 +788,7 @@ end
 function cache:GetUserFilterIDs(userID)
   local ok, err, res
 
-  if not DISABLE_CACHE then
+  if ENABLE_CACHE then
     ok, err = userFilterIDs:get(userID)
     if err then
       ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)

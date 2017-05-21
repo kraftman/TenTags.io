@@ -33,12 +33,65 @@ function write:IncrementSiteStat(stat, value)
   return ok, err
 end
 
+function write:DelKeys(keys, red)
+  local found = red
+  red = red or self:GetRedisWriteConnection()
+  red:init_pipeline()
+  for k,v in pairs(keys) do
+    red:del(v)
+  end
+  local ok, err = red:commit_pipeline()
+  if not found then
+    self:SetKeepalive(red)
+  end
+  if err then
+    return nil, err
+  end
+  return ok, err
+end
+function write:FlushFilterStats()
+  local red = self:GetRedisWriteConnection()
+  local filterID, err = self:GetRandomFilter(red)
+  if not filterID then
+    return nil, err
+  end
+
+
+  local maxAges = {}
+  maxAges.minutes = 60*60*24 -- 1 day worth of minute stats
+  maxAges.hours = maxAges.minutes*14 -- 2 weeks
+  maxAges.days  = maxAges.hours*4 -- 2 months
+  maxAges.months = maxAges.days*6 -- 1 years
+
+  local baseKey = 'filterStats:'..filterID
+  local currTime = ngx.time()
+  local zkey,ok
+  local toDelete = {}
+  for label,maxAge in pairs(maxAges) do
+
+    zkey = baseKey..':'..label
+    ok, err = red:zrangebyscore(zkey, 0, (currTime - maxAge))
+    if not ok then
+      return nil, err
+    end
+    for _,v in pairs(ok) do
+      table.insert(toDelete,v)
+    end
+  end
+
+  ok, err = self:DelKeys(toDelete, red)
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
 
 function write:LogFilterView(filterID, statTime, userID)
 
   -- need total views per minute, hour, day, month
   -- and unique pper minute, hour, day, month
   local red = self:GetRedisWriteConnection()
+  statTime = math.floor(statTime+0.5)
 
   local times = {}
   times.minutes = '60'
@@ -54,7 +107,8 @@ function write:LogFilterView(filterID, statTime, userID)
     newTime = statTime - (statTime % label)
     newKey = baseKey..':'..k..':'..newTime
 
-    red:zadd(baseKey, newTime, newKey)
+    --red:zadd(baseKey, newTime, newKey)
+    red:zadd(baseKey..':'..k,newTime, newKey)
 
     -- store total views per timespan
     red:hincrby(newKey, newTime, 1)
@@ -68,9 +122,49 @@ function write:LogFilterView(filterID, statTime, userID)
   return ok, err
 end
 
+function write:FlushSiteStats()
+
+  local maxAges = {}
+  maxAges.minutes = 60*60*24 -- 1 day worth of minute stats
+  maxAges.hours = maxAges.minutes*14 -- 2 weeks
+  maxAges.days  = maxAges.hours*4 -- 2 months
+  maxAges.months = maxAges.days*6 -- 1 years
+
+
+  local cat = { 'device', 'os', 'browser'}
+  local currTime = ngx.time()
+  local maxTime,key,zkey,ok,err
+  local toDelete = {}
+  local red = self:GetRedisWriteConnection()
+
+  -- get a list of all keys that should be expired
+  for _,category in pairs(cat) do
+    key = 'sitestat:'..category
+
+    for k,maxAge in pairs(maxAges) do
+      zkey = key..':'..k
+
+      ok, err = red:zrangebyscore(zkey, 0, (currTime - maxAge))
+      if not ok then
+        return nil, err
+      end
+      for _,v in pairs(ok) do
+        table.insert(toDelete, v)
+      end
+
+    end
+
+  end
+  -- pipeline their deletion
+  ok, err = self:DelKeys(toDelete, red)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:LogUniqueSiteView(baseKey, statTime, userID, value)
   local red = self:GetRedisWriteConnection()
   local times = {}
+  statTime = math.floor(statTime+0.5)
   times.minutes = '60'
   times.hours = '3600'
   times.days = '86400'
@@ -402,18 +496,9 @@ function write:CreateFilter(filter)
   return results
 end
 
-function write:EmptyFilter()
+function write:GetRandomFilter(red)
 
-  local ranges = {}
-  ranges['hour:'] = 3600
-  ranges['day:'] = 86400
-  ranges['week:'] = 604800
-  ranges['month:'] = 2592000
-  ranges['year:'] = 31622400
-
-
-  local time = ngx.time()
-  local red = self:GetRedisWriteConnection()
+  red = red or self:GetRedisWriteConnection()
   local ok, err = red:zcard('filters')
   if not ok then
     self:SetKeepalive(red)
@@ -426,17 +511,33 @@ function write:EmptyFilter()
     return nil, 'couldnt get random filter: '..err
   end
   if not next(ok) then
+    self:SetKeepalive(red)
     return true
   end
-  -- we've now chosen a random filters
-  print(self:to_json(ok),' ', position)
+  return ok[1]
+end
 
-  local filterID = ok[1]
-  print('got filter:', filterID)
+function write:EmptyFilter()
+
+  local ranges = {}
+  ranges['hour:'] = 3600
+  ranges['day:'] = 86400
+  ranges['week:'] = 604800
+  ranges['month:'] = 2592000
+  ranges['year:'] = 31622400
+
+
+  local time = ngx.time()
+  local red = self:GetRedisWriteConnection()
+
+  local filterID,err = self:GetRandomFilter(red)
+  if not filterID then
+    return nil, err
+  end
+  --print('got filter:', filterID)
   ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
-  print(ok)
+  
   if not ok or ok == ngx.null then
-    print('couldnt get lock')
     return true
   end
 

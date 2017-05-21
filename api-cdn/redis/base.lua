@@ -10,7 +10,6 @@ local from_json = (require 'lapis.util').from_json
 local function GetConnectionDetails(name)
   local data = os.getenv(name)
   if not data then
-    print('no env set')
     return nil
   end
   local host, port = data:match('(.-):(.+)')
@@ -27,6 +26,8 @@ local commentWriteHost, commentWritePort = GetConnectionDetails('REDIS_COMMENT_W
 
 
 function M:GetRedisConnection(host, port)
+  print('gettings redis connection: ', host)
+  print(debug.traceback())
   local red = redis:new()
   port = port or 6379
   red:set_timeout(2000)
@@ -61,11 +62,11 @@ function M:GetUserReadConnection()
 end
 
 function M:GetRedisReadConnection()
-  return self:GetRedisConnection(genReadHost  or 'redis-server', genReadPort)
+  return self:GetRedisConnection(genReadHost  or 'redis-general', genReadPort)
 end
 
 function M:GetRedisWriteConnection()
-  return self:GetRedisConnection(genWriteHost or 'redis-server', genWritePort)
+  return self:GetRedisConnection(genWriteHost or 'redis-general', genWritePort)
 end
 
 function M:GetCommentWriteConnection()

@@ -24,7 +24,8 @@ config("development", {
   dict_ratelimit = '1m',
   dict_emailqueue = '1m',
   dict_pagestatlog = '1m',
-  dict_userfilterids = '1m'
+  dict_userfilterids = '1m',
+  dict_useralerts = '1m'
 
 })
 
@@ -46,6 +47,7 @@ config("production", {
   dict_emailqueue = '10m',
   dict_pagestatlog = '10m',
   dict_userfilterids = '10m',
+  dict_useralerts = '1m',
   hide_errors = true,
   num_workers = 'auto',
   logging = {

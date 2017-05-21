@@ -2,7 +2,6 @@
 
 local lapis = require("lapis")
 local app = lapis.Application()
-local sessionAPI = require 'api.sessions'
 local date = require("date")
 local util = require 'util'
 local errorHandler = require 'middleware.errorhandler'

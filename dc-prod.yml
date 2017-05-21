@@ -9,3 +9,5 @@ services:
     volumes:
       - ./stunnel.conf:/etc/stunnel/stunnel.conf
       - ./stunnel.pem:/etc/stunnel/stunnel.pem
+    env_file:
+      - filtta-prod.env

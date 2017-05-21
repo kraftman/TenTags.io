@@ -426,6 +426,9 @@ end
 function api:UserHasAlerts(userID)
 	--can only get your own alerts
   local alerts = cache:GetUserAlerts(userID)
+	if not alerts then
+		return false
+	end
   return #alerts > 0
 end
 
