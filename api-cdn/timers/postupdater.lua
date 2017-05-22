@@ -145,6 +145,9 @@ function config:VotePost(postVote)
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	self.userWrite:AddUserPostVotes(postVote.userID, postVote.postID)
+	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
+	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
+	print('purged cache')
 
 	return true
 

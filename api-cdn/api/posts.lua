@@ -143,7 +143,7 @@ function api:VotePost(userID, postID, direction)
 		cache:AddSeenPost(userID, postID)
 	end
 
-  return self.redisWrite:QueueJob('votepost',postVote)
+  ok,err = self.redisWrite:QueueJob('votepost',postVote)
 
 end
 

@@ -22,6 +22,10 @@ local searchResults = ngx.shared.searchresults
 local postDict = ngx.shared.posts
 local userAlertDict = ngx.shared.userAlerts
 local userFrontPagePostDict = ngx.shared.userFrontPagePosts
+local userDict = ngx.shared.users
+local commentDict = ngx.shared.comments
+local voteDict = ngx.shared.userVotes
+
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = (require 'redis.db').redisRead
@@ -32,9 +36,6 @@ local lru = require 'api.lrucache'
 
 local elastic = require 'lib.elasticsearch'
 local tinsert = table.insert
-local userDict = ngx.shared.users
-local commentDict = ngx.shared.comments
-local voteDict = ngx.shared.userVotes
 local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
@@ -148,6 +149,8 @@ function cache:PurgeKey(keyInfo)
     if PRECACHE_INVALID then
       self:GetFilterByID(keyInfo.id)
     end
+  elseif keyInfo.keyType == 'postvote' then
+    voteDict:delete('postVotes:'..keyInfo.id)
   end
 end
 
@@ -447,13 +450,11 @@ function cache:GetPost(postID)
     end
     if ok then
       post = from_json(ok)
-      print('got from cache')
     end
   end
 
   if not post then
     post, err = redisread:GetPost(postID)
-    print('got from redis')
 
     if err then
       return result, err
@@ -475,11 +476,16 @@ function cache:GetFilterPosts(userID, filter, sortBy)
   local posts = {}
   local post
 
+  local userVotedPosts = self:GetUserPostVotes(userID)
+
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
       post.userSaved = true
+    end
+    if userVotedPosts[post.id] then
+      post.userHasVoted = true
     end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
@@ -737,13 +743,14 @@ function cache:GetUserPostVotes(userID)
     end
     if ok then
       postVotes = from_json(ok)
+      print 'got from cache'
     end
   end
-
 
   if not postVotes then
 
     ok, err = userRead:GetUserPostVotes(userID)
+    print('got from redis: ', to_json(ok))
     if not ok then
       return nil, err
     end

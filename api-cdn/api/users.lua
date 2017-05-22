@@ -385,9 +385,12 @@ function api:UpdateUser(userID, userToUpdate)
 		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
 
+	ok, err = self.userWrite:CreateSubUser(userInfo)
+	if not ok then
+		return ok, err
+	end
 	ok, err = self:InvalidateKey('user', userID)
-
-	return self.userWrite:CreateSubUser(userInfo)
+	return ok, err
 end
 
 
