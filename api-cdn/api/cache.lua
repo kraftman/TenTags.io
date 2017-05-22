@@ -493,7 +493,7 @@ function cache:GetFilterPosts(userID, filter, sortBy)
   local posts = {}
   local post
 
-  local userVotedPosts = self:GetUserPostVotes(userID)
+
 
   for _,v in pairs(filterIDs) do
     post = self:GetPost(v)
@@ -501,8 +501,11 @@ function cache:GetFilterPosts(userID, filter, sortBy)
     if self:SavedPostExists(userID, post.id) then
       post.userSaved = true
     end
-    if userVotedPosts[post.id] then
-      post.userHasVoted = true
+    if userID and userID ~= 'default' then
+      local userVotedPosts = self:GetUserPostVotes(userID)
+      if userVotedPosts[post.id] then
+        post.userHasVoted = true
+      end
     end
     table.sort(post.filters, function(a,b) return a.subs > b.subs end)
     tinsert(posts, post)
