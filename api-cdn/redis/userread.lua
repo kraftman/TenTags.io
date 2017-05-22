@@ -233,7 +233,7 @@ function userread:GetUnseenPosts(baseKey, elements)
   red:init_pipeline()
 
   for _,v in pairs(elements) do
-    red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
+    red:evalsha(sha1Key,0,baseKey,10000,0.01,v.parentID)
   end
 
   local res, err = red:commit_pipeline()
@@ -244,13 +244,16 @@ function userread:GetUnseenPosts(baseKey, elements)
     return {}
   end
 
+  local indexed = {}
   for k,v in pairs(res) do
     if v == ngx.null then
       res[k] = nil
+    else
+      indexed[v] = true
     end
   end
 
-  return res
+  return indexed
 end
 
 function userread:GetAllUserSeenPosts(userID,startRange,endRange)

@@ -16,11 +16,12 @@ users
 local cache = {}
 local filterDict = ngx.shared.filters
 local userUpdateDict = ngx.shared.userupdates
-local userSessionSeenDict = ngx.shared.usersessionseen
+local userSessionSeenPostDict = ngx.shared.usersessionseenpost
 local userFilterIDs = ngx.shared.userFilterIDs
 local searchResults = ngx.shared.searchresults
 local postDict = ngx.shared.posts
 local userAlertDict = ngx.shared.userAlerts
+local userFrontPagePostDict = ngx.shared.userFrontPagePosts
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local redisread = (require 'redis.db').redisRead
@@ -120,6 +121,7 @@ function cache:SearchPost(queryString)
 end
 
 function cache:PurgeKey(keyInfo)
+  print('purging: ', to_json(keyInfo))
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
       userDict:delete(keyInfo.id)
@@ -127,8 +129,25 @@ function cache:PurgeKey(keyInfo)
       self:GetAccount(keyInfo.id)
     end
   elseif keyInfo.keyType == 'comment' then
-    local postID, commentID = keyInfo.id:match('(%w+):(%w+)')
+    local postID, _ = keyInfo.id:match('(%w+):(%w+)') -- postID, commentIDs
     commentDict:delete(postID)
+  elseif keyInfo.keyType == 'user' then
+    userDict:delete(keyInfo.id)
+    if PRECACHE_INVALID then
+      self:GetUser(keyInfo.id)
+    end
+  elseif keyInfo.keyType == 'useralert' then
+    userAlertDict:delete(keyInfo.id)
+  elseif keyInfo.keyType == 'post' then
+    postDict:delete(keyInfo.id)
+    if PRECACHE_INVALID then
+      self:GetPost(keyInfo.id)
+    end
+  elseif keyInfo.keyType == 'filter' then
+    filterDict:delete(keyInfo.id)
+    if PRECACHE_INVALID then
+      self:GetFilterByID(keyInfo.id)
+    end
   end
 end
 
@@ -166,10 +185,11 @@ function cache:GetUserAlerts(userID)
   if not user then
     return nil, 'no user found'
   end
+
   if not user.alertCheck then
     user.alertCheck = 0
   end
-  local ok, err
+  local ok, err, alerts
 
   if ENABLE_CACHE then
     ok, err = userAlertDict:get(userID)
@@ -177,21 +197,25 @@ function cache:GetUserAlerts(userID)
       return nil, 'couldnt load alerts from shdict'
     end
     if ok then
-      return from_json(ok)
+      alerts = from_json(ok)
     end
   end
 
-  local alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
+  if not alerts then
+    alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
 
-  if err then
-    return alerts, err
-  end
-  ok, err = userAlertDict:set(userID, to_json(alerts), 30)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to set alert info: ',err)
+    if err then
+      return alerts, err
+    end
+    ok, err = userAlertDict:set(userID, to_json(alerts),30)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to set alert info: ',err)
+    end
+    err = 'cached'
   end
 
-  return alerts
+
+  return alerts, err
 end
 
 
@@ -283,7 +307,7 @@ end
 function cache:GetUsername(userID)
 
   local user = self:GetUser(userID)
-  print(to_json(user))
+  --print(to_json(user))
   if user then
     return user.username
   end
@@ -407,7 +431,7 @@ function cache:GetPosts(postIDs)
 end
 
 function cache:GetPost(postID)
-  local ok, err, result
+  local ok, err, post
 
   if #postID < 10 then
     postID = self:ConvertShortURL(postID)
@@ -422,22 +446,26 @@ function cache:GetPost(postID)
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
     end
     if ok then
-      return from_json(ok)
+      post = from_json(ok)
+      print('got from cache')
     end
   end
 
-  result, err = redisread:GetPost(postID)
+  if not post then
+    post, err = redisread:GetPost(postID)
+    print('got from redis')
 
-  if err then
-    return result, err
-  end
-  result.creatorName = self:GetUsername(result.createdBy) or 'unknown'
+    if err then
+      return result, err
+    end
+    post.creatorName = self:GetUsername(post.createdBy) or 'unknown'
 
-  ok, err = postDict:set(postID,to_json(result))
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to set postDict: ',err)
+    ok, err = postDict:set(postID,to_json(post))
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to set postDict: ',err)
+    end
   end
-  return result
+  return post
 
 end
 
@@ -500,7 +528,7 @@ function cache:GetFilterByID(filterID)
 
   ok, err = filterDict:set(filterID,to_json(result))
   if not ok then
-    ngx.log('unablet to set filterdict: ',err)
+    ngx.log('unable to set filterdict: ',err)
   end
 
   return result
@@ -544,7 +572,7 @@ function cache:GetIndexedUserFilterIDs(userID)
 end
 
 function cache:GetUserSessionSeenPosts(userID)
-  local result = userSessionSeenDict:get(userID)
+  local result = userSessionSeenPostDict:get(userID)
   if not result then
     return {}
   end
@@ -571,7 +599,7 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
   for k,_ in pairs(indexedSeenPosts) do
     tinsert(flatSeen,k)
   end
-  local ok,err,forced = userSessionSeenDict:set(userID,to_json(flatSeen))
+  local ok,err,forced = userSessionSeenPostDict:set(userID,to_json(flatSeen))
   if not ok then
     ngx.log(ngx.ERR, 'unable to write user seen:',err)
   end
@@ -590,7 +618,7 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
 
   local startRange,endRange = 0,1000
   local freshPosts,filteredPosts = {},{}
-  local postID,filterID
+
   local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
 
   local filterFunction
@@ -624,32 +652,43 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
     endRange = endRange+1000
 
     if filter == 'seen' then
-      for _,v in pairs(allPostIDs) do
-        tinsert(freshPosts,v)
+      for _,postID in pairs(allPostIDs) do
+        tinsert(freshPosts,postID)
       end
-    else
-
-      for _, v in pairs(allPostIDs) do
-        filterID,postID = v:match('(%w+):(%w+)')
-        if userFilterIDs[filterID] then
-          tinsert(filteredPosts,postID)
-        end
-      end
-
-      -- check the user hasnt seen the posts
-      local newUnseen
-      if userID == 'default' then
-        newUnseen = filteredPosts
-      else
-        newUnseen = userRead:GetUnseenPosts(userID,filteredPosts)
-      end
-
-      for _,v in pairs(newUnseen) do
-        tinsert(freshPosts,v)
-      end
-
+      return freshPosts
     end
+
+    -- narrow it down to posts in the users filters
+    local filterID, postID
+    for _, postFilterPair in pairs(allPostIDs) do
+      filterID,postID = postFilterPair:match('(%w+):(%w+)')
+      if userFilterIDs[filterID] then
+        tinsert(filteredPosts,postID)
+      end
+    end
+
+    if userID == 'default' then
+      return filteredPosts
+    end
+
+    -- check the user hasnt seen the posts
+    local postParents = redisread:GetParentIDs(filteredPosts)
+    -- for k,v in pairs(postParents) do
+    --
+    --   if v.parentID:len() < 10 then
+    --     v.parentID = self:ConvertShortURL(v.parentID)
+    --   end
+    -- end
+
+    local unSeenParentIDs = userRead:GetUnseenPosts(userID,postParents)
+    for _,v in pairs(postParents) do
+      if unSeenParentIDs[v.postID] then
+        tinsert(freshPosts,v.postID)
+      end
+    end
+    return freshPosts
   end
+
 
   return freshPosts
 end
@@ -689,65 +728,97 @@ function cache:GetUserCommentVotes(userID)
 end
 
 function cache:GetUserPostVotes(userID)
-  local indexed = userRead:GetUserPostVotes(userID)
-  local keyed = {}
-  for _,v in pairs(indexed) do
-    keyed[v] = true
+  local ok, err,postVotes
+  if ENABLE_CACHE then
+    ok, err = voteDict:get('postVotes:'..userID)
+
+    if err then
+      ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
+    end
+    if ok then
+      postVotes = from_json(ok)
+    end
   end
-  return keyed
+
+
+  if not postVotes then
+
+    ok, err = userRead:GetUserPostVotes(userID)
+    if not ok then
+      return nil, err
+    end
+    local keyed = {}
+    for _,v in pairs(ok) do
+      keyed[v] = true
+    end
+    if not err then
+      voteDict:set('postVotes:'..userID, to_json(keyed))
+      postVotes = keyed
+    end
+  end
+
+  return postVotes
 
 end
 
-function cache:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
-  --check if its seen this session, add it
-  if sessionSeenPosts[postID] then
-    return
-  end
-  sessionSeenPosts[postID] = true
+function cache:GetCachedFreshUserPosts(userID, sortBy)
+  local ok, err, userFrontPagePosts
+  if ENABLE_CACHE then
+    ok, err = userFrontPagePostDict:get(userID..':'..sortBy)
+    if err then
+      ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
+    end
+    if ok then
+      userFrontPagePosts = from_json(ok)
+    end
 
-  --
-  local post = self:GetPost(postID)
-  if post.id ~= post.parentID then
-    if sessionSeenPosts[post.parentID] then
-      return
-    end
-    local parentID = post.parentID
-    if parentID:len() < 10 then
-      parentID = self:ConvertShortURL(parentID)
-    end
-    local unseenPosts = userRead:GetUnseenPosts(userID,{parentID})
-    if not next(unseenPosts) then
-      return
-    end
   end
 
-  tinsert(newPosts, post)
+  if not userFrontPagePosts then
+    userFrontPagePosts = self:GetFreshUserPosts(userID, sortBy)
+    userFrontPagePostDict:set(userID..':'..sortBy, to_json(userFrontPagePosts),60)
+  end
+
+  return userFrontPagePosts
+
 end
+
 
 function cache:GetUserFrontPage(userID,sortBy,startAt, range)
 
   local user = self:GetUser(userID)
 
+  sortBy = sortBy or 'fresh'
+
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetFreshUserPosts(userID,sortBy)
+  local freshPosts = cache:GetCachedFreshUserPosts(userID,sortBy)
 
   local newPosts = {}
-
+  local post
   if sortBy ~= 'seen' and userID ~= 'default' then
-    for _,postID in pairs(freshPosts) do
-      self:CheckUnseenParent(newPosts, sessionSeenPosts, userID, postID)
+    for i = startAt, startAt+range do
+        if freshPosts[i] then
+        post = self:GetPost(freshPosts[i])
 
-      -- stop when we have a page worth
-      if #newPosts >= (range) then
-        break
+        if not sessionSeenPosts[post.parentID] then
+          tinsert(newPosts, post)
+          if user.hideSeenPosts then
+            sessionSeenPosts[post.parentID] = true
+          end
+        end
+
+        -- stop when we have a page worth
+        if #newPosts >= (range) then
+          break
+        end
+      end
+      if user.hideSeenPosts then
+        self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
       end
     end
-    if user.hideSeenPosts then
-      self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
-    end
-  else
+  else --seen or default
     for i = startAt, startAt+range do
       if freshPosts[i] then
         tinsert(newPosts,self:GetPost(freshPosts[i]))
@@ -806,7 +877,7 @@ function cache:GetUserFilterIDs(userID)
   end
 
 
-  ok, err = userFilterIDs:set(userID,to_json(res),DEFAULT_CACHE_TIME)
+  ok, err = userFilterIDs:set(userID,to_json(res))
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user filter: ',err)

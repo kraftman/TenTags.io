@@ -124,8 +124,9 @@ function api:EditComment(userID, userComment)
   if not ok then
     return ok, err
   end
+	ok, err = self:InvalidateKey('comment', userComment.postID)
 
-  return true
+  return ok, err
 
 end
 

@@ -33,7 +33,7 @@
       <% end %>
 
 
-      <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea" value="<%= post.text -%>" rows="7" ></textarea>
+      <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea"  rows="7" ><%= post.text -%></textarea>
 
       </br>
 

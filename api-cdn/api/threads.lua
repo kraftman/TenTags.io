@@ -56,6 +56,7 @@ function api:CreateMessageReply(userID, userMessage)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
+      ok, err = self:InvalidateKey('useralert', viewerID)
       self.userWrite:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
@@ -149,7 +150,7 @@ function api:CreateThread(userID, messageInfo)
 
 
   self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
-
+  ok, err = self:InvalidateKey('useralert', recipientID)
   ok, err = self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user alert: ', err )

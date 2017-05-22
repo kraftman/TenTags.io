@@ -97,6 +97,8 @@ function api:DeleteUser(userID, username)
 		return nil, 'failed to delete users'
 	end
 
+	ok, err = self:InvalidateKey('account', account.id)
+
 
 	local userToDelete = cache:GetUser(userToDeleteID)
 	if not userToDelete then
@@ -228,6 +230,8 @@ function api:CreateSubUser(accountID, username)
 	if not ok then
 		return ok, err
 	end
+
+	ok, err = self:InvalidateKey('account', account.id)
 	if account.role == 'Admin' then
 		subUser.role = 'Admin'
 	end
@@ -288,23 +292,23 @@ end
 
 
 function api:GetUserAlerts(userID)
-	local ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
+	local ok, err , alerts
+	ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 	-- can only get their own
-  local alerts = cache:GetUserAlerts(userID)
+  alerts,err = cache:GetUserAlerts(userID)
+	if not alerts then
+		ngx.log(ngx.ERR, 'error loading user alerts: ', err)
+		return nil, 'couldnt load user alerts'
+	end
+	if alerts and not err then
+		-- its not from cache, so update the last time checked
+		return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+	end
 
   return alerts
-end
-
-function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = self:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
-	-- can only edit their own
-  return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
 end
 
 
@@ -324,6 +328,8 @@ function api:SwitchUser(accountID, userID)
 	if not ok then
 		return ok, err
 	end
+
+	ok, err = self:InvalidateKey('account', account.id)
 
 	return user
 end
@@ -378,6 +384,8 @@ function api:UpdateUser(userID, userToUpdate)
 	if (userID == userToUpdate) then
 		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
+
+	ok, err = self:InvalidateKey('user', userID)
 
 	return self.userWrite:CreateSubUser(userInfo)
 end

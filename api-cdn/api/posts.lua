@@ -124,11 +124,6 @@ function api:AddPostTag(userID, postID, tagName)
 
 end
 
-
-
-
-
-
 function api:VotePost(userID, postID, direction)
 
 	local ok, err = self:RateLimit('VotePost:', userID, 10, 60)
@@ -170,8 +165,6 @@ function api:SubscribePost(userID, postID)
 	return ok, err
 
 end
-
-
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
@@ -314,10 +307,17 @@ function api:EditPost(userID, userPost)
     post.edits[ngx.time()] = {time = ngx.time(), editedBy = userID, original = post.text}
   end
 
-	post.text = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+	post.text = newText
+  print('setting new text to',newText)
 	post.editedAt = ngx.time()
 
+
 	ok, err = self.redisWrite:CreatePost(post)
+  if not ok then
+    return ok, err
+  end
+  ok,err = self:InvalidateKey('post', post.id)
+
 	return ok, err
 
 end

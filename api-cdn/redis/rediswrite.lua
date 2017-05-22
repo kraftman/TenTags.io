@@ -52,8 +52,11 @@ end
 function write:FlushFilterStats()
   local red = self:GetRedisWriteConnection()
   local filterID, err = self:GetRandomFilter(red)
-  if not filterID then
+  if err then
     return nil, err
+  end
+  if not filterID then
+    return true
   end
 
 
@@ -512,7 +515,7 @@ function write:GetRandomFilter(red)
   end
   if not next(ok) then
     self:SetKeepalive(red)
-    return true
+    return nil
   end
   return ok[1]
 end
@@ -531,12 +534,16 @@ function write:EmptyFilter()
   local red = self:GetRedisWriteConnection()
 
   local filterID,err = self:GetRandomFilter(red)
-  if not filterID then
+  if err then
     return nil, err
   end
+  if not filterID then
+    return true
+  end
+
   --print('got filter:', filterID)
   ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
-  
+
   if not ok or ok == ngx.null then
     return true
   end
@@ -764,6 +771,7 @@ function write:RemovePostsFromFilter(filterID, postIDs)
   end
   return results
 end
+
 
 function write:AddPostsToFilter(filterInfo,posts)
 

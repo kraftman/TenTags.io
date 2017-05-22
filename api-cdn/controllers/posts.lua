@@ -117,6 +117,7 @@ function m.GetPost(request)
   local postID = request.params.postID
 
   local post = postAPI:GetPost(userID, postID)
+  print(post.text)
 
   if not post then
     return 'post not found'

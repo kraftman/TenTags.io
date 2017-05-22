@@ -43,6 +43,7 @@ function api:SetToggleDefault(userID, filterID)
 	end
 
 	ok, err = self.redisWrite:FilterSetDefault(filterID, not filter.default)
+	ok,err = self:InvalidateKey('filter', filter.id)
 
 	return ok, err
 end
@@ -69,6 +70,7 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	account.modCount = account.modCount + 1
+	ok, err = self:InvalidateKey('account', account.id)
 	self.userWrite:CreateAccount(account)
 
 
@@ -214,6 +216,9 @@ function api:AddMod(userID, filterID, newModName)
 	end
 
 	account.modCount = account.modCount + 1
+
+	ok, err = self:InvalidateKey('account', account.id)
+	ok,err = self:InvalidateKey('filter', filter.id)
 	self.userWrite:CreateAccount(account)
 
 	local modInfo = {
@@ -251,6 +256,9 @@ function api:DelMod(userID, filterID, modID)
 	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
+
+	ok, err = self:InvalidateKey('account', account.id)
+	ok,err = self:InvalidateKey('filter', filter.id)
 	self.userWrite:CreateAccount(account)
 	return self.redisWrite:DelMod(filterID, modID)
 
@@ -277,8 +285,12 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	return self.redisWrite:UpdateFilterTitle(filter)
-
+	ok, err = self.redisWrite:UpdateFilterTitle(filter)
+	if not ok then
+		return ok, err
+	end
+	ok,err = self:InvalidateKey('filter', filter.id)
+	return ok, err
 end
 
 
@@ -303,8 +315,12 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	return self.redisWrite:UpdateFilterDescription(filter)
-
+	ok, err =  self.redisWrite:UpdateFilterDescription(filter)
+	if not ok then
+		return ok, err
+	end
+	ok,err = self:InvalidateKey('filter', filter.id)
+	return ok, err
 end
 
 
@@ -340,7 +356,12 @@ function api:FilterBanUser(userID, filterID, banInfo)
 	end
 
 	banInfo.bannedAt = ngx.time()
-	return self.redisWrite:FilterBanUser(filterID, banInfo)
+	ok, err = self.redisWrite:FilterBanUser(filterID, banInfo)
+	if not ok then
+		return ok, err
+	end
+	ok, err = self:InvalidateKey('filter', filter.id)
+	return ok, err
 end
 
 function api:FilterUnbanPost(userID, filterID, postID)
@@ -430,7 +451,11 @@ function api:FilterUnbanUser(filterID, userID)
 		return ok, err
 	end
 
-	return self.redisWrite:FilterUnbanUser(filterID, userID)
+	ok, err = self.redisWrite:FilterUnbanUser(filterID, userID)
+	if not ok then
+		return ok, err
+	end
+	return self:InvalidateKey('filter', filterID)
 end
 
 function api:FilterBanDomain(userID, filterID, banInfo)
@@ -441,6 +466,7 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 
 	banInfo.bannedAt = ngx.time()
 	banInfo.domainName = self:GetDomain(banInfo.domainName) or banInfo.domainName
+	ok, err = self:InvalidateKey('filter', filterID)
 	return self.redisWrite:FilterBanDomain(filterID, banInfo)
 end
 
@@ -491,6 +517,16 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 
 
 	ok, err = self.redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
+	if not ok then
+		return ok, err
+	end
+
+
+	ok, err = self.redisWrite:QueueJob('UpdateFilterPosts',{id = filter.id})
+	if not ok then
+		return ok, err
+	end
+	ok, err = self:InvalidateKey('filter', filterID)
 	if not ok then
 		return ok, err
 	end

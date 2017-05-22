@@ -608,7 +608,7 @@ function read:GetAllNewPosts(rangeStart,rangeEnd)
 end
 
 function read:GetAllFreshPosts(rangeStart,rangeEnd)
-  
+
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:datescore',rangeStart,rangeEnd)
   self:SetKeepalive(red)
@@ -617,6 +617,25 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   end
 
   return ok ~= ngx.null and ok or {}
+end
+
+function read:GetParentIDs(postIDs)
+  local red = self:GetRedisReadConnection()
+  red:init_pipeline()
+  for _,postID in pairs(postIDs) do
+    red:hget('post:'..postID,'parentID')
+  end
+  local ok, err = red:commit_pipeline()
+  if not ok then
+    return nil, 'couldnt commit pipeline:', err
+  end
+  self:SetKeepalive(red)
+  local postParents = {}
+  for i = 1, #postIDs do
+    tinsert(postParents, {postID = postIDs[i], parentID = ok[i]})
+  end
+  return postParents
+
 end
 
 function read:SearchTags(searchString)
