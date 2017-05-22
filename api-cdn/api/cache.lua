@@ -88,6 +88,22 @@ function cache:GetUser(userID)
 
 end
 
+function cache:GetReports()
+  local ok, err = redisread:GetReports()
+  if not ok then
+    return ok, err
+  end
+  local post, postID, user, userID
+  local reports = {}
+  for _,v in pairs(ok) do
+    postID, userID = v:match('(%w+):(%w+)')
+    post = self:GetPost(postID)
+    user = self:GetUser(userID)
+    tinsert(reports, {user = user, post = post})
+  end
+  return reports
+end
+
 function cache:SearchURL(queryString)
   return elastic:SearchURL(queryString)
 end
@@ -442,6 +458,7 @@ function cache:GetPost(postID)
       return nil, 'no post found'
     end
   end
+  print('getting ',postID)
 
   if ENABLE_CACHE then
     ok, err = postDict:get(postID)

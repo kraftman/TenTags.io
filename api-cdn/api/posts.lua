@@ -79,6 +79,34 @@ function api:ReloadImage(userID, postID)
 
 end
 
+function api:ReportPost(userID, postID, reportText)
+  local ok, err = self:RateLimit('ReportPost:', userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
+  local post = cache:GetPost(postID)
+  if post.reports[userID] then
+    return nil, 'youve already reported this post'
+  end
+
+  post.reports = post.reports or {}
+  post.reports[userID] = self:SanitiseUserInput(reportText, 300)
+
+  ok, err = self.redisWrite:CreatePost(post)
+  if not ok then
+    return nil, err
+  end
+  ok, err = self.redisWrite:AddReport(userID, postID)
+  ok, err = self:InvalidateKey('post',postID)
+
+  return ok,err
+
+  --check they havent already reported it
+  -- add it to the list of reports attached to the postID
+  -- add it to the admin list of reports
+end
+
 function api:AddPostTag(userID, postID, tagName)
 
 	local ok, err = self:RateLimit('AddPostTag:', userID, 1, 60)

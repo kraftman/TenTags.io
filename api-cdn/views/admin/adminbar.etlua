@@ -3,6 +3,7 @@
 
     <a href="<%= url_for('adminpanel') %>">Admin</a>
     <a href="<%= url_for('adminstats') %>">Stats</a>
+    <a href="<%= url_for('adminreports') %>">Reports</a>
 
   </ul>
 </div>

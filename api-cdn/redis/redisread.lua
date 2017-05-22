@@ -184,6 +184,15 @@ function read:GetFilterIDsByTags(tags)
   return ok, err
 end
 
+function read:GetReports(startAt, range)
+  startAt = startAt or 0
+  range = range or 100
+
+  local red = self:GetRedisReadConnection()
+  local ok, err = red:zrange('reports:',startAt, startAt+range)
+  self:SetKeepalive(red)
+  return ok, err
+end
 function read:GetRelevantFilters(tags)
   local red = self:GetRedisReadConnection()
   -- for each tag
@@ -517,6 +526,7 @@ function read:GetPost(postID)
   post.viewers = {}
   post.filters = {}
   post.edits = {}
+  post.reports = {}
 
   for k,v in pairs(post) do
     if k:find('^viewer:') then
@@ -526,6 +536,12 @@ function read:GetPost(postID)
     elseif k:find('^filter:') then
       local filterID = k:match('^filter:(%w+)')
       tinsert(post.filters, filterID)
+      post[k] = nil
+
+    elseif k:find('^reports:') then
+      local reporterID = k:match('^reports:(%w+)')
+      post.reports[reporterID] = v
+
       post[k] = nil
     elseif k:find('^specialTag:') then
       post[k] = v == 'true' and true or nil

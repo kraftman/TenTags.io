@@ -1019,11 +1019,19 @@ function write:LogBacklogStats(jobName, time, value, duration)
 
 end
 
+function write:AddReport(userID, postID)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:zadd('reports:', ngx.time(), postID..':'..userID)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:CreatePost(post)
 
   local hashedPost = {}
   hashedPost.viewers = {}
   hashedPost.filters = {}
+  hashedPost.reports = {}
 
   for k,v in pairs(post) do
     if k == 'viewers' then
@@ -1034,9 +1042,11 @@ function write:CreatePost(post)
       for _,filterID in pairs(v) do
         hashedPost['filter:'..filterID] = 'true'
       end
-    elseif k == 'tags' then
+    elseif k == 'reports' then
       --leave tags seperate for now as we do more with them
-
+      for reporterID,report in pairs(v) do
+        hashedPost['reports:'..reporterID] = report
+      end
     elseif k == 'edits' then
       for time,edit in pairs(v) do
         hashedPost['edit:'..time] = self:to_json(edit)
@@ -1048,7 +1058,7 @@ function write:CreatePost(post)
 
   local red = self:GetRedisWriteConnection()
 
-  red:init_pipeline()
+  red:init_pipeline() --TODO switch toexec
 
     red:del('post:'..hashedPost.id)
 

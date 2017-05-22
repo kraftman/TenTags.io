@@ -56,6 +56,13 @@ end
 
 
 local function Stat(request)
+  if not request.account then
+    return 'you must be logged in to access this'
+  end
+  if request.account.role ~= 'Admin' then
+    return 'you suck go away'
+  end
+
   local startAt = ngx.time() - 100000
   local endAt = ngx.time()
 
@@ -70,6 +77,13 @@ local function Stat(request)
 end
 
 local function SiteStats(request)
+
+    if not request.account then
+      return 'you must be logged in to access this'
+    end
+    if request.account.role ~= 'Admin' then
+      return 'you suck go away'
+    end
   local ok, err = adminAPI:GetSiteUniqueStats()
   if not ok then
     return 'error: ',err
@@ -95,13 +109,32 @@ local function GetScore(request)
   local z = 1.64485 --1.0 = 85%, 1.6 = 95%
   local phat = up / n
   return ''..(phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+end
+
+function GetReports(request)
+  if not request.account then
+    return 'you must be logged in to access this'
+  end
+  if request.account.role ~= 'Admin' then
+    return 'you suck go away'
+  end
+
+  local ok, err = adminAPI:GetReports(request.session.userID)
+  if ok then
+    request.reports = ok
+    return {render = 'admin.reports'}
+  else
+    return err
+  end
 
 end
+
 function m:Register(app)
   app:match('adminpanel','/admin',respond_to({GET = self.ViewSettings}))
   app:get('ele', '/ele', SearchTitle)
   app:get('adminstats', '/admin/stats', SiteStats)
   app:get('score', '/admin/score/:up/:down', GetScore)
+  app:get('adminreports','/admin/reports',GetReports)
 end
 
 return m
