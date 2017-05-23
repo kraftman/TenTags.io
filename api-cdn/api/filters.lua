@@ -3,6 +3,7 @@ local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
 local tagAPI = require 'api.tags'
+local userAPI = require 'api.users'
 local POST_TITLE_LENGTH = 100
 
 
@@ -342,6 +343,30 @@ function api:SearchFilters(userID, searchString)
 	return ok
 end
 
+function api:UserCanEditFilter(userID, filterID)
+	local user = cache:GetUser(userID)
+
+	if not user then
+		return nil, 'userID not found'
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+	if user.role == 'Admin' then
+		return filter
+	end
+
+	if filter.ownerID == userID then
+		return filter
+	end
+
+	for _,mod in pairs(filter.mods) do
+		if mod.id == userID then
+			return filter
+		end
+	end
+
+	return nil, 'you must be admin or mod to edit filters'
+end
 
 function api:FilterBanUser(userID, filterID, banInfo)
 	local ok, err, filter

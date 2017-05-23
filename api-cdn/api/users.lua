@@ -455,29 +455,6 @@ function api:UserHasAlerts(userID)
 end
 
 
-function api:UserCanEditFilter(userID, filterID)
-	local user = cache:GetUser(userID)
 
-	if not user then
-		return nil, 'userID not found'
-	end
-
-	local filter = cache:GetFilterByID(filterID)
-	if user.role == 'Admin' then
-		return filter
-	end
-
-	if filter.ownerID == userID then
-		return filter
-	end
-
-	for _,mod in pairs(filter.mods) do
-		if mod.id == userID then
-			return filter
-		end
-	end
-
-	return nil, 'you must be admin or mod to edit filters'
-end
 
 return api

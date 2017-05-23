@@ -22,8 +22,8 @@
   <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
     <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
     <label for='plustagselect'>Required Tags</label>
-    <select name='plustagselect' id='requiredSelect' style="width:350px;" multiple='true' class="chosen-select">
-      <% for i, tag in pairs(tags) do print(tag.name, tag.name, requiredTagKeys[tag.name]) %>
+    <select name='plustagselect' id='plustagselect' style="width:350px;" multiple='multiple' >
+      <% for i, tag in pairs(tags) do  %>
        <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
         <% if requiredTagKeys[tag.name] then  %>
           selected = 'selected'
@@ -33,7 +33,8 @@
     </select>
     </br>
     <label for='minustagselect'>Excluded Tags</label>
-    <select name='minustagselect' id='bannedSelect' style="width:350px;" multiple='true' class="chosen-select">
+
+    <select name='minustagselect' id='minustagselect' style="width:350px;" multiple='multiple' >
       <% for i, tag in pairs(tags) do %>
        <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
         <% if bannedTagKeys[tag.name] then %>

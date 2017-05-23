@@ -2,7 +2,7 @@
 
 $(function() {
 
-    $('#requiredSelect').selectize({
+    $('#plustagselect').selectize({
       plugins: ['remove_button'],
       delimiter: ' ',
       persist: false,
@@ -13,7 +13,7 @@ $(function() {
           }
       }});
 
-      $('#bannedSelect').selectize({
+      $('#minustagselect').selectize({
         plugins: ['remove_button'],
         delimiter: ' ',
         persist: false,
