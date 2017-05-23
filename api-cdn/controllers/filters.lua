@@ -145,8 +145,12 @@ function m.DisplayFilter(request)
     request.isMod = userAPI:UserCanEditFilter(request.session.userID, filter.id)
   end
   local sortBy = request.params.sortBy or 'fresh'
-  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy)
+  local startAt = request.params.startAt or 0
+  local range = 10
+  print(startAt, range)
+  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy, startAt, range)
   --(to_json(request.posts))
+  request.AddParams = AddParams
   if request.session.userID then
     for k,v in pairs(request.posts) do
       v.hash = ngx.md5(v.id..request.session.userID)

@@ -40,6 +40,7 @@ app:before_filter(function(self)
   self.markdown = markdown
   self.UserHasFilter = util.UserHasFilter
   self.TimeAgo = util.TimeAgo
+  self.Paginate = util.Paginate
 
 end)
 

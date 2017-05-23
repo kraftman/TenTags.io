@@ -74,6 +74,21 @@ end
   return 'style="background-color: rgb('..r..','..g..','..b..')"'
 end
 
+function util.Paginate(request,params,direction)
+  local startAt
+  if direction == 'back' then
+    startAt = params.startAt - 10
+  elseif direction == 'forward' then
+    params.startAt = params.startAt or 0
+    startAt = params.startAt +10
+  end
+  local newParams = '?startAt='..startAt
+  if params.sortBy then
+    newParams = newParams..'&sortBy='..params.sortBy
+  end
+  return newParams
+end
+
 function util.GetStyleSelected(self, styleName)
 
   if not self.userInfo then

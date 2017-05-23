@@ -172,6 +172,7 @@ function api:VotePost(userID, postID, direction)
 	end
 
   ok,err = self.redisWrite:QueueJob('votepost',postVote)
+  return ok ,err
 
 end
 

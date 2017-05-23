@@ -471,8 +471,10 @@ function api:FilterBanDomain(userID, filterID, banInfo)
 end
 
 
-function api:GetFilterPosts(userID, filter, sortBy)
-  return cache:GetFilterPosts(userID, filter, sortBy)
+function api:GetFilterPosts(userID, filter, sortBy, startAt, range)
+	startAt = startAt or 0
+	range = range or 10
+  return cache:GetFilterPosts(userID, filter, sortBy, startAt, range)
 end
 
 function api:GetFilterByName(filterName)

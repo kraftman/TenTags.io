@@ -226,17 +226,16 @@ function userread:GetUserPosts(userID,startAt, range)
   end
 end
 
-function userread:GetUnseenPosts(baseKey, elements)
+function userread:GetUnseenParentIDs(baseKey, elements)
   local red = self:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()
 
   red:init_pipeline()
-
-  for _,v in pairs(elements) do
-    red:evalsha(sha1Key,0,baseKey,10000,0.01,v.parentID)
-  end
-
+    for _,v in pairs(elements) do
+      red:evalsha(sha1Key,0,baseKey,10000,0.01,v.parentID)
+    end
   local res, err = red:commit_pipeline()
+
   self:SetKeepalive(red)
 
   if err then

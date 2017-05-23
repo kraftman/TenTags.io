@@ -45,7 +45,8 @@
     <% if post.deleted then %>
       <p> [deleted] </p>
     <% else %>
-      <p><%= post.text -%></p>
+      
+      <%- markdown.markdown(post.text) -%>
     <% end %>
   <% end %>
 

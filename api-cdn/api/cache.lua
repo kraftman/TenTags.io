@@ -486,15 +486,36 @@ function cache:GetPost(postID)
 
 end
 
-function cache:GetFilterPosts(userID, filter, sortBy)
+function cache:GetUnseenPosts(userID, postIDs)
+  local sessionSeenPosts = self:GetUserSessionSeenPosts(userID)
+  local postParents = redisRead:GetParentIDs(postIDs) -- postID, parentID
+  local unSeenParentIDs = userRead:GetUnseenParentIDs(userID,postParents)
+  local unSeenPosts = {}
 
-  local filterIDs = redisRead:GetFilterPosts(filter, sortBy)
+  for _,v in pairs(postParents) do
+    if unSeenParentIDs[v.parentID] and not sessionSeenPosts[v.parentID] then
+      tinsert(unSeenPosts,v.postID)
+    end
+  end
+
+  return unSeenPosts
+
+end
+
+function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
+
+  local unSeenPostIDs = {}
+  local postIDs = redisRead:GetFilterPosts(filter, sortBy,startAt, range)
+
+  if userID == 'default' then
+    unSeenPostIDs = postIDs
+  else
+    unSeenPostIDs = self:GetUnseenPosts(userID, postIDs)
+  end
+
   local posts = {}
   local post
-
-
-
-  for _,v in pairs(filterIDs) do
+  for _,v in pairs(unSeenPostIDs) do
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
@@ -649,9 +670,6 @@ end
 
 function cache:GetFreshUserPosts(userID, sortBy)
 
-  local destionationKey = 'frontPage:'..userID..':'..sortBy
-
-
   local freshPosts = {}
   local startAt, range = 0, 100
 
@@ -663,14 +681,9 @@ function cache:GetFreshUserPosts(userID, sortBy)
       return nil, err
     end
 
-    local postParents = redisRead:GetParentIDs(userPostIDs)
-
-
-    local unSeenParentIDs = userRead:GetUnseenPosts(userID,postParents)
-    for _,v in pairs(postParents) do
-      if unSeenParentIDs[v.postID] then
-        tinsert(freshPosts,v.postID)
-      end
+    local unSeenPosts = self:GetUnseenPosts(userID, userPostIDs)
+    for _,v in pairs(unSeenPosts) do
+      tinsert(freshPosts, v)
     end
 
     if #userPostIDs < range then
@@ -680,7 +693,6 @@ function cache:GetFreshUserPosts(userID, sortBy)
   end
 
   return freshPosts
-
 end
 
 
@@ -735,7 +747,6 @@ function cache:GetUserPostVotes(userID)
   if not postVotes then
 
     ok, err = userRead:GetUserPostVotes(userID)
-    print('got from redis: ', to_json(ok))
     if not ok then
       return nil, err
     end

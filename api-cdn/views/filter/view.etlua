@@ -20,3 +20,13 @@
     <% render(GetFilterTemplate(),{post = post}) %>
   <% end %>
 </div>
+
+<% if params.startAt and tonumber(params.startAt) >= 10 then %>
+  <a href="<%= url_for("filter",{filterlabel = params.filterlabel}) %><%= Paginate(params,'back') %>">
+    Prev
+  </a>
+<% end %>
+
+<% if #posts > 9 then %>
+  <a href="<%= url_for("filter",{filterlabel = params.filterlabel}) %><%= Paginate(params,'forward') %>">Next</a>
+<% end %>
