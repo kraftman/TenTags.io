@@ -28,7 +28,7 @@ local voteDict = ngx.shared.userVotes
 
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
-local redisread = (require 'redis.db').redisRead
+local redisRead = (require 'redis.db').redisRead
 local userRead = (require 'redis.db').userRead
 local commentRead = (require 'redis.db').commentRead
 local lru = require 'api.lrucache'
@@ -44,12 +44,12 @@ local ENABLE_CACHE = os.getenv('ENABLE_CACHE')
 
 
 function cache:GetThread(threadID)
-  return redisread:GetThreadInfo(threadID)
+  return redisRead:GetThreadInfo(threadID)
 end
 
 function cache:GetThreads(userID, startAt, range)
-  local threadIDs = redisread:GetUserThreads(userID, startAt, range)
-  local threads = redisread:GetThreadInfos(threadIDs)
+  local threadIDs = redisRead:GetUserThreads(userID, startAt, range)
+  local threads = redisRead:GetThreadInfos(threadIDs)
 
   return threads
 end
@@ -89,7 +89,7 @@ function cache:GetUser(userID)
 end
 
 function cache:GetReports()
-  local ok, err = redisread:GetReports()
+  local ok, err = redisRead:GetReports()
   if not ok then
     return ok, err
   end
@@ -109,7 +109,7 @@ function cache:SearchURL(queryString)
 end
 
 function cache:GetRelevantFilters(validTags)
-  return redisread:GetRelevantFilters(validTags)
+  return redisRead:GetRelevantFilters(validTags)
 end
 
 function cache:SearchPost(queryString)
@@ -264,7 +264,7 @@ function cache:GetAllTags()
     return tags
   end
 
-  local res = redisread:GetAllTags()
+  local res = redisRead:GetAllTags()
   if res then
     lru:SetAllTags(res)
     return res
@@ -311,11 +311,11 @@ function cache:AddChildren(parentID,flat)
 end
 
 function cache:SearchTags(searchString)
-  return redisread:SearchTags(searchString)
+  return redisRead:SearchTags(searchString)
 end
 
 function cache:SearchFilters(searchString)
-  local filterNames = redisread:SearchFilters(searchString)
+  local filterNames = redisRead:SearchFilters(searchString)
   local filters = {}
   for _,filterName in pairs(filterNames) do
     tinsert(filters, self:GetFilterByName(filterName))
@@ -384,7 +384,7 @@ end
 
 
 function cache:ConvertShortURL(shortURL)
-  return redisread:ConvertShortURL(shortURL)
+  return redisRead:ConvertShortURL(shortURL)
 end
 
 function cache:GetSortedComments(userID, postID,sortBy)
@@ -458,7 +458,6 @@ function cache:GetPost(postID)
       return nil, 'no post found'
     end
   end
-  print('getting ',postID)
 
   if ENABLE_CACHE then
     ok, err = postDict:get(postID)
@@ -471,7 +470,7 @@ function cache:GetPost(postID)
   end
 
   if not post then
-    post, err = redisread:GetPost(postID)
+    post, err = redisRead:GetPost(postID)
 
     if err then
       return result, err
@@ -489,7 +488,7 @@ end
 
 function cache:GetFilterPosts(userID, filter, sortBy)
 
-  local filterIDs = redisread:GetFilterPosts(filter, sortBy)
+  local filterIDs = redisRead:GetFilterPosts(filter, sortBy)
   local posts = {}
   local post
 
@@ -517,10 +516,20 @@ function cache:GetFilterPosts(userID, filter, sortBy)
 end
 
 
+function cache:GetUserSeenPosts(userID, startAt, range)
+  local postIDs = userRead:GetAllUserSeenPosts(userID, startAt, range-1)
+  print(#postIDs)
+  local posts = {}
+  for _,v in pairs(postIDs) do
+    table.insert(posts, self:GetPost(v))
+  end
+  return posts
+end
+
 
 function cache:GetFilterID(filterName)
   --cache later
-  return redisread:GetFilterID(filterName)
+  return redisRead:GetFilterID(filterName)
 end
 
 function cache:GetFilterByName(filterName)
@@ -547,7 +556,7 @@ function cache:GetFilterByID(filterID)
   end
 
 
-  result,err = redisread:GetFilter(filterID)
+  result,err = redisRead:GetFilter(filterID)
   if err then
     return result, err
   end
@@ -565,7 +574,7 @@ function cache:GetFilterIDsByTags(tags)
 
   -- return all filters that are interested in these tags
 
-  return redisread:GetFilterIDsByTags(tags)
+  return redisRead:GetFilterIDsByTags(tags)
 
 end
 
@@ -581,7 +590,7 @@ end
 
 function cache:GetFiltersBySubs(startAt,endAt)
 
-  local filterIDs = redisread:GetFiltersBySubs(startAt, endAt)
+  local filterIDs = redisRead:GetFiltersBySubs(startAt, endAt)
   if not filterIDs then
     return {}
   end
@@ -604,7 +613,7 @@ function cache:GetUserSessionSeenPosts(userID)
   end
 
   local indexedSeen = {}
-  for _,v in pairs(from_json(result)) do
+  for _,v in ipairs(from_json(result)) do
     indexedSeen[v] = true
   end
 
@@ -637,74 +646,25 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
   return ok, err
 end
 
-function cache:GetFreshUserPosts(userID,filter) -- needs caching
-  -- the results of this need to be cached for a shorter duration than the
-  -- frequency that session seen posts are flushed to user seen
-  -- so that we can ignore session seen posts here
 
-  local startRange,endRange = 0,1000
-  local freshPosts,filteredPosts = {},{}
+function cache:GetFreshUserPosts(userID, sortBy)
 
-  local userFilterIDs = self:GetIndexedUserFilterIDs(userID)
+  local destionationKey = 'frontPage:'..userID..':'..sortBy
 
-  local filterFunction
-  if filter == 'new' then
-    filterFunction = 'GetAllNewPosts'
-  elseif filter == 'best' then
-    filterFunction = 'GetAllBestPosts'
-  elseif filter == 'seen' then
-    filterFunction = 'GetAllUserSeenPosts'
-  else
-    filterFunction = 'GetAllFreshPosts'
-  end
+
+  local freshPosts = {}
+  local startAt, range = 0, 100
 
   while #freshPosts < 100 do
 
-    local allPostIDs
-
-    -- grab 1000 post IDs
-    if filter == 'seen' then
-      allPostIDs = userRead[filterFunction](userRead,userID,startRange,endRange)
-    else
-      allPostIDs = redisread[filterFunction](redisread,startRange,endRange)
+    local userFilterIDs = self:GetUserFilterIDs(userID)
+    local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
+    if err then
+      return nil, err
     end
 
-    -- if weve hit the end then return regardless
-    if #allPostIDs == 0 then
-      break
-    end
+    local postParents = redisRead:GetParentIDs(userPostIDs)
 
-    startRange = startRange+1000
-    endRange = endRange+1000
-
-    if filter == 'seen' then
-      for _,postID in pairs(allPostIDs) do
-        tinsert(freshPosts,postID)
-      end
-      return freshPosts
-    end
-
-    -- narrow it down to posts in the users filters
-    local filterID, postID
-    for _, postFilterPair in pairs(allPostIDs) do
-      filterID,postID = postFilterPair:match('(%w+):(%w+)')
-      if userFilterIDs[filterID] then
-        tinsert(filteredPosts,postID)
-      end
-    end
-
-    if userID == 'default' then
-      return filteredPosts
-    end
-
-    -- check the user hasnt seen the posts
-    local postParents = redisread:GetParentIDs(filteredPosts)
-    -- for k,v in pairs(postParents) do
-    --
-    --   if v.parentID:len() < 10 then
-    --     v.parentID = self:ConvertShortURL(v.parentID)
-    --   end
-    -- end
 
     local unSeenParentIDs = userRead:GetUnseenPosts(userID,postParents)
     for _,v in pairs(postParents) do
@@ -712,12 +672,17 @@ function cache:GetFreshUserPosts(userID,filter) -- needs caching
         tinsert(freshPosts,v.postID)
       end
     end
-    return freshPosts
+
+    if #userPostIDs < range then
+      -- we've got as many as we'll get
+      break
+    end
   end
 
-
   return freshPosts
+
 end
+
 
 function cache:GetUserCommentVotes(userID)
   if not userID then
@@ -788,7 +753,7 @@ function cache:GetUserPostVotes(userID)
 
 end
 
-function cache:GetCachedFreshUserPosts(userID, sortBy)
+function cache:GetCachedUserFrontPage(userID, sortBy)
   local ok, err, userFrontPagePosts
   if ENABLE_CACHE then
     ok, err = userFrontPagePostDict:get(userID..':'..sortBy)
@@ -802,7 +767,11 @@ function cache:GetCachedFreshUserPosts(userID, sortBy)
   end
 
   if not userFrontPagePosts then
-    userFrontPagePosts = self:GetFreshUserPosts(userID, sortBy)
+    userFrontPagePosts,err = self:GetFreshUserPosts(userID, sortBy)
+    if not userFrontPagePosts then
+      print(err)
+    end
+
     userFrontPagePostDict:set(userID..':'..sortBy, to_json(userFrontPagePosts),60)
   end
 
@@ -820,7 +789,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetCachedFreshUserPosts(userID,sortBy)
+  local freshPosts = cache:GetCachedUserFrontPage(userID,sortBy)
 
   local newPosts = {}
   local post
@@ -877,7 +846,7 @@ end
 
 
 function cache:GetTag(tagName)
-  local tag = redisread:GetTag(tagName)
+  local tag = redisRead:GetTag(tagName)
   return tag
 end
 

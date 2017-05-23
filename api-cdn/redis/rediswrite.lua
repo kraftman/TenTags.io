@@ -542,7 +542,7 @@ function write:EmptyFilter()
   end
 
   --print('got filter:', filterID)
-  ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
+  local ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
 
   if not ok or ok == ngx.null then
     return true
@@ -558,8 +558,9 @@ function write:EmptyFilter()
       end
       red:init_pipeline()
         for _,postID in pairs(ok) do
-          red:zrem('filterposts:date:'..range, postID)
-          red:zrem('filterposts:score:'..range, postID)
+          red:zrem('filterposts:date:'..range..':'..filterID, postID)
+          red:zrem('filterposts:score:'..range..':'..filterID, postID)
+          red:zadd('filterposts:datescore:'..range..':'..filterID, postID)
         end
       ok, err = red:commit_pipeline()
       if not ok then
@@ -582,13 +583,15 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   -- is this set useless?
   red:sadd('filterposts:'..filter.id, postInfo.id)
   local ranges = {'','hour:', 'day:', 'week:', 'month:', 'year:'}
-
+  
   for _,v in pairs(ranges) do
-    red:zadd('filterposts:date:'..v..filter.id,postInfo.createdAt,postInfo.id)
-    red:zadd('filterposts:score:'..v..filter.id,filter.score,postInfo.id)
-    red:zadd('filterpostsall:date:'..v,postInfo.createdAt,filter.id..':'..postInfo.id)
-    red:zadd('filterpostsall:score:'..v,filter.score,filter.id..':'..postInfo.id)
+    red:zadd('filterposts:date:'..v..filter.id, postInfo.createdAt, postInfo.id)
+    red:zadd('filterposts:score:'..v..filter.id, filter.score, postInfo.id)
+    red:zadd('filterposts:datescore:'..v..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR, postInfo.id)
+    red:zadd('filterpostsall:date:'..v,postInfo.createdAt, filter.id..':'..postInfo.id)
+    red:zadd('filterpostsall:score:'..v,filter.score, filter.id..':'..postInfo.id)
   end
+
 
   red:zadd('filterposts:datescore:'..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR,postInfo.id)
 

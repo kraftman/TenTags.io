@@ -256,13 +256,12 @@ function userread:GetUnseenPosts(baseKey, elements)
   return indexed
 end
 
-function userread:GetAllUserSeenPosts(userID,startRange,endRange)
+function userread:GetAllUserSeenPosts(userID,startAt,range)
 
   --ngx.log(ngx.ERR,startRange,' ',endRange,' ',userID)
-  startRange = startRange or 0
-  endRange = endRange or 1000
+
   local red = self:GetUserReadConnection()
-  local ok, err = red:zrange('userSeen:'..userID, startRange, endRange)
+  local ok, err = red:zrange('userSeen:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
 
   if not ok then

@@ -635,6 +635,68 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   return ok ~= ngx.null and ok or {}
 end
 
+function read:GetFrontPage(userID, sortBy, userFilterIDs,startAt, range)
+  local red = self:GetRedisReadConnection()
+  local destionationKey = 'frontPage:'..userID..':'..sortBy
+
+  local ok, err = red:zcard(destionationKey)
+  if not ok then
+
+    return nil, err
+  end
+
+  if ok == ngx.null or ok < startAt+range then
+    local timeUnits = {'day','week', 'month'}
+    for _,timeUnit in ipairs(timeUnits) do
+      -- go bigger until we get enough
+      ok, err = self:GenerateUserFrontPage(userID, userFilterIDs,timeUnit, sortBy)
+      if not ok then
+        print(err)
+        return ok, err
+      end
+    end
+  end
+
+  -- we have as many as we can get, send them back
+
+  ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
+  print(to_json(red:zrevrange(destionationKey, startAt, startAt+range, 'WITHSCORES')))
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
+function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
+  --we're going to write to the slave to save the master overhead
+  range = range or 'day'
+  local red = self:GetRedisReadConnection()
+
+  local destinationKey = 'frontPage:'..userID..':'..sortBy
+
+  local sortToKey = {
+    fresh = 'filterposts:datescore:',
+    new = 'filterposts:date:',
+    best = 'filterposts:score:'
+  }
+  local keyedFilterIDs = {}
+
+  for _,filterID in pairs(userFilterIDs) do
+    table.insert(keyedFilterIDs, sortToKey[sortBy]..range..':'..filterID)
+  end
+  print(#keyedFilterIDs)
+  table.insert(keyedFilterIDs, 'AGGREGATE')
+  table.insert(keyedFilterIDs, 'MAX')
+  local ok, err = red:zunionstore(destinationKey,#keyedFilterIDs-2,unpack(keyedFilterIDs))
+  if not ok then
+    print(err)
+    return nil, err
+  end
+  ok, err = red:expire(destinationKey, 300)
+
+  return ok, err
+
+end
+
 function read:GetParentIDs(postIDs)
   local red = self:GetRedisReadConnection()
   red:init_pipeline()
