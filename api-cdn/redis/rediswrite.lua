@@ -52,8 +52,11 @@ end
 function write:FlushFilterStats()
   local red = self:GetRedisWriteConnection()
   local filterID, err = self:GetRandomFilter(red)
-  if not filterID then
+  if err then
     return nil, err
+  end
+  if not filterID then
+    return true
   end
 
 
@@ -512,7 +515,7 @@ function write:GetRandomFilter(red)
   end
   if not next(ok) then
     self:SetKeepalive(red)
-    return true
+    return nil
   end
   return ok[1]
 end
@@ -531,12 +534,16 @@ function write:EmptyFilter()
   local red = self:GetRedisWriteConnection()
 
   local filterID,err = self:GetRandomFilter(red)
-  if not filterID then
+  if err then
     return nil, err
   end
+  if not filterID then
+    return true
+  end
+
   --print('got filter:', filterID)
-  ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
-  
+  local ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
+
   if not ok or ok == ngx.null then
     return true
   end
@@ -551,8 +558,9 @@ function write:EmptyFilter()
       end
       red:init_pipeline()
         for _,postID in pairs(ok) do
-          red:zrem('filterposts:date:'..range, postID)
-          red:zrem('filterposts:score:'..range, postID)
+          red:zrem('filterposts:date:'..range..':'..filterID, postID)
+          red:zrem('filterposts:score:'..range..':'..filterID, postID)
+          red:zadd('filterposts:datescore:'..range..':'..filterID, postID)
         end
       ok, err = red:commit_pipeline()
       if not ok then
@@ -575,13 +583,15 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   -- is this set useless?
   red:sadd('filterposts:'..filter.id, postInfo.id)
   local ranges = {'','hour:', 'day:', 'week:', 'month:', 'year:'}
-
+  
   for _,v in pairs(ranges) do
-    red:zadd('filterposts:date:'..v..filter.id,postInfo.createdAt,postInfo.id)
-    red:zadd('filterposts:score:'..v..filter.id,filter.score,postInfo.id)
-    red:zadd('filterpostsall:date:'..v,postInfo.createdAt,filter.id..':'..postInfo.id)
-    red:zadd('filterpostsall:score:'..v,filter.score,filter.id..':'..postInfo.id)
+    red:zadd('filterposts:date:'..v..filter.id, postInfo.createdAt, postInfo.id)
+    red:zadd('filterposts:score:'..v..filter.id, filter.score, postInfo.id)
+    red:zadd('filterposts:datescore:'..v..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR, postInfo.id)
+    red:zadd('filterpostsall:date:'..v,postInfo.createdAt, filter.id..':'..postInfo.id)
+    red:zadd('filterpostsall:score:'..v,filter.score, filter.id..':'..postInfo.id)
   end
+
 
   red:zadd('filterposts:datescore:'..filter.id,postInfo.createdAt + filter.score*SCORE_FACTOR,postInfo.id)
 
@@ -764,6 +774,7 @@ function write:RemovePostsFromFilter(filterID, postIDs)
   end
   return results
 end
+
 
 function write:AddPostsToFilter(filterInfo,posts)
 
@@ -1011,11 +1022,19 @@ function write:LogBacklogStats(jobName, time, value, duration)
 
 end
 
+function write:AddReport(userID, postID)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:zadd('reports:', ngx.time(), postID..':'..userID)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:CreatePost(post)
 
   local hashedPost = {}
   hashedPost.viewers = {}
   hashedPost.filters = {}
+  hashedPost.reports = {}
 
   for k,v in pairs(post) do
     if k == 'viewers' then
@@ -1026,9 +1045,11 @@ function write:CreatePost(post)
       for _,filterID in pairs(v) do
         hashedPost['filter:'..filterID] = 'true'
       end
-    elseif k == 'tags' then
+    elseif k == 'reports' then
       --leave tags seperate for now as we do more with them
-
+      for reporterID,report in pairs(v) do
+        hashedPost['reports:'..reporterID] = report
+      end
     elseif k == 'edits' then
       for time,edit in pairs(v) do
         hashedPost['edit:'..time] = self:to_json(edit)
@@ -1040,7 +1061,7 @@ function write:CreatePost(post)
 
   local red = self:GetRedisWriteConnection()
 
-  red:init_pipeline()
+  red:init_pipeline() --TODO switch toexec
 
     red:del('post:'..hashedPost.id)
 

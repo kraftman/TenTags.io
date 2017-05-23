@@ -38,6 +38,10 @@ function m:Register(app)
     GET = self.DeletePost,
     POST = self.DeletePost,
   }))
+  app:match('reportpost', '/p/:postID/report', respond_to({
+    GET = self.ViewReportPost,
+    POST = self.ReportPost
+  }))
 
   app:get('upvotetag','/post/upvotetag/:tagName/:postID',self.UpvoteTag)
   app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
@@ -48,6 +52,31 @@ function m:Register(app)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
   app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
 
+
+end
+
+function m.ViewReportPost(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  print(request.params.postID)
+  ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
+  request.post = ok
+  return {render = 'post.report'}
+
+
+end
+
+function m.ReportPost(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local ok, err = postAPI:ReportPost(request.session.userID, request.params.postID, request.params.reportreason)
+  if ok then
+    return 'reported!'
+  else
+    return err
+  end
 end
 
 function m.ReloadImage(request)
@@ -116,10 +145,11 @@ function m.GetPost(request)
 
   local postID = request.params.postID
 
-  local post = postAPI:GetPost(userID, postID)
+  local post,err = postAPI:GetPost(userID, postID)
 
   if not post then
-    return 'post not found'
+    print(err)
+    return err
   end
 
   if (#postID > 10) and post.shortURL then

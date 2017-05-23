@@ -33,4 +33,13 @@ function M:GetNewUsers(userID)
   return cache:GetNewUsers()
 end
 
+function M:GetReports(userID)
+  local user = cache:GetUser(userID)
+  if not user.role == 'Admin' then
+    return nil, 'no admin'
+  end
+
+  return cache:GetReports()
+end
+
 return M

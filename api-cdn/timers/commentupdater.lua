@@ -133,11 +133,15 @@ function config:AddAlerts(post, comment)
   -- need to add alert to all parent comment viewers
   if comment.parentID == comment.postID then
 		for _,viewerID in pairs(post.viewers) do
+      cache:PurgeKey({keyType = 'useralert', viewerID})
+      ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
 			self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
+      cache:PurgeKey({keyType = 'useralert', id = viewerID})
+      ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
       self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
   end

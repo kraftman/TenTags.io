@@ -147,8 +147,6 @@ function config:ProcessPostView(stat)
     ngx.log(ngx.ERR, 'unable to update post view count ',err)
   end
 
-  --ok, err = redisWrite:InvalidateKey('post', stat.postID)
-
   ok, err = redisWrite:AddUniquePostView(stat.postID, stat.userID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to log unique post view: ', err)

@@ -145,6 +145,9 @@ function config:VotePost(postVote)
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	self.userWrite:AddUserPostVotes(postVote.userID, postVote.postID)
+	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
+	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
+	print('purged cache')
 
 	return true
 
@@ -367,6 +370,8 @@ function config:AddPostShortURL(data)
   -- add short url to hash
   -- deleted job
   ok, err = self.redisWrite:UpdatePostField(post.id, 'shortURL', shortURL)
+	cache:PurgeKey({keyType = 'post', id = post.id})
+	self.redisWrite:InvalidateKey('post', post.id)
   if not ok then
     print('error updating post field: ',err)
     return nil
@@ -474,7 +479,12 @@ function config:UpdatePostFilters(data)
 
   ok, err = self.redisWrite:CreatePost(post)
 	if not ok then
-		print(err)
+		ngx.log(ngx.ERR, err)
+	end
+	cache:PurgeKey({keyType = 'post', id = post.id})
+	ok,err = self.redisWrite:InvalidateKey('post', post.id)
+	if not ok then
+		ngx.log(ngx.ERR, err)
 	end
 	return true
 end

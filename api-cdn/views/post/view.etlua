@@ -33,7 +33,7 @@
       <% end %>
 
 
-      <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea" value="<%= post.text -%>" rows="7" ></textarea>
+      <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea"  rows="7" ><%= post.text -%></textarea>
 
       </br>
 
@@ -45,7 +45,8 @@
     <% if post.deleted then %>
       <p> [deleted] </p>
     <% else %>
-      <p><%= post.text -%></p>
+      
+      <%- markdown.markdown(post.text) -%>
     <% end %>
   <% end %>
 
@@ -58,6 +59,7 @@
     <% end %>
   <% end %>
   <% if session.userID then %>
+    <a href='<%= url_for("reportpost",{postID = post.id})%>'>Report</a>
     <form id='addsource' action='' method='post'accept-charset='UTF-8'>
 
       <h3>Add Repost Source</h3>

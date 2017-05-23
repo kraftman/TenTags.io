@@ -184,6 +184,15 @@ function read:GetFilterIDsByTags(tags)
   return ok, err
 end
 
+function read:GetReports(startAt, range)
+  startAt = startAt or 0
+  range = range or 100
+
+  local red = self:GetRedisReadConnection()
+  local ok, err = red:zrange('reports:',startAt, startAt+range)
+  self:SetKeepalive(red)
+  return ok, err
+end
 function read:GetRelevantFilters(tags)
   local red = self:GetRedisReadConnection()
   -- for each tag
@@ -517,6 +526,7 @@ function read:GetPost(postID)
   post.viewers = {}
   post.filters = {}
   post.edits = {}
+  post.reports = {}
 
   for k,v in pairs(post) do
     if k:find('^viewer:') then
@@ -526,6 +536,12 @@ function read:GetPost(postID)
     elseif k:find('^filter:') then
       local filterID = k:match('^filter:(%w+)')
       tinsert(post.filters, filterID)
+      post[k] = nil
+
+    elseif k:find('^reports:') then
+      local reporterID = k:match('^reports:(%w+)')
+      post.reports[reporterID] = v
+
       post[k] = nil
     elseif k:find('^specialTag:') then
       post[k] = v == 'true' and true or nil
@@ -576,7 +592,7 @@ function read:GetPost(postID)
   return post
 end
 
-function read:GetFilterPosts(filter, sortBy)
+function read:GetFilterPosts(filter, sortBy,startAt, range)
   local key = 'filterposts:score:'
   if sortBy == 'fresh' then
     key = 'filterposts:datescore:'
@@ -585,8 +601,10 @@ function read:GetFilterPosts(filter, sortBy)
   elseif sortBy == 'best' then
     key = 'filterposts:score:'
   end
+
   local red = self:GetRedisReadConnection()
-  local ok, err = red:zrevrange(key..filter.id,0,50)
+
+  local ok, err = red:zrevrange(key..filter.id, startAt, startAt+range)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter posts ',err)
   end
@@ -608,7 +626,7 @@ function read:GetAllNewPosts(rangeStart,rangeEnd)
 end
 
 function read:GetAllFreshPosts(rangeStart,rangeEnd)
-  
+
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange('filterpostsall:datescore',rangeStart,rangeEnd)
   self:SetKeepalive(red)
@@ -617,6 +635,96 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   end
 
   return ok ~= ngx.null and ok or {}
+end
+
+function read:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
+  local red = self:GetRedisReadConnection()
+  local destionationKey = 'frontPage:'..userID..':'..sortBy
+  
+  local ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
+  if not ok then
+
+    return nil, err
+  end
+
+  if ok == ngx.null or #ok < range then
+    local timeUnits = {'day','week', 'month'}
+    for _,timeUnit in ipairs(timeUnits) do
+      -- go bigger until we get enough
+      ok, err = self:GenerateUserFrontPage(userID, userFilterIDs, timeUnit, sortBy)
+      if not ok then
+        self:SetKeepalive(red)
+        return ok, err
+      end
+
+      ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
+      if not ok then
+        self:SetKeepalive(red)
+        return ok, err
+      end
+
+      if #ok >= range then
+        self:SetKeepalive(red)
+        return ok
+      end
+    end
+  end
+
+  -- we have as many as we can get, send them back
+  self:SetKeepalive(red)
+  return ok, err
+
+
+end
+
+function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
+  --we're going to write to the slave to save the master overhead
+  range = range or 'day'
+  local red = self:GetRedisReadConnection()
+
+  local destinationKey = 'frontPage:'..userID..':'..sortBy
+
+  local sortToKey = {
+    fresh = 'filterposts:datescore:',
+    new = 'filterposts:date:',
+    best = 'filterposts:score:'
+  }
+  local keyedFilterIDs = {}
+
+  for _,filterID in pairs(userFilterIDs) do
+    table.insert(keyedFilterIDs, sortToKey[sortBy]..range..':'..filterID)
+  end
+
+  table.insert(keyedFilterIDs, 'AGGREGATE')
+  table.insert(keyedFilterIDs, 'MAX')
+  local ok, err = red:zunionstore(destinationKey,#keyedFilterIDs-2,unpack(keyedFilterIDs))
+  if not ok then
+    print(err)
+    return nil, err
+  end
+  ok, err = red:expire(destinationKey, 300)
+
+  return ok, err
+
+end
+
+function read:GetParentIDs(postIDs)
+  local red = self:GetRedisReadConnection()
+  red:init_pipeline()
+  for _,postID in pairs(postIDs) do
+    red:hget('post:'..postID,'parentID')
+  end
+  local ok, err = red:commit_pipeline()
+  if not ok then
+    return nil, 'couldnt commit pipeline:', err
+  end
+  self:SetKeepalive(red)
+  local postParents = {}
+  for i = 1, #postIDs do
+    tinsert(postParents, {postID = postIDs[i], parentID = ok[i]})
+  end
+  return postParents
+
 end
 
 function read:SearchTags(searchString)

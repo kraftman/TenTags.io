@@ -129,6 +129,8 @@ function m.GetFrontPage(request)
   local sortBy = request.params.sortby or 'fresh'
   local userID = request.session.userID or 'default'
 
+  range = tonumber(range)
+
   local ok,err = userAPI:GetUserFrontPage(userID, sortBy, startAt, range)
   if ok then
     return {json = {status = 'success', data = ok or {}}}

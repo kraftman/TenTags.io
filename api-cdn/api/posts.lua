@@ -79,6 +79,34 @@ function api:ReloadImage(userID, postID)
 
 end
 
+function api:ReportPost(userID, postID, reportText)
+  local ok, err = self:RateLimit('ReportPost:', userID, 1, 60)
+	if not ok then
+		return ok, err
+	end
+
+  local post = cache:GetPost(postID)
+  if post.reports[userID] then
+    return nil, 'youve already reported this post'
+  end
+
+  post.reports = post.reports or {}
+  post.reports[userID] = self:SanitiseUserInput(reportText, 300)
+
+  ok, err = self.redisWrite:CreatePost(post)
+  if not ok then
+    return nil, err
+  end
+  ok, err = self.redisWrite:AddReport(userID, postID)
+  ok, err = self:InvalidateKey('post',postID)
+
+  return ok,err
+
+  --check they havent already reported it
+  -- add it to the list of reports attached to the postID
+  -- add it to the admin list of reports
+end
+
 function api:AddPostTag(userID, postID, tagName)
 
 	local ok, err = self:RateLimit('AddPostTag:', userID, 1, 60)
@@ -124,11 +152,6 @@ function api:AddPostTag(userID, postID, tagName)
 
 end
 
-
-
-
-
-
 function api:VotePost(userID, postID, direction)
 
 	local ok, err = self:RateLimit('VotePost:', userID, 10, 60)
@@ -148,7 +171,8 @@ function api:VotePost(userID, postID, direction)
 		cache:AddSeenPost(userID, postID)
 	end
 
-  return self.redisWrite:QueueJob('votepost',postVote)
+  ok,err = self.redisWrite:QueueJob('votepost',postVote)
+  return ok ,err
 
 end
 
@@ -170,8 +194,6 @@ function api:SubscribePost(userID, postID)
 	return ok, err
 
 end
-
-
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
@@ -314,10 +336,17 @@ function api:EditPost(userID, userPost)
     post.edits[ngx.time()] = {time = ngx.time(), editedBy = userID, original = post.text}
   end
 
-	post.text = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+	post.text = newText
+  print('setting new text to',newText)
 	post.editedAt = ngx.time()
 
+
 	ok, err = self.redisWrite:CreatePost(post)
+  if not ok then
+    return ok, err
+  end
+  ok,err = self:InvalidateKey('post', post.id)
+
 	return ok, err
 
 end

@@ -226,17 +226,16 @@ function userread:GetUserPosts(userID,startAt, range)
   end
 end
 
-function userread:GetUnseenPosts(baseKey, elements)
+function userread:GetUnseenParentIDs(baseKey, elements)
   local red = self:GetUserReadConnection()
   local sha1Key = checkKey:GetSHA1()
 
   red:init_pipeline()
-
-  for _,v in pairs(elements) do
-    red:evalsha(sha1Key,0,baseKey,10000,0.01,v)
-  end
-
+    for _,v in pairs(elements) do
+      red:evalsha(sha1Key,0,baseKey,10000,0.01,v.parentID)
+    end
   local res, err = red:commit_pipeline()
+
   self:SetKeepalive(red)
 
   if err then
@@ -244,22 +243,24 @@ function userread:GetUnseenPosts(baseKey, elements)
     return {}
   end
 
+  local indexed = {}
   for k,v in pairs(res) do
     if v == ngx.null then
       res[k] = nil
+    else
+      indexed[v] = true
     end
   end
 
-  return res
+  return indexed
 end
 
-function userread:GetAllUserSeenPosts(userID,startRange,endRange)
+function userread:GetAllUserSeenPosts(userID,startAt,range)
 
   --ngx.log(ngx.ERR,startRange,' ',endRange,' ',userID)
-  startRange = startRange or 0
-  endRange = endRange or 1000
+
   local red = self:GetUserReadConnection()
-  local ok, err = red:zrange('userSeen:'..userID, startRange, endRange)
+  local ok, err = red:zrange('userSeen:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
 
   if not ok then

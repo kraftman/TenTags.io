@@ -145,8 +145,12 @@ function m.DisplayFilter(request)
     request.isMod = userAPI:UserCanEditFilter(request.session.userID, filter.id)
   end
   local sortBy = request.params.sortBy or 'fresh'
-  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy)
+  local startAt = request.params.startAt or 0
+  local range = 10
+  print(startAt, range)
+  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy, startAt, range)
   --(to_json(request.posts))
+  request.AddParams = AddParams
   if request.session.userID then
     for k,v in pairs(request.posts) do
       v.hash = ngx.md5(v.id..request.session.userID)
@@ -208,8 +212,19 @@ function m.BanDomain(request,filter)
 end
 
 function m.UpdateFilterTags(request,filter)
-  local requiredTagNames = from_json(request.params.requiredTagNames)
-  local bannedTagNames = from_json(request.params.bannedTagNames)
+  local requiredTagNames = {}
+  local bannedTagNames = {}
+  print(request.params.plustagselect)
+  for word in request.params.plustagselect:gmatch('%S+') do
+    print(word)
+    table.insert(requiredTagNames, word)
+  end
+  if request.params.minustagselect then
+    for word in request.params.minustagselect:gmatch('%S+') do
+      table.insert(bannedTagNames, word)
+    end
+  end
+
   local userID = request.session.userID
 
   --print(to_json(filter))
@@ -289,7 +304,7 @@ function m.UpdateFilter(request)
      return m.BanDomain(request,filter)
   end
 
-  if request.params.requiredTagNames then
+  if request.params.plustagselect then
      return m.UpdateFilterTags(request,filter)
   end
 
@@ -313,7 +328,6 @@ function m.ViewFilterSettings(request)
     ngx.log(ngx.ERR, 'no filter label found!')
     return 'error!'
   end
-  print(to_json(filter))
   local user = request.userInfo
 
   if user.role ~= 'Admin' then
@@ -337,11 +351,9 @@ function m.ViewFilterSettings(request)
   request.requiredTagKeys = {}
   for k, v in pairs(filter.requiredTagNames) do
     if not v:find('meta:') then
-      print(v)
       request.requiredTagKeys[v] = true
     end
   end
-  print(to_json(request.requiredTagKeys))
 
   request.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTagNames) do

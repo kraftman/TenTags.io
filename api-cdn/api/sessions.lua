@@ -3,6 +3,7 @@ local cache = require 'api.cache'
 
 local base = require 'api.base'
 local api = setmetatable({}, base)
+local sessionLastSeenDict = ngx.shared.sessionLastSeen
 
 
 function api:GetHash(values)
@@ -94,8 +95,7 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'session has been killed'
 	end
 
-	session.lastSeen = ngx.time()
-  self.userWrite:CreateAccount(account)
+  sessionLastSeenDict:set(accountID..':'..sessionID, ngx.time())
 
 	return account
 
@@ -186,6 +186,7 @@ function api:ConfirmLogin(userSession, key)
 	account.lastSeen = ngx.time()
 	account.active = true
 	self.userWrite:CreateAccount(account)
+	ok, err = self:InvalidateKey('account', account.id)
 
   self.userWrite:IncrementAccountStat(account.id, 'logins', 1)
 
@@ -207,8 +208,12 @@ function api:KillSession(accountID, sessionID)
 
 	session.killed = true
   -- purge from cache
-  self.redisWrite:InvalidateKey('account', account.id)
-  return self.userWrite:CreateAccount(account)
+  self:InvalidateKey('account', account.id)
+
+  self.userWrite:CreateAccount(account)
+
+	ok, err = self:InvalidateKey('account', account.id)
+  return ok, err
 
 end
 

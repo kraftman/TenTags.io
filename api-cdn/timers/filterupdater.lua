@@ -186,6 +186,8 @@ function config:UpdateFilterPosts(data)
 		print(ok, err)
 		return ok, err
 	end
+  cache:PurgeKey({keyType = 'filter', id = filter.id})
+  ok,err = self.redisWrite:InvalidateKey('filter', filter.id)
 
 	local relatedFilters = self:GetRelatedFilters(filter)
 	ok, err = self.redisWrite:UpdateRelatedFilters(filter, relatedFilters)

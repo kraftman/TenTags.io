@@ -17,7 +17,7 @@ function worker:New()
   -- shared dicts
   w.locks = ngx.shared.locks
   w.userUpdateDict = ngx.shared.userupdates
-  w.userSessionSeenDict = ngx.shared.usersessionseen
+  w.userSessionSeenDict = ngx.shared.usersessionseenpost
 
   w.emailer = (require 'timers.emailsender'):New(w.util)
   w.postUpdater = (require 'timers.postupdater'):New(w.util)

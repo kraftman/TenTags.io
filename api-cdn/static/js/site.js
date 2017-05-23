@@ -1,12 +1,13 @@
 
 
 var userSettings = {};
-var newPosts = {};
+var newPosts = [];
 var maxPosts = 10;
 var seenPosts = [];
 var userID;
-var postIndex = 0;
+var postIndex = 10;
 var userFilters = [];
+var list_empty;
 
 $(function() {
   userID = $('#userID').val()
@@ -16,7 +17,7 @@ $(function() {
   AddFilterSearch();
   GetUserSettings();
   LoadKeybinds();
-  //LoadNewPosts();
+  LoadNewPosts();
   AddToSeenPosts();
   AddFilterHandler();
   LoadUserFilters();
@@ -26,11 +27,24 @@ $(function() {
   Recaptcha()
   AddInfoBar();
   HookSubClick();
+  AddInfinite();
 
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()
   //})
 })
+
+function AddInfinite(){
+  $(window).scroll(function() {
+   if($(window).scrollTop() + $(window).height() >= ($(document).height()-50)) {
+
+     for (var i = 1; i <= 1; i++) {
+       LoadMorePosts($('.posts').children().first())
+     }
+   }
+  });
+ }
+
 
 function HookSubClick(){
   $('.filterbar-subscribe').click(function(e){
@@ -228,11 +242,11 @@ function Downvote(e) {
 function AddPostVoteListener(){
   $(".post-upvote").click(function(e) {
     e.preventDefault()
-    VotePost($(this).parent().parent(), 'up')
+    VotePost($(this).parents('.post'), 'up')
   })
   $(".post-downvote").click(function(e){
     e.preventDefault()
-    VotePost($(this).parent().parent(),'down')
+    VotePost($(this).parents('.post'),'down')
   })
 }
 
@@ -250,7 +264,7 @@ function VotePost(post, direction){
     }
 
 
-    LoadMorePosts($(post).parents('.post'));
+    LoadMorePosts($(post));
 
     $(post).hide(0, function() {
       var nextPost = $(post).next()
@@ -262,18 +276,16 @@ function VotePost(post, direction){
 
   var uri;
   if (direction == 'up'){
-
     uri = '/api/post/'+postID+'/upvote?hash='+postHash
   } else {
-
     uri = '/api/post/'+postID+'/downvote?hash='+postHash
   }
   $(post).find('.post-upvote').addClass('disable-vote');
   $(post).find('.post-downvote').addClass('disable-vote');
 
-  $.get(uri,function(data){
+  //$.get(uri,function(data){
     //console.log(data);
-  })
+  //})
 }
 
 function AddFilterHandler(){
@@ -300,18 +312,28 @@ function AddToSeenPosts(){
   })
 }
 
-function LoadNewPosts(startAt = 0, endAt = 100){
-  var uri = '/api/frontpage?startat=1&endat=100'
+function LoadNewPosts(startAt = 10){
+  var uri = '/api/frontpage?startAt='+startAt+'&range=100'
+  if (list_empty) {
+    return ;
+  }
 
   $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
-      console.log(data.data)
-      newPosts = data.data
-      if (data.data == 'undefined') {
-        newPosts = []
+      if (data.data.length) {
+        console.log('got data')
+      } else {
+        console.log('no data')
       }
-      console.log(newPosts.length+ ' new posts got from server')
+      var count = 0
+      $.each(data.data,function(k,v) {
+        newPosts.push(v)
+        count ++
+      })
+      if (count < 100) {
+        list_empty = true
+      }
     }
   })
 }
@@ -484,37 +506,37 @@ function AddMenuHandler(){
 }
 
 function GetFreshPost(){
+  if (newPosts.length < 10 ) {
+    postIndex = postIndex + 100
+    LoadNewPosts(postIndex)
+  }
+
   var newPost = newPosts.shift()
+  if (newPost == undefined) {
+    return
+  }
 
   while ($.inArray(newPost.id, seenPosts) != -1){
-
-    //console.log(newPost)
-
     newPost = newPosts.shift()
-
     if (newPost == undefined) {
-      postIndex = postIndex + 100
-      LoadNewPosts(postIndex,postIndex+100)
-      newPost = newPosts.shift()
-      if (newPost == undefined) {
-        return
-      }
+      return
     }
-
   }
+
   return newPost
 }
 
 function LoadMorePosts(template){
+  console.log(template)
   var newPost = template.clone()
-
-  $(newPost).slideDown('fast')
+  console.log(newPost)
 
   var postInfo = GetFreshPost()
   if (postInfo == null) {
+    console.log('no post')
     return
   }
-  var postID
+  console.log(postInfo.id)
   newPost.find('.postID').val(postInfo.id)
   newPost.find('.post-link').text(postInfo.title)
 
@@ -546,7 +568,8 @@ function LoadMorePosts(template){
     filterIcon.show()
   })
 
-  $('#posts').append(newPost)
+  $('.posts').append(newPost)
+  console.log('done')
 }
 
 

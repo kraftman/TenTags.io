@@ -2,7 +2,7 @@
 
 local trim = (require 'lapis.util').trim
 local rateDict = ngx.shared.ratelimit
-
+local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
 
 local M = {}
@@ -23,6 +23,12 @@ function M:SanitiseHTML(str)
 	-- 	return html[char] or char
 	-- end)
 	--return web_sanitize.sanitize_html(str)
+end
+
+function M:InvalidateKey(key, id)
+	cache:PurgeKey({keyType = key, id = id})
+	local ok, err = self.redisWrite:InvalidateKey(key,id)
+	return ok, err
 end
 
 

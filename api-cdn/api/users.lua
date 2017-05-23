@@ -17,9 +17,20 @@ function api:UserCanVoteTag(userID, postID, tagName)
 	return true
 end
 
-function api:GetUserFrontPage(userID,filter,startAt, endAt)
+function api:GetUserFrontPage(userID, sortBy, startAt, range)
 
-  return cache:GetUserFrontPage(userID,filter,startAt, endAt)
+
+	local ok, err = self:RateLimit('GetFrontPage:'..sortBy,userID, 5, 30)
+	if not ok then
+		return ok, err
+	end
+
+
+	if sortBy == 'seen' then
+		return cache:GetUserSeenPosts(userID, startAt, range)
+	else
+  	return cache:GetUserFrontPage(userID, sortBy, startAt, range)
+	end
 end
 
 
@@ -96,6 +107,8 @@ function api:DeleteUser(userID, username)
 		ngx.log(ngx.ERR, 'error deleting user:', userToDeleteID, ' from account ', account.id, err )
 		return nil, 'failed to delete users'
 	end
+
+	ok, err = self:InvalidateKey('account', account.id)
 
 
 	local userToDelete = cache:GetUser(userToDeleteID)
@@ -228,6 +241,8 @@ function api:CreateSubUser(accountID, username)
 	if not ok then
 		return ok, err
 	end
+
+	ok, err = self:InvalidateKey('account', account.id)
 	if account.role == 'Admin' then
 		subUser.role = 'Admin'
 	end
@@ -288,23 +303,23 @@ end
 
 
 function api:GetUserAlerts(userID)
-	local ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
+	local ok, err , alerts
+	ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
 	if not ok then
 		return ok, err
 	end
 	-- can only get their own
-  local alerts = cache:GetUserAlerts(userID)
+  alerts,err = cache:GetUserAlerts(userID)
+	if not alerts then
+		ngx.log(ngx.ERR, 'error loading user alerts: ', err)
+		return nil, 'couldnt load user alerts'
+	end
+	if alerts and not err then
+		-- its not from cache, so update the last time checked
+		return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+	end
 
   return alerts
-end
-
-function api:UpdateLastUserAlertCheck(userID)
-	local ok, err = self:RateLimit('UpdateUserAlertCheck:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
-	-- can only edit their own
-  return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
 end
 
 
@@ -324,6 +339,8 @@ function api:SwitchUser(accountID, userID)
 	if not ok then
 		return ok, err
 	end
+
+	ok, err = self:InvalidateKey('account', account.id)
 
 	return user
 end
@@ -379,7 +396,12 @@ function api:UpdateUser(userID, userToUpdate)
 		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
 
-	return self.userWrite:CreateSubUser(userInfo)
+	ok, err = self.userWrite:CreateSubUser(userInfo)
+	if not ok then
+		return ok, err
+	end
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
 end
 
 
@@ -433,29 +455,6 @@ function api:UserHasAlerts(userID)
 end
 
 
-function api:UserCanEditFilter(userID, filterID)
-	local user = cache:GetUser(userID)
 
-	if not user then
-		return nil, 'userID not found'
-	end
-
-	local filter = cache:GetFilterByID(filterID)
-	if user.role == 'Admin' then
-		return filter
-	end
-
-	if filter.ownerID == userID then
-		return filter
-	end
-
-	for _,mod in pairs(filter.mods) do
-		if mod.id == userID then
-			return filter
-		end
-	end
-
-	return nil, 'you must be admin or mod to edit filters'
-end
 
 return api

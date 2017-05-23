@@ -26,8 +26,9 @@ local commentWriteHost, commentWritePort = GetConnectionDetails('REDIS_COMMENT_W
 
 
 function M:GetRedisConnection(host, port)
-  print('gettings redis connection: ', host)
-  print(debug.traceback())
+  --print('gettings redis connection: ', host)
+  --print(debug.traceback())
+  --print(ngx.var.uri)
   local red = redis:new()
   port = port or 6379
   red:set_timeout(2000)

@@ -5,6 +5,7 @@ local config = {}
 config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
+local sessionLastSeenDict = ngx.shared.sessionLastSeen
 
 local to_json = (require 'lapis.util').to_json
 local emailDict = ngx.shared.emailQueue
@@ -30,9 +31,45 @@ function config.Run(_,self)
 
   self.startTime = ngx.now()
   self:ProcessJob('registeraccount', 'ProcessAccount')
+  self:FlushSessionLastSeen()
 
 end
 
+function config:FlushSessionLastSeen()
+  --dump from shdict to redis
+  local ok, err = self.util:GetLock('FlushSessionLastSeen', 10)
+  if err then
+    print(err)
+  end
+  if not ok then
+    return
+  end
+
+  local sessionData = sessionLastSeenDict:get_keys()
+  local sessionID, accountID,lastSeen, account,session
+  for _,key in pairs(sessionData) do
+    sessionLastSeenDict:get(key)
+    sessionID, accountID = key:match('(%w+):(%w+)')
+    lastSeen = sessionLastSeenDict:get(key)
+    account = self.userRead:GetAccount(accountID)
+    session = account.sessions[sessionID]
+    if account and session then
+      session.lastSeen = lastSeen
+
+      ok, err = self.redisWrite:InvalidateKey('account', account.id)
+      ok, err = self.userWrite:CreateAccount(account)
+      if not ok then
+        print('error updating lastseen:',err)
+      end
+    end
+    sessionLastSeenDict:delete(key)
+
+  end
+
+
+
+
+end
 
 function config:CreateAccount(accountID, session)
   local account = {
@@ -71,7 +108,7 @@ function config:ProcessAccount(session)
   if not account then
     account = self:CreateAccount(accountID, session)
     ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
-    
+
   end
 	account.id = accountID
 
@@ -80,6 +117,7 @@ function config:ProcessAccount(session)
   end
 	account.sessions[session.id] = session
 
+  ok, err = self.redisWrite:InvalidateKey('account', account.id)
   local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		ngx.log(ngx.ERR, err)

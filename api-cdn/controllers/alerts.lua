@@ -11,7 +11,7 @@ local tinsert = table.insert
 
 function m.ViewAlerts(request)
   local alerts = userAPI:GetUserAlerts(request.session.userID)
-  userAPI:UpdateLastUserAlertCheck(request.session.userID)
+  
   request.alerts = {}
 
   for _, v in pairs(alerts) do
