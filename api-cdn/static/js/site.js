@@ -7,6 +7,7 @@ var seenPosts = [];
 var userID;
 var postIndex = 10;
 var userFilters = [];
+var list_empty;
 
 $(function() {
   userID = $('#userID').val()
@@ -313,6 +314,9 @@ function AddToSeenPosts(){
 
 function LoadNewPosts(startAt = 10){
   var uri = '/api/frontpage?startAt='+startAt+'&range=100'
+  if (list_empty) {
+    return ;
+  }
 
   $.getJSON(uri,function(data){
     console.log(data)
@@ -322,9 +326,14 @@ function LoadNewPosts(startAt = 10){
       } else {
         console.log('no data')
       }
+      var count = 0
       $.each(data.data,function(k,v) {
         newPosts.push(v)
+        count ++
       })
+      if (count < 100) {
+        list_empty = true
+      }
     }
   })
 }
