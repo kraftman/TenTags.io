@@ -6,6 +6,7 @@ local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local util = require("lapis.util")
+local assert_valid = require("lapis.validate").assert_valid
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -122,6 +123,20 @@ function m.CreatePost(request)
     createdBy = request.session.userID,
     tags = {}
   }
+
+  if request.params.upload_file then
+    assert_valid(request.params, {
+      { "upload_file", is_file = true }
+    })
+    local file = request.params.upload_file
+    local bbID, err = bb:UploadImage(file.filename, file.content)
+    if not bbID then
+      ngx.log(ngx.ERR, 'file upload failed: ', err)
+      return 'error uploading file'
+    end
+
+    info.bbID = bbID
+  end
 
   for word in request.params.selectedtags:gmatch('%S+') do
     table.insert(info.tags, word)

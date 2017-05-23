@@ -15,6 +15,7 @@
 
   <input type="text" class='form-input' name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
 
+  <input type="file" name="upload_file" /></td></tr>
   <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea" placeholder="Post Text"rows="10" ></textarea>
 
   </br>

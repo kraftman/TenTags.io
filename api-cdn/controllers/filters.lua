@@ -142,7 +142,7 @@ function m.DisplayFilter(request)
   filter.description = sanitize_html(filter.description)
   request.thisfilter = filter
   if request.session.userID then
-    request.isMod = userAPI:UserCanEditFilter(request.session.userID, filter.id)
+    request.isMod = filterAPI:UserCanEditFilter(request.session.userID, filter.id)
   end
   local sortBy = request.params.sortBy or 'fresh'
   local startAt = request.params.startAt or 0
@@ -214,16 +214,10 @@ end
 function m.UpdateFilterTags(request,filter)
   local requiredTagNames = {}
   local bannedTagNames = {}
-  print(request.params.plustagselect)
-  for word in request.params.plustagselect:gmatch('%S+') do
-    print(word)
-    table.insert(requiredTagNames, word)
-  end
-  if request.params.minustagselect then
-    for word in request.params.minustagselect:gmatch('%S+') do
-      table.insert(bannedTagNames, word)
-    end
-  end
+
+  local args = ngx.req.get_post_args()
+  requiredTagNames = args.plustagselect or requiredTagNames
+  bannedTagNames = args.minustagselect or bannedTagNames
 
   local userID = request.session.userID
 

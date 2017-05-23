@@ -5,7 +5,7 @@
 
 --]]
 local tinsert, random = table.insert, math.random
-local redisWrite = require 'api.rediswrite'
+local redisWrite = (require 'redis.db').redisWrite
 local lru = require 'api.lrucache'
 local cache = require 'api.cache'
 
@@ -13,6 +13,10 @@ local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local uuid = require 'lib.uuid'
 local locks = ngx.shared.locks
+local respond_to = (require 'lapis.application').respond_to
+local assert_valid = require("lapis.validate").assert_valid
+local bb = require 'lib.backblaze'
+
 
 local m = {}
 
@@ -292,6 +296,33 @@ local function TestGenerate(self)
 
 end
 
+local function ShowUploadForm()
+  return {render = 'uploadform'}
+end
+
+
+local function ProcessUpload(request)
+  assert_valid(request.params, {
+    { "upload_file", is_file = true }
+  })
+  local file = request.params.upload_file
+  local ok, err = bb:UploadImage(file.filename, file.content)
+  print(ok, err)
+  return ok
+
+  -- local httpc = http.new()
+  -- local res, err = httpc:request_uri("http://example.com/helloworld", {
+  --       method = "POST",
+  --       body = "a=1&b=2",
+  --       headers = {
+  --         ["Content-Type"] = "application/x-www-form-urlencoded",
+  --       }
+  --     })
+
+
+
+end
+
 function m:Register(app)
 
   app:get('/test/generaterandom', TestGenerate)
@@ -300,6 +331,10 @@ function m:Register(app)
   app:get('/test/comments',TestComments)
   app:get('/test/users',TestUserIDsSharedDict)
   app:get('/gc', ShowGC)
+  app:match('uploadform','/formupload',respond_to({
+    GET = ShowUploadForm,
+    POST = ProcessUpload
+  }) )
 end
 
 return m

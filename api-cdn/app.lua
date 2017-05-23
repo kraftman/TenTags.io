@@ -71,13 +71,14 @@ require 'api':Register(app)
 require 'admin':Register(app)
 require 'search':Register(app)
 
-if config._name == 'Development' then
+print(config._name)
+if config._name == 'development' then
   require 'auto':Register(app)
+  require 'testing.perftest':Register(app)
+
 end
 
 -- TESTING
---require 'testing.perftest':Register(app)
-
 
 
 return app

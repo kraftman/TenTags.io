@@ -389,7 +389,8 @@ function api:ConvertUserPostToPost(userID, post)
 		link = self:SanitiseUserInput(post.link, 400),
 		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
-		filters = {}
+		filters = {},
+    bbID = post.bbID
 	}
 	if newPost.link:gsub(' ','') == '' then
 		newPost.link = nil
@@ -414,8 +415,12 @@ function api:ConvertUserPostToPost(userID, post)
 		end
 	end
 
-  if (not post.link) or trim(post.link) == '' then
-		newPost.postType = 'self'
+  if (not post.link) or trim(post.link) == '' or post.bbID then
+    if post.bbID then
+		  newPost.postType = 'self-image'
+    else
+      newPost.postType = 'self'
+    end
     tinsert(newPost.tags,'meta:self')
   end
 	tinsert(newPost.tags, 'meta:all')
