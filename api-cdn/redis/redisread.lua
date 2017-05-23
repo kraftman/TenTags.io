@@ -603,7 +603,7 @@ function read:GetFilterPosts(filter, sortBy,startAt, range)
   end
 
   local red = self:GetRedisReadConnection()
-  
+
   local ok, err = red:zrevrange(key..filter.id, startAt, startAt+range)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get filter posts ',err)
@@ -637,34 +637,43 @@ function read:GetAllFreshPosts(rangeStart,rangeEnd)
   return ok ~= ngx.null and ok or {}
 end
 
-function read:GetFrontPage(userID, sortBy, userFilterIDs,startAt, range)
+function read:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
   local red = self:GetRedisReadConnection()
   local destionationKey = 'frontPage:'..userID..':'..sortBy
-
-  local ok, err = red:zcard(destionationKey)
+  print(startAt)
+  local ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
   if not ok then
 
     return nil, err
   end
 
-  if ok == ngx.null or ok < startAt+range then
+  if ok == ngx.null or #ok < range then
     local timeUnits = {'day','week', 'month'}
     for _,timeUnit in ipairs(timeUnits) do
       -- go bigger until we get enough
-      ok, err = self:GenerateUserFrontPage(userID, userFilterIDs,timeUnit, sortBy)
+      ok, err = self:GenerateUserFrontPage(userID, userFilterIDs, timeUnit, sortBy)
       if not ok then
-        print(err)
+        self:SetKeepalive(red)
         return ok, err
+      end
+
+      ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
+      if not ok then
+        self:SetKeepalive(red)
+        return ok, err
+      end
+
+      if #ok >= range then
+        self:SetKeepalive(red)
+        return ok
       end
     end
   end
 
   -- we have as many as we can get, send them back
-
-  ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
-  print(to_json(red:zrevrange(destionationKey, startAt, startAt+range, 'WITHSCORES')))
   self:SetKeepalive(red)
   return ok, err
+
 
 end
 

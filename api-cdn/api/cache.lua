@@ -668,12 +668,11 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
 end
 
 
-function cache:GetFreshUserPosts(userID, sortBy)
+function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
 
   local freshPosts = {}
-  local startAt, range = 0, 100
 
-  while #freshPosts < 100 do
+  while #freshPosts < range do
 
     local userFilterIDs = self:GetUserFilterIDs(userID)
     local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
@@ -764,7 +763,7 @@ function cache:GetUserPostVotes(userID)
 
 end
 
-function cache:GetCachedUserFrontPage(userID, sortBy)
+function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
   local ok, err, userFrontPagePosts
   if ENABLE_CACHE then
     ok, err = userFrontPagePostDict:get(userID..':'..sortBy)
@@ -778,7 +777,7 @@ function cache:GetCachedUserFrontPage(userID, sortBy)
   end
 
   if not userFrontPagePosts then
-    userFrontPagePosts,err = self:GetFreshUserPosts(userID, sortBy)
+    userFrontPagePosts,err = self:GetFreshUserPosts(userID, sortBy, startAt, range)
     if not userFrontPagePosts then
       print(err)
     end
@@ -800,37 +799,21 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetCachedUserFrontPage(userID,sortBy)
+  local freshPosts = cache:GetCachedUserFrontPage(userID,sortBy, startAt, range)
 
   local newPosts = {}
   local post
-  if sortBy ~= 'seen' and userID ~= 'default' then
-    for i = startAt, startAt+range do
-        if freshPosts[i] then
-        post = self:GetPost(freshPosts[i])
 
-        if not sessionSeenPosts[post.parentID] then
-          tinsert(newPosts, post)
-          if user.hideSeenPosts then
-            sessionSeenPosts[post.parentID] = true
-          end
-        end
+  for _,postID in ipairs(freshPosts) do
 
-        -- stop when we have a page worth
-        if #newPosts >= (range) then
-          break
-        end
-      end
-      if user.hideSeenPosts then
-        self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
-      end
+    post = self:GetPost(postID)
+    if sortBy ~= 'seen' and userID ~= 'default' and user.hideSeenPosts then
+      sessionSeenPosts[post.parentID] = true
+      self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
-  else --seen or default
-    for i = startAt, startAt+range do
-      if freshPosts[i] then
-        tinsert(newPosts,self:GetPost(freshPosts[i]))
-      end
-    end
+
+    tinsert(newPosts, post)
+
   end
 
   local userVotedPosts = self:GetUserPostVotes(userID)

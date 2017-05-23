@@ -5,7 +5,7 @@ var newPosts = [];
 var maxPosts = 10;
 var seenPosts = [];
 var userID;
-var postIndex = 0;
+var postIndex = 10;
 var userFilters = [];
 
 $(function() {
@@ -35,10 +35,10 @@ $(function() {
 
 function AddInfinite(){
   $(window).scroll(function() {
-   if($(window).scrollTop() + $(window).height() > ($(document).height()-50)) {
+   if($(window).scrollTop() + $(window).height() >= ($(document).height()-50)) {
 
-     for (var i = 1; i < 10; i++) {
-       LoadMorePosts($('.posts').children().last())
+     for (var i = 1; i <= 1; i++) {
+       LoadMorePosts($('.posts').children().first())
      }
    }
   });
@@ -311,19 +311,20 @@ function AddToSeenPosts(){
   })
 }
 
-function LoadNewPosts(startAt = 0, endAt = 100){
-  var uri = '/api/frontpage?startat=1&endat=100'
+function LoadNewPosts(startAt = 10){
+  var uri = '/api/frontpage?startAt='+startAt+'&range=100'
 
   $.getJSON(uri,function(data){
     console.log(data)
     if (data.status == 'success'){
-
-      newPosts = data.data
-
-      if (data.data == 'undefined') {
-        newPosts = []
+      if (data.data.length) {
+        console.log('got data')
+      } else {
+        console.log('no data')
       }
-      console.log(newPosts.length+ ' new posts got from server')
+      $.each(data.data,function(k,v) {
+        newPosts.push(v)
+      })
     }
   })
 }
@@ -496,33 +497,23 @@ function AddMenuHandler(){
 }
 
 function GetFreshPost(){
-  var newPost = newPosts.shift()
-
-  if (newPost == undefined) {
+  if (newPosts.length < 10 ) {
     postIndex = postIndex + 100
-    LoadNewPosts(postIndex,postIndex+100)
+    LoadNewPosts(postIndex)
+  }
+
+  var newPost = newPosts.shift()
+  if (newPost == undefined) {
+    return
+  }
+
+  while ($.inArray(newPost.id, seenPosts) != -1){
     newPost = newPosts.shift()
     if (newPost == undefined) {
       return
     }
   }
 
-  while ($.inArray(newPost.id, seenPosts) != -1){
-
-    //console.log(newPost)
-
-    newPost = newPosts.shift()
-
-    if (newPost == undefined) {
-      postIndex = postIndex + 100
-      LoadNewPosts(postIndex,postIndex+100)
-      newPost = newPosts.shift()
-      if (newPost == undefined) {
-        return
-      }
-    }
-
-  }
   return newPost
 }
 
