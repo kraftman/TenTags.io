@@ -766,7 +766,7 @@ end
 function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
   local ok, err, userFrontPagePosts
   if ENABLE_CACHE then
-    ok, err = userFrontPagePostDict:get(userID..':'..sortBy)
+    ok, err = userFrontPagePostDict:get(userID..':'..sortBy..':'..startAt..':'..range)
     if err then
       ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
     end
