@@ -471,6 +471,11 @@ function api:GetUserPosts(userID, targetUserID, startAt, range)
 end
 
 
+function api:AddImage(postID, bbID)
+  return self.redisWrite:AddImage(postID, bbID)
+
+end
+
 function api:CreatePost(userID, postInfo)
 
 	local newPost, ok, err

@@ -68,6 +68,7 @@ function bb:GetAuthToken()
   apiUrl = body.apiUrl
   authToken = body.authorizationToken
   downloadUrl = body.downloadUrl
+  print(downloadUrl)
 
   return true
 
@@ -167,5 +168,42 @@ function bb:UploadImage(fileName, fileContent)
 
 end
 
+function bb:GetImageFromBB(imageID)
+  local httpc = http.new()
+  httpc:set_timeout(10000)
+  print(downloadUrl..'?fileId='..imageID)
+  local res, err = httpc:request_uri(downloadUrl..'/b2api/v1/b2_download_file_by_id?fileId='..imageID, {
+    headers = {
+      Authorization = authToken,
+    },
+    --query = '?fileId='..imageID
+  })
+  
+  print(to_json(res.headers))
+  if not res or res.status ~= 200 then
+    print(res and res.status, err)
+    return nil, err
+  end
+  --print(to_json(res))
+  local imageInfo = {
+    ['Content-Type'] = res.headers['Content-Type'],
+    filename = res.headers['x-bz-file-name'],
+    data = res.body
+  }
+
+  return imageInfo, err
+end
+
+function bb:GetImage(imageID)
+
+  local ok, err = self:GetAuthToken()
+  if not ok then
+    ngx.log(ngx.ERR, 'err')
+    return nil, err
+  end
+
+  ok, err = self:GetImageFromBB(imageID)
+  return ok, err
+end
 
 return bb

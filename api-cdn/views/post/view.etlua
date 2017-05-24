@@ -1,4 +1,5 @@
 
+
 <script src="/static/js/mousetrap.min.js"  ></script>
 <script src="/static/js/post.js"  ></script>
 
@@ -13,6 +14,16 @@
     <% end %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+    </a>
+  </div>
+<% end %>
+<% print(post.bbID) %>
+<% if post.bbID then %>
+
+  <div class = 'panel panel-default panel-image'>
+
+    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+      <img class = 'linkImg' src="/image/<%= post.id %>" >
     </a>
   </div>
 <% end %>
@@ -45,7 +56,7 @@
     <% if post.deleted then %>
       <p> [deleted] </p>
     <% else %>
-      
+
       <%- markdown.markdown(post.text) -%>
     <% end %>
   <% end %>

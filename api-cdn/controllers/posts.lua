@@ -6,6 +6,7 @@ local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local util = require("lapis.util")
+local bb = require('lib.backblaze')
 local assert_valid = require("lapis.validate").assert_valid
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
@@ -49,6 +50,7 @@ function m:Register(app)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('getimage', '/image/:postID', self.GetImage)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
   app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
@@ -110,6 +112,13 @@ function m.ToggleSavePost(request)
 end
 
 
+local allowedExtensions = {
+  ['.gif'] = true,
+  ['.png'] = true,
+  ['.jpg'] = true,
+  ['.jpeg'] = true
+}
+
 function m.CreatePost(request)
 
   if trim(request.params.link) == '' then
@@ -124,28 +133,39 @@ function m.CreatePost(request)
     tags = {}
   }
 
-  if request.params.upload_file then
-    assert_valid(request.params, {
-      { "upload_file", is_file = true }
-    })
-    local file = request.params.upload_file
-    local bbID, err = bb:UploadImage(file.filename, file.content)
-    if not bbID then
-      ngx.log(ngx.ERR, 'file upload failed: ', err)
-      return 'error uploading file'
-    end
 
-    info.bbID = bbID
-  end
 
   for word in request.params.selectedtags:gmatch('%S+') do
     table.insert(info.tags, word)
   end
 
-  local ok, err = postAPI:CreatePost(request.session.userID, info)
+  local newPost, err = postAPI:CreatePost(request.session.userID, info)
 
-  if ok then
-    return {redirect_to = request:url_for("viewpost",{postID = ok.id})}
+  if request.params.upload_file then
+    assert_valid(request.params, {
+      { "upload_file", is_file = true }
+    })
+    local file = request.params.upload_file
+
+    local fileExtension = file.filename:match("^.+(%..+)$")
+    if not allowedExtensions[fileExtension] then
+      return 'file type not allowed'
+    end
+    local bbID, err = bb:UploadImage(newPost.id..fileExtension, file.content)
+    if not bbID then
+      ngx.log(ngx.ERR, 'file upload failed: ', err)
+      return 'error uploading file'
+    end
+
+    local ok, err = postAPI:AddImage(newPost.id, bbID)
+    if not ok then
+      ngx.log(ngx.ERR, err)
+      return nil, 'couldnt add image to post'
+    end
+  end
+
+  if newPost then
+    return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
     return 'error creating post: '.. err
@@ -368,6 +388,36 @@ function m.GetIcon(request)
 
 
 end
+
+function m.GetImage(request)
+  if not request.params.postID then
+    return 'nil'
+  end
+
+  local post,err = postAPI:GetPost(request.session.userID, request.params.postID)
+  if not post then
+    print(err)
+    return 'couldnt find post'
+  end
+
+  request.post = post
+
+  if not post.bbID then
+    print('no bb id')
+    return ''
+  end
+  local imageInfo = bb:GetImage(post.bbID)
+  --print(imageData)
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
+
+  ngx.say(request.iconData)
+
+  return ngx.exit(ngx.HTTP_OK)
+
+end
+
+
 
 function m.AddSource(request)
 
