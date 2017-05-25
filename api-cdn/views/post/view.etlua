@@ -17,8 +17,8 @@
     </a>
   </div>
 <% end %>
-<% print(post.bbID) %>
-<% if post.bbID then %>
+
+<!-- <% if post.bbID then %>
 
   <div class = 'panel panel-default panel-image'>
 
@@ -26,7 +26,7 @@
       <img class = 'linkImg' src="/image/<%= post.id %>" >
     </a>
   </div>
-<% end %>
+<% end %>-->
 
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>" />

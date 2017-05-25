@@ -8,6 +8,8 @@ local http = require("socket.http")
 local ltn12 = require("ltn12")
 local giflib = require("giflib")
 local cjson = require('cjson')
+local bb = require 'lib.backblaze'
+local uuid = require 'lib.uuid'
 
 --[[
 local redisURL = 'localhost'
@@ -76,31 +78,10 @@ function loader:GetImageLinks(res)
   return imageLinks
 end
 
-function loader:SendImage(image, postID)
-  print('sending image')
-  local resp = {}
-  local body,code,headers,status = http.request{
-  url = "http://"..imgHostURl..':'..imgHostPort.."/upload",
-  method = "POST",
-  headers = {
-
-    ["Transfer-Encoding"] = 'chunked',
-    ['content-disposition'] = 'attachment; filename="'..postID..'.png"'
-  },
-  source = ltn12.source.string(image:get_blob()),
-  sink = ltn12.sink.table(resp)
-  }
-  if code ~= 200 then
-    print(body, code, status)
-    return nil, 'unable to send image to backend'
-  end
-
-  if headers then
-      for k,v in pairs(headers) do
-       print(k,v)
-     end
-  end
-  return true
+function loader:SendImage(image, imageName)
+  local id, err = bb:UploadImage(image, imageName..'.png')
+  print(id, err)
+  return id, err
 end
 
 function loader:AddImgURLToPost(postID, imgURL)
@@ -127,19 +108,28 @@ function loader:ProcessImgur(postURL, postID)
   image:set_format('png')
   --finalImage.image:write('/lua/out/p2-'..postID..'.png')
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
-
-  local ok, err = self:SendImage(image,postID..'b')
-  if not ok then
+  local newID = uuid.generate_random()
+  local id, err = self:SendImage(image,newID..'b')
+  if not id then
     print('error sending image: ',err)
     return nil, 'couldnt send imgur full image'
   end
-  image:resize_and_crop(200,200)
-  ok , err = self:SendImage(image,postID)
+  local ok
+  ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
+    return ok, err
+  end
+  image:resize_and_crop(200,200)
+  id , err = self:SendImage(image,newID)
+  if not id then
     print('error sending image: ',err)
     return nil, 'couldnt send imgur thumb image'
   end
 
+  ok, err = self:AddImage(postID, 'bigIcon', id)
+  if not ok then
+    return ok, err
+  end
   os.remove('out/'..postID..'.jpg')
 
 
@@ -162,6 +152,23 @@ function loader:ProcessGfycat(postURL)
 
 end
 
+function loader:IsImage(headers)
+  local contentTypes = {}
+  contentTypes['image/gif'] = true
+  contentTypes['image/jpeg'] = true
+  contentTypes['image/tiff'] = true
+  contentTypes['image/png'] = true
+
+  local resContentType = headers['content-type']
+  print(resContentType)
+
+  if contentTypes[resContentType] then
+    return true
+  end
+
+  return false
+end
+
 function loader:NormalPage(postURL, postID)
 
     local res, c, h = http.request ( postURL )
@@ -172,6 +179,9 @@ function loader:NormalPage(postURL, postID)
 
     local imageLinks
     if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+      imageLinks = {{link = postURL}}
+    elseif self:IsImage(h) then
+      print('its an content-type image')
       imageLinks = {{link = postURL}}
     else
       imageLinks = self:GetImageLinks(res)
@@ -196,7 +206,7 @@ function loader:NormalPage(postURL, postID)
 
   	local finalImage
 
-  	for _,v in pairs(imageLinks) do
+  	for _,v in ipairs(imageLinks) do
   		if v.image then
   			finalImage = v
   			break
@@ -232,8 +242,12 @@ function loader:NormalPage(postURL, postID)
   return finalImage
 end
 
+function loader:AddImage(postID, key, bbID)
+  red:hset('post:'..postID, key, bbID)
+end
+
 function loader:GetPostIcon(postURL, postID)
-  print(postURL, postID)
+
   local finalImage
   if postURL:find('imgur.com') then
     if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
@@ -251,22 +265,31 @@ function loader:GetPostIcon(postURL, postID)
 	end
 
   finalImage.image:set_format('png')
+  local newID = uuid.generate_random()
 
-  local ok ,err = self:SendImage(finalImage.image, postID..'b')
-  if not ok then
+  local id,err = self:SendImage(finalImage.image, newID..'b')
+  if not id then
     return nil, err
   end
+  self:AddImage(postID, 'bigIcon', id)
 
   finalImage.image:resize_and_crop(100,100)
+  local ok
 
-
-  self:AddImgURLToPost(postID, finalImage.link)
-
-  ok , err = self:SendImage(finalImage.image, postID)
+  ok, err = self:AddImgURLToPost(postID, finalImage.link)
   if not ok then
+    return ok, err
+  end
+
+  id , err = self:SendImage(finalImage.image, newID)
+  if not id then
     return nil, err
   end
 
+  ok, err = self:AddImage(postID, 'smallIcon', id)
+  if not ok then
+    return ok, err
+  end
   return true
 end
 
@@ -345,5 +368,11 @@ loader.queueName = 'queue:GeneratePostIcon'
 
 while true do
   socket.sleep(1)
-  loader:GetNextPost()
+
+  local status, err = pcall(function() loader:GetNextPost() end)
+  if not status then
+    print(err)
+  end
+
+
 end

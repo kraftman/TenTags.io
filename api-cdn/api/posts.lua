@@ -418,13 +418,19 @@ function api:ConvertUserPostToPost(userID, post)
   if (not post.link) or trim(post.link) == '' or post.bbID then
     if post.bbID then
 		  newPost.postType = 'self-image'
+      tinsert(newPost.tags,'meta:self-image')
     else
       newPost.postType = 'self'
+      tinsert(newPost.tags,'meta:self')
     end
-    tinsert(newPost.tags,'meta:self')
   end
 	tinsert(newPost.tags, 'meta:all')
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
+
+  if newPost.bbID then
+    print(ngx.var.hostname)
+    newPost.link = ngx.var.scheme..'://'..ngx.var.server_addr..'/image/'..newPost.id
+  end
 
   if newPost.link then
 
@@ -433,8 +439,6 @@ function api:ConvertUserPostToPost(userID, post)
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
-
-
 
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)

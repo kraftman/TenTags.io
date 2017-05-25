@@ -1,5 +1,6 @@
 
 
+
 local commentAPI = require 'api.comments'
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
@@ -8,6 +9,7 @@ local tagAPI = require 'api.tags'
 local util = require("lapis.util")
 local bb = require('lib.backblaze')
 local assert_valid = require("lapis.validate").assert_valid
+local uuid = require 'lib.uuid'
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -133,36 +135,33 @@ function m.CreatePost(request)
     tags = {}
   }
 
-
-
   for word in request.params.selectedtags:gmatch('%S+') do
     table.insert(info.tags, word)
   end
-
-  local newPost, err = postAPI:CreatePost(request.session.userID, info)
 
   if request.params.upload_file then
     assert_valid(request.params, {
       { "upload_file", is_file = true }
     })
     local file = request.params.upload_file
+    local fileID = uuid.generate_random()
 
     local fileExtension = file.filename:match("^.+(%..+)$")
     if not allowedExtensions[fileExtension] then
       return 'file type not allowed'
     end
-    local bbID, err = bb:UploadImage(newPost.id..fileExtension, file.content)
+    local bbID, err = bb:UploadImage(fileID..fileExtension, file.content)
     if not bbID then
       ngx.log(ngx.ERR, 'file upload failed: ', err)
       return 'error uploading file'
     end
+    info.bbID = bbID
 
-    local ok, err = postAPI:AddImage(newPost.id, bbID)
-    if not ok then
-      ngx.log(ngx.ERR, err)
-      return nil, 'couldnt add image to post'
-    end
   end
+
+  local newPost, err = postAPI:CreatePost(request.session.userID, info)
+
+
 
   if newPost then
     return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
@@ -393,8 +392,9 @@ function m.GetImage(request)
   if not request.params.postID then
     return 'nil'
   end
+  local userID = request.session.userID or ngx.ctx.userID
 
-  local post,err = postAPI:GetPost(request.session.userID, request.params.postID)
+  local post,err = postAPI:GetPost(userID, request.params.postID)
   if not post then
     print(err)
     return 'couldnt find post'
