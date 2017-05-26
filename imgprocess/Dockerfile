@@ -25,10 +25,10 @@ RUN luarocks install --server=http://luarocks.org/dev giflib && \
     luarocks install luasec && \
     luarocks install magick && \
     luarocks install lua-cjson && \
-    luarocks install sha1 
+    luarocks install sha1
 
 
-RUN apt-get update && apt-get build-dep -y giflib-dbg
+#RUN apt-get update && apt-get build-dep -y giflib-dbg
 
 ENV GIFLIB_VERSION 5.1.4
 WORKDIR /tmp
