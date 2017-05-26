@@ -11,6 +11,8 @@ services:
     build: imgprocess/.
     volumes:
      - ./imgprocess/lua:/lua
+    env_file:
+     - filtta.env
 
   imghost:
     image: tenstartups/openresty
