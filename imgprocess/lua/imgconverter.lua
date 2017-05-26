@@ -17,11 +17,13 @@ local redisPort = '16379'
 local imgHostURl = 'localhost'
 local imgHostPort = '81'
 --]]
-
-local redisURL = 'redis-general'
-local redisPort = '6379'
-local imgHostURl = 'imghost'
-local imgHostPort = '80'
+local redisURL, redisPort
+if os.getenv('REDIS_GENERAL_WRITE') then
+  print( os.getenv('REDIS_GENERAL_WRITE'))
+  redisURL, redisPort = os.getenv('REDIS_GENERAL_WRITE'):match('(.+):(%d+)')
+else
+  redisURL, redisPort = 'redis-general', '6379'
+end
 
 local red = redis.connect(redisURL, redisPort)
 

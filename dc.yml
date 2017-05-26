@@ -6,6 +6,11 @@ services:
       - ./api-cdn:/opt/openresty/nginx/conf
     env_file:
       - filtta.env
+  imgprocess:
+    privileged: true
+    build: imgprocess/.
+    volumes:
+     - ./imgprocess/lua:/lua
 
   imghost:
     image: tenstartups/openresty

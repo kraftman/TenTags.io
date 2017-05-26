@@ -45,8 +45,12 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
     pip install imgurpython
 
+RUN apt-get update && apt-get install -y ca-certificates stunnel4
+
 
 RUN mkdir -p /var/www && mkdir /lua
 WORKDIR /lua
 VOLUME /var/www
-CMD [ "luajit", "imgconverter.lua" ]
+#CMD [ "luajit", "imgconverter.lua" ]
+
+ENTRYPOINT ["/lua/start.sh"]

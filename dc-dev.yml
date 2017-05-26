@@ -25,6 +25,8 @@ services:
       - imghost
     env_file:
       - filtta.env
+    entrypoint: ""
+    command: luajit imgconverter.lua
   imghost:
     expose:
       - "80"
