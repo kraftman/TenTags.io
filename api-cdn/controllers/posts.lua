@@ -370,22 +370,28 @@ function m.GetIcon(request)
   if not request.params.postID then
     return 'nil'
   end
+  local userID = request.session.userID or ngx.ctx.userID
 
-  local post = postAPI:GetPost(request.params.postID)
-  if not post.icon then
-    return ''
+  local post,err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    print(err)
+    return 'couldnt find post'
   end
+
   request.post = post
-  if not type(post.icon) == 'string' then
+
+  if not post.bigIcon then
+    print('no bb id')
     return ''
   end
-  print(post.icon)
+  local imageInfo = bb:GetImage(post.bigIcon)
+  --print(imageData)
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
 
-  request.iconData = ngx.decode_base64(post.icon)
+  ngx.say(request.iconData)
 
-  return {layout = 'layout.blanklayout',content_type = 'image'}
-
-
+  return ngx.exit(ngx.HTTP_OK)
 end
 
 function m.GetImage(request)

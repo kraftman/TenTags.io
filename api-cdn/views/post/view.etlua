@@ -6,14 +6,14 @@
 <% render("views.st.postelement",{post = post}) %>
 
 
-<% if post.imgURL then %>
+<% if post.bigIcon then %>
 
   <div class = 'panel panel-default panel-image'>
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-      <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+      <img class = 'linkImg' src="/icon/<%= post.id %>" >
     </a>
   </div>
 <% end %>

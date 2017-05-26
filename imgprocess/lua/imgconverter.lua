@@ -86,6 +86,7 @@ end
 
 function loader:AddImgURLToPost(postID, imgURL)
   red:hset('post:'..postID,'imgURL', imgURL)
+  return true
 end
 
 function loader:ProcessImgur(postURL, postID)
@@ -117,10 +118,11 @@ function loader:ProcessImgur(postURL, postID)
   local ok
   ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
+    print('error sending image: ',err)
     return ok, err
   end
   image:resize_and_crop(200,200)
-  id , err = self:SendImage(image,newID)
+  id, err = self:SendImage(image,newID)
   if not id then
     print('error sending image: ',err)
     return nil, 'couldnt send imgur thumb image'
@@ -128,6 +130,7 @@ function loader:ProcessImgur(postURL, postID)
 
   ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
+    print('error sending image: ',err)
     return ok, err
   end
   os.remove('out/'..postID..'.jpg')
@@ -175,7 +178,6 @@ function loader:NormalPage(postURL, postID)
     if c ~= 200 then
       print(c, ' ', res)
     end
-
 
     local imageLinks
     if postURL:find('.gif') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
@@ -243,7 +245,8 @@ function loader:NormalPage(postURL, postID)
 end
 
 function loader:AddImage(postID, key, bbID)
-  red:hset('post:'..postID, key, bbID)
+  local ok, err = red:hset('post:'..postID, key, bbID)
+  return true
 end
 
 function loader:GetPostIcon(postURL, postID)
@@ -269,25 +272,32 @@ function loader:GetPostIcon(postURL, postID)
 
   local id,err = self:SendImage(finalImage.image, newID..'b')
   if not id then
+    print('couldnt send image: ',err)
     return nil, err
   end
-  self:AddImage(postID, 'bigIcon', id)
-
+  local ok, err = self:AddImage(postID, 'bigIcon', id)
+  if not ok then
+    print('couldnt add bigicon: ', err)
+    return ok, err
+  end
   finalImage.image:resize_and_crop(100,100)
-  local ok
+
 
   ok, err = self:AddImgURLToPost(postID, finalImage.link)
   if not ok then
+    print('couldnt add to post:', err)
     return ok, err
   end
 
   id , err = self:SendImage(finalImage.image, newID)
   if not id then
+    print('couldnt send small image:', err)
     return nil, err
   end
 
   ok, err = self:AddImage(postID, 'smallIcon', id)
   if not ok then
+    print('couldnt add small image to post: ', err)
     return ok, err
   end
   return true
