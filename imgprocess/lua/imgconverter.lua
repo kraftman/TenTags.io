@@ -353,7 +353,7 @@ end
 
 function loader:GetNextPost()
   local updates, ok, err
-
+  print('checking icons ', redisURL, redisPort)
   updates, err = self:GetUpdates()
   if not updates then
     print('couldnt load updates: ', err)
@@ -382,6 +382,7 @@ while true do
   socket.sleep(1)
 
   local status, err = pcall(function() loader:GetNextPost() end)
+
   if not status then
     print(err)
   end
