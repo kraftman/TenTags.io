@@ -45,6 +45,9 @@ function loader:LoadPost(postID)
     print('no post link found!')
     return true
   end
+  if post.bbID then
+    return post.bbID
+  end
   return post.link
 end
 
@@ -260,6 +263,12 @@ function loader:AddImage(postID, key, bbID)
   return true
 end
 
+function loader:GetBBImage(bbID, postID)
+  local imageInfo =  bb:GetImage(bbID)
+  imageInfo.image =  assert(magick.load_image_from_blob(imageInfo.data))
+  return imageInfo
+end
+
 function loader:GetPostIcon(postURL, postID)
 
   local finalImage
@@ -270,6 +279,8 @@ function loader:GetPostIcon(postURL, postID)
     return nil, 'imgur gallery'
   elseif postURL:find('gfycat.com/%w+') then
     finalImage = self:ProcessGfycat(postURL)
+  elseif not postURL:find('http') then
+    finalImage  = self:GetBBImage(postURL, postID)
   else
     finalImage = self:NormalPage(postURL, postID)
   end
@@ -294,11 +305,11 @@ function loader:GetPostIcon(postURL, postID)
   finalImage.image:resize_and_crop(100,100)
 
 
-  ok, err = self:AddImgURLToPost(postID, finalImage.link)
-  if not ok then
-    print('couldnt add to post:', err)
-    return ok, err
-  end
+  -- ok, err = self:AddImgURLToPost(postID, finalImage.link)
+  -- if not ok then
+  --   print('couldnt add to post:', err)
+  --   return ok, err
+  -- end
 
   id , err = self:SendImage(finalImage.image, newID)
   if not id then
@@ -362,7 +373,7 @@ end
 
 function loader:GetNextPost()
   local updates, ok, err
-  print('checking icons ', redisURL, redisPort)
+  --print('checking icons ', redisURL, redisPort)
   updates, err = self:GetUpdates()
   if not updates then
     print('couldnt load updates: ', err)
@@ -390,9 +401,11 @@ loader.queueName = 'queue:GeneratePostIcon'
 while true do
   socket.sleep(1)
 
-   red, err = redis.connect(redisURL, redisPort)
   if not red then
-    print(err)
+     red, err = redis.connect(redisURL, redisPort)
+    if not red then
+      print(err)
+    end
   end
 
 
