@@ -428,8 +428,8 @@ function api:ConvertUserPostToPost(userID, post)
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
 
   if newPost.bbID then
-    print(ngx.var.hostname)
-    newPost.link = ngx.var.scheme..'://'..ngx.var.server_addr..'/image/'..newPost.id
+    print(ngx.var.host)
+    newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
   end
 
   if newPost.link then
