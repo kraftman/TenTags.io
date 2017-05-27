@@ -25,7 +25,10 @@ else
   redisURL, redisPort = 'redis-general', '6379'
 end
 
-local red = redis.connect(redisURL, redisPort)
+local red, err = redis.connect(redisURL, redisPort)
+if not red then
+  print(err)
+end
 
 local loader = {}
 
@@ -380,6 +383,12 @@ loader.queueName = 'queue:GeneratePostIcon'
 
 while true do
   socket.sleep(1)
+
+   red, err = redis.connect(redisURL, redisPort)
+  if not red then
+    print(err)
+  end
+
 
   local status, err = pcall(function() loader:GetNextPost() end)
 

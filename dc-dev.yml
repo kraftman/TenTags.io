@@ -14,17 +14,8 @@ services:
       - redis-user
 
   imgprocess:
-    tty: true
-    privileged: true
-    build: imgprocess/.
-    volumes:
-     - ./imgprocess/lua:/lua
-     - ./www:/var/www
     links:
       - redis-general
-      - imghost
-    env_file:
-      - filtta.env
     entrypoint: ""
     command: luajit imgconverter.lua
   imghost:
