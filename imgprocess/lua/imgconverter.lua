@@ -124,6 +124,8 @@ function loader:ProcessImgur(postURL, postID)
     return nil, 'couldnt send imgur full image'
   end
   local ok
+
+  image:resize_and_crop(1000,1000)
   ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
     print('error sending image: ',err)
@@ -297,6 +299,8 @@ function loader:GetPostIcon(postURL, postID)
     print('couldnt send image: ',err)
     return nil, err
   end
+
+  image:resize_and_crop(1000,1000)
   local ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
     print('couldnt add bigicon: ', err)

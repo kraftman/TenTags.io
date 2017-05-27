@@ -52,6 +52,7 @@ function m:Register(app)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('geticon', '/icon/:postID/small', self.GetIconSmall)
   app:get('getimage', '/image/:postID', self.GetImage)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
@@ -385,6 +386,34 @@ function m.GetIcon(request)
       return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.bigIcon)
+  --print(imageData)
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
+
+  ngx.say(request.iconData)
+
+  return ngx.exit(ngx.HTTP_OK)
+end
+
+function m.GetIcon(request)
+  if not request.params.postID then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local userID = request.session.userID or ngx.ctx.userID
+
+  local post,err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    print(err)
+      return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  request.post = post
+
+  if not post.smallIcon then
+    print('no bb id')
+      return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local imageInfo = bb:GetImage(post.smallIcon)
   --print(imageData)
   request.iconData = imageInfo.data
   ngx.header['Content-Type'] = imageInfo['Content-Type']

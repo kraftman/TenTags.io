@@ -18,9 +18,6 @@ services:
       - redis-general
     entrypoint: ""
     command: luajit imgconverter.lua
-  imghost:
-    expose:
-      - "80"
   redis-general:
     expose:
       - '6379'

@@ -6,7 +6,7 @@
 <% render("views.st.postelement",{post = post}) %>
 
 
-<% if post.bigIcon then %>
+<% if post.link then %>
 
   <div class = 'panel panel-default panel-image'>
     <% if account and account.role == 'Admin' then %>

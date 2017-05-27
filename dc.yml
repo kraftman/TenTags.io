@@ -14,13 +14,6 @@ services:
      - ./imgprocess/lua:/lua
     env_file:
      - filtta.env
-
-  imghost:
-    image: tenstartups/openresty
-    volumes:
-     - ./imghost:/imghost
-     - ./www:/var/www
-    entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
   backup:
     build: backup/.
     volumes:
