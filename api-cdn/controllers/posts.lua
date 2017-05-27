@@ -368,21 +368,21 @@ end
 
 function m.GetIcon(request)
   if not request.params.postID then
-    return 'nil'
+    return { redirect_to = '/static/icons/notfound.png' }
   end
   local userID = request.session.userID or ngx.ctx.userID
 
   local post,err = postAPI:GetPost(userID, request.params.postID)
   if not post then
     print(err)
-    return 'couldnt find post'
+      return { redirect_to = '/static/icons/notfound.png' }
   end
 
   request.post = post
 
   if not post.bigIcon then
     print('no bb id')
-    return ''
+      return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.bigIcon)
   --print(imageData)
