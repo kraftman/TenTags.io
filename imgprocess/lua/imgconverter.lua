@@ -180,6 +180,12 @@ end
 function loader:NormalPage(postURL, postID)
 
     local res, c, h = http.request ( postURL )
+    print(postURL)
+    if not res then
+      print(res, err)
+      return res, err
+
+    end
     if c ~= 200 then
       print(c, ' ', res)
     end
