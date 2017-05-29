@@ -83,6 +83,7 @@ app:get('/test', function(request)
   test = test..(ngx.var.geoip_org or 'no org')
   test = test..(ngx.var.geoip_city or 'no city')
   test = test..(ngx.var.geoip_region_name or 'no region')
+  test = test..ngx.var.remote_addr
 
 
   return test
