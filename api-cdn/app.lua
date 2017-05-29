@@ -79,10 +79,10 @@ end
 -- TESTING
 app:get('/test', function(request)
   local test = 'test: '
-  test = test..(ngx.var.geoip_region or '')
-  test = test..(ngx.var.geoip_org or '')
-  test = test..(ngx.var.geoip_city or '')
-  test = test..(ngx.var.geoip_region_name or '')
+  test = test..(ngx.var.geoip_region or 'no region')
+  test = test..(ngx.var.geoip_org or 'no org')
+  test = test..(ngx.var.geoip_city or 'no city')
+  test = test..(ngx.var.geoip_region_name or 'no region')
 
 
   return test
