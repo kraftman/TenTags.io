@@ -26,9 +26,6 @@ services:
   redis-comment:
     expose:
       - '6379'
-  elasticsearch1:
-    ports:
-      - 9200:9200
   redis-general:
     build: redis
     volumes:

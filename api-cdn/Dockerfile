@@ -1,4 +1,40 @@
-FROM erikcw/lapis:latest
+FROM ubuntu:16.04
+MAINTAINER Erik Wickstrom <erik@erikwickstrom.com>
+
+# install build dependencies
+RUN apt-get -qq update && apt-get -qqy install libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl make curl git-core luarocks libgeoip1 libgeoip-dev
+
+# build/install OpenResty
+ENV SRC_DIR /opt
+ENV OPENRESTY_VERSION 1.11.2.3
+ENV OPENRESTY_PREFIX /opt/openresty
+ENV LAPIS_VERSION 1.5.1
+
+
+RUN mkdir /geoip && cd /geoip && \
+  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz && \
+  gunzip GeoIP.dat.gz && \
+  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz && \
+  gunzip GeoLiteCity.dat.gz
+
+RUN cd $SRC_DIR && curl -LOs https://openresty.org/download/openresty-$OPENRESTY_VERSION.tar.gz \
+ && tar xzf openresty-$OPENRESTY_VERSION.tar.gz && cd openresty-$OPENRESTY_VERSION \
+ && ./configure --prefix=$OPENRESTY_PREFIX \
+ --with-luajit \
+ --with-http_realip_module \
+ --with-http_stub_status_module \
+ --with-http_geoip_module \
+ && make && make install && rm -rf openresty-$OPENRESTY_VERSION*
+
+RUN luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis $LAPIS_VERSION && \
+  luarocks install moonscript && \
+  luarocks install lapis-console
+
+WORKDIR $OPENRESTY_PREFIX/nginx/conf
+
+ENV LAPIS_OPENRESTY $OPENRESTY_PREFIX/nginx/sbin/nginx
+
+#my stuff
 
 RUN apt-get update && apt-get install -y autossh uuid-dev #dnsmasq
 
