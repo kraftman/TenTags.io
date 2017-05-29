@@ -85,7 +85,7 @@ app:get('/test', function(request)
   test = test..(ngx.var.geoip_region_name or '')
 
 
-  return 'test'..(ngx.var.geoip_region or '')
+  return test
 
 end)
 
