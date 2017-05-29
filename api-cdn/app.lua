@@ -77,7 +77,17 @@ if config._name == 'development' then
 end
 
 -- TESTING
-app:get('/test', function(request) return 'test'..(ngx.var.geoip_city or '') end)
+app:get('/test', function(request)
+  local test = 'test: '
+  test = test..(ngx.var.geoip_region or '')
+  test = test..(ngx.var.geoip_org or '')
+  test = test..(ngx.var.geoip_city or '')
+  test = test..(ngx.var.geoip_region_name or '')
+
+
+  return 'test'..(ngx.var.geoip_region or '')
+
+end)
 
 
 return app
