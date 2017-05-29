@@ -53,6 +53,8 @@ RUN git clone https://github.com/duhoobo/lua-resty-smtp.git && \
 cd lua-resty-smtp && \
 make install
 
+COPY GeoIP /geoip2
+
 RUN apt-get update && apt-get install -y ca-certificates stunnel4
 
 RUN luarocks install https://raw.githubusercontent.com/toritori0318/lua-resty-woothee/master/lua-resty-woothee-dev-1.rockspec && \
