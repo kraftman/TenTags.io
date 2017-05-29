@@ -86,7 +86,9 @@ app:get('/test', function(request)
   test = test..ngx.var.remote_addr
 
   for k,v in pairs(request.req.headers) do
-    print(k, ' ',v)
+    if type(v) == 'string' then
+      print(v)
+    end
   end
   print('this')
 
