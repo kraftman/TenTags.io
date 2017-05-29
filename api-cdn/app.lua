@@ -87,7 +87,7 @@ app:get('/test', function(request)
 
   for k,v in pairs(request.req.headers) do
     if type(v) == 'string' then
-      print(v)
+      print(k, ' ', v)
     end
   end
   print('this')
