@@ -138,7 +138,7 @@ function loader:ProcessImgur(postURL, postID)
     return nil, 'couldnt send imgur thumb image'
   end
 
-  ok, err = self:AddImage(postID, 'bigIcon', id)
+  ok, err = self:AddImage(postID, 'smallIcon', id)
   if not ok then
     print('error sending image: ',err)
     return ok, err
@@ -261,6 +261,7 @@ function loader:NormalPage(postURL, postID)
 end
 
 function loader:AddImage(postID, key, bbID)
+  print('adding to post: post:'..postID, key, bbID )
   local ok, err = red:hset('post:'..postID, key, bbID)
   return true
 end
@@ -300,7 +301,7 @@ function loader:GetPostIcon(postURL, postID)
     return nil, err
   end
 
-  image:resize_and_crop(1000,1000)
+  finalImage.image:resize_and_crop(1000,1000)
   local ok, err = self:AddImage(postID, 'bigIcon', id)
   if not ok then
     print('couldnt add bigicon: ', err)
@@ -414,7 +415,7 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost() end)
-
+  print(status, err)
   if not status then
     print(err)
   end

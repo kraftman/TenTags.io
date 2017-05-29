@@ -8,7 +8,6 @@ services:
     entrypoint: ""
     command:  bash -c "lapis server"
     links:
-      - imghost
       - redis-general
       - redis-comment
       - redis-user

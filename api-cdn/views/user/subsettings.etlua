@@ -17,20 +17,20 @@
       </br>
     <textarea  class='form-input textbox-large' name='userbio' id='userbio' id="txtArea" rows="10" ><%= userBio or '' %></textarea>
 
-
+      </br>
       <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
 
-
+      </br>
       <label><input type="checkbox" name='hideSeenPosts' <%= hideSeenPosts -%>>Hide Seen Posts</label>
-
+      </br>
       <label><input type="checkbox" name='hideVotedPosts' <%= hideVotedPosts -%>>Hide Voted Posts</label>
-
+      </br>
       <label><input type="checkbox" name='hideClickedPosts' <%= hideClickedPosts -%>>Hide Clicked Posts</label>
-
+      </br>
       <label><input type="checkbox" name='showNSFW' <%= showNSFW -%>>Show NSFW</label>
-
+      </br>
       <label><input type="checkbox" name='showNSFL' <%= showNSFL -%>>Show NSFL</label>
-
+      </br>
 
     <button class='btn btn-default' type="submit" value="Submit">Save</button>
 

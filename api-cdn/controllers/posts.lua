@@ -140,11 +140,12 @@ function m.CreatePost(request)
     table.insert(info.tags, word)
   end
 
-  if request.params.upload_file then
-    assert_valid(request.params, {
-      { "upload_file", is_file = true }
-    })
-    local file = request.params.upload_file
+
+  local file = request.params.upload_file
+
+  if request.params.upload_file and not file.content == '' then
+
+
     local fileID = uuid.generate_random()
 
     local fileExtension = file.filename:match("^.+(%..+)$")
@@ -159,6 +160,10 @@ function m.CreatePost(request)
     info.bbID = bbID
 
   end
+
+  -- if info.bbID then
+  --   info.link = nil
+  -- end
 
   local newPost, err = postAPI:CreatePost(request.session.userID, info)
 
@@ -369,6 +374,7 @@ end
 
 function m.GetIcon(request)
   if not request.params.postID then
+    print('no post id for image')
     return { redirect_to = '/static/icons/notfound.png' }
   end
   local userID = request.session.userID or ngx.ctx.userID
@@ -376,6 +382,7 @@ function m.GetIcon(request)
   local post,err = postAPI:GetPost(userID, request.params.postID)
   if not post then
     print(err)
+    print('cant load post')
       return { redirect_to = '/static/icons/notfound.png' }
   end
 

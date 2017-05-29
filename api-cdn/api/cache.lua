@@ -167,6 +167,8 @@ function cache:PurgeKey(keyInfo)
     end
   elseif keyInfo.keyType == 'postvote' then
     voteDict:delete('postVotes:'..keyInfo.id)
+  elseif keyInfo.keyType == 'userfilter' then
+    userFilterIDs:delete(keyInfo.id)
   end
 end
 
@@ -671,9 +673,10 @@ end
 function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
 
   local freshPosts = {}
+  local count = 0
 
   while #freshPosts < range do
-
+    count = count + 1
     local userFilterIDs = self:GetUserFilterIDs(userID)
     local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
     if err then
@@ -684,11 +687,15 @@ function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
     for _,v in pairs(unSeenPosts) do
       tinsert(freshPosts, v)
     end
-
+    print(range, #userPostIDs)
     if #userPostIDs < range then
       -- we've got as many as we'll get
       break
     end
+    if count > 10 then
+      break
+    end
+    startAt = startAt + range
   end
 
   return freshPosts

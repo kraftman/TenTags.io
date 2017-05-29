@@ -14,12 +14,12 @@ services:
      - ./imgprocess/lua:/lua
     env_file:
      - filtta.env
-  backup:
-    build: backup/.
-    volumes:
-     - ./backup:/usr/src/app
-     - ./redis:/data
-    command: ['nodemon', 'server.js']
+  #backup:
+  #  build: backup/.
+  #  volumes:
+  #   - ./backup:/usr/src/app
+  #   - ./redis:/data
+  #  command: ['nodemon', 'server.js']
   # phantom:
   #   image: cmfatih/phantomjs
   #   volumes:
