@@ -188,7 +188,8 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
 	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
   ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
-	cache:PurgeKey({keyType = 'userfilter', id = userToSubID})
+
+	self:InvalidateKey('userfilter', userToSubID)
 	return ok, err
 end
 

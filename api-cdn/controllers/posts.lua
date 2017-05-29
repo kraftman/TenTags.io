@@ -417,7 +417,7 @@ function m.GetIcon(request)
   request.post = post
 
   if not post.smallIcon then
-    print('no bb id')
+    print('no smallIcon')
       return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.smallIcon)

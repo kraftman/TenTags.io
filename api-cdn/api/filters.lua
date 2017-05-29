@@ -530,18 +530,25 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 
 	--generate actual tags
 	local newrequiredTagNames, newbannedTagNames = {}, {}
-	for k,v in pairs(requiredTagNames) do
-		if v:gsub(' ', '') ~= '' then
-			newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+	if type(requiredTagNames) == 'table' then
+		for k,v in pairs(requiredTagNames) do
+			if v:gsub(' ', '') ~= '' then
+				newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
 		end
-	end
-	for k,v in pairs(bannedTagNames) do
-		if v ~= '' then
-			newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
-		end
+	else
+		table.insert(newrequiredTagNames, tagAPI:CreateTag(userID, requiredTagNames).name)
 	end
 
-
+	if type(bannedTagNames) == 'table' then
+		for k,v in pairs(bannedTagNames) do
+			if v ~= '' then
+				newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
+		end
+	else
+		table.insert(newbannedTagNames, tagAPI:CreateTag(userID, bannedTagNames).name)
+	end
 
 	ok, err = self.redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
 	if not ok then
