@@ -58,6 +58,7 @@ function api:SanitiseSession(session)
 		email = session.email:lower():gsub(' ', ''),
 		createdAt = ngx.time(),
 		activated = false,
+    city = session.city,
 		validUntil = ngx.time()+5184000,
 		activationTime = ngx.time() + 1800,
 	}
