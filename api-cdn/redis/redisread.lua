@@ -691,6 +691,9 @@ function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
   for _,filterID in pairs(userFilterIDs) do
     table.insert(keyedFilterIDs, sortToKey[sortBy]..range..':'..filterID)
   end
+  if #keyedFilterIDs == 0 then
+    return {}
+  end
 
   table.insert(keyedFilterIDs, 'AGGREGATE')
   table.insert(keyedFilterIDs, 'MAX')
