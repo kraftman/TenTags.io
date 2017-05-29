@@ -211,7 +211,8 @@ function m.GetSession(request)
     email = request.params.email,
     category = details.category,
     os = details.os,
-    browser = details.name..' '..details.version
+    browser = details.name..' '..details.version,
+    city = ngx.var.geoip_city
   }
 
   return session
