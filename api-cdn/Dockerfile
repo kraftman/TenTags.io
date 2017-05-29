@@ -2,7 +2,11 @@ FROM ubuntu:16.04
 MAINTAINER Erik Wickstrom <erik@erikwickstrom.com>
 
 # install build dependencies
-RUN apt-get -qq update && apt-get -qqy install libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl make curl git-core luarocks libgeoip1 libgeoip-dev
+RUN apt-get -qq update && apt-get -qqy install libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl make curl git-core luarocks software-properties-common python-software-properties
+
+RUN add-apt-repository ppa:maxmind/ppa && \
+  apt-get update && \
+  apt-get -y install libgeoip1 libgeoip-dev geoip-bin
 
 # build/install OpenResty
 ENV SRC_DIR /opt
@@ -24,7 +28,7 @@ RUN cd $SRC_DIR && curl -LOs https://openresty.org/download/openresty-$OPENRESTY
  --with-http_realip_module \
  --with-http_stub_status_module \
  --with-http_geoip_module \
- && make && make install && rm -rf openresty-$OPENRESTY_VERSION*
+ && make -j4 && make install && rm -rf openresty-$OPENRESTY_VERSION*
 
 RUN luarocks install --server=http://rocks.moonscript.org/manifests/leafo lapis $LAPIS_VERSION && \
   luarocks install moonscript && \
