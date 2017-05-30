@@ -51,6 +51,9 @@ function m.ViewUserUpvoted(request)
   if not userID then
     return 'user not found'
   end
+  if not self.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   local posts, err = userAPI:GetRecentPostVotes(request.session.userID, userID,'up')
   if not  posts  then
