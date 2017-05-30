@@ -385,7 +385,7 @@ function m.GetIcon(request)
   if not post then
     print(err)
     print('cant load post')
-      return { redirect_to = '/static/icons/notfound.png' }
+    return { redirect_to = '/static/icons/notfound.png' }
   end
 
   request.post = post
