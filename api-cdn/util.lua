@@ -7,10 +7,10 @@ util.locks = ngx.shared.locks
 
 local filterStyles = {
   default = 'views.st.postelement',
-  minimal = 'views.st.postelement-min',
+  --minimal = 'views.st.postelement-min',
   HN = 'views.st.postelement-HN',
   full = 'views.st.postelement-full',
-  filtta = 'views.st.postelement-filtta'
+  --filtta = 'views.st.postelement-filtta'
 }
 
 util.filterStyles = filterStyles

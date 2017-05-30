@@ -61,6 +61,59 @@ function api:UserHasVotedTag(userID, postID, tagName)
 
 end
 
+function api:ToggleCommentSubscription(userID, userToSubToID)
+	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local userToSubTo = cache:GetUser(userToSubToID)
+	if not userToSubTo then
+		return nil, 'user not found'
+	end
+	print(to_json(userToSubTo.commentSubscribers[userID]))
+	if userToSubTo.commentSubscribers[userID] then
+		userToSubTo.commentSubscribers[userID] = nil
+	else
+		userToSubTo.commentSubscribers[userID] = userID
+	end
+
+	print(to_json(userToSubTo.commentSubscribers[userID]))
+	user.commentSubscriptions[userToSubToID] = userToSubTo.commentSubscribers[userID]
+
+	local ok, err = self.userWrite:CreateSubUser(user)
+	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	ok, err = self:InvalidateKey('user', userToSubToID)
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
+end
+
+function api:TogglePostSubscription(userID, userToSubToID)
+	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local userToSubTo = cache:GetUser(userToSubToID)
+	if not userToSubTo then
+		return nil, 'user not found'
+	end
+
+	if userToSubTo.postSubscribers[userID] then
+		userToSubTo.postSubscribers[userID] = nil
+	else
+		userToSubTo.postSubscribers[userID] = userID
+	end
+
+	user.postSubscriptions[userToSubToID] = userToSubTo.postSubscribers[userID]
+
+	local ok, err = self.userWrite:CreateSubUser(user)
+	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	ok, err = self:InvalidateKey('user', userToSubToID)
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
+end
+
 function api:DeleteUser(userID, username)
 	local ok, err = self:RateLimit('DeleteUser:',userID, 3, 60)
 	if not ok then
@@ -318,7 +371,8 @@ function api:GetUserAlerts(userID)
 	end
 	if alerts and not err then
 		-- its not from cache, so update the last time checked
-		return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		self:InvalidateKey('user', userID)
 	end
 
   return alerts

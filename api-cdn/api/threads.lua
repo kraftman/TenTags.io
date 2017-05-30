@@ -57,7 +57,7 @@ function api:CreateMessageReply(userID, userMessage)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
       ok, err = self:InvalidateKey('useralert', viewerID)
-      self.userWrite:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
+      self.userWrite:AddUserAlert(ngx.time(), viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
 

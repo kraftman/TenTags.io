@@ -15,7 +15,7 @@
   </div>
 
 
-  <% if post.imgURL then %>
+  <% if post.bigIcon then %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/icon/<%= post.id %>" >
     </a>

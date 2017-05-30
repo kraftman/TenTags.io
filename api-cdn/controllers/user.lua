@@ -1,5 +1,6 @@
 
 
+
 local m = {}
 m.__index = m
 
@@ -39,6 +40,50 @@ function m:Register(app)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
   app:get('listusers','/user/list',function() return {render = 'listusers'} end)
+  app:get('subscribeusercomment','/user/:username/comments/sub',self.SubUserComment)
+  app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
+
+end
+
+function m.SubUserComment(request)
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  if not username then
+    return 'user not found'
+  end
+
+  local userToSubToID = userAPI:GetUserID(username)
+
+  local ok, err = userAPI:ToggleCommentSubscription(userID, userToSubToID)
+  if not ok  then
+    return err
+  end
+
+  return { redirect_to = request:url_for("viewusercomments", {username = request.params.username}) }
+
+end
+
+function m.SubUserPost(request)
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  if not username then
+    return 'user not found'
+  end
+
+  local userToSubToID = userAPI:GetUserID(username)
+
+  local ok, err = userAPI:TogglePostSubscription(userID, userToSubToID)
+  if not ok  then
+    return err
+  end
+
+  return { redirect_to = request:url_for("viewuserposts", {username = request.params.username}) }
 
 end
 

@@ -28,6 +28,10 @@ $(function() {
   AddInfoBar();
   HookSubClick();
   AddInfinite();
+  $('.post-full-topbar').click(function(e){
+    console.log(e.currentTarget)
+    $(e.currentTarget).parent().find('.linkImg').toggle()
+  })
 
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()

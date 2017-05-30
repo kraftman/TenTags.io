@@ -216,20 +216,30 @@ function userwrite:CreateSubUser(user)
   local hashedUser = {}
   hashedUser.filters = {}
 
+
   for k,v in pairs(user) do
+    --print(k)
     if k == 'filters' then
       --do nothing for now, might add the hash later
+    elseif k == 'commentSubscriptions' then
+      hashedUser['commentSubscriptions:'] = to_json(v)
+    elseif k == 'commentSubscribers' then
+      hashedUser['commentSubscribers:'] = to_json(v)
+    elseif k == 'postSubscriptions' then
+      hashedUser['postSubscriptions:'] = to_json(v)
+    elseif k == 'postSubscribers' then
+      hashedUser['postSubscribers:'] = to_json(v)
     else
       hashedUser[k] = v
     end
   end
 
   local red = self:GetUserWriteConnection()
-  user.filters = user.filters or {}
+  hashedUser.filters = hashedUser.filters or {}
 
   red:init_pipeline()
     red:hmset('user:'..hashedUser.id, hashedUser)
-    for _,filterID in pairs(user.filters) do
+    for _,filterID in pairs(hashedUser.filters) do
       red:sadd('userfilters:'..hashedUser.id,filterID)
     end
     red:hset('userToID',hashedUser.username:lower(),hashedUser.id)

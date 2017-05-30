@@ -67,6 +67,7 @@ function cache:GetUser(userID)
   if ENABLE_CACHE then
      ok, err = userDict:get(userID)
     if ok then
+      --print((ok))
       return from_json(ok)
     end
     if err then
@@ -171,6 +172,8 @@ function cache:PurgeKey(keyInfo)
     voteDict:delete('postVotes:'..keyInfo.id)
   elseif keyInfo.keyType == 'userfilter' then
     userFilterIDs:delete(keyInfo.id)
+  elseif keyInfo.keyType == 'frontpage' then
+
   end
 end
 
@@ -219,6 +222,7 @@ function cache:GetUserAlerts(userID)
     if err then
       return nil, 'couldnt load alerts from shdict'
     end
+    --print(ok)
     if ok then
       alerts = from_json(ok)
     end
@@ -689,7 +693,7 @@ function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
     for _,v in pairs(unSeenPosts) do
       tinsert(freshPosts, v)
     end
-    
+
     if #userPostIDs < range then
       -- we've got as many as we'll get
       break

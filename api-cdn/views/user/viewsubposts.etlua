@@ -1,5 +1,8 @@
 
-
+<% render("views.user.userbar",{username = params.username}) %>
+<a href='<%= url_for("subscribeuserpost", {username = params.username})%>' >
+<%= userInfo.postSubscribers[session.userID] and 'Unsubscribe' or 'Subscribe' %>
+</a>
 <div class = 'panel panel-default'>
   <h3> User Posts:</h3>
   <% for k,v in pairs(posts) do %>

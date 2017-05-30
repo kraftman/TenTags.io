@@ -195,6 +195,13 @@ function config:CreatePost(post)
 		ngx.log(ngx.ERR, 'unable to add stat: ', err)
 	end
 
+	local user = self.userRead:GetUser(post.createdBy)
+	for _,subscriberID in pairs(user.postSubscribers) do
+		self.userWrite:AddUserAlert(post.createdAt, subscriberID, 'post:'..post.id)
+    cache:PurgeKey({keyType = 'useralert', id = subscriberID})
+    ok, err = self.redisWrite:InvalidateKey('useralert', subscriberID)
+	end
+
 
   ok, err = self.userWrite:AddPost(post)
   if not ok then

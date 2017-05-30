@@ -68,7 +68,6 @@ function bb:GetAuthToken()
   apiUrl = body.apiUrl
   authToken = body.authorizationToken
   downloadUrl = body.downloadUrl
-  print(downloadUrl)
 
   return true
 
@@ -179,7 +178,7 @@ function bb:GetImageFromBB(imageID)
     --query = '?fileId='..imageID
   })
 
-  print(to_json(res.headers))
+  --print(to_json(res.headers))
   if not res or res.status ~= 200 then
     print(res and res.status, err)
     return nil, err

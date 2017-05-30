@@ -4,6 +4,9 @@
     <% if alert.alertType == 'thread' then %>
       <% render("views.st.threadelement",{thread = alert.data}) %>
     <% end %>
+    <% if alert.alertType == 'post' then %>
+      <% render("views.st.postelement",{post = alert.data}) %>
+    <% end %>
     <% if alert.alertType == 'comment' then %>
       <div class='alert-body'>
         <p> <%= alert.data.text -%></p>

@@ -398,7 +398,6 @@ function m.GetIcon(request)
   local imageInfo, err = bb:GetImage(post.bigIcon)
   if not imageInfo then
     print('couldnt get image: ', err)
-
     return { redirect_to = '/static/icons/notfound.png' }
   end
 
