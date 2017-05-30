@@ -116,7 +116,7 @@ end
 function cache:SearchPost(queryString)
   local results, ok, err
   if ENABLE_CACHE then
-    ok, err = searchResults:get()
+    ok, err = searchResults:get(queryString)
     if err then
       ngx.log(ngx.ERR, 'unable to check searchResults shdict ', err)
       return nil, err
