@@ -142,8 +142,9 @@ function cache:PurgeKey(keyInfo)
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
       userDict:delete(keyInfo.id)
-    else
       self:GetAccount(keyInfo.id)
+    else
+      userDict:delete(keyInfo.id)
     end
   elseif keyInfo.keyType == 'comment' then
     local postID, _ = keyInfo.id:match('(%w+):(%w+)') -- postID, commentIDs
@@ -746,7 +747,6 @@ function cache:GetUserPostVotes(userID)
     end
     if ok then
       postVotes = from_json(ok)
-      print 'got from cache'
     end
   end
 

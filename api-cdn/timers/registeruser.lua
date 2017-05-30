@@ -1,5 +1,5 @@
 
-local CONFIG_CHECK_INTERVAL = 5
+local CONFIG_CHECK_INTERVAL = 1
 
 local config = {}
 config.__index = config
@@ -66,9 +66,6 @@ function config:FlushSessionLastSeen()
 
   end
 
-
-
-
 end
 
 function config:CreateAccount(accountID, session)
@@ -117,12 +114,14 @@ function config:ProcessAccount(session)
   end
 	account.sessions[session.id] = session
 
-  ok, err = self.redisWrite:InvalidateKey('account', account.id)
+
   local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		ngx.log(ngx.ERR, err)
 		return
 	end
+  print('adding user session: ', session.id)
+  ok, err = self.redisWrite:InvalidateKey('account', account.id)
 
   -- TODO: move to other function
 

@@ -224,6 +224,7 @@ function m.ConfirmLogin(request)
 
   if not account then
     -- TODO: change this to a custom failure page
+    print('couldnt login:', sessionID)
     return { redirect_to = request:url_for("home") }
   end
   print('got account: ',account.id)

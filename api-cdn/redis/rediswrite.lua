@@ -569,7 +569,6 @@ function write:EmptyFilter()
       end
     end
   end
-  print('done')
 
   return true
 
