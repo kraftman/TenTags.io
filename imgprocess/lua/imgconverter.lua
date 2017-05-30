@@ -415,7 +415,7 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost() end)
-  print(status, err)
+  
   if not status then
     print(err)
   end

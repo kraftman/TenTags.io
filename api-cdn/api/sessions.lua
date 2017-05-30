@@ -122,7 +122,7 @@ function api:RegisterAccount(session, confirmURL)
   local tempID = ngx.ctx.userID
 
   local ok, err = self:RateLimit('registerAccount:', tempID, 1, 300)
-  print(ok)
+  
 	if not ok then
 		return ok, 429, err
 	end

@@ -420,8 +420,12 @@ function m.GetIcon(request)
     print('no smallIcon')
       return { redirect_to = '/static/icons/notfound.png' }
   end
-  local imageInfo = bb:GetImage(post.smallIcon)
+  local imageInfo,err = bb:GetImage(post.smallIcon)
   --print(imageData)
+  if not imageInfo then
+    print('couldnt load image from bb, ',err)
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
   request.iconData = imageInfo.data
   ngx.header['Content-Type'] = imageInfo['Content-Type']
 
