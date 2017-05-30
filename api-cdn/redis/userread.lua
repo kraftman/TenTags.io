@@ -36,7 +36,6 @@ function userread:GetUserAlerts(userID, startAt, endAt)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user alerts: ',err)
   end
-  print(self:to_json(ok))
   if ok == ngx.null then
     return {}
   else

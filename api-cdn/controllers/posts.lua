@@ -212,7 +212,7 @@ function m.GetPost(request)
       v.commentHash = ngx.md5(v.id..userID)
     end
   end
-  
+
   for k,v in pairs(post.viewers) do
     if v == userID then
       request.userSubbed = true
@@ -389,29 +389,23 @@ function m.DownvotePost(request)
 end
 
 function m.GetIcon(request)
-  print('getting icon')
   if not request.params.postID then
-    print('no post id for image')
     return { redirect_to = '/static/icons/notfound.png' }
   end
   local userID = request.session.userID or ngx.ctx.userID
 
   local post,err = postAPI:GetPost(userID, request.params.postID)
   if not post then
-    print(err)
-    print('cant load post')
     return { redirect_to = '/static/icons/notfound.png' }
   end
 
   request.post = post
 
   if not post.bigIcon then
-    print('no bigIcon id')
     return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo, err = bb:GetImage(post.bigIcon)
   if not imageInfo then
-    print('couldnt get image: ', err)
     return { redirect_to = '/static/icons/notfound.png' }
   end
 

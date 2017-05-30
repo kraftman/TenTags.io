@@ -422,7 +422,7 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost() end)
-  print(status)
+  --print(status)
   if not status then
     print(err)
   end

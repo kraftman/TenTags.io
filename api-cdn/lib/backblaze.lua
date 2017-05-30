@@ -58,7 +58,6 @@ function bb:GetAuthToken()
     }
   })
   if (res.status ~= 200) then
-    print(res.body)
     return nil, 'failed to auth: '..(res and res.status)
   end
 
@@ -99,10 +98,7 @@ function bb:GetUploadUrl()
     },
     body = to_json({bucketId = bucketID})
   })
-  print(res.status)
-  print(res.body)
   if (res and res.status ~= 200) then
-    print(res.body)
     return nil, 'failed to auth: '
   end
 
@@ -133,8 +129,6 @@ function bb:Upload(fileName, fileContent)
     print(err)
     return nil, err
   end
-  print(res.status)
-  print(res.body)
   if (res and res.status ~= 200) then
     print(res.body)
     return nil, 'failed to auth: '
@@ -170,7 +164,6 @@ end
 function bb:GetImageFromBB(imageID)
   local httpc = http.new()
   httpc:set_timeout(10000)
-  print(downloadUrl..'?fileId='..imageID)
   local res, err = httpc:request_uri(downloadUrl..'/b2api/v1/b2_download_file_by_id?fileId='..imageID, {
     headers = {
       Authorization = authToken,

@@ -382,9 +382,9 @@ end
 
 function cache:GetNewUsers()
   local ok, err =  userRead:GetNewUsers()
-  print(to_json(ok))
+
   for k,v in pairs(ok )do
-    print(k,'  ==== '  ,v )
+
   end
 
   if ok == 0 then
@@ -417,7 +417,7 @@ function cache:GetSortedComments(userID, postID,sortBy)
 
   for _,v in pairs(flatComments) do
     v.username = self:GetUsername(v.createdBy) or 'unknown'
-    print(v.username)
+
     v.filters = self:GetFilterInfo(v.filters or {})
 
     if userID and userVotedComments[v.id] then
@@ -518,7 +518,7 @@ function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
 
   local unSeenPostIDs = {}
   local postIDs = redisRead:GetFilterPosts(filter, sortBy,startAt, range)
-  print(#postIDs, userID)
+
   if userID == 'default' then
     unSeenPostIDs = postIDs
   else
@@ -551,7 +551,7 @@ end
 
 function cache:GetUserSeenPosts(userID, startAt, range)
   local postIDs = userRead:GetAllUserSeenPosts(userID, startAt, range-1)
-  print(#postIDs)
+
   local posts = {}
   for _,v in pairs(postIDs) do
     table.insert(posts, self:GetPost(v))

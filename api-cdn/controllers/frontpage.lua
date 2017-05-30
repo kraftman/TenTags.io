@@ -19,7 +19,6 @@ function m.FrontPage(request)
   request.pageNum = request.params.page or 1
   local startAt = 10*(request.pageNum-1)
   local sortBy = request.req.parsed_url.path:match('/(%w+)$') or 'fresh'
-  print('getting user front page')
   request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default', sortBy, startAt, startAt+10)
 
   --print(to_json(request.posts))
@@ -31,7 +30,6 @@ function m.FrontPage(request)
       _, post.topComment = next(comments[post.id].children)
 
       if post.topComment then
-        print(post.topComment.text)
       end
     end
   end
