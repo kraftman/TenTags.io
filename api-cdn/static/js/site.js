@@ -287,9 +287,9 @@ function VotePost(post, direction){
   $(post).find('.post-upvote').addClass('disable-vote');
   $(post).find('.post-downvote').addClass('disable-vote');
 
-  //$.get(uri,function(data){
-    //console.log(data);
-  //})
+  $.get(uri,function(data){
+    console.log(data);
+  })
 }
 
 function AddFilterHandler(){

@@ -37,12 +37,29 @@ function m:Register(app)
 
   app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
   app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
+  app:get('viewuserupvoted','/user/:username/posts/upvoted', self.ViewUserUpvoted)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
   app:get('listusers','/user/list',function() return {render = 'listusers'} end)
   app:get('subscribeusercomment','/user/:username/comments/sub',self.SubUserComment)
   app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
 
+end
+
+function m.ViewUserUpvoted(request)
+  local userID = userAPI:GetUserID(request.params.username)
+  if not userID then
+    return 'user not found'
+  end
+
+  local posts, err = userAPI:GetRecentPostVotes(request.session.userID, userID,'up')
+  if not  posts  then
+    print('posts not found,  ',err)
+    return 'none found'
+  end
+  print(to_json(posts))
+  request.posts = posts
+  return {render = 'user.viewsubupvotes'}
 end
 
 function m.SubUserComment(request)

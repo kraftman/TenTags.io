@@ -260,6 +260,10 @@ function cache:GetUserTagVotes(userID)
 
 end
 
+function cache:GetRecentPostVotes(userID,direction)
+  return userRead:GetRecentPostVotes(userID,direction)
+end
+
 
 function cache:AddPost(post)
   local result,err = postDict:set(post.id,to_json(postDict))

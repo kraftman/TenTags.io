@@ -123,6 +123,24 @@ function userread:GetUserTagVotes(userID)
   end
 end
 
+function userread:GetRecentPostVotes(userID, direction)
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrange('userPostVotes:date:'..direction..':'..userID,0, 100)
+  self:SetKeepalive(red)
+
+  if not ok then
+    return nil, err
+  end
+
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
+
+
 function userread:GetUserPostVotes(userID)
   -- replace with bloom later
   local red = self:GetUserReadConnection()

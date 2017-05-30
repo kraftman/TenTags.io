@@ -112,8 +112,6 @@ function config:VotePost(postVote)
 		return true
 	end
 
-
-
 	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(postVote.userID),post.filters)
 
 	-- filter out the tags they already voted on
@@ -132,19 +130,16 @@ function config:VotePost(postVote)
 		end
 	end
 
-
-
 	self.redisWrite:UpdatePostTags(post)
 
-  local ok, err = self.userWrite:AddPost(post)
-  if not ok then
-    return ok, err
-  end
 
-	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
-	self.userWrite:AddUserPostVotes(postVote.userID, postVote.postID)
+	ok, err = self.userWrite:AddUserPostVotes(postVote.userID, post.createdAt, postVote.postID, postVote.direction)
+	if not ok then
+		print('couldnt add voted post: ', err)
+	end
 	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
 	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
 	print('purged cache')

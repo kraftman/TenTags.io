@@ -92,10 +92,16 @@ function userwrite:RemoveSavedPost(userID, postID)
 end
 
 
-function userwrite:AddUserPostVotes(userID, postID)
+function userwrite:AddUserPostVotes(userID, createdAt, postID, direction)
+  -- replace with bloom later
   local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userPostVotes:date:'..direction..':'..userID, createdAt, postID)
+  if not ok then
+    self:SetKeepalive(red)
+    return ok, err
+  end
 
-  local ok, err = red:sadd('userPostVotes:'..userID, postID)
+  ok, err = red:sadd('userPostVotes:'..userID, postID)
   self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user post vote: ',err)
@@ -126,15 +132,6 @@ function userwrite:AddComment(commentInfo)
   ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
   return ok, err
 end
-
-function userwrite:AddPost(post)
-  local red = self:GetUserWriteConnection()
-  local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
-  -- post has no score since its per-filter
-  return ok, err
-end
-
-
 
 function userwrite:CreateAccount(account)
 

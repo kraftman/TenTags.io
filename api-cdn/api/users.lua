@@ -34,6 +34,28 @@ function api:GetUserFrontPage(userID, sortBy, startAt, range)
 end
 
 
+function api:GetRecentPostVotes(userID, targetUserID, direction)
+	local ok, err = self:RateLimit('GetRecentPostVotes:',userID, 10, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local targetUser = cache:GetUser(targetUserID)
+	if not user or  not targetUser then
+		return nil, 'user not found'
+	end
+	if  userID ~= targetUserID and user.role ~= 'Admin' then
+		return nil, 'you cant view other users voted posts'
+	end
+
+	ok, err = cache:GetRecentPostVotes(targetUserID,direction)
+	if not ok then
+		return ok, err
+	end
+	ok, err = cache:GetPosts(ok)
+	return ok, err
+end
+
 function api:LabelUser(userID, targetUserID, label)
 
 	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
