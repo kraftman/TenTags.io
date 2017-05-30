@@ -15,11 +15,11 @@ ENV OPENRESTY_PREFIX /opt/openresty
 ENV LAPIS_VERSION 1.5.1
 
 
-RUN mkdir /geoip && cd /geoip && \
-  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz && \
-  gunzip GeoIP.dat.gz && \
-  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz && \
-  gunzip GeoLiteCity.dat.gz
+#RUN mkdir /geoip && cd /geoip && \
+#  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz && \
+#  gunzip GeoIP.dat.gz && \
+#  wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz && \
+#  gunzip GeoLiteCity.dat.gz
 
 RUN cd $SRC_DIR && curl -LOs https://openresty.org/download/openresty-$OPENRESTY_VERSION.tar.gz \
  && tar xzf openresty-$OPENRESTY_VERSION.tar.gz && cd openresty-$OPENRESTY_VERSION \
@@ -52,6 +52,8 @@ RUN cd luarocks-2.4.2 && \
 RUN luarocks install date
 #RUN echo "\n\n# Docker extra config \nuser=root\naddn-hosts=/etc/hosts\n" >> /etc/dnsmasq.conf
 
+
+COPY GeoIP /geoip
 
 RUN git clone https://github.com/duhoobo/lua-resty-smtp.git && \
 cd lua-resty-smtp && \
