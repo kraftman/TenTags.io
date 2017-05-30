@@ -212,6 +212,13 @@ function m.GetPost(request)
       v.commentHash = ngx.md5(v.id..userID)
     end
   end
+  
+  for k,v in pairs(post.viewers) do
+    if v == userID then
+      request.userSubbed = true
+      break
+    end
+  end
 
   request.comments = comments
 

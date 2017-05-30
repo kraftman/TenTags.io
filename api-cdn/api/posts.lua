@@ -177,20 +177,24 @@ function api:VotePost(userID, postID, direction)
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = self:RateLimit('SubscribeComment:', userID, 3, 30)
+	local ok, err = self:RateLimit('SubscribePost:', userID, 3, 30)
 	if not ok then
 		return ok, err
 	end
 
 	local post = cache:GetPost(postID)
-	for _,viewerID in pairs(post.viewers) do
+  local found
+	for i,viewerID in ipairs(post.viewers) do
 		if viewerID == userID then
-			return nil, 'already subscribed'
+			table.remove(post.viewers, i)
+      found = true
 		end
 	end
-	tinsert(post.viewers, userID)
-
+  if not found then
+	   tinsert(post.viewers, userID)
+  end
 	ok, err = self.redisWrite:CreatePost(post)
+  self:InvalidateKey('post', post.id)
 	return ok, err
 
 end

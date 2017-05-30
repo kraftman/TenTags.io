@@ -70,6 +70,7 @@
     <% end %>
   <% end %>
   <% if session.userID then %>
+    <a href="<%= url_for('subscribepost',{postID = post.id }) %>"><%= userSubbed and 'Unsubscribe' or 'Subscribe'%></a>
     <a href='<%= url_for("reportpost",{postID = post.id})%>'>Report</a>
     <form id='addsource' action='' method='post'accept-charset='UTF-8'>
 

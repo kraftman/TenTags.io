@@ -1,9 +1,9 @@
 <a class='post-icon-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-<% print(post.nsfwLevel, userInfo.nsfwLevel) %>
-<% if post.nsfl and not userInfo.showNSFL then %>
-  <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="50" width="50">
+
+<% if post.nsfl and userInfo and userInfo.showNSFL then %>
+  <img class = 'post-icon' src="/icon/<%= post.id %>/small" height="50" width="50">
 <% elseif post.nsfwLevel then %>
-  <% if userInfo.nsfwLevel >= post.nsfwLevel and post.postType ~= 'self' then %>
+  <% if userInfo and userInfo.nsfwLevel >= post.nsfwLevel and post.postType ~= 'self' then %>
     <img class = 'post-icon' src="/icon/<%= post.id %>/small" height="50" width="50">
   <% else %>
     <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="50" width="50">
