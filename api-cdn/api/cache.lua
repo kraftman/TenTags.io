@@ -689,7 +689,7 @@ function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
     for _,v in pairs(unSeenPosts) do
       tinsert(freshPosts, v)
     end
-    print(range, #userPostIDs)
+    
     if #userPostIDs < range then
       -- we've got as many as we'll get
       break
