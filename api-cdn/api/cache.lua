@@ -67,6 +67,7 @@ function cache:GetUser(userID)
   if ENABLE_CACHE then
      ok, err = userDict:get(userID)
     if ok then
+      --print((ok))
       return from_json(ok)
     end
     if err then
@@ -115,7 +116,7 @@ end
 function cache:SearchPost(queryString)
   local results, ok, err
   if ENABLE_CACHE then
-    ok, err = searchResults:get()
+    ok, err = searchResults:get(queryString)
     if err then
       ngx.log(ngx.ERR, 'unable to check searchResults shdict ', err)
       return nil, err
@@ -138,12 +139,13 @@ function cache:SearchPost(queryString)
 end
 
 function cache:PurgeKey(keyInfo)
-  print('purging: ', to_json(keyInfo))
+  --print('purging: ', to_json(keyInfo))
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
       userDict:delete(keyInfo.id)
-    else
       self:GetAccount(keyInfo.id)
+    else
+      userDict:delete(keyInfo.id)
     end
   elseif keyInfo.keyType == 'comment' then
     local postID, _ = keyInfo.id:match('(%w+):(%w+)') -- postID, commentIDs
@@ -156,6 +158,7 @@ function cache:PurgeKey(keyInfo)
   elseif keyInfo.keyType == 'useralert' then
     userAlertDict:delete(keyInfo.id)
   elseif keyInfo.keyType == 'post' then
+    --print('purging post: ',keyInfo.id)
     postDict:delete(keyInfo.id)
     if PRECACHE_INVALID then
       self:GetPost(keyInfo.id)
@@ -167,6 +170,10 @@ function cache:PurgeKey(keyInfo)
     end
   elseif keyInfo.keyType == 'postvote' then
     voteDict:delete('postVotes:'..keyInfo.id)
+  elseif keyInfo.keyType == 'userfilter' then
+    userFilterIDs:delete(keyInfo.id)
+  elseif keyInfo.keyType == 'frontpage' then
+
   end
 end
 
@@ -215,6 +222,7 @@ function cache:GetUserAlerts(userID)
     if err then
       return nil, 'couldnt load alerts from shdict'
     end
+    --print(ok)
     if ok then
       alerts = from_json(ok)
     end
@@ -250,6 +258,10 @@ function cache:GetUserTagVotes(userID)
 
   return keyed
 
+end
+
+function cache:GetRecentPostVotes(userID,direction)
+  return userRead:GetRecentPostVotes(userID,direction)
 end
 
 
@@ -506,7 +518,7 @@ function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
 
   local unSeenPostIDs = {}
   local postIDs = redisRead:GetFilterPosts(filter, sortBy,startAt, range)
-
+  print(#postIDs, userID)
   if userID == 'default' then
     unSeenPostIDs = postIDs
   else
@@ -671,9 +683,10 @@ end
 function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
 
   local freshPosts = {}
+  local count = 0
 
   while #freshPosts < range do
-
+    count = count + 1
     local userFilterIDs = self:GetUserFilterIDs(userID)
     local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
     if err then
@@ -689,6 +702,10 @@ function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
       -- we've got as many as we'll get
       break
     end
+    if count > 10 then
+      break
+    end
+    startAt = startAt + range
   end
 
   return freshPosts
@@ -739,7 +756,6 @@ function cache:GetUserPostVotes(userID)
     end
     if ok then
       postVotes = from_json(ok)
-      print 'got from cache'
     end
   end
 

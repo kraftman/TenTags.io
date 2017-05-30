@@ -1,5 +1,6 @@
 
 
+
 local m = {}
 m.__index = m
 
@@ -36,9 +37,73 @@ function m:Register(app)
 
   app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
   app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
+  app:get('viewuserupvoted','/user/:username/posts/upvoted', self.ViewUserUpvoted)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
   app:get('listusers','/user/list',function() return {render = 'listusers'} end)
+  app:get('subscribeusercomment','/user/:username/comments/sub',self.SubUserComment)
+  app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
+
+end
+
+function m.ViewUserUpvoted(request)
+  local userID = userAPI:GetUserID(request.params.username)
+  if not userID then
+    return 'user not found'
+  end
+  if not self.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local posts, err = userAPI:GetRecentPostVotes(request.session.userID, userID,'up')
+  if not  posts  then
+    print('posts not found,  ',err)
+    return 'none found'
+  end
+  print(to_json(posts))
+  request.posts = posts
+  return {render = 'user.viewsubupvotes'}
+end
+
+function m.SubUserComment(request)
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  if not username then
+    return 'user not found'
+  end
+
+  local userToSubToID = userAPI:GetUserID(username)
+
+  local ok, err = userAPI:ToggleCommentSubscription(userID, userToSubToID)
+  if not ok  then
+    return err
+  end
+
+  return { redirect_to = request:url_for("viewusercomments", {username = request.params.username}) }
+
+end
+
+function m.SubUserPost(request)
+  local userID = request.session.userID
+  local username = request.params.username
+  if not userID then
+    return {render = 'pleaselogin'}
+  end
+  if not username then
+    return 'user not found'
+  end
+
+  local userToSubToID = userAPI:GetUserID(username)
+
+  local ok, err = userAPI:TogglePostSubscription(userID, userToSubToID)
+  if not ok  then
+    return err
+  end
+
+  return { redirect_to = request:url_for("viewuserposts", {username = request.params.username}) }
 
 end
 
@@ -211,7 +276,8 @@ function m.GetSession(request)
     email = request.params.email,
     category = details.category,
     os = details.os,
-    browser = details.name..' '..details.version
+    browser = details.name..' '..details.version,
+    city = ngx.var.geoip_city
   }
 
   return session
@@ -223,6 +289,7 @@ function m.ConfirmLogin(request)
 
   if not account then
     -- TODO: change this to a custom failure page
+    print('couldnt login:', sessionID)
     return { redirect_to = request:url_for("home") }
   end
   print('got account: ',account.id)

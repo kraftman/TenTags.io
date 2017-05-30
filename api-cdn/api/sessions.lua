@@ -58,6 +58,7 @@ function api:SanitiseSession(session)
 		email = session.email:lower():gsub(' ', ''),
 		createdAt = ngx.time(),
 		activated = false,
+    city = session.city,
 		validUntil = ngx.time()+5184000,
 		activationTime = ngx.time() + 1800,
 	}
@@ -73,7 +74,7 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'no sessionID!'
 	end
 
-	local account, err = cache:GetAccount(accountID)
+	local account, err = self.userRead:GetAccount(accountID)
 	if not account then
     print('couldnt get account: ', err)
 		return nil, 'account not found'
@@ -121,7 +122,7 @@ function api:RegisterAccount(session, confirmURL)
   local tempID = ngx.ctx.userID
 
   local ok, err = self:RateLimit('registerAccount:', tempID, 1, 300)
-  print(ok)
+
 	if not ok then
 		return ok, 429, err
 	end
@@ -135,8 +136,8 @@ function api:RegisterAccount(session, confirmURL)
 		return false, 'Email provided is invalid'
 	end
 
-  local accountID = self:GetHash(session.email)
-  local account = self.userRead:GetAccount(accountID)
+  --local accountID = self:GetHash(session.email)
+  --local account = self.userRead:GetAccount(accountID)
 
 
 	ok, err = self.redisWrite:QueueJob('registeraccount',session)
@@ -156,14 +157,19 @@ function api:ConfirmLogin(userSession, key)
 	if not key then
 		return nil, 'bad key'
 	end
-	local account = cache:GetAccount(accountID)
+	local account = self.userRead:GetAccount(accountID)
 	if not account then
 		return nil, 'no account'
 	end
 
 	local accountSession = account.sessions[sessionID]
 	if not accountSession then
-		return nil, 'bad session'
+    for k,v in pairs(account.sessions) do
+      if not v.killed then
+        print(k, to_json(v))
+      end
+    end
+		return nil, 'bad session: '..sessionID
 	end
 
 

@@ -389,7 +389,8 @@ function api:ConvertUserPostToPost(userID, post)
 		link = self:SanitiseUserInput(post.link, 400),
 		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
-		filters = {}
+		filters = {},
+    bbID = post.bbID
 	}
 	if newPost.link:gsub(' ','') == '' then
 		newPost.link = nil
@@ -414,12 +415,22 @@ function api:ConvertUserPostToPost(userID, post)
 		end
 	end
 
-  if (not post.link) or trim(post.link) == '' then
-		newPost.postType = 'self'
-    tinsert(newPost.tags,'meta:self')
+  if (not post.link) or trim(post.link) == '' or post.bbID then
+    if post.bbID then
+		  newPost.postType = 'self-image'
+      tinsert(newPost.tags,'meta:self-image')
+    else
+      newPost.postType = 'self'
+      tinsert(newPost.tags,'meta:self')
+    end
   end
 	tinsert(newPost.tags, 'meta:all')
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
+
+  if newPost.bbID then
+    print(ngx.var.host)
+    newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
+  end
 
   if newPost.link then
 
@@ -428,8 +439,6 @@ function api:ConvertUserPostToPost(userID, post)
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
-
-
 
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)
@@ -465,6 +474,11 @@ function api:GetUserPosts(userID, targetUserID, startAt, range)
   return posts
 end
 
+
+function api:AddImage(postID, bbID)
+  return self.redisWrite:AddImage(postID, bbID)
+
+end
 
 function api:CreatePost(userID, postInfo)
 

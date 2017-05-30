@@ -56,10 +56,11 @@ function M:LoadUser(request)
     request.userInfo = userAPI:GetUser(request.session.userID)
   elseif not request.session.accountID then
     local unique = ngx.var.remote_addr..(ngx.var.http_user_agent or '')
-
     request.session.tempID = request.session.tempID or self:GetHash(unique)
   end
+
   ngx.ctx.userID = request.session.userID or request.session.tempID
+  --print('ctx:',ngx.ctx.userID)
   request.cookies.cacheKey = ngx.md5(ngx.ctx.userID)
 end
 

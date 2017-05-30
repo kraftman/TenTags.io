@@ -1,7 +1,7 @@
 
 <div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
 
-  <a href='#' class='comment-collapse' ></a>
+  <a href='' class='comment-collapse' ></a>
   <div class="comment-body <% for _,filter in pairs((child or {}).filters or {}) do %> filter_<%= filter.title -%><% end %>" >
 
 

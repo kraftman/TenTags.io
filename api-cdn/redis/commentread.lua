@@ -37,7 +37,6 @@ function commentread:GetUserComments(postIDcommentIDs)
   local postID, commentID
   red:init_pipeline()
     for _,v in pairs(postIDcommentIDs) do
-      ngx.log(ngx.ERR,v)
       postID, commentID = v:match('(%w+):(%w+)')
       red:hget('postComment:'..postID,commentID)
     end

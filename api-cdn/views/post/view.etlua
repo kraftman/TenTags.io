@@ -1,21 +1,32 @@
 
+
 <script src="/static/js/mousetrap.min.js"  ></script>
-<script src="/static/js/post.js"  ></script>
+<script src="/static/js/post.js"  defer></script>
 
 <% render("views.st.postelement",{post = post}) %>
 
 
-<% if post.imgURL then %>
+<% if post.link then %>
 
   <div class = 'panel panel-default panel-image'>
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-      <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+      <img class = 'linkImg' src="/icon/<%= post.id %>" >
     </a>
   </div>
 <% end %>
+
+<!-- <% if post.bbID then %>
+
+  <div class = 'panel panel-default panel-image'>
+
+    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+      <img class = 'linkImg' src="/image/<%= post.id %>" >
+    </a>
+  </div>
+<% end %>-->
 
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>" />
@@ -45,7 +56,7 @@
     <% if post.deleted then %>
       <p> [deleted] </p>
     <% else %>
-      
+
       <%- markdown.markdown(post.text) -%>
     <% end %>
   <% end %>

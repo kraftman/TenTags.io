@@ -1,11 +1,15 @@
 
 
+
 local commentAPI = require 'api.comments'
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local util = require("lapis.util")
+local bb = require('lib.backblaze')
+local assert_valid = require("lapis.validate").assert_valid
+local uuid = require 'lib.uuid'
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -48,6 +52,8 @@ function m:Register(app)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
+  app:get('geticonsmall', '/icon/:postID/small', self.GetIconSmall)
+  app:get('getimage', '/image/:postID', self.GetImage)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
   app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
@@ -109,6 +115,13 @@ function m.ToggleSavePost(request)
 end
 
 
+local allowedExtensions = {
+  ['.gif'] = true,
+  ['.png'] = true,
+  ['.jpg'] = true,
+  ['.jpeg'] = true
+}
+
 function m.CreatePost(request)
 
   if trim(request.params.link) == '' then
@@ -127,10 +140,39 @@ function m.CreatePost(request)
     table.insert(info.tags, word)
   end
 
-  local ok, err = postAPI:CreatePost(request.session.userID, info)
 
-  if ok then
-    return {redirect_to = request:url_for("viewpost",{postID = ok.id})}
+  local file = request.params.upload_file
+  --print(file.content)
+  --print(file.content == '', request.params.upload == true)
+  if request.params.upload_file and (file.content ~= '') then
+    print('file found')
+
+
+    local fileID = uuid.generate_random()
+
+    local fileExtension = file.filename:match("^.+(%..+)$")
+    if not allowedExtensions[fileExtension] then
+      return 'file type not allowed'
+    end
+    local bbID, err = bb:UploadImage(fileID..fileExtension, file.content)
+    if not bbID then
+      ngx.log(ngx.ERR, 'file upload failed: ', err)
+      return 'error uploading file'
+    end
+    info.bbID = bbID
+
+  end
+
+  -- if info.bbID then
+  --   info.link = nil
+  -- end
+
+  local newPost, err = postAPI:CreatePost(request.session.userID, info)
+
+
+
+  if newPost then
+    return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
     return 'error creating post: '.. err
@@ -276,6 +318,9 @@ end
 
 
 function m.UpvoteTag(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
@@ -283,6 +328,10 @@ function m.UpvoteTag(request)
 end
 
 function m.DownvoteTag(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
@@ -333,26 +382,101 @@ function m.DownvotePost(request)
 end
 
 function m.GetIcon(request)
+  print('getting icon')
+  if not request.params.postID then
+    print('no post id for image')
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local userID = request.session.userID or ngx.ctx.userID
+
+  local post,err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    print(err)
+    print('cant load post')
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  request.post = post
+
+  if not post.bigIcon then
+    print('no bigIcon id')
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local imageInfo, err = bb:GetImage(post.bigIcon)
+  if not imageInfo then
+    print('couldnt get image: ', err)
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
+
+  ngx.say(request.iconData)
+
+  return ngx.exit(ngx.HTTP_OK)
+end
+
+function m.GetIconSmall(request)
+  if not request.params.postID then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local userID = request.session.userID or ngx.ctx.userID
+
+  local post,err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    print(err)
+      return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  request.post = post
+
+  if not post.smallIcon then
+    --print('no smallIcon')
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  local imageInfo,err = bb:GetImage(post.smallIcon)
+  --print(imageData)
+  if not imageInfo then
+    print('couldnt load image from bb, ',err)
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
+
+  ngx.say(request.iconData)
+
+  return ngx.exit(ngx.HTTP_OK)
+end
+
+function m.GetImage(request)
   if not request.params.postID then
     return 'nil'
   end
+  local userID = request.session.userID or ngx.ctx.userID
 
-  local post = postAPI:GetPost(request.params.postID)
-  if not post.icon then
-    return ''
+  local post,err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    print(err)
+    return 'couldnt find post'
   end
+
   request.post = post
-  if not type(post.icon) == 'string' then
-    return ''
+
+  if not post.bbID then
+    return { redirect_to = '/static/icons/notfound.png' }
   end
-  print(post.icon)
+  local imageInfo = bb:GetImage(post.bbID)
+  --print(imageData)
+  request.iconData = imageInfo.data
+  ngx.header['Content-Type'] = imageInfo['Content-Type']
 
-  request.iconData = ngx.decode_base64(post.icon)
+  ngx.say(request.iconData)
 
-  return {layout = 'layout.blanklayout',content_type = 'image'}
-
+  return ngx.exit(ngx.HTTP_OK)
 
 end
+
+
 
 function m.AddSource(request)
 

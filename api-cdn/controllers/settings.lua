@@ -37,7 +37,7 @@ function m.DisplaySettings(request)
   request.account = sessionAPI:GetAccount(request.session.accountID, request.session.accountID)
   if request.account then
     for k,v in pairs(request.account.sessions) do
-      if not v.activated then
+      if (not v.activated) or v.killed then
         request.account.sessions[k] = nil
       end
     end
@@ -108,7 +108,7 @@ function m.UpdateFilterStyle(request)
   end
 
   user['filterStyle:'..filterName] = filterStyle
-  
+
   userAPI:UpdateUser(request.session.userID, user)
 
   if filterName == 'frontPage' then

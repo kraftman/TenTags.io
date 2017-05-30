@@ -34,6 +34,28 @@ function api:GetUserFrontPage(userID, sortBy, startAt, range)
 end
 
 
+function api:GetRecentPostVotes(userID, targetUserID, direction)
+	local ok, err = self:RateLimit('GetRecentPostVotes:',userID, 10, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local targetUser = cache:GetUser(targetUserID)
+	if not user or  not targetUser then
+		return nil, 'user not found'
+	end
+	if  userID ~= targetUserID and user.role ~= 'Admin' then
+		return nil, 'you cant view other users voted posts'
+	end
+
+	ok, err = cache:GetRecentPostVotes(targetUserID,direction)
+	if not ok then
+		return ok, err
+	end
+	ok, err = cache:GetPosts(ok)
+	return ok, err
+end
+
 function api:LabelUser(userID, targetUserID, label)
 
 	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
@@ -59,6 +81,59 @@ function api:UserHasVotedTag(userID, postID, tagName)
 	local userTagVotes = cache:GetUserTagVotes(userID)
 	return userTagVotes[postID..':'..tagName]
 
+end
+
+function api:ToggleCommentSubscription(userID, userToSubToID)
+	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local userToSubTo = cache:GetUser(userToSubToID)
+	if not userToSubTo then
+		return nil, 'user not found'
+	end
+	print(to_json(userToSubTo.commentSubscribers[userID]))
+	if userToSubTo.commentSubscribers[userID] then
+		userToSubTo.commentSubscribers[userID] = nil
+	else
+		userToSubTo.commentSubscribers[userID] = userID
+	end
+
+	print(to_json(userToSubTo.commentSubscribers[userID]))
+	user.commentSubscriptions[userToSubToID] = userToSubTo.commentSubscribers[userID]
+
+	local ok, err = self.userWrite:CreateSubUser(user)
+	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	ok, err = self:InvalidateKey('user', userToSubToID)
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
+end
+
+function api:TogglePostSubscription(userID, userToSubToID)
+	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+	local user = cache:GetUser(userID)
+	local userToSubTo = cache:GetUser(userToSubToID)
+	if not userToSubTo then
+		return nil, 'user not found'
+	end
+
+	if userToSubTo.postSubscribers[userID] then
+		userToSubTo.postSubscribers[userID] = nil
+	else
+		userToSubTo.postSubscribers[userID] = userID
+	end
+
+	user.postSubscriptions[userToSubToID] = userToSubTo.postSubscribers[userID]
+
+	local ok, err = self.userWrite:CreateSubUser(user)
+	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	ok, err = self:InvalidateKey('user', userToSubToID)
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
 end
 
 function api:DeleteUser(userID, username)
@@ -188,6 +263,8 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
 	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
   ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
+
+	self:InvalidateKey('userfilter', userToSubID)
 	return ok, err
 end
 
@@ -316,7 +393,8 @@ function api:GetUserAlerts(userID)
 	end
 	if alerts and not err then
 		-- its not from cache, so update the last time checked
-		return self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		self:InvalidateKey('user', userID)
 	end
 
   return alerts

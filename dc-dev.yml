@@ -8,26 +8,15 @@ services:
     entrypoint: ""
     command:  bash -c "lapis server"
     links:
-      - imghost
       - redis-general
       - redis-comment
       - redis-user
 
   imgprocess:
-    tty: true
-    privileged: true
-    build: imgprocess/.
-    volumes:
-     - ./imgprocess/lua:/lua
-     - ./www:/var/www
     links:
       - redis-general
-      - imghost
-    env_file:
-      - filtta.env
-  imghost:
-    expose:
-      - "80"
+    entrypoint: ""
+    command: luajit imgconverter.lua
   redis-general:
     expose:
       - '6379'
@@ -37,9 +26,6 @@ services:
   redis-comment:
     expose:
       - '6379'
-  elasticsearch1:
-    ports:
-      - 9200:9200
   redis-general:
     build: redis
     volumes:

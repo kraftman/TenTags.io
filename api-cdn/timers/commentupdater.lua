@@ -135,15 +135,27 @@ function config:AddAlerts(post, comment)
 		for _,viewerID in pairs(post.viewers) do
       cache:PurgeKey({keyType = 'useralert', viewerID})
       ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
-			self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+			self.userWrite:AddUserAlert(comment.createdAt, viewerID, 'postComment:'..comment.postID..':'..comment.id)
 		end
   else
     local parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
     for _,viewerID in pairs(parentComment.viewers) do
       cache:PurgeKey({keyType = 'useralert', id = viewerID})
       ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
-      self.userWrite:AddUserAlert(viewerID, 'postComment:'..comment.postID..':'..comment.id)
+      self.userWrite:AddUserAlert(comment.createdAt, viewerID, 'postComment:'..comment.postID..':'..comment.id)
     end
+  end
+
+  local user = cache:GetUser(post.createdBy)
+  if not user then
+    return true
+  end
+
+  for subscriberID,v in pairs(user.commentSubscribers) do
+    print('alerting subscriber: ',subscriberID)
+    self.userWrite:AddUserAlert(comment.createdAt, subscriberID, 'postComment:'..comment.postID..':'..comment.id)
+    cache:PurgeKey({keyType = 'useralert', id = subscriberID})
+    ok, err = self.redisWrite:InvalidateKey('useralert', subscriberID)
   end
 
   return true
@@ -151,7 +163,7 @@ function config:AddAlerts(post, comment)
 end
 
 function config:CreateComment(commentInfo)
-  print('creating comment')
+
   local ok, err
   local comment = self.commentRead:GetComment(commentInfo.postID, commentInfo.commentID)
   if not comment then
@@ -195,7 +207,7 @@ function config:CreateComment(commentInfo)
   end
 
   ok, err = self.commentWrite:CreateComment(comment)
-  print('created comment')
+
   if not ok then
     ngx.log(ngx.ERR, 'unable to create comment: ', err)
   end

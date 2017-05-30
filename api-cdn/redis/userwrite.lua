@@ -24,6 +24,13 @@ function userwrite:LoadScript(script)
   return ok
 end
 
+function userwrite:AddPost(post)		
+   local red = self:GetUserWriteConnection()
+   local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
+   -- post has no score since its per-filter
+   return ok, err
+ end
+
 -- TODO:remove this
 function userwrite:AddNewUser(time, accountID, email)
   local red = self:GetUserWriteConnection()
@@ -92,10 +99,16 @@ function userwrite:RemoveSavedPost(userID, postID)
 end
 
 
-function userwrite:AddUserPostVotes(userID, postID)
+function userwrite:AddUserPostVotes(userID, createdAt, postID, direction)
+  -- replace with bloom later
   local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userPostVotes:date:'..direction..':'..userID, createdAt, postID)
+  if not ok then
+    self:SetKeepalive(red)
+    return ok, err
+  end
 
-  local ok, err = red:sadd('userPostVotes:'..userID, postID)
+  ok, err = red:sadd('userPostVotes:'..userID, postID)
   self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add user post vote: ',err)
@@ -126,15 +139,6 @@ function userwrite:AddComment(commentInfo)
   ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
   return ok, err
 end
-
-function userwrite:AddPost(post)
-  local red = self:GetUserWriteConnection()
-  local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
-  -- post has no score since its per-filter
-  return ok, err
-end
-
-
 
 function userwrite:CreateAccount(account)
 
@@ -216,20 +220,30 @@ function userwrite:CreateSubUser(user)
   local hashedUser = {}
   hashedUser.filters = {}
 
+
   for k,v in pairs(user) do
+    --print(k)
     if k == 'filters' then
       --do nothing for now, might add the hash later
+    elseif k == 'commentSubscriptions' then
+      hashedUser['commentSubscriptions:'] = to_json(v)
+    elseif k == 'commentSubscribers' then
+      hashedUser['commentSubscribers:'] = to_json(v)
+    elseif k == 'postSubscriptions' then
+      hashedUser['postSubscriptions:'] = to_json(v)
+    elseif k == 'postSubscribers' then
+      hashedUser['postSubscribers:'] = to_json(v)
     else
       hashedUser[k] = v
     end
   end
 
   local red = self:GetUserWriteConnection()
-  user.filters = user.filters or {}
+  hashedUser.filters = hashedUser.filters or {}
 
   red:init_pipeline()
     red:hmset('user:'..hashedUser.id, hashedUser)
-    for _,filterID in pairs(user.filters) do
+    for _,filterID in pairs(hashedUser.filters) do
       red:sadd('userfilters:'..hashedUser.id,filterID)
     end
     red:hset('userToID',hashedUser.username:lower(),hashedUser.id)

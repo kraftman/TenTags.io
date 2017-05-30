@@ -4,6 +4,8 @@
     <a href="<%= url_for('viewuser', {username = username}) %>"><%= username %></a>
     <a href="<%= url_for('viewusercomments',{username = username}) %>">Comments</a>
     <a href="<%= url_for('viewuserposts',{username = username}) %>">Posts</a>
-
+    <% if session.username == username then %>
+    <a href="<%= url_for('viewuserupvoted',{username = username}) %>">Upvoted</a>
+    <% end %>
   </ul>
 </div>

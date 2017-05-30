@@ -142,13 +142,13 @@ function m.DisplayFilter(request)
   filter.description = sanitize_html(filter.description)
   request.thisfilter = filter
   if request.session.userID then
-    request.isMod = userAPI:UserCanEditFilter(request.session.userID, filter.id)
+    request.isMod = filterAPI:UserCanEditFilter(request.session.userID, filter.id)
   end
   local sortBy = request.params.sortBy or 'fresh'
   local startAt = request.params.startAt or 0
   local range = 10
-  print(startAt, range)
-  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy, startAt, range)
+
+  request.posts = filterAPI:GetFilterPosts(request.session.userID or 'default', filter, sortBy, startAt, range)
   --(to_json(request.posts))
   request.AddParams = AddParams
   if request.session.userID then
@@ -214,16 +214,10 @@ end
 function m.UpdateFilterTags(request,filter)
   local requiredTagNames = {}
   local bannedTagNames = {}
-  print(request.params.plustagselect)
-  for word in request.params.plustagselect:gmatch('%S+') do
-    print(word)
-    table.insert(requiredTagNames, word)
-  end
-  if request.params.minustagselect then
-    for word in request.params.minustagselect:gmatch('%S+') do
-      table.insert(bannedTagNames, word)
-    end
-  end
+
+  local args = ngx.req.get_post_args()
+  requiredTagNames = args.plustagselect or requiredTagNames
+  bannedTagNames = args.minustagselect or bannedTagNames
 
   local userID = request.session.userID
 
@@ -328,7 +322,10 @@ function m.ViewFilterSettings(request)
     ngx.log(ngx.ERR, 'no filter label found!')
     return 'error!'
   end
-  local user = request.userInfo
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local user = userAPI:GetUser(self.session.userID)
 
   if user.role ~= 'Admin' then
     if filter.ownerID ~= request.session.userID then

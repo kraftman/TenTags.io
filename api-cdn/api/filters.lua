@@ -1,4 +1,5 @@
 
+
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
@@ -126,6 +127,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
 	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
+	ok, err = self:InvalidateKey('userfilter', userID)
 
 	-- cant combine, due to other uses of function
 	 ok, err = self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
@@ -530,18 +532,25 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 
 	--generate actual tags
 	local newrequiredTagNames, newbannedTagNames = {}, {}
-	for k,v in pairs(requiredTagNames) do
-		if v:gsub(' ', '') ~= '' then
-			newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+	if type(requiredTagNames) == 'table' then
+		for k,v in pairs(requiredTagNames) do
+			if v:gsub(' ', '') ~= '' then
+				newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
 		end
-	end
-	for k,v in pairs(bannedTagNames) do
-		if v ~= '' then
-			newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
-		end
+	else
+		table.insert(newrequiredTagNames, tagAPI:CreateTag(userID, requiredTagNames).name)
 	end
 
-
+	if type(bannedTagNames) == 'table' then
+		for k,v in pairs(bannedTagNames) do
+			if v ~= '' then
+				newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
+		end
+	else
+		table.insert(newbannedTagNames, tagAPI:CreateTag(userID, bannedTagNames).name)
+	end
 
 	ok, err = self.redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
 	if not ok then

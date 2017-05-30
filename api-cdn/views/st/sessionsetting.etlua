@@ -3,7 +3,7 @@
   | <span><%= TimeAgo(ngx.time() - accountSession.lastSeen) %></span>
 
   <br>
-  IP: <%= accountSession.ip -%>
+  IP: <%= accountSession.ip -%> City: <%= accountSession.city or 'unknown' %>
   <br>
   <% if not accountSession.killed then %>
     <a class = 'btn' href="<%= url_for('killsession',{sessionID = accountSession.id}) %>"><%= accountSession.killed and 'Killed' or 'Kill' -%></a>

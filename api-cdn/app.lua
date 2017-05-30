@@ -71,13 +71,31 @@ require 'api':Register(app)
 require 'admin':Register(app)
 require 'search':Register(app)
 
-if config._name == 'Development' then
+if config._name == 'development' then
   require 'auto':Register(app)
+  require 'testing.perftest':Register(app)
 end
 
 -- TESTING
---require 'testing.perftest':Register(app)
+app:get('/test', function(request)
+  local test = 'test: '
+  test = test..(ngx.var.geoip_region or 'no region')
+  test = test..(ngx.var.geoip_org or 'no org')
+  test = test..(ngx.var.geoip_city or 'no city')
+  test = test..(ngx.var.geoip_region_name or 'no region')
+  test = test..ngx.var.remote_addr
 
+  for k,v in pairs(request.req.headers) do
+    if type(v) == 'string' then
+      print(k, ' ', v)
+    end
+  end
+  print('this')
+
+
+  return test
+
+end)
 
 
 return app

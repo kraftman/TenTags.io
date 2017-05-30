@@ -6,19 +6,20 @@ services:
       - ./api-cdn:/opt/openresty/nginx/conf
     env_file:
       - filtta.env
-
-  imghost:
-    image: tenstartups/openresty
+  imgprocess:
+    tty: true
+    privileged: true
+    build: imgprocess/.
     volumes:
-     - ./imghost:/imghost
-     - ./www:/var/www
-    entrypoint: ["nginx", "-c", "/imghost/nginx/conf/nginx.conf", "-p", "/imghost/nginx/"]
-  backup:
-    build: backup/.
-    volumes:
-     - ./backup:/usr/src/app
-     - ./redis:/data
-    command: ['nodemon', 'server.js']
+     - ./imgprocess/lua:/lua
+    env_file:
+     - filtta.env
+  #backup:
+  #  build: backup/.
+  #  volumes:
+  #   - ./backup:/usr/src/app
+  #   - ./redis:/data
+  #  command: ['nodemon', 'server.js']
   # phantom:
   #   image: cmfatih/phantomjs
   #   volumes:

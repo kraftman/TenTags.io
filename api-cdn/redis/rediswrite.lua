@@ -569,7 +569,6 @@ function write:EmptyFilter()
       end
     end
   end
-  print('done')
 
   return true
 
@@ -583,7 +582,7 @@ function write:CreateFilterPostInfo(red, filter,postInfo)
   -- is this set useless?
   red:sadd('filterposts:'..filter.id, postInfo.id)
   local ranges = {'','hour:', 'day:', 'week:', 'month:', 'year:'}
-  
+
   for _,v in pairs(ranges) do
     red:zadd('filterposts:date:'..v..filter.id, postInfo.createdAt, postInfo.id)
     red:zadd('filterposts:score:'..v..filter.id, filter.score, postInfo.id)
@@ -1061,7 +1060,10 @@ function write:CreatePost(post)
 
   local red = self:GetRedisWriteConnection()
 
-  red:init_pipeline() --TODO switch toexec
+  local ok, err = red:multi()
+  if not ok then
+    return ok, err
+  end
 
     red:del('post:'..hashedPost.id)
 
@@ -1078,7 +1080,7 @@ function write:CreatePost(post)
 
     -- add post inf
     red:hmset('post:'..hashedPost.id,hashedPost)
-  local results,err = red:commit_pipeline()
+  local results, err = red:exec()
   if err then
     self:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to create post:',err)
@@ -1086,6 +1088,14 @@ function write:CreatePost(post)
 
   self:SetKeepalive(red)
   return results, err
+end
+
+function write:AddImage(postID, bbID)
+  local red = self:GetRedisWriteConnection()
+  print('adding image' , postID)
+  local ok, err = red:hset('post:'..postID, 'bbID', bbID)
+  self:SetKeepalive(red)
+  return ok, err
 end
 
 

@@ -11,6 +11,7 @@ function stats:Run()
   if r.category == 'crawler' or r.category == 'UNKNOWN' then
     return
   end
+  
 
 
   local stat = {

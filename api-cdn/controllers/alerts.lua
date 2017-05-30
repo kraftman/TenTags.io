@@ -7,12 +7,15 @@ local respond_to = (require 'lapis.application').respond_to
 local userAPI = require 'api.users'
 local threadAPI = require 'api.threads'
 local commentAPI = require 'api.comments'
+local postAPI = require 'api.posts'
 local tinsert = table.insert
 
 function m.ViewAlerts(request)
   local alerts = userAPI:GetUserAlerts(request.session.userID)
-  
+
   request.alerts = {}
+
+  print(to_json(alerts))
 
   for _, v in pairs(alerts) do
 
@@ -26,6 +29,10 @@ function m.ViewAlerts(request)
       comment.username = userAPI:GetUser(comment.createdBy).username
 
       tinsert(request.alerts,{alertType = 'comment', data = comment})
+    elseif v:find('post') then
+      local post = postAPI:GetPost(request.session.userID, v:match('post:(%w+)'))
+
+      tinsert(request.alerts, {alertType = 'post', data = post})
     end
   end
   return { render = 'alerts'}

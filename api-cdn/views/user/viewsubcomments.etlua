@@ -1,8 +1,11 @@
 
-
+<% render("views.user.userbar",{username = params.username}) %>
+<a href='<%= url_for("subscribeusercomment", {username = params.username})%>' >
+<%= userInfo.commentSubscribers[session.userID] and 'Unsubscribe' or 'Subscribe' %>
+</a>
 
 <div class = 'panel panel-default'>
-  <% for i, comment in pairs(comments) do print(to_json(comment))%>
+  <% for i, comment in pairs(comments) do %>
     <% render("views.st.comment",{comment = comment}) %>
   <% end %>
 

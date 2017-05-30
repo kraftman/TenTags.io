@@ -36,6 +36,7 @@ function userread:GetUserAlerts(userID, startAt, endAt)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user alerts: ',err)
   end
+  print(self:to_json(ok))
   if ok == ngx.null then
     return {}
   else
@@ -122,6 +123,24 @@ function userread:GetUserTagVotes(userID)
   end
 end
 
+function userread:GetRecentPostVotes(userID, direction)
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrange('userPostVotes:date:'..direction..':'..userID,0, 100)
+  self:SetKeepalive(red)
+
+  if not ok then
+    return nil, err
+  end
+
+  if ok == ngx.null then
+    return {}
+  else
+    return ok
+  end
+end
+
+
+
 function userread:GetUserPostVotes(userID)
   -- replace with bloom later
   local red = self:GetUserReadConnection()
@@ -146,6 +165,7 @@ function userread:GetUser(userID)
   end
 
   if not ok or ok == ngx.null then
+
     return nil
   end
 
@@ -161,7 +181,32 @@ function userread:GetUser(userID)
       targetUserID = k:match('userlabel:(.+)')
       user.userLabels[targetUserID] = v
       user[k] = nil
-    end
+    elseif k:find('commentSubscriptions:') then
+      user.commentSubscriptions = self:from_json(v) or {}
+      user[k] = nil
+    elseif k:find('commentSubscribers:') then
+      user.commentSubscribers = self:from_json(v) or {}
+      user[k] = nil
+    elseif k:find('postSubscriptions:') then
+      user.postSubscriptions = self:from_json(v) or {}
+      user[k] = nil
+    elseif k:find('postSubscribers:') then
+      user.postSubscribers = self:from_json(v) or {}
+      user[k] = nil
+  end
+  end
+  --print(self:to_json(user))
+  if user.commentSubscribers == ngx.null or not user.commentSubscribers then
+    user.commentSubscribers = {}
+  end
+  if user.commentSubscriptions == ngx.null or not user.commentSubscriptions then
+    user.commentSubscriptions = {}
+  end
+  if user.postSubscribers == ngx.null or not user.postSubscribers then
+    user.postSubscribers = {}
+  end
+  if user.postSubscriptions == ngx.null or not user.postSubscriptions then
+    user.postSubscriptions = {}
   end
 
   user.fakeNames = user.fakeNames == '1' and true or false

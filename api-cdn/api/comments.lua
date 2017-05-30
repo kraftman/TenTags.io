@@ -87,7 +87,7 @@ function api:SubscribeComment(userID, postID, commentID)
 		id = userID..':'..commentID
 	}
 
-	return self.self.commentWrite:QueueJob('commentsub', commentSub)
+	return self.redisWrite:QueueJob('commentsub', commentSub)
 
 end
 

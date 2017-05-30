@@ -640,10 +640,9 @@ end
 function read:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
   local red = self:GetRedisReadConnection()
   local destionationKey = 'frontPage:'..userID..':'..sortBy
-  
+
   local ok, err = red:zrevrange(destionationKey, startAt, startAt+range)
   if not ok then
-
     return nil, err
   end
 
@@ -673,8 +672,6 @@ function read:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
   -- we have as many as we can get, send them back
   self:SetKeepalive(red)
   return ok, err
-
-
 end
 
 function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
@@ -693,6 +690,9 @@ function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
 
   for _,filterID in pairs(userFilterIDs) do
     table.insert(keyedFilterIDs, sortToKey[sortBy]..range..':'..filterID)
+  end
+  if #keyedFilterIDs == 0 then
+    return {}
   end
 
   table.insert(keyedFilterIDs, 'AGGREGATE')

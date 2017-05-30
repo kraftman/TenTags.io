@@ -1,0 +1,8 @@
+<div class = 'panel panel-default' >
+  <form method="POST" enctype="multipart/form-data">
+			<table>
+				<tr><td>File to upload:</td><td><input type="file" name="upload_file" /></td></tr>
+				<tr><td></td><td><input type="submit" value="Upload" /></td></tr>
+			</table>
+		</form>
+</dim>
