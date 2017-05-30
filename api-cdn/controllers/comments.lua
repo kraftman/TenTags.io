@@ -10,6 +10,27 @@ local respond_to = (require 'lapis.application').respond_to
 local m = {}
 
 
+
+function m:Register(app)
+  app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({
+    GET = m.DeleteComment,
+    POST = m.DeleteComment
+  }))
+  app:get('viewcomment','/comment/:postID/:commentID',m.ViewComment)
+
+  app:get('viewcommentshort','/c/:commentShortURL', m.ViewShortURLComment)
+  app:get('subscribecomment','/comment/subscribe/:postID/:commentID', m.SubscribeComment)
+  app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
+  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', m.DownVoteComment)
+  app:post('newcomment','/comment/', m.CreateComment)
+
+  app:match('viewcomment','/comment/:postID/:commentID', respond_to({
+    GET = m.ViewComment,
+    POST = m.EditComment
+  }))
+end
+
+
 function m.ViewComment(request)
   request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
 
@@ -128,25 +149,6 @@ function m.DeleteComment(request)
   else
     return 'failed'..err
   end
-end
-
-function m:Register(app)
-  app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({
-    GET = m.DeleteComment,
-    POST = m.DeleteComment
-  }))
-  app:get('viewcomment','/comment/:postID/:commentID',m.ViewComment)
-
-  app:get('viewcommentshort','/c/:commentShortURL', m.ViewShortURLComment)
-  app:get('subscribecomment','/comment/subscribe/:postID/:commentID', m.SubscribeComment)
-  app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
-  app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', m.DownVoteComment)
-  app:post('newcomment','/comment/', m.CreateComment)
-
-  app:match('viewcomment','/comment/:postID/:commentID', respond_to({
-    GET = m.ViewComment,
-    POST = m.EditComment
-  }))
 end
 
 return m

@@ -1,5 +1,5 @@
 
-<div class="comment" tabindex="0" <%- GetColorForDepth(child, depth) %> >
+<div class="comment" data-commentid='<%= child.id %>' tabindex="0" <%- GetColorForDepth(child, depth) %> >
 
   <a href='' class='comment-collapse' ></a>
   <div class="comment-body <% for _,filter in pairs((child or {}).filters or {}) do %> filter_<%= filter.title -%><% end %>" >
@@ -42,10 +42,10 @@
 
       <div class = 'comment-controls'>
         <% if not child.userHasVoted then %>
-          <a href=" <%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
+          <a class='downvotecomment-button' href="<%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
             <span class="ti-angle-down"></span>
           </a>
-          <a href=" <%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
+          <a class='upvotecomment-button' href="<%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
             <span class="ti-angle-up"></span>
           </a>
         <% end %>

@@ -26,7 +26,42 @@ $(function() {
     e.preventDefault();
   });
 
+  MoveReply();
+  HandleCommentVotes();
+
 })
+
+function HandleCommentVotes() {
+  $('.upvotecomment-button, .downvotecomment-button').click(function(e){
+    e.stopPropagation()
+    console.log(e.currentTarget)
+    e.preventDefault();
+    console.log('/api'+$(e.currentTarget).attr('href'))
+     $.get('/api'+$(e.currentTarget).attr('href'),function(data){
+       console.log(data);
+       if(data.error == false ){
+         $(e.currentTarget).parent().children('.upvotecomment-button, .downvotecomment-button').hide()
+       }
+     })
+  })
+}
+
+function MoveReply(){
+  $('.comment').click(function(e) {
+    console.log(e.currentTarget)
+    $('#commentform').insertAfter(e.currentTarget);
+    $('#commentform').children('#parentID').val($(e.currentTarget).data('commentid'))
+    e.stopPropagation();
+  })
+  $('.post-comments').click(function(e){
+    console.log(e.target)
+    if ($(e.target).hasClass('post-comments')) {
+       $('#commentform').prependTo($('.post-comments'))
+       $('#commentform').children('#parentID').val($('#postID').val())
+     }
+  })
+
+}
 
 function ChangeFocus(value) {
   if (index == -1) {

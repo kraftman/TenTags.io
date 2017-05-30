@@ -1,7 +1,7 @@
 
 <div class='tag-med tag' data-id='<%= tag.name %>' <%- TagColor(tag.score) %>>
   <% if not tag.userHasVoted then %>
-    <a class = 'upvote'  href='#'>
+    <a class = 'downvote'  href='#'>
         <span class="ti-angle-left"></span>
     </a>
   <% end %>
@@ -17,7 +17,7 @@
   <span class='tagcount' ><%= (tag.up-tag.down) %></span>
 
   <% if not tag.userHasVoted then %>
-    <a class = 'downvote' href='#'>
+    <a class = 'upvote' href='#'>
       <span class="ti-angle-right"></span>
     </a>
   <% end %>

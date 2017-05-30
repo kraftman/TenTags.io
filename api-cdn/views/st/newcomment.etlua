@@ -2,7 +2,7 @@
 
 <form id="commentform" method="post" action="<%= url_for('newcomment') %>" >
   <input id="parentID" name='parentID' type="hidden" value="<%= post.id%>" name="name">
-  <input id="postID" name='postID' type="hidden" value="<%= post.id%>" name="name">
+  <input name='postID' type="hidden" value="<%= post.id%>" name="name">
 
   <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="5"></textarea>
   </br>

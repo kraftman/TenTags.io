@@ -87,61 +87,8 @@ function Recaptcha(){
 }
 
 
-function onStartListener(event){
 
-  $(event.target).children('a').click(function(e){e.preventDefault()})
-  console.log('this started')
-}
-
-function onEndListener(event){
-  var target = event.target
-  var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
-  console.log(x)
-
-  $(event.target).children('a').off('click');
-  var y = 0;
-
-  event.preventDefault();
-  console.log(event.dx)
-  if ((event.dx<=0 && event.dx < -200)) {
-    console.log('voting down')
-    VotePost(event.target,'down')
-  } else if ((event.dx>0 && event.dx> 200)){
-    console.log('voting up')
-    VotePost(event.target,'up')
-
-  } else {
-
-  }
-
-
-  target.style.webkitTransform =
-  target.style.transform =
-  'translate(' + 0 + 'px, ' + y + 'px)';
-
-  target.setAttribute('data-x', 0);
-  target.setAttribute('data-y', 0);
-
-}
-
-
-  function dragMoveListener (event) {
-    var target = event.target,
-        // keep the dragged position in the data-x/data-y attributes
-        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
-        y = 0 //(parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-
-    // translate the element
-    target.style.webkitTransform =
-    target.style.transform =
-      'translate(' + x + 'px, ' + y + 'px)';
-
-    // update the posiion attributes
-
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
-  }
+  
 
 function SubmitLogin(){
 

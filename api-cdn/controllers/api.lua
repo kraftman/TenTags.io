@@ -8,6 +8,7 @@ local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local tinsert = table.insert
 local postAPI = require 'api.posts'
+local commentAPI = require 'api.comments'
 
 
 function m:Register(app)
@@ -16,12 +17,56 @@ function m:Register(app)
   app:match('userfilters', '/api/user/filters', self.GetUserFilters)
   app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
   app:match('/api/post/:postID/upvote', self.UpvotePost)
+  app:match('/api/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
+  app:match('/api/comment/downvote/:postID/:commentID/:commentHash', m.DownVoteComment)
   app:match('/api/post/:postID/downvote', self.DownvotePost)
   app:match('/api/user/:userID/settings', self.GetUserSettings)
   app:match('/api/frontpage', self.GetFrontPage)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
   app:match('/api/filters/create', self.CreateFilter)
   app:match('/api/tags/:searchString', self.SearchTags)
+end
+
+
+function m.HashIsValid(request)
+  local realHash = ngx.md5(request.params.commentID..request.session.userID)
+  if realHash ~= request.params.commentHash then
+    ngx.log(ngx.ERR, 'hashes dont match!')
+    return false
+  end
+  return true
+end
+
+
+function m.UpvoteComment(request)
+  if not request.session.userID then
+    return {json = {error = 'you must be logged in!', data = {}}}
+  end
+  if not m.HashIsValid(request) then
+    return 'hashes dont match'
+  end
+  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
+  if ok then
+    return {json = {error = false, data = {true}} }
+  else
+    return {json = {error = {err}, data = {}}}
+  end
+end
+
+function m.DownVoteComment(request)
+  if not request.session.userID then
+    return {json = {error = 'you must be logged in!', data = {}}}
+  end
+  if not m.HashIsValid(request) then
+    return 'hashes dont match'
+  end
+
+  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
+  if ok then
+    return {json = {error = false, data = {true}} }
+  else
+    return {json = {error = {err}, data = {}}}
+  end
 end
 
 function m.SubscribeFilter(request)

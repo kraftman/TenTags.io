@@ -134,11 +134,11 @@
     <% end %>
   </div>
 
+  <% render("views.st.newcomment") %>
 
   <% for _,child in pairs(comments[post.id].children or {}) do local depth = depth and depth+1 or 1  %>
     <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
   <% end %>
 
-  <% render("views.st.newcomment") %>
 
 </div>
