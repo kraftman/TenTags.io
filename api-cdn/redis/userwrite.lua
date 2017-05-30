@@ -24,6 +24,13 @@ function userwrite:LoadScript(script)
   return ok
 end
 
+function userwrite:AddPost(post)		
+   local red = self:GetUserWriteConnection()
+   local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
+   -- post has no score since its per-filter
+   return ok, err
+ end
+
 -- TODO:remove this
 function userwrite:AddNewUser(time, accountID, email)
   local red = self:GetUserWriteConnection()
