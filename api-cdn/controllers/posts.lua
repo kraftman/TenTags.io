@@ -318,6 +318,9 @@ end
 
 
 function m.UpvoteTag(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
@@ -325,6 +328,10 @@ function m.UpvoteTag(request)
 end
 
 function m.DownvoteTag(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 

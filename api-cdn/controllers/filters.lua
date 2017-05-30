@@ -147,8 +147,8 @@ function m.DisplayFilter(request)
   local sortBy = request.params.sortBy or 'fresh'
   local startAt = request.params.startAt or 0
   local range = 10
-  print(startAt, range)
-  request.posts = filterAPI:GetFilterPosts(request.session.userID, filter, sortBy, startAt, range)
+
+  request.posts = filterAPI:GetFilterPosts(request.session.userID or 'default', filter, sortBy, startAt, range)
   --(to_json(request.posts))
   request.AddParams = AddParams
   if request.session.userID then

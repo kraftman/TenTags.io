@@ -139,7 +139,7 @@ function cache:SearchPost(queryString)
 end
 
 function cache:PurgeKey(keyInfo)
-  print('purging: ', to_json(keyInfo))
+  --print('purging: ', to_json(keyInfo))
   if keyInfo.keyType == 'account' then
     if PRECACHE_INVALID then
       userDict:delete(keyInfo.id)
@@ -158,7 +158,7 @@ function cache:PurgeKey(keyInfo)
   elseif keyInfo.keyType == 'useralert' then
     userAlertDict:delete(keyInfo.id)
   elseif keyInfo.keyType == 'post' then
-    print('purging post: ',keyInfo.id)
+    --print('purging post: ',keyInfo.id)
     postDict:delete(keyInfo.id)
     if PRECACHE_INVALID then
       self:GetPost(keyInfo.id)
@@ -518,7 +518,7 @@ function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
 
   local unSeenPostIDs = {}
   local postIDs = redisRead:GetFilterPosts(filter, sortBy,startAt, range)
-
+  print(#postIDs, userID)
   if userID == 'default' then
     unSeenPostIDs = postIDs
   else
