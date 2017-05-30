@@ -395,8 +395,13 @@ function m.GetIcon(request)
     print('no bigIcon id')
     return { redirect_to = '/static/icons/notfound.png' }
   end
-  local imageInfo = bb:GetImage(post.bigIcon)
-  --print(imageData)
+  local imageInfo, err = bb:GetImage(post.bigIcon)
+  if not imageInfo then
+    print('couldnt get image: ', err)
+
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
   request.iconData = imageInfo.data
   ngx.header['Content-Type'] = imageInfo['Content-Type']
 
