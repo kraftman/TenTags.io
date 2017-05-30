@@ -3,6 +3,7 @@
 
 local magick = require 'magick'
 local redis = require 'redis'
+local socket = require 'socket'
 
 local http = require("socket.http")
 local ltn12 = require("ltn12")
@@ -263,6 +264,12 @@ end
 function loader:AddImage(postID, key, bbID)
   print('adding to post: post:'..postID, key, bbID )
   local ok, err = red:hset('post:'..postID, key, bbID)
+
+  local timeInvalidated = socket.gettime()
+  print(timeInvalidated)
+  local data = cjson.encode({keyType = 'post', id = postID})
+  local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+
   return true
 end
 
@@ -415,7 +422,7 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost() end)
-  
+  print(status)
   if not status then
     print(err)
   end

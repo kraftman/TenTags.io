@@ -1,4 +1,5 @@
 
+
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
@@ -126,6 +127,7 @@ function api:CreateFilter(userID, filterInfo)
 
 	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
 	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
+	ok, err = self:InvalidateKey('userfilter', userID)
 
 	-- cant combine, due to other uses of function
 	 ok, err = self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)

@@ -52,7 +52,7 @@ function m:Register(app)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
   app:get('geticon', '/icon/:postID', self.GetIcon)
-  app:get('geticon', '/icon/:postID/small', self.GetIconSmall)
+  app:get('geticonsmall', '/icon/:postID/small', self.GetIconSmall)
   app:get('getimage', '/image/:postID', self.GetImage)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
@@ -142,8 +142,10 @@ function m.CreatePost(request)
 
 
   local file = request.params.upload_file
-
-  if request.params.upload_file and not file.content == '' then
+  --print(file.content)
+  --print(file.content == '', request.params.upload == true)
+  if request.params.upload_file and (file.content ~= '') then
+    print('file found')
 
 
     local fileID = uuid.generate_random()
@@ -389,8 +391,10 @@ function m.GetIcon(request)
   request.post = post
 
   if not post.bigIcon then
-    print('no bb id')
-      return { redirect_to = '/static/icons/notfound.png' }
+    print('no bigIcon id')
+
+    return 'nope'
+    --return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.bigIcon)
   --print(imageData)
@@ -402,7 +406,7 @@ function m.GetIcon(request)
   return ngx.exit(ngx.HTTP_OK)
 end
 
-function m.GetIcon(request)
+function m.GetIconSmall(request)
   if not request.params.postID then
     return { redirect_to = '/static/icons/notfound.png' }
   end
@@ -417,8 +421,9 @@ function m.GetIcon(request)
   request.post = post
 
   if not post.smallIcon then
-    print('no smallIcon')
-      return { redirect_to = '/static/icons/notfound.png' }
+    --print('no smallIcon')
+    return 'no smallicon id'
+    --return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo,err = bb:GetImage(post.smallIcon)
   --print(imageData)

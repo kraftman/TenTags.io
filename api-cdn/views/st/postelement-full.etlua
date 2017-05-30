@@ -17,7 +17,7 @@
 
   <% if post.imgURL then %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
-      <img class = 'linkImg' src="/icons/<%= post.id %>b.png" >
+      <img class = 'linkImg' src="/icon/<%= post.id %>" >
     </a>
   <% else %>
   <a class = 'postelement-text' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) -%>">

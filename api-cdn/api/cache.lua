@@ -157,6 +157,7 @@ function cache:PurgeKey(keyInfo)
   elseif keyInfo.keyType == 'useralert' then
     userAlertDict:delete(keyInfo.id)
   elseif keyInfo.keyType == 'post' then
+    print('purging post: ',keyInfo.id)
     postDict:delete(keyInfo.id)
     if PRECACHE_INVALID then
       self:GetPost(keyInfo.id)
