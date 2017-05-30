@@ -325,7 +325,7 @@ function m.ViewFilterSettings(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  local user = userAPI:GetUser(self.session.userID)
+  local user = userAPI:GetUser(request.session.userID)
 
   if user.role ~= 'Admin' then
     if filter.ownerID ~= request.session.userID then

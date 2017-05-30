@@ -290,7 +290,8 @@ function api:CreateSubUser(accountID, username)
     username = self:SanitiseHTML(username,20),
     filters = cache:GetUserFilterIDs('default'),
     parentID = accountID,
-    enablePM = true
+    enablePM = 1,
+		nsfwLevel = 0
   }
 	subUser.lowerUsername = subUser.username:lower()
 
@@ -457,7 +458,7 @@ function api:UpdateUser(userID, userToUpdate)
 		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
 		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,
 		hideClickedPosts = userToUpdate.hideClickedPosts and 1 or 0,
-		showNSFW = userToUpdate.showNSFW and 1 or 0,
+		nsfwLevel = userToUpdate.nsfwLevel,
 		showNSFL = userToUpdate.showNSFL and 1 or 0,
 		username = userToUpdate.username,
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),

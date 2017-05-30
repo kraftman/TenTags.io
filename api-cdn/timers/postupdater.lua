@@ -17,10 +17,14 @@ local elastic = require 'lib.elasticsearch'
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw',
 	nsfl = 'nsfl',
-	nsfw1 = 'nsfw1',
-	nsfw2 = 'nsfw2',
-	nsfw3 = 'nsfw3'
 
+}
+
+local NSFW_LEVELS = {
+	nsfw = 1,
+	nsfw1 = 1,
+	nsfw2 = 2,
+	nsfw3 = 3
 }
 
 local common = require 'timers.common'
@@ -440,22 +444,23 @@ function config:UpdatePostFilters(data)
 		end
 	end
 
-  local specialTagFound = {}
-
+	local nsfwLevel = 0
   for _,tag in pairs(post.tags) do
 		--print(tag.name)
-    if SPECIAL_TAGS[tag.name] then
-      specialTagFound[SPECIAL_TAGS[tag.name]] = true
-    end
+    if tag.name:find('nsfl') then
+			post.nsfl = 'true'
+		end
+		if NSFW_LEVELS[tag.name] then
+			nsfwLevel = math.max(nsfwLevel, NSFW_LEVELS[tag.name])
+		end
   end
+	print('nsfw level: ',nsfwLevel)
+	if nsfwLevel > 0 then
+		post.nsfwLevel = nsfwLevel
+	else
+		post.nsfwLevel = nil
+	end
 
-  for k,v in pairs(SPECIAL_TAGS) do
-    if specialTagFound[k] then
-      post['specialTag:'..v] = 'true'
-    else
-      post['specialTag:'..v] = 'false'
-    end
-  end
 
   --print('removing from: '..to_json(purgeFilterIDs))
   --print('adding to: '..to_json(newFilters))

@@ -543,7 +543,7 @@ function read:GetPost(postID)
       post.reports[reporterID] = v
 
       post[k] = nil
-    elseif k:find('^specialTag:') then
+    elseif k:find('^nsfl:') then
       post[k] = v == 'true' and true or nil
 
     elseif k:find('^edit:') then

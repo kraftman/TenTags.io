@@ -27,10 +27,18 @@
       </br>
       <label><input type="checkbox" name='hideClickedPosts' <%= hideClickedPosts -%>>Hide Clicked Posts</label>
       </br>
-      <label><input type="checkbox" name='showNSFW' <%= showNSFW -%>>Show NSFW</label>
-      </br>
       <label><input type="checkbox" name='showNSFL' <%= showNSFL -%>>Show NSFL</label>
       </br>
+
+      NSFW Level:
+      <select name = 'nsfwLevel'>
+        <option value="0" <%= nsfwLevel == 0 and 'selected' or '' %>>Safe for work</option>
+        <option value="1" <%= nsfwLevel == 1 and 'selected' or '' %> >Underwear/Bikinis/Etc</option>
+        <option value="2" <%= nsfwLevel == 2 and 'selected' or '' %> >Nudity</option>
+        <option value="3" <%= nsfwLevel == 3 and 'selected' or '' %> >Porn</option>
+      </select>
+    </br>
+  </br>
 
     <button class='btn btn-default' type="submit" value="Submit">Save</button>
 

@@ -48,9 +48,9 @@ function m.DisplaySettings(request)
   request.hideSeenPosts = user.hideSeenPosts and 'checked' or ''
   request.hideVotedPosts = user.hideVotedPosts and 'checked' or ''
   request.hideClickedPosts = user.hideClickedPosts and 'checked' or ''
-  request.showNSFW = user.showNSFW and 'checked' or ''
   request.showNSFL = user.showNSFL and 'checked' or ''
   request.userBio = user.bio
+  request.nsfwLevel = tonumber(user.nsfwLevel)
 
 
   return {render = 'user.subsettings'}
@@ -70,7 +70,7 @@ function m.UpdateSettings(request)
   user.hideSeenPosts = request.params.hideSeenPosts and true or false
   user.hideVotedPosts = request.params.hideVotedPosts and true or false
   user.hideClickedPosts = request.params.hideClickedPosts and true or false
-  user.showNSFW = request.params.showNSFW and true or false
+  user.nsfwLevel = request.params.nsfwLevel
   user.showNSFL = request.params.showNSFL and true or false
   user.bio = request.params.userbio or ''
 

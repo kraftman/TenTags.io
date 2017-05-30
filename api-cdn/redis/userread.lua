@@ -214,7 +214,6 @@ function userread:GetUser(userID)
   user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
   user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
-  user.showNSFW = user.showNSFW == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false
 
   if user.deleted then
