@@ -375,6 +375,7 @@ function m.DownvotePost(request)
 end
 
 function m.GetIcon(request)
+  print('getting icon')
   if not request.params.postID then
     print('no post id for image')
     return { redirect_to = '/static/icons/notfound.png' }
