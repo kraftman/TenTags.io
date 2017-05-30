@@ -12,9 +12,10 @@ $(function() {
   })
 
   $('.comment-collapse').click( function(e) {
+    e.preventDefault();
     console.log('hid comment')
     $(this).parent().find('.commentInfo').toggle()
-    e.preventDefault();
+
   })
 
   $(document).on('click', '.togglefiltercomment', function(e) {

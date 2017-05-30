@@ -11,7 +11,7 @@
       <p class = 'post-text'><%= post.title -%></p>
     </a>
     </br>
-    <span class='comment-link'><%= post.views or 0 %> views</span>
+    <span class='comment-views'><%= post.views or 0 %> views</span>
     <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
     <a class='user-link' href="<%= url_for('viewuser',{username = post.creatorName or ''}) %>"> <%= post.creatorName -%></a>
     <% if post.filters then %>
