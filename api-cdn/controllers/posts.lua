@@ -392,9 +392,7 @@ function m.GetIcon(request)
 
   if not post.bigIcon then
     print('no bigIcon id')
-
-    return 'nope'
-    --return { redirect_to = '/static/icons/notfound.png' }
+    return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.bigIcon)
   --print(imageData)
@@ -422,8 +420,7 @@ function m.GetIconSmall(request)
 
   if not post.smallIcon then
     --print('no smallIcon')
-    return 'no smallicon id'
-    --return { redirect_to = '/static/icons/notfound.png' }
+    return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo,err = bb:GetImage(post.smallIcon)
   --print(imageData)
@@ -454,8 +451,7 @@ function m.GetImage(request)
   request.post = post
 
   if not post.bbID then
-    print('no bb id')
-    return ''
+    return { redirect_to = '/static/icons/notfound.png' }
   end
   local imageInfo = bb:GetImage(post.bbID)
   --print(imageData)
