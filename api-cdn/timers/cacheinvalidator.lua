@@ -53,13 +53,8 @@ end
 
 function config:InvalidateCache()
   -- we want this to run on all workers so dont use locks
-
-  local ok, err = self.util:GetLock('TrimCacheInvalidations', CONFIG_CHECK_INTERVAL)
-	if not ok then
-		return
-	end
-
   local timeNow = self:MilliSecondTime()
+  self.lastUpdate = timeNow
 
   local ok, err = redisRead:GetInvalidationRequests(self.lastUpdate, timeNow)
   if not ok then
