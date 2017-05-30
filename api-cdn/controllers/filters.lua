@@ -322,7 +322,10 @@ function m.ViewFilterSettings(request)
     ngx.log(ngx.ERR, 'no filter label found!')
     return 'error!'
   end
-  local user = request.userInfo
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local user = userAPI:GetUser(self.session.userID)
 
   if user.role ~= 'Admin' then
     if filter.ownerID ~= request.session.userID then
