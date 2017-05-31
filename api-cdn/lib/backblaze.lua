@@ -190,7 +190,7 @@ function bb:GetImage(imageID)
 
   local ok, err = self:GetAuthToken()
   if not ok then
-    ngx.log(ngx.ERR, 'err')
+    ngx.log(ngx.ERR, err)
     return nil, err
   end
 
