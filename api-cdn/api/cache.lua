@@ -400,8 +400,7 @@ function cache:ConvertShortURL(shortURL)
 end
 
 function cache:FiltersOverlap(postFilters, commentFilters)
-  print(to_json(postFilters))
-  print(to_json(commentFilters))
+
   for _,postFilterID in pairs(postFilters) do
     for _,commentFilterID in pairs(commentFilters) do
       if postFilterID == commentFilterID then

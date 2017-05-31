@@ -84,11 +84,13 @@ function Recaptcha(){
   $('.form-login').focusout(function(){
     $('.form-login > div').hide();
   })
+
+  $('.g-recaptcha').prop('disabled',true)
 }
 
 
 
-  
+
 
 function SubmitLogin(){
 

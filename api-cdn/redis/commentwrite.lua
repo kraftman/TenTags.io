@@ -21,7 +21,10 @@ function commentwrite:UpdateCommentField(postID,commentID,field,newValue)
     ngx.log(ngx.ERR, 'error getting comment: ',err)
     return ok, err
   end
-
+  if ok == ngx.null then
+    print('comment not found: ', postID, '   ',commentID)
+    return true
+  end
   local comment  = self:from_json(ok)
   comment[field] = newValue
   local serialComment = self:to_json(comment)
