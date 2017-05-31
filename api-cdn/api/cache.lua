@@ -25,6 +25,7 @@ local userFrontPagePostDict = ngx.shared.userFrontPagePosts
 local userDict = ngx.shared.users
 local commentDict = ngx.shared.comments
 local voteDict = ngx.shared.userVotes
+local imageDict = ngx.shared.images
 
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -52,6 +53,25 @@ function cache:GetThreads(userID, startAt, range)
   local threads = redisRead:GetThreadInfos(threadIDs)
 
   return threads
+end
+
+function cache:GetImage(imageID)
+  local ok, err = imageDict:get(imageID)
+  if err then
+    print(err)
+  end
+  if ok then
+    print('got from cache')
+  end
+  return ok, err
+end
+
+function cache:SetImage(imageID, imageData)
+  local ok, err = imageDict:set(imageID, imageData)
+  if not ok then
+    print('error setting image: ', err)
+  end
+  return ok
 end
 
 function cache:SavedPostExists(userID, postID)
