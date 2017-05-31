@@ -24,7 +24,7 @@ function userwrite:LoadScript(script)
   return ok
 end
 
-function userwrite:AddPost(post)		
+function userwrite:AddPost(post)
    local red = self:GetUserWriteConnection()
    local ok, err = red:zadd('userPosts:date:'..post.createdBy, post.createdAt, post.id)
    -- post has no score since its per-filter
@@ -45,6 +45,7 @@ function userwrite:AddUserTagVotes(userID, postID, tagNames)
   for k,v in pairs(tagNames) do
     tagNames[k] = postID..':'..v
   end
+
 
   local ok, err = red:sadd('userTagVotes:'..userID, tagNames)
   self:SetKeepalive(red)
@@ -218,8 +219,6 @@ end
 function userwrite:CreateSubUser(user)
 
   local hashedUser = {}
-  hashedUser.filters = {}
-
 
   for k,v in pairs(user) do
     --print(k)
@@ -233,21 +232,23 @@ function userwrite:CreateSubUser(user)
       hashedUser['postSubscriptions:'] = to_json(v)
     elseif k == 'postSubscribers' then
       hashedUser['postSubscribers:'] = to_json(v)
+    elseif k == 'blockedUsers' then
+      hashedUser['blockedUsers:'] = to_json(v)
     else
       hashedUser[k] = v
     end
   end
 
   local red = self:GetUserWriteConnection()
-  hashedUser.filters = hashedUser.filters or {}
 
-  red:init_pipeline()
+  red:multi()
     red:hmset('user:'..hashedUser.id, hashedUser)
-    for _,filterID in pairs(hashedUser.filters) do
-      red:sadd('userfilters:'..hashedUser.id,filterID)
-    end
+
     red:hset('userToID',hashedUser.username:lower(),hashedUser.id)
-  local results, err = red:commit_pipeline()
+  local results, err = red:exec()
+  if not results then
+    print('couldnt create user: ', err)
+  end
   self:SetKeepalive(red)
 
   if err then
@@ -256,6 +257,23 @@ function userwrite:CreateSubUser(user)
   end
   return true
 
+end
+
+function userwrite:UpdateBlockedUsers(user)
+  local red = self:GetUserWriteConnection()
+
+  local ok, err = red:hset('user:'..user.id, 'blockedUsers:', to_json(user.blockedUsers))
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
+function userwrite:UpdateUserField(userID, field, value)
+  local red = self:GetUserWriteConnection()
+
+  local ok, err = red:hset('user:'..userID, field, value)
+  self:SetKeepalive(red)
+  return ok, err
 end
 
 function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)

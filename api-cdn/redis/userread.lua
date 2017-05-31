@@ -1,4 +1,5 @@
 
+
 --[[
 user settings ands
 seen posts
@@ -156,6 +157,7 @@ function userread:GetUserPostVotes(userID)
 end
 
 function userread:GetUser(userID)
+
   local red = self:GetUserReadConnection()
   local ok, err = red:hgetall('user:'..userID)
   self:SetKeepalive(red)
@@ -192,11 +194,18 @@ function userread:GetUser(userID)
     elseif k:find('postSubscribers:') then
       user.postSubscribers = self:from_json(v) or {}
       user[k] = nil
+    elseif k:find('blockedUsers:') then
+
+      user.blockedUsers = self:from_json(v) or {}
+      user[k] = nil
+    end
   end
-  end
-  --print(self:to_json(user))
+
   if user.commentSubscribers == ngx.null or not user.commentSubscribers then
     user.commentSubscribers = {}
+  end
+  if user.blockedUsers == ngx.null or not user.blockedUsers then
+    user.blockedUsers = {}
   end
   if user.commentSubscriptions == ngx.null or not user.commentSubscriptions then
     user.commentSubscriptions = {}
@@ -216,6 +225,7 @@ function userread:GetUser(userID)
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false
 
+  
   if user.deleted then
     return nil
   end

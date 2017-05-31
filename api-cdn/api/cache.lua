@@ -441,10 +441,21 @@ function cache:GetSortedComments(userID, postID,sortBy)
     if userID and userVotedComments[v.id] then
       v.userHasVoted = true
     end
-    
+
     if user and user.hideUnsubbedComments and not filtersOverlap then
       v.hidden = true
     end
+
+    if user then
+      for _,blockedUserID in pairs(user.blockedUsers) do
+        if v.createdBy == blockedUserID then
+          v.hidden = true
+          v.username = 'blocked'
+          break
+        end
+      end
+    end
+
 
     tinsert(indexedComments, v)
 

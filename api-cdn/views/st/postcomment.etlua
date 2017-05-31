@@ -25,11 +25,11 @@
 
     </div>
 
-    <div class="commentInfo" style='<%= child.hidden and "display: none" or ""%>'>
+    <div class="commentInfo" >
       <% if child.deleted then %>
         <p>[deleted]</p>
       <% else %>
-        <div class="comment-text <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
+        <div style='<%= child.hidden and "display: none" or ""%>' class="comment-text  <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
           <%- markdown.markdown(child.text) -%>
         </div>
       <% end %>
@@ -68,7 +68,9 @@
         <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">
           <span class="ti-plus"></span>
         </a>
-
+        <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %> ">
+          <span class="ti-sharethis"></span>
+        </a>
 
       </div>
 

@@ -83,6 +83,36 @@ function api:UserHasVotedTag(userID, postID, tagName)
 
 end
 
+function api:BlockUser(userID, userToBlockID)
+	print(userID,' == ', userToBlockID)
+	local ok, err = self:RateLimit('BlockUser:',userID, 3, 60)
+	if not ok then
+		return ok, err
+	end
+
+	local user = cache:GetUser(userID)
+	local found
+	for i,v in ipairs(user.blockedUsers) do
+		if v == userToBlockID then
+			found = true
+			table.remove(user.blockedUsers,i)
+		end
+	end
+	if not found then
+		table.insert(user.blockedUsers, userToBlockID)
+	end
+
+	ok, err = self.userWrite:UpdateBlockedUsers(user)
+	if not ok then
+		print(err)
+		return ok, err
+	end
+
+	ok, err = self:InvalidateKey('user', userID)
+	return ok, err
+
+end
+
 function api:ToggleCommentSubscription(userID, userToSubToID)
 	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
 	if not ok then
@@ -93,18 +123,16 @@ function api:ToggleCommentSubscription(userID, userToSubToID)
 	if not userToSubTo then
 		return nil, 'user not found'
 	end
-	print(to_json(userToSubTo.commentSubscribers[userID]))
 	if userToSubTo.commentSubscribers[userID] then
 		userToSubTo.commentSubscribers[userID] = nil
 	else
 		userToSubTo.commentSubscribers[userID] = userID
 	end
 
-	print(to_json(userToSubTo.commentSubscribers[userID]))
 	user.commentSubscriptions[userToSubToID] = userToSubTo.commentSubscribers[userID]
 
-	local ok, err = self.userWrite:CreateSubUser(user)
-	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	local ok, err = self.userWrite:UpdateUserField(user.id, 'commentSubscriptions:', to_json(user.commentSubscriptions))
+	ok, err = self.userWrite:UpdateUserField(userToSubToID, 'commentSubscribers:', to_json(userToSubTo.commentSubscribers))
 	ok, err = self:InvalidateKey('user', userToSubToID)
 	ok, err = self:InvalidateKey('user', userID)
 	return ok, err
@@ -129,8 +157,8 @@ function api:TogglePostSubscription(userID, userToSubToID)
 
 	user.postSubscriptions[userToSubToID] = userToSubTo.postSubscribers[userID]
 
-	local ok, err = self.userWrite:CreateSubUser(user)
-	ok, err = self.userWrite:CreateSubUser(userToSubTo)
+	local ok, err = self.userWrite:UpdateUserField(user.id, 'postSubscriptions:', to_json(user.commentSubscriptions))
+	ok, err = self.userWrite:UpdateUserField(userToSubToID, 'postSubscribers:', to_json(userToSubTo.commentSubscribers))
 	ok, err = self:InvalidateKey('user', userToSubToID)
 	ok, err = self:InvalidateKey('user', userID)
 	return ok, err

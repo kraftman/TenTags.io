@@ -54,7 +54,7 @@
     <% if isMod then %>
       <a class ='banButton' href=" <%= url_for('banpost',{postID = post.id, filterlabel= thisfilter.name}) %>"><span class="ti-na"></span></a>
     <% end %>
-    <span class="ti-eye">
+    
     <a class=' comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> <span class="ti-comments"></span></a>
 
     <a  href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">

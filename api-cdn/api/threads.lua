@@ -119,6 +119,16 @@ function api:CreateThread(userID, messageInfo)
 		return nil, 'couldnt find recipient user'
 	end
 
+
+  local recipient = cache:GetUser(recipientID)
+
+  for _,v in pairs(recipient.blockedUsers) do
+    if userID == v then
+      return nil, 'this user has blocked you'
+    end
+  end
+
+
   local thread = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,

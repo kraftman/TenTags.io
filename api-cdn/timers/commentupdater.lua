@@ -131,15 +131,25 @@ function config:AddAlerts(post, comment)
   --tell all the users that care that the comment they are watchin has a new reply
 
   -- need to add alert to all parent comment viewers
+  local parentComment, ok, err, viewer
   if comment.parentID == comment.postID then
-		for _,viewerID in pairs(post.viewers) do
-      cache:PurgeKey({keyType = 'useralert', viewerID})
-      ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
-			self.userWrite:AddUserAlert(comment.createdAt, viewerID, 'postComment:'..comment.postID..':'..comment.id)
-		end
+    parentComment = post
   else
-    local parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
-    for _,viewerID in pairs(parentComment.viewers) do
+    parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
+  end
+
+  for _,viewerID in pairs(post.viewers) do
+    viewer = cache:GetUser(viewerID)
+    local blocked
+    -- check they arent blocked
+    for _,v in pairs(viewer.blockedUsers) do
+      if comment.createdBy == v then
+        blocked = true
+        break
+      end
+    end
+
+    if not blocked then
       cache:PurgeKey({keyType = 'useralert', id = viewerID})
       ok, err = self.redisWrite:InvalidateKey('useralert', viewerID)
       self.userWrite:AddUserAlert(comment.createdAt, viewerID, 'postComment:'..comment.postID..':'..comment.id)
@@ -150,7 +160,8 @@ function config:AddAlerts(post, comment)
   if not user then
     return true
   end
-
+  
+  -- if they are subscribed to them lets assume they havent blocked them
   for subscriberID,v in pairs(user.commentSubscribers) do
     print('alerting subscriber: ',subscriberID)
     self.userWrite:AddUserAlert(comment.createdAt, subscriberID, 'postComment:'..comment.postID..':'..comment.id)
@@ -193,8 +204,6 @@ function config:CreateComment(commentInfo)
   if not ok then
     return ok, err
   end
-
-
 
   ok, err = self:UpdateFilters(post, comment)
   if not ok then

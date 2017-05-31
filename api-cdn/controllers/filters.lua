@@ -117,6 +117,7 @@ function m.CreateFilter(request)
     print('no user id')
     return { render = 'pleaselogin' }
   end
+  request.page_title = 'Create Filter'
   request.tags = tagAPI:GetAllTags()
   return {render = 'filter.create'}
 end
@@ -130,6 +131,8 @@ function m.DisplayFilter(request)
   if not filter then
     return m.CreateFilter(request)
   end
+
+  request.page_title = filter.name
 
   for _,v in pairs(filter.mods) do
     local user = userAPI:GetUser(v.id)
