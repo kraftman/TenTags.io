@@ -369,7 +369,7 @@ function api:ConvertUserPostToPost(userID, post)
   local user = cache:GetUser(userID)
   if user.role == 'Admin' and user.fakeNames then
 
-    print('using fake name')
+
     local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
 
@@ -430,6 +430,9 @@ function api:ConvertUserPostToPost(userID, post)
   end
 	tinsert(newPost.tags, 'meta:all')
   tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
+  if user.role == 'Admin' then
+    tinsert(newPost.tags, 'meta:admin')
+  end
 
   if newPost.bbID then
     print(ngx.var.host)

@@ -22,7 +22,7 @@
   </div>
 <% end %>
 
-<% if session.userID and (userInfo.enablePM) then %>
+<% if session.userID and (userInfo.enablePM) and (not viewerIsBlocked) then %>
 
   <% render("views.message.create",{recipient = params.username}) %>
 
@@ -36,6 +36,12 @@
       <input type='text' class='form-input' name='tagUser' id='tagUser' ></input>
       </br>
       <input class = 'btn' type='submit' value="Add Tag"></input>
+    </form>
+
+    <h3>Block User</h3>
+    <form id="tagform" method="post" action="<%= url_for("blockuser",{username = params.username}) %>" >
+
+      <input class = 'btn' type='submit' value="<%= userIsBlocked and 'Unblock' or 'Block' %>"></input>
     </form>
   </div>
 <% end %>

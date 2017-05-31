@@ -69,9 +69,7 @@ function M:Run(request)
   self:LoadUser(request)
 
 
-    if request.session.accountID then
-      request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID) or {}
-    end
+
 
     if request.session.userID then
       if userAPI:UserHasAlerts(request.session.userID) then
@@ -79,9 +77,7 @@ function M:Run(request)
       end
     end
 
-    if not request.otherUsers then
-      request.otherUsers = {}
-    end
+
     --ngx.log(ngx.ERR, to_json(user))
 
     request.csrf_token = csrf.generate_token(request,request.session.userID)

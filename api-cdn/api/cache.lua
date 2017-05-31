@@ -399,6 +399,19 @@ function cache:ConvertShortURL(shortURL)
   return redisRead:ConvertShortURL(shortURL)
 end
 
+function cache:FiltersOverlap(postFilters, commentFilters)
+  print(to_json(postFilters))
+  print(to_json(commentFilters))
+  for _,postFilterID in pairs(postFilters) do
+    for _,commentFilterID in pairs(commentFilters) do
+      if postFilterID == commentFilterID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 function cache:GetSortedComments(userID, postID,sortBy)
 
   local flatComments,err = self:GetPostComments(postID)
@@ -411,20 +424,41 @@ function cache:GetSortedComments(userID, postID,sortBy)
 
   local userVotedComments
 
-  if userID then
+  if userID ~= 'default' then
     userVotedComments = self:GetUserCommentVotes(userID)
   end
+  local post = cache:GetPost(postID)
+  local user = cache:GetUser(userID)
+  local filtersOverlap
 
   for _,v in pairs(flatComments) do
     v.username = self:GetUsername(v.createdBy) or 'unknown'
 
+    filtersOverlap = self:FiltersOverlap(post.filters or {}, v.filters or {})
     v.filters = self:GetFilterInfo(v.filters or {})
 
-    if userID and userVotedComments[v.id] then
+
+    if user and userVotedComments[v.id] then
       v.userHasVoted = true
     end
 
+    if user and user.hideUnsubbedComments and not filtersOverlap then
+      v.hidden = true
+    end
+
+    if user then
+      for _,blockedUserID in pairs(user.blockedUsers) do
+        if v.createdBy == blockedUserID then
+          v.hidden = true
+          v.username = 'blocked'
+          break
+        end
+      end
+    end
+
+
     tinsert(indexedComments, v)
+
   end
 
   if sortBy == 'top' then

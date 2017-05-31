@@ -420,7 +420,11 @@ function config:AddCommentShortURL(data)
     return
   end
 
-
+	ok , err = self.redisWrite:InvalidateKey('comment', commentID)
+	if not ok then
+		print('error invalidating key: ', err)
+	end
+	
   ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
 	return true
 end

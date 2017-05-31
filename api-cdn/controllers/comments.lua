@@ -35,7 +35,9 @@ function m.ViewComment(request)
   request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
 
   request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
-  ngx.log(ngx.ERR, to_json(request.commentInfo))
+  if request.commentInfo.shortURL then
+    return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
+  end
   return {render = 'viewcomment'}
 
 end

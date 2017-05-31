@@ -40,10 +40,31 @@ function m:Register(app)
   app:get('viewuserupvoted','/user/:username/posts/upvoted', self.ViewUserUpvoted)
   app:get('logout','/logout', self.LogOut)
   app:get('switchuser','/user/switch/:userID', self.SwitchUser)
-  app:get('listusers','/user/list',function() return {render = 'listusers'} end)
+  app:get('listusers','/user/list',self.ListUsers)
   app:get('subscribeusercomment','/user/:username/comments/sub',self.SubUserComment)
   app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
+  app:post('blockuser','/user/:username/block',self.BlockUser)
 
+end
+
+function m.ListUsers(request)
+  request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
+  return {render = 'listusers'}
+end
+
+function m.BlockUser(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local userToBlockID = userAPI:GetUserID(request.params.username)
+
+  local ok, err = userAPI:BlockUser(request.session.userID, userToBlockID)
+  if ok then
+    return { redirect_to = request:url_for("viewuser", {username = request.params.username}) }
+  else
+    print(err)
+    return 'error blocking user'
+  end
 end
 
 function m.ViewUserUpvoted(request)
@@ -139,6 +160,22 @@ function m.ViewUser(request)
   request.userInfo = userAPI:GetUser(request.userID)
   if not request.userInfo then
     return 'user not found'
+  end
+
+  if request.session.userID then
+    print('this')
+    local viewingUser = userAPI:GetUser(request.session.userID)
+    for _,v in pairs(request.userInfo.blockedUsers) do
+      if viewingUser.id == v then
+        request.viewerIsBlocked = true
+      end
+    end
+    for _,v in pairs(viewingUser.blockedUsers) do
+      if request.userID == v then
+        request.userIsBlocked = true
+        break
+      end
+    end
   end
 
   return {render = 'user.viewsub'}

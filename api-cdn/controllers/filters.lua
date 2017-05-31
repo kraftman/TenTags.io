@@ -117,6 +117,7 @@ function m.CreateFilter(request)
     print('no user id')
     return { render = 'pleaselogin' }
   end
+  request.page_title = 'Create Filter'
   request.tags = tagAPI:GetAllTags()
   return {render = 'filter.create'}
 end
@@ -130,6 +131,8 @@ function m.DisplayFilter(request)
   if not filter then
     return m.CreateFilter(request)
   end
+
+  request.page_title = filter.name
 
   for _,v in pairs(filter.mods) do
     local user = userAPI:GetUser(v.id)
@@ -347,14 +350,14 @@ function m.ViewFilterSettings(request)
   -- get key indexed tags
   request.requiredTagKeys = {}
   for k, v in pairs(filter.requiredTagNames) do
-    if not v:find('meta:') then
+    if not v:find('meta:filterban') then
       request.requiredTagKeys[v] = true
     end
   end
 
   request.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTagNames) do
-    if not v:find('meta:') then
+    if not v:find('meta:filterban') then
       request.bannedTagKeys[v] = true
     end
   end

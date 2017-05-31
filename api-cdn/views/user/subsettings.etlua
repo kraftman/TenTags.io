@@ -21,6 +21,9 @@
       <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
 
       </br>
+      <label><input type="checkbox" name='hideUnsubbedComments' <%= hideUnsubbedComments -%>>Hide non-subbed user comments</label>
+
+      </br>
       <label><input type="checkbox" name='hideSeenPosts' <%= hideSeenPosts -%>>Hide Seen Posts</label>
       </br>
       <label><input type="checkbox" name='hideVotedPosts' <%= hideVotedPosts -%>>Hide Voted Posts</label>

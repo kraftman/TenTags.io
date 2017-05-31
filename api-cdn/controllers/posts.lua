@@ -193,6 +193,7 @@ function m.GetPost(request)
     print(err)
     return err
   end
+  request.page_title = post.title
 
   if (#postID > 10) and post.shortURL then
     return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }

@@ -42,7 +42,7 @@ end
 function bb:GetAuthToken()
   local currTime = ngx.time()
   if authedAt and authedAt > (currTime - 86400) then
-    return
+    return true
   end
 
 
@@ -190,7 +190,7 @@ function bb:GetImage(imageID)
 
   local ok, err = self:GetAuthToken()
   if not ok then
-    ngx.log(ngx.ERR, 'err')
+    ngx.log(ngx.ERR, err)
     return nil, err
   end
 
