@@ -42,7 +42,7 @@ end
 function bb:GetAuthToken()
   local currTime = ngx.time()
   if authedAt and authedAt > (currTime - 86400) then
-    return
+    return true
   end
 
 
