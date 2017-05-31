@@ -438,7 +438,7 @@ function cache:GetSortedComments(userID, postID,sortBy)
     v.filters = self:GetFilterInfo(v.filters or {})
 
 
-    if userID and userVotedComments[v.id] then
+    if user and userVotedComments[v.id] then
       v.userHasVoted = true
     end
 
