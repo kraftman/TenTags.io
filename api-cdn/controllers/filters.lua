@@ -350,14 +350,14 @@ function m.ViewFilterSettings(request)
   -- get key indexed tags
   request.requiredTagKeys = {}
   for k, v in pairs(filter.requiredTagNames) do
-    if not v:find('meta:') then
+    if not v:find('meta:filterban') then
       request.requiredTagKeys[v] = true
     end
   end
 
   request.bannedTagKeys = {}
   for k,v in pairs(filter.bannedTagNames) do
-    if not v:find('meta:') then
+    if not v:find('meta:filterban') then
       request.bannedTagKeys[v] = true
     end
   end
