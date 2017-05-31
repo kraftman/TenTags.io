@@ -588,6 +588,7 @@ function read:GetPost(postID)
   --ngx.log(ngx.ERR, self:to_json(ok))
   post.filters = ok
   --]]
+  post.nsfwLevel = post.nsfwLevel and tonumber(post.nsfwLevel)
 
   return post
 end

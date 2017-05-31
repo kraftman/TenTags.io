@@ -424,6 +424,7 @@ function api:GetUserAlerts(userID)
 		-- its not from cache, so update the last time checked
 		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
 		self:InvalidateKey('user', userID)
+	  ok, err = self:InvalidateKey('useralert', userID)
 	end
 
   return alerts

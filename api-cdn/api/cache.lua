@@ -61,7 +61,6 @@ function cache:GetImage(imageID)
     print(err)
   end
   if ok then
-    print('got from cache')
   end
   return ok, err
 end
@@ -254,7 +253,7 @@ function cache:GetUserAlerts(userID)
     if err then
       return alerts, err
     end
-    ok, err = userAlertDict:set(userID, to_json(alerts),30)
+    ok, err = userAlertDict:set(userID, to_json(alerts),10)
     if not ok then
       ngx.log(ngx.ERR, 'unable to set alert info: ',err)
     end

@@ -64,7 +64,7 @@ function m.ViewReportPost(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  
+
   ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
   request.post = ok
   return {render = 'post.report'}
@@ -398,12 +398,10 @@ function m.GetImage(request,imageSize)
 
   local post, err = postAPI:GetPost(userID, request.params.postID)
   if not post or not post[imageSize] then
-    print('not found: ', err)
 
     --ngx.header['Content-Type'] = 'image/png'
     return { redirect_to = '/static/icons/notfound.png' }
   end
-  print('this')
   request.iconData = postAPI:GetImage(post[imageSize])
   if not request.iconData then
     return { redirect_to = '/static/icons/notfound.png' }

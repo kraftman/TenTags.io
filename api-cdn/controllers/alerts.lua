@@ -10,12 +10,16 @@ local commentAPI = require 'api.comments'
 local postAPI = require 'api.posts'
 local tinsert = table.insert
 
+
+function m:Register(app)
+  app:match('viewalerts','/alerts/view',respond_to({GET = self.ViewAlerts}))
+end
+
 function m.ViewAlerts(request)
   local alerts = userAPI:GetUserAlerts(request.session.userID)
 
   request.alerts = {}
-
-  print(to_json(alerts))
+ 
 
   for _, v in pairs(alerts) do
 
@@ -26,7 +30,8 @@ function m.ViewAlerts(request)
     elseif v:find('postComment:') then
       local postID, commentID = v:match('postComment:(%w+):(%w+)')
       local comment = commentAPI:GetComment(postID, commentID)
-      comment.username = userAPI:GetUser(comment.createdBy).username
+      local creator = userAPI:GetUser(comment.createdBy)
+      comment.username = creator and creator.username or ''
 
       tinsert(request.alerts,{alertType = 'comment', data = comment})
     elseif v:find('post') then
@@ -38,8 +43,5 @@ function m.ViewAlerts(request)
   return { render = 'alerts'}
 end
 
-function m:Register(app)
-  app:match('viewalerts','/alerts/view',respond_to({GET = self.ViewAlerts}))
-end
 
 return m
