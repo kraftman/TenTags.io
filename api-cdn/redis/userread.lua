@@ -211,6 +211,7 @@ function userread:GetUser(userID)
   user.fakeNames = user.fakeNames == '1' and true or false
   user.enablePM = user.enablePM == '1' and true or false
   user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
+  user.hideUnsubbedComments = user.hideUnsubbedComments == '1' and true or false
   user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false

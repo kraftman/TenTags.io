@@ -246,8 +246,10 @@ end
 
 
 function api:GetPostComments(userID, postID,sortBy)
-	local comments = cache:GetSortedComments(userID, postID,sortBy)
 
+
+
+	local comments = cache:GetSortedComments(userID, postID,sortBy)
 
 	return comments
 end

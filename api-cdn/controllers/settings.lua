@@ -1,5 +1,6 @@
 
 
+
 local m = {}
 m.__index = m
 
@@ -46,6 +47,7 @@ function m.DisplaySettings(request)
   request.fakeNames = user.fakeNames and 'checked' or ''
   request.enablePM = user.enablePM and 'checked' or ''
   request.hideSeenPosts = user.hideSeenPosts and 'checked' or ''
+  request.hideUnsubbedComments = user.hideUnsubbedComments and 'checked' or ''
   request.hideVotedPosts = user.hideVotedPosts and 'checked' or ''
   request.hideClickedPosts = user.hideClickedPosts and 'checked' or ''
   request.showNSFL = user.showNSFL and 'checked' or ''
@@ -68,6 +70,7 @@ function m.UpdateSettings(request)
   user.fakeNames = request.params.fakeNames and true or false
 
   user.hideSeenPosts = request.params.hideSeenPosts and true or false
+  user.hideUnsubbedComments = request.params.hideUnsubbedComments and true or false
   user.hideVotedPosts = request.params.hideVotedPosts and true or false
   user.hideClickedPosts = request.params.hideClickedPosts and true or false
   user.nsfwLevel = request.params.nsfwLevel

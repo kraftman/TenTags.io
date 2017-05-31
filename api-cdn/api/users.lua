@@ -456,6 +456,7 @@ function api:UpdateUser(userID, userToUpdate)
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
 		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
+		hideUnsubbedComments = userToUpdate.hideUnsubbedComments and 1 or 0,
 		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,
 		hideClickedPosts = userToUpdate.hideClickedPosts and 1 or 0,
 		nsfwLevel = userToUpdate.nsfwLevel,
