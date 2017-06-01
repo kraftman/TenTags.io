@@ -1,5 +1,6 @@
 
 
+
 <script src="/static/js/mousetrap.min.js"  ></script>
 <script src="/static/js/post.js"  defer></script>
 
@@ -128,12 +129,12 @@
       <% end %>
   >Top</option>
   </select>
-  Show comments by filter:</br>
-  <div>
+  </br>Show comments by filter:
+
     <% for _,filter in pairs(filters or {}) do %>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
-  </div>
+  
 
   <% render("views.st.newcomment") %>
 

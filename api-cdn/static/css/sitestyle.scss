@@ -954,6 +954,11 @@ ul {
   padding-left: 5px;
 }
 
+
+.comment-title-details {
+  font-size: 10px;
+}
+
 .post:focus {
   background: #e5f7ff;
 }
@@ -974,6 +979,7 @@ ul {
   display: block;
 
 }
+
 
 .comment-title {
   padding-top: 3px;
@@ -997,6 +1003,7 @@ ul {
 .comment-controls:hover {
   display: block;
 }
+
 
 .comment:focus {
   background: #e5f7ff;

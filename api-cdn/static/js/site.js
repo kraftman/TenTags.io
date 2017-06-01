@@ -247,7 +247,6 @@ function UserHasFilter(filterID){
   $.each(userFilters, function(k,v){
 
     if (v.id == filterID) {
-      console.log('found')
       found = true;
       return;
     }

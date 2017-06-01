@@ -651,6 +651,9 @@ ul {
   max-width: 400px;
   margin-left: 15px; }
 
+.comment-title-details {
+  font-size: 8px;
+}
 .comment-collapse {
   display: table-cell;
   height: 100%;

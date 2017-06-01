@@ -254,11 +254,11 @@ function cache:GetUserAlerts(userID)
     if err then
       return alerts, err
     end
-    ok, err = userAlertDict:set(userID, to_json(alerts),10)
+    ok, err = userAlertDict:set(userID, to_json(alerts),30)
     if not ok then
       ngx.log(ngx.ERR, 'unable to set alert info: ',err)
     end
-    err = 'cached'
+
   end
 
 
