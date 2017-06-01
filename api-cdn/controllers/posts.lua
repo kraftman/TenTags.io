@@ -406,7 +406,7 @@ function m.GetImage(request,imageSize)
   if not request.iconData then
     return { redirect_to = '/static/icons/notfound.png' }
   end
-  ngx.header['Content-Length'] = #request.iconData
+  
   ngx.header['Content-Type'] = 'image/png'
   ngx.header['Cache-Control'] = 'max-age=86400'
   ngx.say(request.iconData)
