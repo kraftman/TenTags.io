@@ -18,11 +18,14 @@ function api:SearchPost(queryString)
   elseif #queryString > 200 then
     return nil, 'search is too long'
   end
+  local ok, err
 
-  local ok, err = cache:SearchPost(queryString)
-  if not ok then
-    ngx.log(ngx.ERR, 'failed to search posts: ', err)
-    return nil, 'failed to search posts'
+  if not queryString:find('^http') then
+    ok, err = cache:SearchPost(queryString)
+    if not ok then
+      ngx.log(ngx.ERR, 'failed to search posts: ', err)
+      return nil, 'failed to search posts'
+    end
   end
 
 
@@ -34,7 +37,6 @@ function api:SearchPost(queryString)
     end
     ok = from_json(ok)
     return ok
-
   end
 
   return ok, err
