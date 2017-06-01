@@ -224,8 +224,8 @@ function userread:GetUser(userID)
   user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false
+  user.nsfwLevel = user.nsfwLevel and tonumber(user.nsfwLevel) or 0
 
-  
   if user.deleted then
     return nil
   end

@@ -429,6 +429,7 @@ function api:GetUserAlerts(userID)
 			print('coldnt update alert: ', err)
 		end
 		self:InvalidateKey('user', userID)
+	  ok, err = self:InvalidateKey('useralert', userID)
 	end
 
   return alerts

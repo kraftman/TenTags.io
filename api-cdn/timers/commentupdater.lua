@@ -160,7 +160,7 @@ function config:AddAlerts(post, comment)
   if not user then
     return true
   end
-  
+
   -- if they are subscribed to them lets assume they havent blocked them
   for subscriberID,v in pairs(user.commentSubscribers) do
     print('alerting subscriber: ',subscriberID)
@@ -174,7 +174,7 @@ function config:AddAlerts(post, comment)
 end
 
 function config:CreateComment(commentInfo)
-
+  -- commentInfo.id is postID:commentID, just needed for unique processing
   local ok, err
   local comment = self.commentRead:GetComment(commentInfo.postID, commentInfo.commentID)
   if not comment then
@@ -190,16 +190,17 @@ function config:CreateComment(commentInfo)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat: ', err)
 	end
+  
 	self.redisWrite:IncrementSiteStat('CommentsCreated', 1)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat')
 	end
 
-  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.id})
+  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.commentID})
   if not ok then
     return ok, err
   end
-  print('adding comment to user')
+
   ok, err = self.userWrite:AddComment(comment)
   if not ok then
     return ok, err
@@ -210,8 +211,6 @@ function config:CreateComment(commentInfo)
     print('error getting filters: ', err)
     return nil, err
   else
-    print('addingi fitlrse to comment')
-    print(to_json(ok))
     comment.filters = ok
   end
 
@@ -222,6 +221,12 @@ function config:CreateComment(commentInfo)
   end
 
   self:AddAlerts(post, comment)
+  cache:PurgeKey {keyType = 'comment', id = post.id}
+
+	ok , err = self.redisWrite:InvalidateKey('comment', post.id)
+	if not ok then
+		print('error invalidating key: ', err)
+	end
 
   ok, err = self.redisWrite:IncrementPostStat(comment.postID, 'commentCount',1)
   if not ok then

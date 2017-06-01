@@ -4,6 +4,7 @@ local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 
 local tagAPI = require 'api.tags'
+local bb = require('lib.backblaze')
 
 local trim = (require 'lapis.util').trim
 local base = require 'api.base'
@@ -76,8 +77,28 @@ function api:ReloadImage(userID, postID)
 
   return true
 
+end
+
+function api:GetImage(imageID)
+
+
+  -- all our images are png
+
+  local image = cache:GetImage(imageID)
+  if image then
+    return image
+  end
+
+  local imageInfo, err = bb:GetImage(imageID)
+  if not imageInfo then
+    print(err)
+    return nil
+  end
+  cache:SetImage(imageID, imageInfo.data)
+  return imageInfo.data
 
 end
+
 
 function api:ReportPost(userID, postID, reportText)
   local ok, err = self:RateLimit('ReportPost:', userID, 1, 60)

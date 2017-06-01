@@ -58,7 +58,7 @@ function config.Run(_,self)
 	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
 	self:ProcessJob('ReIndexPost', 'ReIndexPost')
 	self:EmptyOldFilters()
-	--self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
+	self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
 end
 
@@ -396,10 +396,10 @@ function config:AddCommentShortURL(data)
   local shortURL, ok, err
   for i = 1, 6 do
     shortURL = self:CreateShortURL()
-    ok, err = self.redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
+    ok, err = self.redisWrite:SetShortURL(shortURL, commentPostPair)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' commentPostPair: ', commentPostPair)
-      return
+      return nil
     end
 
     if ok ~= ngx.null then
@@ -408,7 +408,7 @@ function config:AddCommentShortURL(data)
 
     if (i == 6) then
       ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', commentPostPair)
-      return
+      return nil
     end
   end
 
@@ -419,12 +419,13 @@ function config:AddCommentShortURL(data)
     print('error updating post field: ',err)
     return
   end
+	cache:PurgeKey {keyType = 'comment', id = postID}
 
-	ok , err = self.redisWrite:InvalidateKey('comment', commentID)
+	ok , err = self.redisWrite:InvalidateKey('comment', postID)
 	if not ok then
 		print('error invalidating key: ', err)
 	end
-	
+
   ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
 	return true
 end

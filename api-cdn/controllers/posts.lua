@@ -7,7 +7,6 @@ local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local util = require("lapis.util")
-local bb = require('lib.backblaze')
 local assert_valid = require("lapis.validate").assert_valid
 local uuid = require 'lib.uuid'
 
@@ -51,9 +50,9 @@ function m:Register(app)
   app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
-  app:get('geticon', '/icon/:postID', self.GetIcon)
-  app:get('geticonsmall', '/icon/:postID/small', self.GetIconSmall)
-  app:get('getimage', '/image/:postID', self.GetImage)
+  app:get('geticon', '/icon/:postID', function(request) return self.GetImage(request, 'bigIcon') end)
+  app:get('geticonsmall', '/icon/:postID/small',function(request) return self.GetImage(request, 'smallIcon') end)
+  app:get('getimage', '/image/:postID', function(request) return self.GetImage(request, 'bbID') end)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
   app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
@@ -65,7 +64,7 @@ function m.ViewReportPost(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  print(request.params.postID)
+
   ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
   request.post = ok
   return {render = 'post.report'}
@@ -389,94 +388,29 @@ function m.DownvotePost(request)
   end
 end
 
-function m.GetIcon(request)
+
+function m.GetImage(request,imageSize)
   if not request.params.postID then
     return { redirect_to = '/static/icons/notfound.png' }
   end
+  -- ratelimit based on session even if logged out
   local userID = request.session.userID or ngx.ctx.userID
 
-  local post,err = postAPI:GetPost(userID, request.params.postID)
-  if not post then
+  local post, err = postAPI:GetPost(userID, request.params.postID)
+  if not post or not post[imageSize] then
+
+    --ngx.header['Content-Type'] = 'image/png'
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  request.iconData = postAPI:GetImage(post[imageSize])
+  if not request.iconData then
     return { redirect_to = '/static/icons/notfound.png' }
   end
 
-  request.post = post
-
-  if not post.bigIcon then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  local imageInfo, err = bb:GetImage(post.bigIcon)
-  if not imageInfo then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-
-  request.iconData = imageInfo.data
-  ngx.header['Content-Type'] = imageInfo['Content-Type']
-  ngx.header['Cache-Control'] = 'max-age=86400'
-
+  ngx.header['Content-Type'] = 'image/png'
   ngx.say(request.iconData)
 
   return ngx.exit(ngx.HTTP_OK)
-end
-
-function m.GetIconSmall(request)
-  if not request.params.postID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  local userID = request.session.userID or ngx.ctx.userID
-
-  local post,err = postAPI:GetPost(userID, request.params.postID)
-  if not post then
-    print(err)
-      return { redirect_to = '/static/icons/notfound.png' }
-  end
-
-  request.post = post
-
-  if not post.smallIcon then
-    --print('no smallIcon')
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  local imageInfo,err = bb:GetImage(post.smallIcon)
-  --print(imageData)
-  if not imageInfo then
-    print('couldnt load image from bb, ',err)
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  request.iconData = imageInfo.data
-  ngx.header['Content-Type'] = imageInfo['Content-Type']
-
-  ngx.say(request.iconData)
-
-  return ngx.exit(ngx.HTTP_OK)
-end
-
-function m.GetImage(request)
-  if not request.params.postID then
-    return 'nil'
-  end
-  local userID = request.session.userID or ngx.ctx.userID
-
-  local post,err = postAPI:GetPost(userID, request.params.postID)
-  if not post then
-    print(err)
-    return 'couldnt find post'
-  end
-
-  request.post = post
-
-  if not post.bbID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  local imageInfo = bb:GetImage(post.bbID)
-  --print(imageData)
-  request.iconData = imageInfo.data
-  ngx.header['Content-Type'] = imageInfo['Content-Type']
-
-  ngx.say(request.iconData)
-
-  return ngx.exit(ngx.HTTP_OK)
-
 end
 
 

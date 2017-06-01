@@ -33,7 +33,7 @@ end
 
 function m.ViewComment(request)
   request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
-
+  print(to_json(request.commentInfo))
   request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
   if request.commentInfo.shortURL then
     return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }

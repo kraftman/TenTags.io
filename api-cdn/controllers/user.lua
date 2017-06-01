@@ -292,14 +292,11 @@ function m.NewLogin(request)
   end
 
   local confirmURL = request:build_url("confirmlogin")
-  local ok,code, err = sessionAPI:RegisterAccount(session, confirmURL)
-  if code == 429 then
-    return {render = 'errors.'..code}
-  end
+  local ok, err = sessionAPI:RegisterAccount(session, confirmURL)
 
   if not ok then
     request.success = false
-    request.errorMessage = 'There was an error registering you, please try again later'
+    request.errorMessage = 'There was an error registering you: '..(err or '')
   else
     request.success = true
   end
