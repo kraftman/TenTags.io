@@ -20,16 +20,7 @@ function api:SearchPost(queryString)
   end
   local ok, err
 
-  if not queryString:find('^http') then
-    ok, err = cache:SearchPost(queryString)
-    if not ok then
-      ngx.log(ngx.ERR, 'failed to search posts: ', err)
-      return nil, 'failed to search posts'
-    end
-  end
-
-
-  if ok.hits.total < 1 then
+  if queryString:find('^http') then
     ok, err = cache:SearchURL(queryString)
     if not ok then
       ngx.log(ngx.ERR, 'failed to search posts: ', err)
@@ -37,6 +28,13 @@ function api:SearchPost(queryString)
     end
     ok = from_json(ok)
     return ok
+
+  else
+    ok, err = cache:SearchPost(queryString)
+    if not ok then
+      ngx.log(ngx.ERR, 'failed to search posts: ', err)
+      return nil, 'failed to search posts'
+    end
   end
 
   return ok, err
