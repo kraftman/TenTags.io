@@ -86,7 +86,7 @@ end
 function bb:GetUploadUrl()
   local currTime = ngx.time()
   if uploadAuthedAt and uploadAuthedAt > (currTime - 86400) then
-    return
+    return true
   end
 
   local httpc = http.new()
@@ -147,7 +147,7 @@ function bb:UploadImage(fileName, fileContent)
 
   ok, err = self:GetUploadUrl()
   if not ok then
-    ngx.log(ngx.ERR, 'err')
+    ngx.log(ngx.ERR, err)
     return nil, err
   end
 
