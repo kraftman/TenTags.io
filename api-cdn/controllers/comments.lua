@@ -33,7 +33,7 @@ end
 
 function m.ViewComment(request)
   request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
-  
+
   request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
   if request.commentInfo.shortURL then
     return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
@@ -63,13 +63,12 @@ function m.CreateComment(request)
     text = request.params.commentText,
   }
   --ngx.log(ngx.ERR, to_json(request.params))
-  local ok = commentAPI:CreateComment(request.session.userID, commentInfo)
+  local ok,err = commentAPI:CreateComment(request.session.userID, commentInfo)
   if ok then
-    print('created')
-    return 'created!'
+    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
-    print('failed')
-    return 'failed!'
+
+    return 'failed!'..(err or '')
   end
 
 end

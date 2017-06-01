@@ -9,6 +9,7 @@ local tagAPI = require 'api.tags'
 local util = require("lapis.util")
 local assert_valid = require("lapis.validate").assert_valid
 local uuid = require 'lib.uuid'
+local bb = require('lib.backblaze')
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -406,7 +407,7 @@ function m.GetImage(request,imageSize)
   if not request.iconData then
     return { redirect_to = '/static/icons/notfound.png' }
   end
-  
+
   ngx.header['Content-Type'] = 'image/png'
   ngx.header['Cache-Control'] = 'max-age=86400'
   ngx.say(request.iconData)
