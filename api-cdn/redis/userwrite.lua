@@ -126,13 +126,6 @@ function userwrite:AddUserAlert(createdAt,userID, alert)
   return ok, err
 end
 
-function userwrite:UpdateLastUserAlertCheck(userID, checkedAt)
-  local red = self:GetUserWriteConnection()
-  local ok, err = red:hmset('user:'..userID,'alertCheck',checkedAt)
-  self:SetKeepalive(red)
-
-  return ok, err
-end
 
 function userwrite:AddComment(commentInfo)
   local red = self:GetUserWriteConnection()

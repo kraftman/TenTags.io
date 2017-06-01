@@ -15,7 +15,6 @@ function m.ViewAlerts(request)
 
   request.alerts = {}
 
-  print(to_json(alerts))
 
   for _, v in pairs(alerts) do
 

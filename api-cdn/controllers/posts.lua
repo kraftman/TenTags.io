@@ -412,6 +412,7 @@ function m.GetIcon(request)
 
   request.iconData = imageInfo.data
   ngx.header['Content-Type'] = imageInfo['Content-Type']
+  ngx.header['Cache-Control'] = 'max-age=86400'
 
   ngx.say(request.iconData)
 

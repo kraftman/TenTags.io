@@ -390,7 +390,7 @@ function api:ConvertUserPostToPost(userID, post)
 		createdBy = post.createdBy,
 		commentCount = 0,
 		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
-		link = self:SanitiseUserInput(post.link, 400),
+		link = self:SanitiseUserInput(post.link, 2083),
 		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
 		filters = {},

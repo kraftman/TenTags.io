@@ -420,9 +420,14 @@ function api:GetUserAlerts(userID)
 		ngx.log(ngx.ERR, 'error loading user alerts: ', err)
 		return nil, 'couldnt load user alerts'
 	end
+	
 	if alerts and not err then
 		-- its not from cache, so update the last time checked
-		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		print('setting last check to ',ngx.time())
+		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, 'alertCheck', ngx.time())
+		if not ok then
+			print('coldnt update alert: ', err)
+		end
 		self:InvalidateKey('user', userID)
 	end
 

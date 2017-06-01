@@ -227,8 +227,9 @@ function cache:GetUserAlerts(userID)
       alerts = from_json(ok)
     end
   end
-
+  print(user.alertCheck)
   if not alerts then
+
     alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
 
     if err then
