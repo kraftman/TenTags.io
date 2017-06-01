@@ -154,7 +154,7 @@ end
 function loader:ProcessGfycat(postURL)
   local gfyName = postURL:match('gfycat.com/(%w+)')
   local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
-  print(newURL)
+
   local imageBlob, err = self:LoadImage(newURL)
   if not imageBlob then
     return imageBlob, err
@@ -283,10 +283,10 @@ function loader:GetPostIcon(postURL, postID)
 
   local finalImage
   if postURL:find('imgur.com') then
-    if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+    --if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
       return self:ProcessImgur(postURL, postID)
-    end
-    return nil, 'imgur gallery'
+    --end
+    --return nil, 'imgur gallery'
   elseif postURL:find('gfycat.com/%w+') then
     finalImage = self:ProcessGfycat(postURL)
   elseif not postURL:find('http') then

@@ -147,6 +147,7 @@ function m.CreatePost(request)
   if request.params.upload_file and (file.content ~= '') then
     print('file found')
 
+
     local fileID = uuid.generate_random()
 
     local fileExtension = file.filename:match("^.+(%..+)$")
