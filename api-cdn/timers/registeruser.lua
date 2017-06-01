@@ -128,7 +128,7 @@ function config:ProcessAccount(session)
   local url = session.confirmURL..'?key='..session.id..'-'..accountID
 
   local email = {}
-  email.body = [[ Please click this link to login (remember to open in browser on mobile): /n]]
+  email.body = [[ Please click this link to login (remember to open in browser on mobile):  ]]
   email.body = email.body..url
   email.subject = 'Login email'
   email.recipient = emailAddr
