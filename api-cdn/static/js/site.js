@@ -144,6 +144,7 @@ function FilterToggle(){
 function Upvote(e) {
   var post = $(':focus')
 
+    e.preventDefault()
   if (post.length) {
     VotePost(post, 'up');
   }
@@ -151,7 +152,8 @@ function Upvote(e) {
 
 function Downvote(e) {
   var post = $(':focus')
-  console.log(post)
+
+  e.preventDefault()
   if (post.length) {
     console.log(2)
     VotePost(post, 'down');

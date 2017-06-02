@@ -141,12 +141,14 @@ function AddToSeenPosts(){
 
 
 function AddPostVoteListener(){
-  $(".post-upvote").click(function(e) {
+  $(".post-upvote, .upvoteButton").click(function(e) {
     e.preventDefault()
+    $('.upvoteButton, .downvoteButton').hide()
     VotePost($(this).parents('.post'), 'up')
   })
-  $(".post-downvote").click(function(e){
+  $(".post-downvote, .downvoteButton").click(function(e){
     e.preventDefault()
+    $('.upvoteButton, .downvoteButton').hide()
     VotePost($(this).parents('.post'),'down')
   })
 }
@@ -186,7 +188,7 @@ function VotePost(post, direction){
   $(post).find('.post-downvote').addClass('disable-vote');
 
   $.get(uri,function(data){
-    console.log(data);
+    //console.log(data);
   })
 }
 
