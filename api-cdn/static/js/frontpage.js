@@ -253,6 +253,14 @@ function LoadMorePosts(template){
   console.log(postInfo.id)
   newPost.find('.postID').val(postInfo.id)
   newPost.find('.post-link').text(postInfo.title)
+
+  var postLink;
+  if (postInfo.link == null){
+    postLink = '/p/'+postInfo.shortURL || postInfo.id
+  } else {
+    postLink = postInfo.link
+  }
+
   if (postInfo.link == null && postInfo.bbID == null){
 
     newPost.find('.post-icon').attr('src','/static/icons/self.svg')
@@ -260,15 +268,12 @@ function LoadMorePosts(template){
   } else {
     newPost.find('.post-icon').attr('src','/icon/'+postInfo.id)
     newPost.find('.linkImg').attr('src','/icon/'+postInfo.id)
+    console.log('adding '+postLink+ ' to linkImg parent')
+    newPost.find('.linkImg').parent().attr('href',postLink);
     newPost.find('.linkImg').show()
 
   }
-  var postLink;
-  if (postInfo.link == null){
-    postLink = '/p/'+postInfo.shortURL || postInfo.id
-  } else {
-    postLink = postInfo.link
-  }
+
   if (postInfo.text) {
     newPost.find('.postelement-text').text(postInfo.text.substring(0, 300))
   }
