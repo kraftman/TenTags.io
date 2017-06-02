@@ -152,7 +152,9 @@ function loader:ProcessImgur(postURL, postID)
 end
 
 function loader:ProcessGfycat(postURL)
+  print(postURL)
   local gfyName = postURL:match('gfycat.com/gifs/detail/(%w+)')
+  print(gfyName)
   if not gfyName then
     gfyName = postURL:match('gfycat.com/(%w+)')
   end
