@@ -77,7 +77,6 @@ function cache:SavedPostExists(userID, postID)
   if not userID then
     return false
   end
-  print(postID)
   return userRead:SavedPostExists(userID, postID)
 end
 
@@ -883,7 +882,6 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
     if self:SavedPostExists(userID, post.id) then
-      print('user has saved the post')
       post.userSaved = true
     end
 
