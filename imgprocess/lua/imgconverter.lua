@@ -152,7 +152,10 @@ function loader:ProcessImgur(postURL, postID)
 end
 
 function loader:ProcessGfycat(postURL)
-  local gfyName = postURL:match('gfycat.com/gifs/detail/(%w+)') or postURL:match('gfycat.com/(%w+)')
+  local gfyName = postURL:match('gfycat.com/gifs/detail/(%w+)')
+  if not gfyName then
+    gfyName = postURL:match('gfycat.com/(%w+)')
+  end
 
   print(gfyName)
   local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
