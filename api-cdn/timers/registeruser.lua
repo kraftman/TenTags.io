@@ -52,8 +52,9 @@ function config:FlushSessionLastSeen()
     sessionID, accountID = key:match('(%w+):(%w+)')
     lastSeen = sessionLastSeenDict:get(key)
     account = self.userRead:GetAccount(accountID)
-    session = account.sessions[sessionID]
+
     if account and session then
+      session = account.sessions[sessionID]
       session.lastSeen = lastSeen
 
       ok, err = self.redisWrite:InvalidateKey('account', account.id)
