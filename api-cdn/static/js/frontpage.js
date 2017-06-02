@@ -27,7 +27,7 @@ $(function() {
 
   AddFilterHandler();
   Drag2();
-  AddInfinite();
+  //AddInfinite();
 })
 
 
@@ -241,16 +241,14 @@ function GetFreshPost(){
 
 
 function LoadMorePosts(template){
-  console.log(template)
   var newPost = template.clone()
-  console.log(newPost)
 
   var postInfo = GetFreshPost()
   if (postInfo == null) {
     console.log('no post')
     return
   }
-  console.log(postInfo.id)
+
   newPost.find('.postID').val(postInfo.id)
   newPost.find('.post-link').text(postInfo.title)
 
@@ -278,6 +276,7 @@ function LoadMorePosts(template){
     newPost.find('.postelement-text').text(postInfo.text.substring(0, 300))
   }
 
+  newPost.find('.post-link').attr('href','/p/'+postInfo.shortURL || postInfo.id);
   newPost.find('.comment-link').attr('href','/p/'+postInfo.shortURL || postInfo.id);
   newPost.find('.comment-link').text(postInfo.commentCount+' comments')
 
