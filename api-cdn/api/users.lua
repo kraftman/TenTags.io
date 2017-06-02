@@ -278,7 +278,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 			return nil, 'you must be admin to do that'
 		end
 	end
-
+	print(userToSubID)
 	local filterIDs = cache:GetUserFilterIDs(userToSubID)
 
 	local subscribe = true
@@ -289,7 +289,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 			break
     end
   end
-
+	print(userToSubID,' ', filterID,' ', subscribe)
 	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
   ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
 
@@ -326,6 +326,10 @@ function api:CreateSubUser(accountID, username)
 
 	if #subUser.username < 3 then
 		return nil, 'username too short'
+	end
+
+	for k,v in pairs(subUser.filters) do
+		self.userWrite:ToggleFilterSubscription(subUser.id,v,true)
 	end
 
 	local existingUserID = cache:GetUserID(subUser.username)
