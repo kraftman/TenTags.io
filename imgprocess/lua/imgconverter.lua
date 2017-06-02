@@ -152,16 +152,16 @@ function loader:ProcessImgur(postURL, postID)
 end
 
 function loader:ProcessGfycat(postURL)
-  print(postURL)
-  local gfyName = postURL:match('gfycat.com/gifs/detail/(%w+)')
-  print(gfyName)
+  --print(postURL)
+  local gfyName = postURL:match('gfycat.com/detail/(%w+)') or postURL:match('gfycat.com/gifs/detail/(%w+)')
+  --print(gfyName)
   if not gfyName then
     gfyName = postURL:match('gfycat.com/(%w+)')
   end
 
-  print(gfyName)
+  --print(gfyName)
   local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
-  print(newURL)
+  --print(newURL)
 
   local imageBlob, err = self:LoadImage(newURL)
   if not imageBlob then
