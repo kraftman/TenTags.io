@@ -922,7 +922,7 @@ end
 
 function cache:GetUserFilterIDs(userID)
   local ok, err, res
-  print(userID)
+
   if ENABLE_CACHE then
     ok, err = userFilterIDs:get(userID)
     if err then
@@ -945,7 +945,6 @@ function cache:GetUserFilterIDs(userID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user filter: ',err)
   end
-  print(to_json(res))
   return res
 
 end
