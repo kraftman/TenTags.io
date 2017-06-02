@@ -158,25 +158,23 @@ end
 
 function util.GetFilterTemplate(self)
 
-  local filterStyle = 'default'
+  local filterStyle = 'full'
   local filterName = self.thisfilter and self.thisfilter.name or 'frontPage'
   if self.session.userID then
     self.userInfo = self.userInfo or userAPI:GetUser(self.session.userID)
-
-
     if self.userInfo then
       --print('getting filter style for name: '..filterName,', ', self.userInfo['filterStyle:'..filterName])
-      filterStyle = self.userInfo['filterStyle:'..filterName] or 'default'
+      filterStyle = self.userInfo['filterStyle:'..filterName] or 'full'
     end
   else
-    filterStyle = 'default'
+    filterStyle = 'full'
   end
 
   if not filterStyles[filterStyle] then
     print('filter style not found: ',filterStyle)
     return filterStyles.default
   end
-
+  print(filterStyle, filterStyles[filterStyle])
   return filterStyles[filterStyle]
 end
 
