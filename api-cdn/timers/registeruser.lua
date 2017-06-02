@@ -102,9 +102,18 @@ function config:ProcessAccount(session)
   local accountID = self:GetHash(emailAddr)
   local account = self.userRead:GetAccount(accountID)
 
+  if account then
+    print('account already exists')
+    print(to_json(account))
+  end
   if not account then
     account = self:CreateAccount(accountID, session)
-    ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    print('adding to newusers')
+    local ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to write new user: ', err)
+    end
+
 
   end
 	account.id = accountID

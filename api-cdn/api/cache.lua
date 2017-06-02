@@ -402,12 +402,13 @@ end
 
 function cache:GetNewUsers()
   local ok, err =  userRead:GetNewUsers()
-
+  print(to_json(ok))
   for k,v in pairs(ok )do
 
   end
 
   if ok == 0 then
+    print('none')
     return {}
   end
 

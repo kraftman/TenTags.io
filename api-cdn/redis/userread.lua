@@ -82,6 +82,9 @@ function userread:GetAccount(accountID)
   if not ok or ok == ngx.null then
     return nil,err
   end
+  if not next(ok) then
+    return nil
+  end
 
   local account = self:ConvertListToTable(ok)
 
