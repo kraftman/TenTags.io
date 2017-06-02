@@ -77,6 +77,7 @@ function cache:SavedPostExists(userID, postID)
   if not userID then
     return false
   end
+  print(postID)
   return userRead:SavedPostExists(userID, postID)
 end
 
@@ -246,7 +247,7 @@ function cache:GetUserAlerts(userID)
       alerts = from_json(ok)
     end
   end
-  
+
   if not alerts then
 
     alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
@@ -584,6 +585,7 @@ function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
+      print('user has saved the post')
       post.userSaved = true
     end
     if userID and userID ~= 'default' then
@@ -879,6 +881,10 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
     if sortBy ~= 'seen' and userID ~= 'default' and user.hideSeenPosts then
       sessionSeenPosts[post.parentID] = true
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
+    end
+    if self:SavedPostExists(userID, post.id) then
+      print('user has saved the post')
+      post.userSaved = true
     end
 
     tinsert(newPosts, post)

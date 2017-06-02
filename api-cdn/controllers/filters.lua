@@ -411,12 +411,12 @@ function m.UnbanDomain(request)
 end
 
 function m.BanPost(request)
-  local filter =filterAPI:GetFilterByName(request.params.filterlabel)
+  local filter = filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     return 'filter not found'
   end
 
-  local ok, err =filterAPI:FilterBanPost(request.session.userID, filter.id, self.params.postID)
+  local ok, err = filterAPI:FilterBanPost(request.session.userID, filter.id, request.params.postID)
   if ok then
     return 'ok'
   else

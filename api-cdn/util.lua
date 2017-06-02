@@ -174,7 +174,6 @@ function util.GetFilterTemplate(self)
     print('filter style not found: ',filterStyle)
     return filterStyles.default
   end
-  print(filterStyle, filterStyles[filterStyle])
   return filterStyles[filterStyle]
 end
 

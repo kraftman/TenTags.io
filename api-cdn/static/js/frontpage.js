@@ -11,6 +11,9 @@ var list_empty;
 
 $(function() {
   $('.post-controls').hide();
+
+  HookSave();
+
   $( ".post" ).focus(function() {
     var postControls = $(this).find('.post-controls')
     $(postControls).show()
@@ -25,10 +28,30 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
 
+
   AddFilterHandler();
   Drag2();
   //AddInfinite();
 })
+
+function HookSave(){
+  $('.post-save-button').click(function(e){
+    e.preventDefault()
+    e.stopPropagation()
+    $(e.currentTarget).children().toggleClass('ti-star')
+    $(e.currentTarget).children().toggleClass('ti-trash')
+
+
+    var url = $(e.currentTarget).attr('href')
+  
+    $.get(url,function(data){
+      console.log(data);
+    })
+  })
+
+
+
+}
 
 
 function onStartListener(event){

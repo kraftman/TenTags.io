@@ -57,11 +57,11 @@
 
     <a class=' comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> <span class="ti-comments"></span></a>
 
-    <a  href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">
+    <a class='post-save-button' href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">
       <% if post.userSaved then %>
-        <span class="ti-trash">
+        <span class=" ti-trash">
       <% else %>
-        <span class="ti-star">
+        <span class=" ti-star">
       <% end %>
     </a>
 

@@ -251,13 +251,14 @@ function api:ToggleSavePost(userID,postID)
 		return nil, err
 	end
 
-	if ok == true then
+	if tonumber(ok) == 1 then
 		print('removing saved post')
 		ok, err = self.userWrite:RemoveSavedPost(userID, post.id)
 	else
-	print('addingsaved post')
-	ok, err = self.userWrite:AddSavedPost(userID, post.id)
+		print('addingsaved post')
+		ok, err = self.userWrite:AddSavedPost(userID, post.id)
 	end
+	self:InvalidateKey('user', userID)
 
 	return ok, err
 end
