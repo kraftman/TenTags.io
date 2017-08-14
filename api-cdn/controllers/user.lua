@@ -72,7 +72,7 @@ function m.ViewUserUpvoted(request)
   if not userID then
     return 'user not found'
   end
-  if not self.session.userID then
+  if not request.session.userID then
     return {render = 'pleaselogin'}
   end
 
