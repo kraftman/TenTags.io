@@ -1,10 +1,32 @@
 var knownFilters = [];
 
 
+   Dropzone.autoDiscover = false;
+
 $(function() {
 
   //$("#tagselect").chosen();
   //$('#filterselect').chosen();
+
+  $("#image-dropzone").dropzone({
+            maxFiles: 2000,
+            url: "/ajax_file_upload_handler/",
+            success: function (file, response) {
+                console.log(response);
+            }
+        });
+
+  $("#image-dropzone").sortable({
+      items:'.dz-preview',
+      cursor: 'move',
+      opacity: 0.5,
+      containment: '#image-dropzone',
+      distance: 20,
+      tolerance: 'pointer',
+      dictDefaultMessage: 'test test'
+  });
+
+
   $('#selectedtags').selectize({
     plugins: ['remove_button'],
     delimiter: ' ',

@@ -270,3 +270,14 @@ user factory checks cache
 cache generates user
 or ask redis
 redis generates user
+
+
+Images:
+Save original as png
+generate jpeg thumbnails
+
+albums:
+allow uploading multiple files
+allow creator to delete them
+allow admin to delete them
+allow flagging for dmca
