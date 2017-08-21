@@ -16,6 +16,10 @@ function m:Register(app)
 end
 
 function m.ViewAlerts(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  
   local alerts = userAPI:GetUserAlerts(request.session.userID)
 
   request.alerts = {}

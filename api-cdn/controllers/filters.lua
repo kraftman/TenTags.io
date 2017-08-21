@@ -37,13 +37,13 @@ function m:Register(app)
 end
 
 function m.SubscribeFilter(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   local userID = request.session.userID
 
-  if not userID then
-    return { render = 'pleaselogin' }
-  end
   local filterID = request.params.filterID
-
 
   local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
   if not ok then
@@ -53,11 +53,12 @@ function m.SubscribeFilter(request)
 end
 
 function m.ToggleDefault(request)
-  local userID = request.session.userID
 
-  if not userID then
-    return { render = 'pleaselogin' }
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
   end
+
+  local userID = request.session.userID
 
   local filterID = request.params.filterID
   if not filterID then
@@ -78,6 +79,10 @@ function m.ToggleDefault(request)
 end
 
 function m.NewFilter(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   if request.params.setdefault or request.params.subscribe then
     return m.ToggleDefault(request)
@@ -114,7 +119,6 @@ end
 
 function m.CreateFilter(request)
   if not request.session.userID then
-    print('no user id')
     return { render = 'pleaselogin' }
   end
   request.page_title = 'Create Filter'
@@ -181,6 +185,11 @@ function m.LoadAllFilters(request)
 end
 
 function m.BanUser(request,filter)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local userID = userAPI:GetUserID(request.params.banuser)
   if not userID then
     ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',request.params.banuser)
@@ -201,6 +210,10 @@ end
 
 function m.BanDomain(request,filter)
 
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local banInfo = {
     domainName = request.params.banDomain,
     banReason = request.params.banDomainReason or '',
@@ -215,6 +228,11 @@ function m.BanDomain(request,filter)
 end
 
 function m.UpdateFilterTags(request,filter)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local requiredTagNames = {}
   local bannedTagNames = {}
 
@@ -240,6 +258,11 @@ function m.UpdateFilterTags(request,filter)
 end
 
 function m.AddMod(request, filter)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local modName = request.params.addmod
   local ok, err = filterAPI:AddMod(request.session.userID, filter.id, modName)
   if ok then
@@ -250,6 +273,11 @@ function m.AddMod(request, filter)
 end
 
 function m.DelMod(request, filter)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local modID = request.params.delmod
   local ok, err = filterAPI:DelMod(request.session.userID, filter.id, modID)
   if ok then
@@ -260,6 +288,11 @@ function m.DelMod(request, filter)
 end
 
 function m.UpdateTitle(request, filter)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local title = request.params.filtertitle
 
   local description = request.params.filterdescription
@@ -280,6 +313,11 @@ end
 
 
 function m.UpdateFilter(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   --print(request.params.filterlabel)
   local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
@@ -330,6 +368,8 @@ function m.ViewFilterSettings(request)
   end
   local user = userAPI:GetUser(request.session.userID)
 
+
+  --maybe move to api
   if user.role ~= 'Admin' then
     if filter.ownerID ~= request.session.userID then
       local found = nil
@@ -382,6 +422,11 @@ function m.ViewFilterSettings(request)
 end
 
 function m.UnbanUser(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
@@ -397,6 +442,11 @@ function m.UnbanUser(request)
 end
 
 function m.UnbanDomain(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local filter =filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     ngx.log(ngx.ERR, 'no filter label found!')
@@ -411,6 +461,11 @@ function m.UnbanDomain(request)
 end
 
 function m.BanPost(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  
   local filter = filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     return 'filter not found'

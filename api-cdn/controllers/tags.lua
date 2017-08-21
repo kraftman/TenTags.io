@@ -6,6 +6,15 @@ local tagAPI = require 'api.tags'
 local m = {}
 m.__index = m
 
+
+function m:Register(app)
+  app:get('/tag/*',self.ParseTags)
+
+  app:get('newtag','/createtag',function()    return {render = 'createtag'}  end)
+
+  app:post('/createtagpost',self.CreateTag)
+end
+
 function m.ParseTags(request)
 
   local tagName = request.params.splat:match('(%w+)')
@@ -23,6 +32,10 @@ end
 
 function m.CreateTag(request)
 
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local info ={
     id = uuid.generate_random(),
     name = request.params.tagname,
@@ -38,13 +51,6 @@ function m.CreateTag(request)
   end
 end
 
-function m:Register(app)
-  app:get('/tag/*',self.ParseTags)
-
-  app:get('newtag','/createtag',function()    return {render = 'createtag'}  end)
-
-  app:post('/createtagpost',self.CreateTag)
-end
 
 
 return m

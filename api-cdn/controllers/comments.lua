@@ -52,8 +52,9 @@ end
 
 -- needs moving to comments controller
 function m.CreateComment(request)
-  if not request.userInfo then
-    return 'You must be logged in to do that'
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
   end
 
   local commentInfo = {
@@ -74,6 +75,11 @@ function m.CreateComment(request)
 end
 
 function m.EditComment(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local commentInfo = {
     postID = request.params.postID,
     text = request.params.commentText,
@@ -140,6 +146,10 @@ function m.DownVoteComment(request)
 end
 
 function m.DeleteComment(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   local postID = request.params.postID
   local userID = request.session.userID
   local commentID = request.params.commentID

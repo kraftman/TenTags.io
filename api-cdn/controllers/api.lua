@@ -88,6 +88,10 @@ function m.SubscribeFilter(request)
 end
 
 function m.SearchFilter(request)
+
+  if not request.session.userID then
+    return {json = {error = 'you must be logged in!', data = {}}}
+  end
   if not request.params.searchString then
     return {json = {error = 'no searchString provided', data = {}}}
   end
@@ -105,6 +109,10 @@ function m.SearchFilter(request)
 end
 --
 function m.GetUserFilters(request)
+
+  if not request.session.userID then
+    return {json = {error = 'you must be logged in!', data = {}}}
+  end
   local ok, err = userAPI:GetUserFilters(request.session.userID)
   if ok then
     return {json ={error = false, data = ok} }

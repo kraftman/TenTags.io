@@ -84,6 +84,11 @@ function m.ReportPost(request)
 end
 
 function m.ReloadImage(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local userID = request.session.userID
   local postID = request.params.postID
   if not userID then
@@ -113,6 +118,10 @@ function m.ToggleSavePost(request)
 end
 
 function m.CreatePost(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   if trim(request.params.link) == '' then
     request.params.link = nil
@@ -395,6 +404,11 @@ function m.AddSource(request)
 end
 
 function m.AddTag(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local tagName = request.params.addtag
   local userID = request.session.userID
   local postID = request.params.postID
@@ -410,6 +424,10 @@ function m.AddTag(request)
 end
 
 function m.EditPost(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   if request.params.sourceurl then
     return m.AddSource(request)
@@ -436,6 +454,11 @@ function m.EditPost(request)
 end
 
 function m.DeletePost(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local confirmed = request.params.confirmdelete
 
   if not confirmed then
@@ -456,6 +479,10 @@ function m.DeletePost(request)
 end
 
 function m.SubscribePost(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   local ok, err = postAPI:SubscribePost(request.session.userID,request.params.postID)
   if ok then
     return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
