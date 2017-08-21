@@ -6,6 +6,7 @@ local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
+local imageAPI = require 'api.images'
 local util = require("lapis.util")
 local assert_valid = require("lapis.validate").assert_valid
 local uuid = require 'lib.uuid'
@@ -51,9 +52,6 @@ function m:Register(app)
   app:get('downvotetag','/post/downvotetag/:tagName/:postID',self.DownvoteTag)
   app:get('upvotepost','/post/:postID/upvote', self.UpvotePost)
   app:get('downvotepost','/post/:postID/downvote', self.DownvotePost)
-  app:get('geticon', '/icon/:postID', function(request) return self.GetImage(request, 'bigIcon') end)
-  app:get('geticonsmall', '/icon/:postID/small',function(request) return self.GetImage(request, 'smallIcon') end)
-  app:get('getimage', '/image/:postID', function(request) return self.GetImage(request, 'bbID') end)
   app:get('subscribepost', '/post/:postID/subscribe', self.SubscribePost)
   app:get('savepost','/post/:postID/save',self.ToggleSavePost)
   app:get('reloadimage','/post/:postID/reloadimage', self.ReloadImage)
@@ -66,7 +64,7 @@ function m.ViewReportPost(request)
     return {render = 'pleaselogin'}
   end
 
-  ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
+  local ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
   request.post = ok
   return {render = 'post.report'}
 
@@ -114,14 +112,6 @@ function m.ToggleSavePost(request)
 
 end
 
-
-local allowedExtensions = {
-  ['.gif'] = true,
-  ['.png'] = true,
-  ['.jpg'] = true,
-  ['.jpeg'] = true
-}
-
 function m.CreatePost(request)
 
   if trim(request.params.link) == '' then
@@ -133,7 +123,8 @@ function m.CreatePost(request)
     link = request.params.postlink,
     text = request.params.posttext,
     createdBy = request.session.userID,
-    tags = {}
+    tags = {},
+    images = {}
   }
 
   for word in request.params.selectedtags:gmatch('%S+') do
@@ -141,35 +132,26 @@ function m.CreatePost(request)
   end
 
 
-  local file = request.params.upload_file
-  --print(file.content)
-  --print(file.content == '', request.params.upload == true)
-  if request.params.upload_file and (file.content ~= '') then
-    print('file found')
+  -- if they have no js let them form upload one image
+  local fileData = request.params.upload_file
 
-
-    local fileID = uuid.generate_random()
-
-    local fileExtension = file.filename:match("^.+(%..+)$")
-    if not allowedExtensions[fileExtension] then
-      return 'file type not allowed'
+  if request.params.upload_file and (fileData.content ~= '') then
+    local ok, err = imageAPI:CreateImage(fileData)
+    if ok then
+      info.images = { ok.id}
     end
-    local bbID, err = bb:UploadImage(fileID..fileExtension, file.content)
-    if not bbID then
-      ngx.log(ngx.ERR, 'file upload failed: ', err)
-      return 'error uploading file'
+  end
+  -- otherwise let them assign multiple preuploaded images
+  if request.params.postimages then
+    for k, v in pairs(from_json(request.params.postimages)) do
+      if v.text then
+        imageAPI:AddText(v.id, v.text)
+        info.images[#info.images+1] =  v.id
+      end
     end
-    info.bbID = bbID
-
   end
 
-  -- if info.bbID then
-  --   info.link = nil
-  -- end
-
   local newPost, err = postAPI:CreatePost(request.session.userID, info)
-
-
 
   if newPost then
     return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
@@ -390,30 +372,6 @@ function m.DownvotePost(request)
 end
 
 
-function m.GetImage(request,imageSize)
-  if not request.params.postID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  -- ratelimit based on session even if logged out
-  local userID = request.session.userID or ngx.ctx.userID
-
-  local post, err = postAPI:GetPost(userID, request.params.postID)
-  if not post or not post[imageSize] then
-
-    --ngx.header['Content-Type'] = 'image/png'
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  request.iconData = postAPI:GetImage(post[imageSize])
-  if not request.iconData then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-
-  ngx.header['Content-Type'] = 'image/png'
-  ngx.header['Cache-Control'] = 'max-age=86400'
-  ngx.say(request.iconData)
-
-  return ngx.exit(ngx.HTTP_OK)
-end
 
 
 

@@ -281,3 +281,44 @@ allow uploading multiple files
 allow creator to delete them
 allow admin to delete them
 allow flagging for dmca
+
+images:
+upload the image
+generate an id
+generate a short id
+convert to jpg
+create lower res optimised image
+convert short videos to gifs (and vice versa)
+generate preview gif for long videos
+
+create post:
+add all image ids to the post (in order)
+generate two sizes of post thumbnail
+
+image info:
+ID
+original file id
+optimised ID
+notes
+createdby
+createdat
+views
+bandwidth used
+
+extras:
+sorted set for images views/bandwidth
+still need to handle regular file upload from form
+
+deletion:
+user deletion
+
+DMCA:
+admin needs to be able to delete individual photos easily.
+
+unassigned images
+uploaded images added to pending queue
+removed when a post is created that uses them
+oldest pending image is removed completely
+should users have a list of images they have uploaded? (their own 'gallery'?)
+
+test redis over vpn

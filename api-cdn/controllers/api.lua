@@ -6,6 +6,7 @@ local m = {}
 local respond_to = (require 'lapis.application').respond_to
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
+local imageAPI = require 'api.images'
 local tinsert = table.insert
 local postAPI = require 'api.posts'
 local commentAPI = require 'api.comments'
@@ -25,6 +26,7 @@ function m:Register(app)
   app:match('/api/f/:filterName/posts', self.GetFilterPosts)
   app:match('/api/filters/create', self.CreateFilter)
   app:match('/api/tags/:searchString', self.SearchTags)
+  app:post('/api/i/', self.UploadImage)
 end
 
 
@@ -192,8 +194,31 @@ function m.GetFilterPosts(request)
   --local ok, err = api:GetFilterPosts(userID, self.params.filterName, )
 end
 
+function m.UploadImage(request)
+
+
+  if not request.session.userID then
+    return {json = {status = 'error', data = {'you must be logged in to upload'}}}
+  end
+
+  local fileData = request.params.upload_file
+
+  if not request.params.upload_file and (fileData.content == '') then
+    return {json = {status = 'error', message = 'no file data'}}
+  end
+
+  local ok, err = imageAPI:CreateImage(fileData)
+
+  return {json = {status = 'success', data = ok or {}}}
+
+end
+
 
 function m.CreateFilter(request)
+
+  if not request.session.userID then
+    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
+  end
 
   local requiredTagNames = from_json(request.params.requiredTagNames)
   local bannedTagNames = from_json(request.params.bannedTagNames)

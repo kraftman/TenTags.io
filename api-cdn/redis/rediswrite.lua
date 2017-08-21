@@ -1028,6 +1028,14 @@ function write:AddReport(userID, postID)
   return ok, err
 end
 
+function write:CreateImage(image)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hmset('image:'..image.id, image)
+  self:SetKeepalive(red)
+  return ok, err
+
+end
+
 function write:CreatePost(post)
 
   local hashedPost = {}
