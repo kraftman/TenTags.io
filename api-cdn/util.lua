@@ -10,6 +10,7 @@ local filterStyles = {
   --minimal = 'views.st.postelement-min',
   HN = 'views.st.postelement-HN',
   full = 'views.st.postelement-full',
+  grid = 'views.st.postelement-grid',
   --filtta = 'views.st.postelement-filtta'
 }
 

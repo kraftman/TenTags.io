@@ -784,6 +784,15 @@ ul {
   background-color: $postelement-color;
 }
 
+.post-grid {
+  //@include card1();
+  margin: 5px;
+  padding: 0px;
+  background-color: $postelement-color;
+  display: inline-block;
+  width: 250px;
+}
+
 .infobar-title{
   display: inline-block;
   width: 100%;
