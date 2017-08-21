@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="UTF-8">
 
-  <title><%= page_title or "Filtta" %></title>
+  <title><%= page_title or "TenTags" %></title>
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
   <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">

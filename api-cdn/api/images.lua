@@ -10,10 +10,11 @@ local bb = require('lib.backblaze')
 
 
 local allowedExtensions = {
-  ['.gif'] = true,
-  ['.png'] = true,
-  ['.jpg'] = true,
-  ['.jpeg'] = true
+  ['.mp4'] = 'vid',
+  ['.gif'] = 'vid',
+  ['.png'] = 'pic',
+  ['.jpg'] = 'pic',
+  ['.jpeg'] = 'pic'
 }
 
 function api:GetImage(imageID)
@@ -50,6 +51,8 @@ function api:UploadImage(userID, fileData)
 		return ok, err
 	end
 
+  --check image size
+
 
   local uuid = require 'lib.uuid'
 
@@ -66,18 +69,20 @@ function api:UploadImage(userID, fileData)
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end
-  local bbID, err = bb:UploadImage(file.id..fileExtension, fileData.content)
-  if not bbID then
+
+  file.extension = fileExtension
+  local rawID, err = bb:UploadImage(file.id..fileExtension, fileData.content)
+  if not rawID then
     ngx.log(ngx.ERR, 'file upload failed: ', err)
     return nil, 'error uploading file'
   end
-  file.bbID = bbID
+  file.rawID = rawID
 
   ok, err = self.redisWrite:CreateImage(file)
   if not ok then
     return ok, err
   end
-  ok, err = self.redisWrite:QueueJob('CreateImage', file)
+  ok, err = self.redisWrite:QueueJob('ConvertImage', file)
 
   return ok, err
 end

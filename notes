@@ -305,6 +305,26 @@ createdat
 views
 bandwidth used
 
+static has:
+optimised smaller image
+normal larger image
+
+gif has:
+gif
+mp4
+
+vid has
+vid
+mp4 preview
+gif preview
+
+post has
+small still
+big still
+
+nginx mp4 caching?
+
+
 extras:
 sorted set for images views/bandwidth
 still need to handle regular file upload from form
