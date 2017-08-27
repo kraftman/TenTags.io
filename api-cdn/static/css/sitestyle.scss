@@ -1,16 +1,26 @@
 
 // top bar
 
-$title-box-color: #add8e6;
+$topbar-background: #ffffff;
+$topbar-fontcolor: #616171;
 
 // side bar
+$sidebar-background: #eeeeee;
+$sidebar-linecolor: #c1c1d1;
+
+//background
+
+$background-color: #ffffff;
 
 //post elements
+$card-color: #ffffff;
+$post-background: #eeeeee;
+$post-bars: #eeeeee;
+
+$body-fontcolor: #c1c1d1;
 
 
-$link-color: #000;
-$background-color: #ACBDBA;
-$title-box-color: #add8e6;
+$link-color: #414151;
 $black: #000;
 $white: #fff;
 $upvote: #03191e;
@@ -28,7 +38,7 @@ $alert-green: green;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
   transition: all 0.3s cubic-bezier(.25,.8,.25,1);
-  background-color: $panel-color;
+  background-color: $card-color;
 }
 
 
@@ -40,6 +50,7 @@ html,body {
 
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
+
   height: 100%;
   margin: 0px;
   background-color: $background-color;
@@ -67,7 +78,7 @@ a {
 .hamburger {
   font-size: 30px;
   vertical-align: top;
-  color: $hight-font-color;
+  color: $topbar-fontcolor;
   display: inline-block;
   padding-top: 4px;
   padding-left: 5px;
@@ -76,13 +87,15 @@ a {
 
 .filterbarelement {
   display: table;
-  width: 100%;
+  width: auto;
   height: 30px;
   line-height: 30px;
   text-align: left;
   vertical-align: middle;
   border-top: 1px solid;
-  border-color: white;
+  border-color: $sidebar-linecolor;
+  margin-right: 3px;
+  margin-left: 5px;
   .filterbar-subscribe {
     display: table-cell;
     min: 10px;
@@ -105,6 +118,7 @@ a {
 
 .form-search {
   border: none;
+  margin-left: 5px;
 }
 
 .filter-contents {
@@ -126,7 +140,7 @@ a {
 
 .title-box {
 
-  background-color: $title-box-color;
+  background-color: $topbar-background;
   height: 25px;
   margin: 5px;
   background: $background-color;
@@ -157,7 +171,7 @@ a {
 .top-nav {
   @include card1();
   height: 40px;
-  background-color: $highlight-color;
+  background-color: $topbar-background;
 
   width: 100%;
 
@@ -175,7 +189,7 @@ a {
 
 
 .home-link {
-  color: $hight-font-color;
+  color: $topbar-fontcolor;
   display: inline-block;
   vertical-align: top;
   padding-right: 5px;
@@ -201,6 +215,7 @@ a {
   margin-top: 0px;
   min-height: 20px;
   a {
+    font-weight: bold;
     display: inline-block;
     height: 25px;
     line-height: 25px;
@@ -209,8 +224,13 @@ a {
     padding-right: 12px;
     padding-top: 3px;
     padding-bottom: 3px;
+    &:hover {
+      background-color: $sidebar-background;
+    }
   }
 }
+
+
 
 .filter-styles {
   margin: 5px;
@@ -235,7 +255,7 @@ a {
   height: 100%;
 }
 .settings-link {
-  color: $hight-font-color;
+  color: $topbar-fontcolor;
   display: inline-block;
   height: 100%;
   box-sizing: border-box;
@@ -266,6 +286,7 @@ a {
 
 .filter-bar {
   @include card1();
+  background-color: $sidebar-background;
   display: table-cell;
   width: 200px;
   position: static;
@@ -410,6 +431,10 @@ a {
       display:inline-block;
     }
   }
+
+  .post-full-bottombar {
+    display: block;
+  }
   .main {
     margin-bottom: 55px;
   }
@@ -522,9 +547,10 @@ a {
 
 
 .info-bar {
-  margin: 5px;
+  margin: 15px;
   width: 100%;
-
+  border-bottom: 1px solid;
+  border-color: $sidebar-linecolor;
 }
 
 .panel-image  {
@@ -632,11 +658,16 @@ ul {
 
 
 .post {
-  //@include card1();
+  @include card1();
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
-  background-color: $postelement-color;
+}
+
+.postelement-text {
+  display: inline-block;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .post-grid {
@@ -661,15 +692,16 @@ ul {
 }
 
 .post-full-topbar {
-  background-color: $postborder;
+  background-color: $post-bars;
   min-height: 20px;
-  padding: 5px;
+  padding: 8px;
   word-wrap: break-word;
 }
 
 .post-full-bottombar {
-  background-color: $postborder;
+  background-color: $post-bars;
   min-height: 30px;
+  display: none;
 
   a {
     display: inline-block;
@@ -785,6 +817,10 @@ ul {
 
 }
 
+.post-link {
+  font-weight: bold;
+}
+
 .alert-body {
   margin: 5px;
   padding:5px;
@@ -826,7 +862,7 @@ ul {
 }
 
 .post:focus {
-  background: #e5f7ff;
+  background: $post-background;
 }
 
 .comment {
@@ -911,7 +947,7 @@ ul {
 .panel {
   border: none;
   border-radius: 0px;
-  //@include card1();
+  @include card1();
 
   overflow: visible;
   background-color: $panel-color;

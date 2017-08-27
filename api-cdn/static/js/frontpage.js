@@ -17,7 +17,6 @@ $(function() {
   $( ".post" ).focus(function() {
     var postControls = $(this).find('.post-controls')
     $(postControls).show()
-    console.log('showing');
   });
   $( ".post" ).focusout(function() {
     var postControls = $(this).find('.post-controls')
@@ -43,7 +42,7 @@ function HookSave(){
 
 
     var url = $(e.currentTarget).attr('href')
-  
+
     $.get(url,function(data){
       console.log(data);
     })

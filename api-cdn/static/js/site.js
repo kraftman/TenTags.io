@@ -21,6 +21,14 @@ $(function() {
     $(e.currentTarget).parent().find('.linkImg').toggle()
   })
 
+  $('.post').focusin(function(e){
+    $(e.target).children('.post-full-bottombar').show();
+  })
+
+  $('.post').focusout(function(e){
+  $(e.target).children('.post-full-bottombar').hide();
+  })
+
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()
   //})
