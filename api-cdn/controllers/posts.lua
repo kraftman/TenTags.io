@@ -304,6 +304,11 @@ function m.CreatePostForm(request)
   if not request.session.userID then
     return { render = 'pleaselogin' }
   end
+  request.test = function()
+    return [[<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
+
+    <link rel="stylesheet" type="text/css" href="/static/css/spare.min.css">]]
+  end
 
 
   local tags = tagAPI:GetAllTags(api)

@@ -2,6 +2,8 @@
 
 <script src="/static/js/createfilter.js" defer></script>
 
+<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
+
 
 <div class = 'panel panel-default'>
   <h3>Create Filter</h3>

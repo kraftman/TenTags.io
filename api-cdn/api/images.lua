@@ -37,7 +37,7 @@ function api:GetImage(imageID)
 
 end
 
-function api:UploadImage(userID, fileData)
+function api:CreateImage(userID, fileData)
   --[[
     upload the image to backblaze
     create the imageinfo in redis
@@ -65,7 +65,7 @@ function api:UploadImage(userID, fileData)
   }
 
 
-  local fileExtension = file.filename:match("^.+(%..+)$")
+  local fileExtension = fileData.filename:match("^.+(%..+)$")
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end

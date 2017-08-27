@@ -9,8 +9,8 @@ $(function() {
   //$('#filterselect').chosen();
 
   $("#image-dropzone").dropzone({
-            maxFiles: 2000,
-            url: "/ajax_file_upload_handler/",
+            maxFiles: 20,
+            url: "/api/i/",
             success: function (file, response) {
                 console.log(response);
             }

@@ -5,6 +5,10 @@
 <script src="/static/js/createpost.js" defer></script>
 
 
+
+<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
+<link rel="stylesheet" type="text/css" href="/static/css/spare.min.css">
+
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/dropzone.css">
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/basic.css">
 

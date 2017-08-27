@@ -209,13 +209,13 @@ function m.UploadImage(request)
     return {json = {status = 'error', data = {'you must be logged in to upload'}}}
   end
 
-  local fileData = request.params.upload_file
-
-  if not request.params.upload_file and (fileData.content == '') then
+  local fileData = request.params.file
+  ngx.log(ngx.ERR, request.params.name, fileData.filename)
+  if not request.params.file and (fileData.content == '') then
     return {json = {status = 'error', message = 'no file data'}}
   end
 
-  local ok, err = imageAPI:CreateImage(fileData)
+  local ok, err = imageAPI:CreateImage(request.session.userID, fileData)
 
   return {json = {status = 'success', data = ok or {}}}
 
