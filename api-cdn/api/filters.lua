@@ -166,7 +166,7 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 	if(#userFilter.name < 2 ) then
 		return nil, 'filter name is too short'
 	end
-	if(#userFilter.name > 20 ) then
+	if(#userFilter.name > 30 ) then
 		return nil, 'filter name is too long'
 	end
 
@@ -179,7 +179,7 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		mods = {},
 		requiredTagNames = {},
 		bannedTagNames = {},
-		ownerID = self:SanitiseUserInput(userFilter.ownerID,50),
+		ownerID = self:SanitiseUserInput(userFilter.ownerID or userFilter.createdBy,50),
 		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
 	}

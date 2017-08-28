@@ -4,6 +4,7 @@ local m = {}
 local respond_to = (require 'lapis.application').respond_to
 local tinsert = table.insert
 local postAPI = require 'api.posts'
+local filterAPI = require 'api.filters'
 
 local filters = {
   {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
@@ -75,7 +76,7 @@ end
 function m.CreatePosts(self)
   local userID = self.session.userID
 
-  for i = 1, 1000 do
+  for i = 1, 10 do
     local info = {
       title = 'post:456:'..i,
       text = 'text:'..i,
@@ -93,9 +94,36 @@ function m.CreatePosts(self)
 
 end
 
+function m.CreateFilters(self)
+  local userID = self.session.userID
+  math.randomseed(ngx.time())
+  local a = math.random(0,100)
+  for i = 1, 100 do
+    i = i..a..math.floor(ngx.time())
+    print(i)
+    local info = {
+      name = 'filter:'..i,
+      descriptions = 'filterdescription:'..i,
+      title = 'fitlertitle:'..i,
+      requiredTagNames = {'456'},
+      bannedTagNames = {},
+      createdBy = self.session.userID,
+      createdAt = ngx.time(),
+    }
+
+    local ok, err = filterAPI:CreateFilter(userID, info)
+
+    if not ok then
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      return {json = err}
+    end
+  end
+end
+
 function m:Register(app)
     app:get('/auto/all', self.AutoContent)
     app:get('/auto/posts', self.CreatePosts)
+    app:get('/auto/filters', self.CreateFilters)
 end
 
 return m

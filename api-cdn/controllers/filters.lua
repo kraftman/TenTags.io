@@ -143,7 +143,13 @@ function m.DisplayFilter(request)
     v.username = user.username
   end
 
-  filter.ownerName = userAPI:GetUser(filter.ownerID or filter.createdBy).username
+  local ownerID = filter.ownerID or filter.createdBy
+
+  local owner = userAPI:GetUser(ownerID)
+  if not owner then
+    print('no owner with id: ', ownerID)
+  end
+  filter.ownerName = owner.username
   filter.relatedFilters = filterAPI:GetFilters(filter.relatedFilterIDs)
   filter.description = request.markdown.markdown(filter.description)
   filter.description = sanitize_html(filter.description)
@@ -465,7 +471,7 @@ function m.BanPost(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  
+
   local filter = filterAPI:GetFilterByName(request.params.filterlabel)
   if not filter then
     return 'filter not found'

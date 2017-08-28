@@ -21,12 +21,14 @@ $(function() {
     $(e.currentTarget).parent().find('.linkImg').toggle()
   })
 
-  $('.post').focusin(function(e){
+  $('.post').hover(function(e){
     $(e.target).children('.post-full-bottombar').show();
+    //$(e.target).find('.post-filters').show();
   })
 
   $('.post').focusout(function(e){
-  $(e.target).children('.post-full-bottombar').hide();
+    $(e.target).children('.post-full-bottombar').hide();
+    //$(e.target).find('.post-filters').hide();
   })
 
   //$('.settings-menu').focusout(function(){

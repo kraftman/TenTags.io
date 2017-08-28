@@ -694,6 +694,16 @@ ul {
   margin: 5px;
   margin-bottom: 0px;
   padding: 0px;
+  min-height: 100px;
+  &:hover {
+    .post-full-bottombar {
+      display: block;
+    }
+
+    .post-filters {
+      display: block;
+    }
+  }
 }
 
 .postelement-text {
@@ -729,11 +739,23 @@ ul {
   padding: 8px;
   word-wrap: break-word;
 }
+.post-filters {
+  float: left;
+  display: none;
+}
 
 .post-full-bottombar {
   background-color: $post-bars;
-  min-height: 30px;
-  display: none;
+  height: 30px;
+  width: 220px;
+  float: right;
+  position:relative;
+  display:none;
+  right: 0px;
+  top:auto;
+  bottom: 10px;
+  vertical-align: bottom;
+
 
   a {
     display: inline-block;

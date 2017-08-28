@@ -123,9 +123,13 @@ a {
   border-style: solid;
   border-width: 1px; }
 
+.filterbar-results {
+
+}
+
 .filter-icon {
   display: inline-block;
-  background-color: #ACBDBA;
+  background-color: #ffffff ;
   padding-left: 5px;
   padding-right: 5px;
   padding-top: 3px;
@@ -564,6 +568,10 @@ ul {
 .infobar-body {
   padding: 5px;
   display: none; }
+
+.post-filters {
+
+}
 
 .post-full-topbar {
   background-color: #eee;
