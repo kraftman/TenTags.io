@@ -19,8 +19,33 @@ $post-bars: #eeeeee;
 
 $body-fontcolor: #c1c1d1;
 
-
 $link-color: #414151;
+
+
+
+// // top bar
+//
+// $topbar-background: #444444;
+// $topbar-fontcolor: #dddddd;
+//
+// // side bar
+// $sidebar-background: #333333;
+// $sidebar-linecolor: #c1c1d1;
+//
+// //background
+//
+// $background-color: #444444;
+//
+// //post elements
+// $card-color: #555555;
+// $post-background: #eeeeee;
+// $post-bars: #666666;
+//
+//
+// $link-color: #cccccc;
+// $body-fontcolor: #777777;
+
+
 $black: #000;
 $white: #fff;
 $upvote: #03191e;
@@ -119,6 +144,10 @@ a {
 .form-search {
   border: none;
   margin-left: 5px;
+  background-color: $post-bars;
+  color: #ffffff;
+  border-radius: 3px;
+
 }
 
 .filter-contents {
@@ -288,7 +317,7 @@ a {
   @include card1();
   background-color: $sidebar-background;
   display: table-cell;
-  width: 200px;
+  width: 250px;
   position: static;
   border-radius: 0px;
   z-index: 8;
@@ -559,6 +588,9 @@ a {
 .contents {
   position: relative;
   overflow: hidden;
+
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .box-wrap {
@@ -719,8 +751,8 @@ ul {
 }
 
 .posts{
-  //margin-left: 5px;
-  //margin-right: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
   margin-bottom: 5px;
 }
 
@@ -948,9 +980,9 @@ ul {
   border: none;
   border-radius: 0px;
   @include card1();
+  background-color: $post-background;
 
   overflow: visible;
-  background-color: $panel-color;
 
 }
 
