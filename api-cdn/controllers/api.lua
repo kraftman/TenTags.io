@@ -203,7 +203,9 @@ function m.GetFilterPosts(request)
 end
 
 function m.UploadImage(request)
-
+  if true then
+    return {status = 400}
+  end
 
   if not request.session.userID then
     return {json = {status = 'error', data = {'you must be logged in to upload'}}}
@@ -212,10 +214,12 @@ function m.UploadImage(request)
   local fileData = request.params.file
   ngx.log(ngx.ERR, request.params.name, fileData.filename)
   if not request.params.file and (fileData.content == '') then
-    return {json = {status = 'error', message = 'no file data'}}
+    return {json = {status = 'error', message = 'no file data'}, statu = 400}
   end
 
   local ok, err = imageAPI:CreateImage(request.session.userID, fileData)
+-- return error code if needed
+
 
   return {json = {status = 'success', data = ok or {}}}
 

@@ -11,6 +11,7 @@ $(function() {
   $("#image-dropzone").dropzone({
             maxFiles: 20,
             url: "/api/i/",
+            previewTemplate: $('#template-preview').html(),
             success: function (file, response) {
                 console.log(response);
             }
