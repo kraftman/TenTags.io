@@ -9,14 +9,12 @@
 <link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
 <link rel="stylesheet" type="text/css" href="/static/css/spare.min.css">
 
-<link rel="stylesheet" type="text/css" href="/static/css/dropzone.css">
-<link rel="stylesheet" type="text/css" href="/static/css/basic.css">
 
-<div id='template-preview'>
+<div id='template-preview' class = 'hidden-template'>
 <div class="dz-preview dz-file-preview">
   <div class="dz-image"><img data-dz-thumbnail /></div>
-  <form>
-    <textarea>
+  <form class='dropzone-description'>
+    <textarea class='form-input' placeholder="File description...">
     </textarea>
   </form>
   <div class="dz-details">

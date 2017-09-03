@@ -66,6 +66,8 @@ function api:CreateImage(userID, fileData)
 
 
   local fileExtension = fileData.filename:match("^.+(%..+)$")
+  fileExtension = fileExtension:lower()
+  print(fileExtension)
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end
@@ -83,8 +85,11 @@ function api:CreateImage(userID, fileData)
     return ok, err
   end
   ok, err = self.redisWrite:QueueJob('ConvertImage', file)
+  if not ok then
+    return ok, err
+  end
 
-  return ok, err
+  return file, err
 end
 
 return api

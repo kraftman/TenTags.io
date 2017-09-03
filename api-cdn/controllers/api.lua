@@ -203,9 +203,9 @@ function m.GetFilterPosts(request)
 end
 
 function m.UploadImage(request)
-  if true then
-    return {status = 400}
-  end
+  -- if true then
+  --   return {status = 400}
+  -- end
 
   if not request.session.userID then
     return {json = {status = 'error', data = {'you must be logged in to upload'}}}
@@ -219,9 +219,12 @@ function m.UploadImage(request)
 
   local ok, err = imageAPI:CreateImage(request.session.userID, fileData)
 -- return error code if needed
+  if not ok then
+    print(err)
+    return {json = {status = 'error'}, status = 500}
+  end
 
-
-  return {json = {status = 'success', data = ok or {}}}
+  return {json = {status = 'success', data = ok.id or {}}}
 
 end
 
