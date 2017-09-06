@@ -6,6 +6,7 @@ local api = setmetatable({}, base)
 local tinsert = table.insert
 local userlib = require 'lib.userlib'
 local trim = (require 'lapis.util').trim
+local MAX_USER_VIEWS = 20
 
 function api:UserCanVoteTag(userID, postID, tagName)
 	if self:UserHasVotedTag(userID, postID, tagName) then
@@ -28,9 +29,12 @@ function api:GetUserFrontPage(userID, sortBy, startAt, range)
 
 	if sortBy == 'seen' then
 		return cache:GetUserSeenPosts(userID, startAt, range)
-	else
-  	return cache:GetUserFrontPage(userID, sortBy, startAt, range)
 	end
+
+	local user = cache:GetUser(userID)
+
+  return cache:GetUserFrontPage(userID, sortBy, startAt, range)
+
 end
 
 
@@ -263,37 +267,92 @@ function api:ToggleSavePost(userID,postID)
 	return ok, err
 end
 
+function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
 
-function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 
-
-	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
+	local ok, err = self:RateLimit('Toggle FilterSub:', userID, 60, 120)
 	if not ok then
 		return ok, err
 	end
 
-	if userID ~= userToSubID then
-		local user = cache:GetUser(userID)
+	local user = cache:GetUser(userID)
+	if userID ~= userToUpdateID then
 		if user.role ~= 'Admin' then
-			return nil, 'you must be admin to do that'
+			print('not admin')
+			return nil, 'no auth'
 		end
 	end
-	print(userToSubID)
-	local filterIDs = cache:GetUserFilterIDs(userToSubID)
+
+	-- if the view were updating is default
+	if userToUpdateID == 'default' then
+		if user.role ~= 'Admin' then
+			return nil, 'no auth'
+		end
+		local view = cache:GetView('default')
+		return self:ToggleViewFilter(view, filterID)
+	end
+
+	local view
+
+	-- create a view if they have default
+	if user.currentView == 'default' then
+		local defaultView, err = cache:GetView('default')
+		if not defaultView then
+			ngx.log(ngx.ERR, err)
+			return nil, 'eek'
+		end
+
+		ok, err = self:CreateView(userID, defaultView.filters)
+		if not ok then
+			ngx.log(ngx.ERR, err)
+			return nil, 'error creating new view'
+		else
+			-- we're done, they have a new view, no need to toggle it
+			return ok
+		end
+	end
+
+
+	view = cache:GetView(user.currentView)
+
+
+	ok, err = self:ToggleViewFilter(view, filterID)
+
+	if not ok then
+		print('fail:', err)
+		return nil, err
+	end
+
+
+	self:InvalidateKey('userfilter', userToUpdateID)
+
+	return ok, err
+
+
+end
+
+function api:ToggleViewFilter(view, filterID)
 
 	local subscribe = true
-  for _, v in pairs(filterIDs) do
+  for k, v in pairs(view.filters) do
     if v == filterID then
       -- they are already subbed
       subscribe = false
+			view.filters [k] = nil
 			break
     end
   end
-	print(userToSubID,' ', filterID,' ', subscribe)
-	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
-  ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
 
-	self:InvalidateKey('userfilter', userToSubID)
+	if subscribe then
+		view.filters[#view.filters+1] = filterID
+	end
+
+	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
+	self.redisWrite:CreateView(view)
+	-- need to remove the view from the cache
+	local ok, err = self:InvalidateKey('view', view.id)
+  --ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
+
 	return ok, err
 end
 
@@ -311,26 +370,148 @@ function api:GetUser(userID)
 	return userInfo
 end
 
+--[[
+
+
+need to have user -> view link
+
+
+view:
+- list of filters
+- creation time
+- createdBy
+- name
+- public?
+- follower count
+
+
+can we merge views?
+admins  an edit views (default view)
+can share view by making it public
+
+user starts with default view
+if they edit the view, they get their own
+can they combine others views with their own? - no, but can save other peoples views
+can views be named and shared? /v/kraftman/tech
+
+list of views includes users + following
+cant edit following
+follows default
+
+frontpages are calculated per view not per user
+
+
+]]
+
+
+function api:CreateView(userID, filters)
+
+  -- check they arent at the limit
+  local user = cache:GetUser(userID)
+  if user.viewCount and user.viewCount > MAX_USER_VIEWS  then
+    return nil, 'you have too many views, please unfollow one'
+  end
+
+  local newView = {
+
+    id = uuid.generate(),
+    createdBy = userID,
+    createdAt = ngx.time(),
+    filters = filters or {},
+    public = false,
+  }
+
+  user.viewCount = user.viewCount + 1
+  user.views[#user.views+1] = newView.id
+	user.currentView = newView.id
+
+  local ok, err = self.redisWrite:CreateView(newView)
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self.userWrite:CreateSubUser(user)
+	self:InvalidateKey('user', userID)
+  return ok, err
+
+end
+
+function api:CreateDefaultView(userID)
+	local user = cache:GetUser(userID)
+	if user.role ~= 'Admin' then
+		return nil, 'must be admin'
+	end
+
+	local newView = {
+		id = 'default',
+		createdBy = userID,
+		createdAt = ngx.time(),
+		filters = {},
+		public = true
+	}
+
+	local ok, err = self.redisWrite:CreateView(newView)
+
+	return ok, err
+end
+
+function api:ToggleViewSubscription(userID, viewID)
+	local user = self.cache:GetUser(userID)
+	local view = self.cache:GetView(viewID)
+
+	local found
+	for k, v in pairs(user.views) do
+		if v == viewID then
+			found = true
+			user.views[k] = nil
+
+			break
+		end
+	end
+
+	if found then
+		view.subCount = view.subCount - 1
+	else
+		view.subCount = view.subCount + 1
+		user.views[#user.views+1]= viewID
+	end
+
+	local ok, err = self.userWrite:CreateSubUser(user)
+	if not ok then
+		return ok, err
+	end
+
+
+	ok, err = self.redisWrite:CreateView(view)
+
+	return ok, err
+
+
+end
+
+
 
 function api:CreateSubUser(accountID, username)
 	username = trim(username)
   local subUser = {
     id = uuid.generate(),
     username = self:SanitiseHTML(username,20),
-    filters = cache:GetUserFilterIDs('default'),
+		views = {'default'},
+		currentView = 'default',
     parentID = accountID,
     enablePM = 1,
 		nsfwLevel = 0
   }
 	subUser.lowerUsername = subUser.username:lower()
 
+
 	if #subUser.username < 3 then
 		return nil, 'username too short'
 	end
 
-	for k,v in pairs(subUser.filters) do
-		self.userWrite:ToggleFilterSubscription(subUser.id,v,true)
-	end
+	-- for k,v in pairs(subUser.filters) do
+	-- 	self.userWrite:ToggleFilterSubscription(subUser.id,v,true)
+	-- end
 
 	local existingUserID = cache:GetUserID(subUser.username)
 	if existingUserID then
@@ -529,8 +710,12 @@ function api:GetUserFilters(userID)
   if not userID then
     userID = 'default'
   end
-  local filterIDs = cache:GetUserFilterIDs(userID)
-	--print(to_json(filterIDs))
+
+	local user = cache:GetUser(userID)
+
+  local filterIDs = cache:GetViewFilterIDs(user.currentView)
+
+
 	local filters = cache:GetFilterInfo(filterIDs)
 	--print(to_json(filters))
 	return filters

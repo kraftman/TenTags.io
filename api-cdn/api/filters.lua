@@ -44,6 +44,8 @@ function api:SetToggleDefault(userID, filterID)
 		return nil, 'unknown filter'
 	end
 
+
+
 	ok, err = self.redisWrite:FilterSetDefault(filterID, not filter.default)
 	ok,err = self:InvalidateKey('filter', filter.id)
 

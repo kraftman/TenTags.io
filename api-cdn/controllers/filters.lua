@@ -505,6 +505,12 @@ function m.SearchFilters(request)
     return 'no filters found matching '..request.params.searchString
   end
 
+
+  local user = userAPI:GetUser(request.session.userID)
+  if user and user.role == 'Admin' then
+    request.isAdmin = true
+  end
+
   request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(request.session.userID)
   request.searchString = request.params.searchString
   return {render = 'filter.all'}

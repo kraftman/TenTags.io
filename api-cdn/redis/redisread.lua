@@ -85,6 +85,29 @@ function read:GetQueueSize(jobName)
 
 end
 
+function read:GetView(viewID)
+  local red = self:GetRedisReadConnection()
+  local ok, err = red:hgetall('view:'..viewID)
+  self:SetKeepalive(red)
+  if not ok then
+    return nil, err
+  end
+  ok = self:ConvertListToTable(ok)
+  print(ok.filters)
+  ok.filters = self:from_json(ok.filters)
+  for i = #ok.filters, 1, -1 do
+    if ok.filters[i] == ngx.null then
+      print(k)
+      table.remove(ok.filters, i)
+      print('removing nullf from filters')
+    end
+  end
+  print(to_json(ok.filters))
+
+
+  return ok
+end
+
 
 function read:GetBacklogStats(jobName,startAt, endAt)
   jobName = 'backlog:'..jobName

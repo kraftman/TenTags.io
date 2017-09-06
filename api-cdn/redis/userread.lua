@@ -197,6 +197,9 @@ function userread:GetUser(userID)
     elseif k:find('postSubscribers:') then
       user.postSubscribers = self:from_json(v) or {}
       user[k] = nil
+    elseif k:find('views:') then
+      user.views = self:from_json(v) or {}
+      user[k] = nil
     elseif k:find('blockedUsers:') then
 
       user.blockedUsers = self:from_json(v) or {}
@@ -228,6 +231,8 @@ function userread:GetUser(userID)
   user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
   user.showNSFL = user.showNSFL == '1' and true or false
   user.nsfwLevel = user.nsfwLevel and tonumber(user.nsfwLevel) or 0
+  user.viewCount = user.viewCount or 1
+  user.views = user.views or {}
 
   if user.deleted then
     return nil
