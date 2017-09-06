@@ -742,12 +742,18 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
 end
 
 
-function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
+function cache:GetFreshUserPosts(userID, viewID, sortBy, startAt, range)
 
   local freshPosts = {}
   local count = 0
   local user = self:GetUser(userID)
-  local view = self:GetView(user.currentView)
+  local view
+
+  if viewID then
+    view = self:GetView(viewID)
+  else
+    view = self:GetView(user.currentView)
+  end
 
 
 
@@ -845,10 +851,10 @@ function cache:GetUserPostVotes(userID)
 
 end
 
-function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
+function cache:GetCachedUserFrontPage(userID, viewID, sortBy, startAt, range)
   local ok, err, userFrontPagePosts
   if ENABLE_CACHE then
-    ok, err = userFrontPagePostDict:get(userID..':'..sortBy..':'..startAt..':'..range)
+    ok, err = userFrontPagePostDict:get(userID..':'..(viewID or '')..':'..sortBy..':'..startAt..':'..range)
     if err then
       ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
     end
@@ -859,12 +865,12 @@ function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
   end
 
   if not userFrontPagePosts then
-    userFrontPagePosts,err = self:GetFreshUserPosts(userID, sortBy, startAt, range)
+    userFrontPagePosts,err = self:GetFreshUserPosts(userID, viewID, sortBy, startAt, range)
     if not userFrontPagePosts then
       print(err)
     end
 
-    userFrontPagePostDict:set(userID..':'..sortBy, to_json(userFrontPagePosts),60)
+    userFrontPagePostDict:set(userID..':'..(viewID or '')..':'..sortBy..':'..range, to_json(userFrontPagePosts),60)
   end
 
   return userFrontPagePosts
@@ -872,7 +878,7 @@ function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
 end
 
 
-function cache:GetUserFrontPage(userID,sortBy,startAt, range)
+function cache:GetUserFrontPage(userID, viewID, sortBy,startAt, range)
 
   local user = self:GetUser(userID)
 
@@ -881,7 +887,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
+  local freshPosts = cache:GetCachedUserFrontPage(userID, viewID, sortBy, startAt, range)
 
   local newPosts = {}
   local post

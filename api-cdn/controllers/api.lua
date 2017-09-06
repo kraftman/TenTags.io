@@ -186,7 +186,7 @@ function m.GetFrontPage(request)
 
   range = tonumber(range)
 
-  local ok,err = userAPI:GetUserFrontPage(userID, sortBy, startAt, range)
+  local ok,err = userAPI:GetUserFrontPage(userID, nil, sortBy, startAt, range)
   if ok then
     return {json = {status = 'success', data = ok or {}}}
   else

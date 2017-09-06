@@ -18,7 +18,7 @@ function api:UserCanVoteTag(userID, postID, tagName)
 	return true
 end
 
-function api:GetUserFrontPage(userID, sortBy, startAt, range)
+function api:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
 
 	local ok, err = self:RateLimit('GetFrontPage:'..sortBy,userID, 5, 30)
@@ -33,7 +33,7 @@ function api:GetUserFrontPage(userID, sortBy, startAt, range)
 
 	local user = cache:GetUser(userID)
 
-  return cache:GetUserFrontPage(userID, sortBy, startAt, range)
+  return cache:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
 end
 
