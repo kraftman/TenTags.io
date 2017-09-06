@@ -721,13 +721,18 @@ function api:GetUserFilters(userID)
 	return filters
 end
 
-function api:GetIndexedUserFilterIDs(userID)
+function api:GetIndexedViewFilterIDs(userID)
 	local ok, err = self:RateLimit('GetIndexedUserFilterIDs', 5, 1)
 	if not ok then
 		return nil, err
 	end
 
-	return cache:GetIndexedUserFilterIDs(userID) or {}
+	local user = cache:GetUser(userID)
+	if userID == 'default' then
+		return cache:GetIndexedViewFilterIDs('default')
+	end
+
+	return cache:GetIndexedViewFilterIDs(user.currentView) or {}
 
 end
 

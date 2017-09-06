@@ -67,7 +67,7 @@ function m.ToggleDefault(request)
 
   if request.params.setdefault == 'true' then
     userAPI:ToggleFilterSubscription(userID, 'default', filterID)
-    filterAPI:SetToggleDefault(userID,filterID)
+
     return {redirect_to = request:url_for("allfilters") }
   end
 
@@ -180,11 +180,21 @@ function m.LoadAllFilters(request)
     request.isAdmin = true
   end
   if user then
-    request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(user.id)
+    request.userFilterIDs = userAPI:GetIndexedViewFilterIDs(user.id)
   else
     request.userFilterIDs = {}
   end
   request.filters = filterAPI:GetFiltersBySubs()
+
+  local defaultFilters = userAPI:GetIndexedViewFilterIDs('default')
+  for k,v in pairs(request.filters) do
+    if defaultFilters[k] then
+      v.default = true
+    else
+      v.default = false
+    end
+  end
+
   --print(to_json(request.filters))
 
   return {render = 'filter.all'}
@@ -511,7 +521,7 @@ function m.SearchFilters(request)
     request.isAdmin = true
   end
 
-  request.userFilterIDs = userAPI:GetIndexedUserFilterIDs(request.session.userID)
+  request.userFilterIDs = userAPI:GetIndexedViewilterIDs(user.currentView)
   request.searchString = request.params.searchString
   return {render = 'filter.all'}
 end

@@ -693,9 +693,9 @@ function cache:GetFiltersBySubs(startAt,endAt)
   return self:GetFilterInfo(filterIDs)
 end
 
-function cache:GetIndexedUserFilterIDs(userID)
+function cache:GetIndexedViewFilterIDs(viewID)
   local indexed = {}
-  for _,v in pairs(self:GetUserFilterIDs(userID)) do
+  for _,v in pairs(self:GetViewFilterIDs(viewID)) do
     indexed[v] = true
   end
   return indexed
