@@ -23,6 +23,11 @@ function m.NewMessage(request)
 end
 
 function m.ViewMessages(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local startAt = request.params.startAt or 0
   if not tonumber(startAt) then
     startAt = 0
@@ -38,6 +43,11 @@ function m.ViewMessages(request)
 end
 
 function m.CreateThread(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local msgInfo = {
     title = request.params.subject,
     body = request.params.body,
@@ -57,6 +67,11 @@ end
 
 function m.CreateMessageReply(request)
   -- need the threadID
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local msgInfo = {}
   msgInfo.threadID = request.params.threadID
   msgInfo.body = request.params.body
@@ -65,7 +80,12 @@ function m.CreateMessageReply(request)
 end
 
 function m.MessageReply(request)
-  request.thread = threadAPI:GetThread(request.params.threadID)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  --TODO check they are allowed to view the thread
+  request.thread = threadAPI:GetThread(request.session.userID, request.params.threadID)
   return {render = 'message.reply'}
 end
 

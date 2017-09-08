@@ -27,6 +27,10 @@ end
 
 function m.DisplaySettings(request)
 
+  if not request.session.accountID then
+    return {render = 'pleaselogin'}
+  end
+
   local user = request.userInfo
   if not user then
     return 'unknown user'
@@ -60,6 +64,10 @@ end
 
 
 function m.UpdateSettings(request)
+
+  if not request.session.accountID then
+    return {render = 'pleaselogin'}
+  end
 
   local user = request.userInfo
   if not user or not user.id then
@@ -124,6 +132,10 @@ function m.UpdateFilterStyle(request)
 end
 
 function m.KillSession(request)
+
+  if not request.session.accountID then
+    return {render = 'pleaselogin'}
+  end
 
   local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
   if ok then

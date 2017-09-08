@@ -248,16 +248,17 @@ function cache:GetUserAlerts(userID)
   end
 
   if not alerts then
+
     alerts = userRead:GetUserAlerts(userID,user.alertCheck, ngx.time())
 
     if err then
       return alerts, err
     end
-    ok, err = userAlertDict:set(userID, to_json(alerts),10)
+    ok, err = userAlertDict:set(userID, to_json(alerts),30)
     if not ok then
       ngx.log(ngx.ERR, 'unable to set alert info: ',err)
     end
-    err = 'cached'
+
   end
 
 
@@ -401,12 +402,13 @@ end
 
 function cache:GetNewUsers()
   local ok, err =  userRead:GetNewUsers()
-
+  print(to_json(ok))
   for k,v in pairs(ok )do
 
   end
 
   if ok == 0 then
+    print('none')
     return {}
   end
 
@@ -583,6 +585,7 @@ function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
     post = self:GetPost(v)
     post.filters = self:GetFilterInfo(post.filters) or {}
     if self:SavedPostExists(userID, post.id) then
+      print('user has saved the post')
       post.userSaved = true
     end
     if userID and userID ~= 'default' then
@@ -879,6 +882,9 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
       sessionSeenPosts[post.parentID] = true
       self:UpdateUserSessionSeenPosts(userID,sessionSeenPosts)
     end
+    if self:SavedPostExists(userID, post.id) then
+      post.userSaved = true
+    end
 
     tinsert(newPosts, post)
 
@@ -934,13 +940,11 @@ function cache:GetUserFilterIDs(userID)
     return res, err
   end
 
-
   ok, err = userFilterIDs:set(userID,to_json(res))
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user filter: ',err)
   end
-  --print(to_json(res))
   return res
 
 end

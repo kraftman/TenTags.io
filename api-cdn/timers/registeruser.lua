@@ -52,8 +52,9 @@ function config:FlushSessionLastSeen()
     sessionID, accountID = key:match('(%w+):(%w+)')
     lastSeen = sessionLastSeenDict:get(key)
     account = self.userRead:GetAccount(accountID)
-    session = account.sessions[sessionID]
+
     if account and session then
+      session = account.sessions[sessionID]
       session.lastSeen = lastSeen
 
       ok, err = self.redisWrite:InvalidateKey('account', account.id)
@@ -102,9 +103,18 @@ function config:ProcessAccount(session)
   local accountID = self:GetHash(emailAddr)
   local account = self.userRead:GetAccount(accountID)
 
+  if account then
+    print('account already exists')
+    print(to_json(account))
+  end
   if not account then
     account = self:CreateAccount(accountID, session)
-    ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    print('adding to newusers')
+    local ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to write new user: ', err)
+    end
+
 
   end
 	account.id = accountID
@@ -128,7 +138,7 @@ function config:ProcessAccount(session)
   local url = session.confirmURL..'?key='..session.id..'-'..accountID
 
   local email = {}
-  email.body = [[ Please click this link to login (remember to open in browser on mobile): /n]]
+  email.body = [[ Please click this link to login (remember to open in browser on mobile):  ]]
   email.body = email.body..url
   email.subject = 'Login email'
   email.recipient = emailAddr

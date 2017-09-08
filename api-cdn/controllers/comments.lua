@@ -33,7 +33,7 @@ end
 
 function m.ViewComment(request)
   request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
-  print(to_json(request.commentInfo))
+
   request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
   if request.commentInfo.shortURL then
     return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
@@ -52,8 +52,9 @@ end
 
 -- needs moving to comments controller
 function m.CreateComment(request)
-  if not request.userInfo then
-    return 'You must be logged in to do that'
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
   end
 
   local commentInfo = {
@@ -63,18 +64,22 @@ function m.CreateComment(request)
     text = request.params.commentText,
   }
   --ngx.log(ngx.ERR, to_json(request.params))
-  local ok = commentAPI:CreateComment(request.session.userID, commentInfo)
+  local ok,err = commentAPI:CreateComment(request.session.userID, commentInfo)
   if ok then
-    print('created')
-    return 'created!'
+    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
   else
-    print('failed')
-    return 'failed!'
+
+    return 'failed!'..(err or '')
   end
 
 end
 
 function m.EditComment(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   local commentInfo = {
     postID = request.params.postID,
     text = request.params.commentText,
@@ -141,6 +146,10 @@ function m.DownVoteComment(request)
 end
 
 function m.DeleteComment(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   local postID = request.params.postID
   local userID = request.session.userID
   local commentID = request.params.commentID

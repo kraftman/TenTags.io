@@ -22,9 +22,9 @@ function m.SearchPosts(request)
     ngx.log(ngx.ERR, err)
     return {render = 'search.failed'}
   end
-  print(search, search:find('^http'),ok.hits.total, ok.hits.total == 0)
+  
   if search:find('^http') and ok.hits.total == 0 then
-    print('this')
+
     request.postLink = search
     return {redirect_to = request:url_for("newpost",{postLink = search })..'?postLink='..search}
   else

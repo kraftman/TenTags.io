@@ -206,7 +206,6 @@ function config:LogBacklogStats(jobName, time, value)
     increment = tonumber(increment)
     newTime = (time - (time % increment))
 
-    print(jobName, ' ', increment, ' ', value)
     ok, err = redisWrite:LogBacklogStats(jobName..':'..increment, newTime, newTime..':'..value, timespan)
     if not ok then
       ngx.log(ngx.ERR, 'unable to write stats: ', err)

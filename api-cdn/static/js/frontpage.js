@@ -11,10 +11,12 @@ var list_empty;
 
 $(function() {
   $('.post-controls').hide();
+
+  HookSave();
+
   $( ".post" ).focus(function() {
     var postControls = $(this).find('.post-controls')
     $(postControls).show()
-    console.log('showing');
   });
   $( ".post" ).focusout(function() {
     var postControls = $(this).find('.post-controls')
@@ -25,10 +27,30 @@ $(function() {
   LoadNewPosts();
   AddToSeenPosts();
 
+
   AddFilterHandler();
   Drag2();
-  AddInfinite();
+  //AddInfinite();
 })
+
+function HookSave(){
+  $('.post-save-button').click(function(e){
+    e.preventDefault()
+    e.stopPropagation()
+    $(e.currentTarget).children().toggleClass('ti-star')
+    $(e.currentTarget).children().toggleClass('ti-trash')
+
+
+    var url = $(e.currentTarget).attr('href')
+
+    $.get(url,function(data){
+      console.log(data);
+    })
+  })
+
+
+
+}
 
 
 function onStartListener(event){
@@ -141,12 +163,14 @@ function AddToSeenPosts(){
 
 
 function AddPostVoteListener(){
-  $(".post-upvote").click(function(e) {
+  $(".post-upvote, .upvoteButton").click(function(e) {
     e.preventDefault()
+    $('.upvoteButton, .downvoteButton').hide()
     VotePost($(this).parents('.post'), 'up')
   })
-  $(".post-downvote").click(function(e){
+  $(".post-downvote, .downvoteButton").click(function(e){
     e.preventDefault()
+    $('.upvoteButton, .downvoteButton').hide()
     VotePost($(this).parents('.post'),'down')
   })
 }
@@ -186,7 +210,7 @@ function VotePost(post, direction){
   $(post).find('.post-downvote').addClass('disable-vote');
 
   $.get(uri,function(data){
-    console.log(data);
+    //console.log(data);
   })
 }
 
@@ -241,18 +265,24 @@ function GetFreshPost(){
 
 
 function LoadMorePosts(template){
-  console.log(template)
   var newPost = template.clone()
-  console.log(newPost)
 
   var postInfo = GetFreshPost()
   if (postInfo == null) {
     console.log('no post')
     return
   }
-  console.log(postInfo.id)
+
   newPost.find('.postID').val(postInfo.id)
   newPost.find('.post-link').text(postInfo.title)
+
+  var postLink;
+  if (postInfo.link == null){
+    postLink = '/p/'+postInfo.shortURL || postInfo.id
+  } else {
+    postLink = postInfo.link
+  }
+
   if (postInfo.link == null && postInfo.bbID == null){
 
     newPost.find('.post-icon').attr('src','/static/icons/self.svg')
@@ -260,19 +290,17 @@ function LoadMorePosts(template){
   } else {
     newPost.find('.post-icon').attr('src','/icon/'+postInfo.id)
     newPost.find('.linkImg').attr('src','/icon/'+postInfo.id)
+    console.log('adding '+postLink+ ' to linkImg parent')
+    newPost.find('.linkImg').parent().attr('href',postLink);
     newPost.find('.linkImg').show()
 
   }
-  var postLink;
-  if (postInfo.link == null){
-    postLink = '/p/'+postInfo.shortURL || postInfo.id
-  } else {
-    postLink = postInfo.link
-  }
+
   if (postInfo.text) {
     newPost.find('.postelement-text').text(postInfo.text.substring(0, 300))
   }
 
+  newPost.find('.post-link').attr('href','/p/'+postInfo.shortURL || postInfo.id);
   newPost.find('.comment-link').attr('href','/p/'+postInfo.shortURL || postInfo.id);
   newPost.find('.comment-link').text(postInfo.commentCount+' comments')
 

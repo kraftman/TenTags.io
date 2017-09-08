@@ -88,7 +88,7 @@ function loader:GetImageLinks(res)
 end
 
 function loader:SendImage(image, imageName)
-  local id, err = bb:UploadImage(image, imageName..'.png')
+  local id, err = bb:UploadImage(image, imageName..'.jpg')
   print(id, err)
   return id, err
 end
@@ -115,7 +115,7 @@ function loader:ProcessImgur(postURL, postID)
     return nil, 'unable to load image from file'
   end
   image:coalesce()
-  image:set_format('png')
+  image:set_format('jpg')
   --finalImage.image:write('/lua/out/p2-'..postID..'.png')
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
   local newID = uuid.generate_random()
@@ -152,9 +152,17 @@ function loader:ProcessImgur(postURL, postID)
 end
 
 function loader:ProcessGfycat(postURL)
-  local gfyName = postURL:match('gfycat.com/(%w+)')
+  --print(postURL)
+  local gfyName = postURL:match('gfycat.com/detail/(%w+)') or postURL:match('gfycat.com/gifs/detail/(%w+)')
+  --print(gfyName)
+  if not gfyName then
+    gfyName = postURL:match('gfycat.com/(%w+)')
+  end
+
+  --print(gfyName)
   local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
-  print(newURL)
+  --print(newURL)
+
   local imageBlob, err = self:LoadImage(newURL)
   if not imageBlob then
     return imageBlob, err
@@ -174,7 +182,6 @@ function loader:IsImage(headers)
   contentTypes['image/png'] = true
 
   local resContentType = headers['content-type']
-  print(resContentType)
 
   if contentTypes[resContentType] then
     return true
@@ -248,13 +255,13 @@ function loader:NormalPage(postURL, postID)
     gif:close()
     finalImage.image = magick.load_image('/lua/out/processedgif-'..postID..'.gif')
     finalImage.image:coalesce()
-    finalImage.image:set_format('png')
-    finalImage.image:write('/lua/out/p2-'..postID..'.png')
-    finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
+    finalImage.image:set_format('jpg')
+    finalImage.image:write('/lua/out/p2-'..postID..'.jpg')
+    finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.jpgf')
 
     os.remove(tempGifLoc)
     os.remove('/lua/out/processedgif-'..postID..'.gif')
-    os.remove('/lua/out/p2-'..postID..'.png')
+    os.remove('/lua/out/p2-'..postID..'.jpg')
 
 	end
 
@@ -283,10 +290,10 @@ function loader:GetPostIcon(postURL, postID)
 
   local finalImage
   if postURL:find('imgur.com') then
-    if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
+    --if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
       return self:ProcessImgur(postURL, postID)
-    end
-    return nil, 'imgur gallery'
+    --end
+    --return nil, 'imgur gallery'
   elseif postURL:find('gfycat.com/%w+') then
     finalImage = self:ProcessGfycat(postURL)
   elseif not postURL:find('http') then
@@ -299,7 +306,7 @@ function loader:GetPostIcon(postURL, postID)
 		return nil, 'no final image!'
 	end
 
-  finalImage.image:set_format('png')
+  finalImage.image:set_format('jpg')
   local newID = uuid.generate_random()
 
   local id,err = self:SendImage(finalImage.image, newID..'b')
@@ -351,13 +358,47 @@ function loader:ProcessPostIcon(postID)
   return true
 end
 
-function loader:GetUpdates()
-  local ok, err = red:zrevrange(self.queueName, 0, 10)
+function loader:ConvertImage(image)
+  --is it a gif or a video
+  if image.extension == '.gif' then
+    -- convert to mp4
+    -- create still
+  elseif image.extension == '.mp4' then
+    --check the duration
+    -- convert short mp4s to fallback gifs
+    -- create still
+    -- generate previews for long mp4s
+  else
+
+    local imageData =  bb:GetImage(image.rawID)
+    local data =  assert(magick.load_image_from_blob(imageData))
+
+    data:set_format('jpg')
+  end
+
+
+  local imageData =  bb:GetImage(image.bbID)
+  image.data =  assert(magick.load_image_from_blob(imageData))
+
+  image.data:set_format('jpg')
+  local bbID, err = self:SendImage(image.data, newID..'.jpg')
+  -- add this as imgID
+
+  image.data:resize_and_crop(1000,1000)
+
+  local bbID, err = self:SendImage(image.data, newID..'.jpg')
+  --add as optID
+
+
+end
+
+function loader:GetUpdates(queueName)
+  local ok, err = red:zrevrange(queueName, 0, 10)
   if not ok then
     return ok, err
   end
   for k,v in pairs(ok) do
-    red:zrem(self.queueName,v)
+    red:zrem(queueName,v)
     ok[k] = cjson.decode(v)
   end
 
@@ -365,7 +406,7 @@ function loader:GetUpdates()
 end
 
 
-function loader:Requeue(postInfo)
+function loader:Requeue(queueName, postInfo)
   -- add retries
   postInfo.retries = postInfo.retries or 0
   postInfo.retries = postInfo.retries + 1
@@ -376,17 +417,17 @@ function loader:Requeue(postInfo)
 
   local delay = postInfo.retries * 30
 
-  local ok, err = red:zadd(self.queueName, delay, cjson.encode(postInfo))
+  local ok, err = red:zadd(queueName, delay, cjson.encode(postInfo))
   if not ok then
     print('error requueuing: ',err)
   end
   return ok, err
 end
 
-function loader:GetNextPost()
+function loader:GetNextPost(queueName, job)
   local updates, ok, err
-  --print('checking icons ', redisURL, redisPort)
-  updates, err = self:GetUpdates()
+
+  updates, err = self:GetUpdates(queueName)
   if not updates then
     print('couldnt load updates: ', err)
     return
@@ -394,10 +435,10 @@ function loader:GetNextPost()
 
   for _,postUpdate in pairs(updates) do
 
-    ok, err = self:ProcessPostIcon(postUpdate.id)
+    ok, err = self[job](postUpdate.id)
     if not ok then
       print('couldnt req: ', err)
-      self:Requeue(postUpdate)
+      self:Requeue(queueName, postUpdate)
     end
  end
 end
@@ -421,7 +462,13 @@ while true do
   end
 
 
-  local status, err = pcall(function() loader:GetNextPost() end)
+  local status, err = pcall(function() loader:GetNextPost('queue:GeneratePostIcon', 'ProcessPostIcon') end)
+  --print(status)
+  if not status then
+    print(err)
+  end
+
+  local status, err = pcall(function() loader:GetNextPost('queue:ConvertImage', 'ConvertImage') end)
   --print(status)
   if not status then
     print(err)

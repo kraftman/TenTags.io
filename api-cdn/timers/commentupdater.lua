@@ -190,7 +190,7 @@ function config:CreateComment(commentInfo)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat: ', err)
 	end
-  
+
 	self.redisWrite:IncrementSiteStat('CommentsCreated', 1)
 	if not ok then
 		ngx.log(ngx.ERR, 'unable to add stat')
@@ -232,6 +232,11 @@ function config:CreateComment(commentInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to incr post field: ', err)
   end
+
+
+  cache:PurgeKey {keyType = 'post', id = post.id}
+
+  ok , err = self.redisWrite:InvalidateKey('post', post.id)
   return true
 
 end

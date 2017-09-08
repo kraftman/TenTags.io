@@ -19,8 +19,8 @@
         </a>
       <% end %>
 
-      <%= (child.up or 0) - (child.down or 0)  -%> votes
-      <%= TimeAgo(ngx.time() - child.createdAt) -%>
+      <span class='comment-title-details'><%= (child.up or 0) - (child.down or 0)  -%> votes
+      <%= TimeAgo(ngx.time() - child.createdAt) -%></span>
 
 
     </div>
@@ -34,14 +34,17 @@
         </div>
       <% end %>
 
-      filters:
-      <% for _,filter in pairs(child.filters or {}) do %>
-        <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
-      <% end %>
+
 
 
 
       <div class = 'comment-controls'>
+        <div>
+        filters:
+          <% for _,filter in pairs(child.filters or {}) do %>
+            <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
+          <% end %>
+        </div>
         <% if not child.userHasVoted then %>
           <a class='downvotecomment-button' href="<%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
             <span class="ti-angle-down"></span>
@@ -51,11 +54,11 @@
           </a>
         <% end %>
         <% if child.shortURL then %>
-          <a href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
+          <a class='comment-reply-button' href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
             <span class="ti-comments"></span>
           </a
         <% else %>
-          <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >
+          <a class='comment-reply-button' href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >
             <span class="ti-comments"></span>
           </a>
         <% end %>

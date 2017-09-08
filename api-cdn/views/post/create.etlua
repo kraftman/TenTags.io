@@ -1,8 +1,19 @@
 
 
 
+<script src="/static/js/dropzone.js" defer></script>
 <script src="/static/js/createpost.js" defer></script>
 
+
+
+<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
+<link rel="stylesheet" type="text/css" href="/static/css/spare.min.css">
+
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/dropzone.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.1.1/basic.css">
+
+
+<div id="image-dropzone" class="dropzone square"></div>
 
 
 <form class="panel panel-default create-post" id='createpost' action='/p/new' method="POST" enctype="multipart/form-data" accept-charset='UTF-8'>

@@ -48,6 +48,9 @@ function m:Register(app)
 end
 
 function m.ListUsers(request)
+  if not request.session.accountID then
+    return {render = 'pleaselogin'}
+  end
   request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
   return {render = 'listusers'}
 end
@@ -72,7 +75,7 @@ function m.ViewUserUpvoted(request)
   if not userID then
     return 'user not found'
   end
-  if not self.session.userID then
+  if not request.session.userID then
     return {render = 'pleaselogin'}
   end
 
@@ -138,6 +141,9 @@ function m.LogOut(request)
 end
 
 function m.DeleteUser(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   local userID = request.session.userID
   local username = request.params.username
@@ -156,6 +162,10 @@ function m.DeleteUser(request)
 end
 
 function m.ViewUser(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
   if not request.userInfo then
@@ -182,6 +192,9 @@ function m.ViewUser(request)
 end
 
 function m.ViewUserComments(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
   if not request.userInfo then
@@ -199,6 +212,9 @@ function m.ViewUserComments(request)
 end
 
 function m.ViewUserPosts(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
@@ -246,6 +262,9 @@ function m.SwitchUser(request)
 end
 
 function m.TagUser(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
 
   local userTag = request.params.tagUser
 

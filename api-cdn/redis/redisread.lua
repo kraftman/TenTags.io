@@ -496,6 +496,10 @@ function read:GetFilter(filterID)
     filter.requiredTagNames = ok
   end
 
+  if filter.ownerID:gsub(' ', '') == '' then
+    filter.ownerID = filter.createdBy
+  end
+
   return filter
 end
 

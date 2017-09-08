@@ -251,13 +251,14 @@ function api:ToggleSavePost(userID,postID)
 		return nil, err
 	end
 
-	if ok == true then
+	if tonumber(ok) == 1 then
 		print('removing saved post')
 		ok, err = self.userWrite:RemoveSavedPost(userID, post.id)
 	else
-	print('addingsaved post')
-	ok, err = self.userWrite:AddSavedPost(userID, post.id)
+		print('addingsaved post')
+		ok, err = self.userWrite:AddSavedPost(userID, post.id)
 	end
+	self:InvalidateKey('user', userID)
 
 	return ok, err
 end
@@ -277,7 +278,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 			return nil, 'you must be admin to do that'
 		end
 	end
-
+	print(userToSubID)
 	local filterIDs = cache:GetUserFilterIDs(userToSubID)
 
 	local subscribe = true
@@ -288,7 +289,7 @@ function api:ToggleFilterSubscription(userID, userToSubID, filterID)
 			break
     end
   end
-
+	print(userToSubID,' ', filterID,' ', subscribe)
 	self.redisWrite:IncrementFilterSubs(filterID, subscribe and 1 or -1)
   ok, err = self.userWrite:ToggleFilterSubscription(userToSubID, filterID, subscribe)
 
@@ -325,6 +326,10 @@ function api:CreateSubUser(accountID, username)
 
 	if #subUser.username < 3 then
 		return nil, 'username too short'
+	end
+
+	for k,v in pairs(subUser.filters) do
+		self.userWrite:ToggleFilterSubscription(subUser.id,v,true)
 	end
 
 	local existingUserID = cache:GetUserID(subUser.username)
@@ -420,9 +425,14 @@ function api:GetUserAlerts(userID)
 		ngx.log(ngx.ERR, 'error loading user alerts: ', err)
 		return nil, 'couldnt load user alerts'
 	end
+
 	if alerts and not err then
 		-- its not from cache, so update the last time checked
-		ok, err =  self.userWrite:UpdateLastUserAlertCheck(userID, ngx.time())
+		print('setting last check to ',ngx.time())
+		ok, err =  self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
+		if not ok then
+			print('coldnt update alert: ', err)
+		end
 		self:InvalidateKey('user', userID)
 	  ok, err = self:InvalidateKey('useralert', userID)
 	end

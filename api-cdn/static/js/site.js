@@ -21,6 +21,16 @@ $(function() {
     $(e.currentTarget).parent().find('.linkImg').toggle()
   })
 
+  $('.post').hover(function(e){
+    $(e.target).children('.post-full-bottombar').show();
+    //$(e.target).find('.post-filters').show();
+  })
+
+  $('.post').focusout(function(e){
+    $(e.target).children('.post-full-bottombar').hide();
+    //$(e.target).find('.post-filters').hide();
+  })
+
   //$('.settings-menu').focusout(function(){
   //  $('.settings-menu').hide()
   //})
@@ -144,6 +154,7 @@ function FilterToggle(){
 function Upvote(e) {
   var post = $(':focus')
 
+    e.preventDefault()
   if (post.length) {
     VotePost(post, 'up');
   }
@@ -151,7 +162,8 @@ function Upvote(e) {
 
 function Downvote(e) {
   var post = $(':focus')
-  console.log(post)
+
+  e.preventDefault()
   if (post.length) {
     console.log(2)
     VotePost(post, 'down');
@@ -247,7 +259,6 @@ function UserHasFilter(filterID){
   $.each(userFilters, function(k,v){
 
     if (v.id == filterID) {
-      console.log('found')
       found = true;
       return;
     }

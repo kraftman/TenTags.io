@@ -1,37 +1,86 @@
 
 
 <div class = 'panel panel-default'>
-  <h2> What is Filtta? </h2>
-  <p>Filtta is a content aggregration site heavily inspired by reddit and hacker news, but with a few differences:</p>
+  <h2> What is TenTags? </h2>
+  <p>Tentags is a content aggregration site a la Reddit/Voat/HN, but works a little differently under the hood:</p>
+
+  <h3> Tags </h3>
+  <p>
+    Unsurprisingly, tags are at the core of Tentags. Each time you post to the site, you can add up to 10 tags
+    to your post; the tags on a post decide which communities see your post. But since we don't trust you (sorry!), we let the community
+    decide if your tags are legit, and even add their own; Instead of voting on posts users
+    can vote on each tag, allowing the same post to have a different score per filter.
+  </p>
+
+  <h3> Filters </h3>
+  <p>
+    Filters are 'communities' (subs) of people that want to see the same content based on the tags on each post. They are defined
+    by tags that people want to and don't want to see, e.g. 'sfwpics' could be all posts tagged 'pics' except those tagged 'nsfw'.
+  </p>
+
   <h3> Post Once </h3>
-  <p>With Filtta, you post directly to the website not a specific community, tagging the post to share it to other communities, no
-  need to cross-post.
-  </p></p>
+  <p>
+    As the tag scores govern which communities see a post, there's no need to crosspost, you can just add more tags to the post,
+    e.g. you could tag a post 'tech' and 'android' and it would appear in the 'tech' filter, and the
+    'android' filter, but not the 'apple' filter.
+  </p>
+
 
   <h3>See Once</h3>
-  <p>Fed up of stale content? Per-user settings let you automatically hide any posts you've seen, so that you always view fresh
-  content even when moving devices.</p>
-  <h3>No reposts</h3>
-  <p>No one likes reposts, but there's <a href='https://xkcd.com/1053/'>always a first time for everyone.</a>
-   Users can add the original post source; only people who haven't seen the original will see the new post.</p>
+  <p>
+    Fed up of stale content? You can set posts to auto hide after you've voted on them, clicked on them, or even just seen them,
+    so that you always see fresh content, even when moving between devices.
+  </p>
+
+  <h3>Post Anything</h3>
+  <p>
+    What if you could share a link, AND write something about it? (Crazy right?) We've got you covered.
+    Share links, images, videos, gifs, and albums. Comment on them. Go Crazy.
+    We'll even let you fix that typo in your title if you're quick
+  </p>
+
+  <h3>Subscribe to Anything</h3>
+  <p>
+    No more 'remind me!' comments, simply click to subscribe to individual comment replies,
+    all post replies, or to users to get all updates directly to your inbox.
+  </p>
 
   <h3>All the comments in one place</h3>
-  <p>Rather than spreading the comments across different reposts in different places, all comments are on the same post, and can be displayed
-  by the filter they came from.</p>
+  <p>
+  As posts arent linked to filters, you can end up having multiple communities commenting on the same content.
+  For easy browsing, you can filter comments by the community they came from.
+  </p>
 
-  <h3>Subscribe to posts/comments/users</h3>
-  <p> Subscribe to entire posts, individual comments, or directly to users to get fresh updates directly to your inbox.</p>
+  <h3>No reposts</h3>
+  <p>
+    No one likes reposts, but there's <a href='https://xkcd.com/1053/'>always a first time for everyone.</a>
+    That's why we've added a repost reporting feature. Users can tag a post with its source post,
+    and only people that haven't seen the original will see the new post.
+   </p>
+
+
   <h3>One account, multiple users</h3>
-  <p> Create additional users and easily switch between them without relogging, e.g. for seperate work/home accounts</p>
+  <p>
+    Create additional users and easily switch between them without relogging, e.g. for seperate work/home accounts
+  </p>
 
   <h3>Passwordless</h3>
-  <p> Email based logins mean your account is as strong as your email account, we don't even store your email address!</p>
+  <p>
+    Fed up of data leaks? We can't do security so we don't try.
+    Passwordless logins make it someone elses problem; we don't even store your email address!
+  </p>
 
+  <h3> NSFW!!!! </h3>
+  <p>
+    Everyone's workplace is different, and 'NSFW' can range from 'phalic object on screen' to 'keep it legal.' For that reason,
+    we have a more fine grained nsfw setting, to avoid any awkward conversations with the boss. While we're at it,
+    there's a seperate NSFL setting, so you won't get surprised by maggots instead of mammaries, or nails instead of nailing.
+  </p>
 
+  <!---
   <h3>The rest</h3>
   <p>Turn off PM's</p>
-  <p>Allow changing the post title for a few minutes after posting</p>
-  <p>Per-filter post styles for image/text content</p>
-
+  <p>Per-filter post styles for image-heavy/text content</p>
+ -->
 
 </div>

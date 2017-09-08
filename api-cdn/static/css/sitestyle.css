@@ -123,9 +123,13 @@ a {
   border-style: solid;
   border-width: 1px; }
 
+.filterbar-results {
+
+}
+
 .filter-icon {
   display: inline-block;
-  background-color: #ACBDBA;
+  background-color: #ffffff ;
   padding-left: 5px;
   padding-right: 5px;
   padding-top: 3px;
@@ -565,6 +569,10 @@ ul {
   padding: 5px;
   display: none; }
 
+.post-filters {
+
+}
+
 .post-full-topbar {
   background-color: #eee;
   min-height: 20px;
@@ -651,6 +659,9 @@ ul {
   max-width: 400px;
   margin-left: 15px; }
 
+.comment-title-details {
+  font-size: 8px;
+}
 .comment-collapse {
   display: table-cell;
   height: 100%;

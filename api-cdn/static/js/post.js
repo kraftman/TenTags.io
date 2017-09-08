@@ -13,8 +13,9 @@ $(function() {
 
   $('.comment-collapse').click( function(e) {
     e.preventDefault();
-    console.log('hid comment')
+
     $(this).parent().find('.commentInfo').toggle()
+    $(this).parent().find('.comment-title').toggle()
 
   })
 
@@ -47,14 +48,16 @@ function HandleCommentVotes() {
 }
 
 function MoveReply(){
-  $('.comment').click(function(e) {
-    console.log(e.currentTarget)
-    $('#commentform').insertAfter(e.currentTarget);
-    $('#commentform').children('#parentID').val($(e.currentTarget).data('commentid'))
+  $('.comment-reply-button').click(function(e) {
+    var parent = $(e.currentTarget).closest('.comment')
+    console.log(parent)
+    $('#commentform').insertAfter(parent);
+    $('#commentform').children('#parentID').val($(parent).data('commentid'))
+    e.preventDefault();
     e.stopPropagation();
   })
   $('.post-comments').click(function(e){
-    console.log(e.target)
+
     if ($(e.target).hasClass('post-comments')) {
        $('#commentform').prependTo($('.post-comments'))
        $('#commentform').children('#parentID').val($('#postID').val())

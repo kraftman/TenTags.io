@@ -4,7 +4,7 @@
       <span class='ti-arrow-circle-down'></span>
       <%= thisfilter.name-%>
     </a>
-    
+
     <div class='infobar-body'>
 
       <%- thisfilter.description -%>
@@ -19,7 +19,7 @@
       <% end %>
     </div>
   <% else %>
-    <p>Welcome to filter!</p>
+    <p>Welcome to TenTags, If you're new please check out our <a href="<%= url_for('about') %>">FAQ</a>!</p>
   <% end %>
   <% if enableAds then %><% end %>
 </div>

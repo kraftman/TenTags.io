@@ -7,7 +7,6 @@ services:
     env_file:
       - filtta.env
   imgprocess:
-    tty: true
     privileged: true
     build: imgprocess/.
     volumes:
