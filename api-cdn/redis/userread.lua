@@ -233,6 +233,7 @@ function userread:GetUser(userID)
   user.nsfwLevel = user.nsfwLevel and tonumber(user.nsfwLevel) or 0
   user.viewCount = user.viewCount or 1
   user.views = user.views or {}
+  user.currentView = user.currentView or 'default'
 
   if user.deleted then
     return nil

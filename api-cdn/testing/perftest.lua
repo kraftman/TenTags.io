@@ -117,7 +117,7 @@ local function TestUserSharedDict(self)
     subUser = {
       id = uuid.generate(),
       username = uuid.generate(),
-      filters = cache:GetUserFilterIDs('default'),
+      filters = cache:GetViewFilterIDs('default'),
       parentID = uuid.generate(),
       enablePM = 1,
     }

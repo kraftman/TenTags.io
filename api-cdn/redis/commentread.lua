@@ -74,10 +74,14 @@ function commentread:GetComment(postID, commentID)
     return nil
   end
 
-  if ok == ngx.null then
+  if ok == ngx.null or not ok  then
     return nil
   else
-    return self:from_json(ok)
+    ok = self:from_json(ok)
+    if not ok.viewID then
+      ok.viewID = 'default'
+    end
+    return ok
   end
 
 end

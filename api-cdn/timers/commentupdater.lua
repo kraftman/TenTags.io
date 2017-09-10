@@ -113,7 +113,8 @@ function config:UpdateFilters(post, comment)
   local filters = {}
 
   local postFilters = post.filters
-  local userFilters = cache:GetUserFilterIDs(comment.createdBy)
+
+  local userFilters = cache:GetViewFilterIDs(comment.viewID)
 
 	-- get shared filters between user and post
   for _,userFilterID in pairs(userFilters) do

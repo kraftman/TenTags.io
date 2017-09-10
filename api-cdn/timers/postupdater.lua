@@ -116,7 +116,7 @@ function config:VotePost(postVote)
 		return true
 	end
 
-	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(postVote.userID),post.filters)
+	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(user.currentView),post.filters)
 
 	-- filter out the tags they already voted on
 	matchingTags = tagAPI:GetUnvotedTags(user,postVote.postID, matchingTags)
