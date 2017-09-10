@@ -156,8 +156,9 @@ function OverrideSubmit(){
       url: '/p/new',
       data: form,
       success: function(data) {
-        console.log('this '+data)
-        console.log(data)
+        //console.log('this '+data)
+        //console.log(data)
+        console.log('worked')
         if (data.id) {
           window.location.assign('/p/'+data.id);
         }

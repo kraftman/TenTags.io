@@ -1046,3 +1046,187 @@ ul {
   margin: 5px;
   padding: 5px;
 }
+
+
+
+
+@mixin textInput(){
+  border: none;
+  border-radius: 2px;
+  outline: none;
+  min-height: 25px;
+}
+
+$link-color: #000;
+$background-color: #ACBDBA;
+$title-box-color: #add8e6;
+$black: #000;
+$white: #fff;
+$upvote: #03191e;
+$downvote: #e54b4b;
+$postborder: #eee;
+$drop-shadow: rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
+$panel-color: #CDDDDD;
+$postelement-color: #CDDDDD;
+$highlight-color: #03191e;
+$hight-font-color: #e54b4b;
+$alert-green: green;
+
+.center-page {
+
+  display: flex;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 2px;
+  padding-left: 3px;
+  padding-right: 3px;
+
+}
+
+
+.post-upvote-default-img, .post-downvote-default-img {
+  display: block;
+  width: 100%;
+  margin-top: 15px;
+  vertical-align: middle;
+  text-align:left;
+  line-height: 100%;
+  font-size: 20px;
+  margin-left: 2px;
+}
+
+.post-upvote-default-img {
+  color: lighten($upvote, 10%);
+
+}
+
+.post-downvote-default-img {
+  color: lighten($downvote, 10%);
+}
+
+
+
+.vote-container {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 50px;
+  height:100%;
+  min-width: 50px;
+
+  .post-upvote {
+  }
+
+  .post-upvote-default {
+    display: inline-block;
+    background-color: $upvote;
+    width: 50%;
+    height: 100%;
+    text-align: center;
+    a {
+    }
+  }
+
+  .post-downvote-default {
+    display: inline-block;
+    background-color: $downvote;
+    width: 50%;
+    height: 100%;
+  }
+}
+
+.togglefilter-selected {
+  border-style: solid;
+  border-width: 1px;
+}
+
+
+.form-login {
+  float: right;
+  margin-right: 10px;
+  vertical-align: top;
+  padding-top: 6px;
+}
+
+
+.form-login > div {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 45px;
+
+  z-index: 5;
+}
+
+
+.tab-buttons {
+  padding: 3px;
+
+  a {
+    text-decoration: none;
+    color: $black;
+    margin: 5px;
+    width: 100%;
+  }
+}
+
+
+
+.banned {
+  background: #c17272 !important;;
+  background-color: #c17272 !important;;
+}
+
+
+.usercomment-info {
+  font-size: 10px;
+}
+
+
+.form-input {
+  @include textInput();
+  margin: 2px;
+  box-sizing: border-box;
+  padding-left: 3px;
+  &:focus {
+    border: 1px solid $hight-font-color;
+  }
+
+}
+
+
+.session-killed {
+  background-color: #ffcccc;
+}
+
+.session-active {
+  background-color: #ccffcc;
+}
+
+
+.filter-sort li {
+  display: inline-block;
+}
+
+
+.filter-searchbox-main {
+  width: 100px;
+}
+
+.filter-item form {
+  display: inline-block;
+
+}
+
+.filter-description {
+  display: inline-block;
+}
+
+.filter-sort {
+  margin-top: 5px;
+  background-color: #333;
+  white-space: nowrap;
+  overflow-y: scroll;
+}

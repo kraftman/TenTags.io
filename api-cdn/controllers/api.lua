@@ -40,6 +40,7 @@ function m.HashIsValid(request)
 end
 
 
+
 function m.UpvoteComment(request)
   if not request.session.userID then
     return {json = {error = 'you must be logged in!', data = {}}}
