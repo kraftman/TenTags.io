@@ -74,6 +74,16 @@ function m.UpdateSettings(request)
     print('no user')
   end
 
+  if request.params.resetdefaultview then
+    if user.role == 'Admin' then
+      local ok, err = userAPI:CreateDefaultView(request.session.userID)
+      if not ok then
+        return err
+      end
+    end
+    return {redirect_to = request:url_for('usersettings')}
+  end
+
   user.enablePM = request.params.enablePM and true or false
   user.fakeNames = request.params.fakeNames and true or false
 

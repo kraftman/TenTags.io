@@ -155,9 +155,12 @@ function api:CreateComment(userID, userComment)
 			postID = newComment.postID,
 			commentID = newComment.id,
 			userID = userID,
+			viewID = user.currentView
 		}
 
 		-- queue the rest
+
+		ok, err = self:InvalidateKey('comment', newComment.postID)
 		ok, err = self.redisWrite:QueueJob('CreateComment', commentUpdate)
 		if not ok then
 			ngx.log(ngx.ERR, 'unable to queue comment create: ', err)

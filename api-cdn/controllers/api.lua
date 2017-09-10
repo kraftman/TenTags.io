@@ -186,7 +186,7 @@ function m.GetFrontPage(request)
 
   range = tonumber(range)
 
-  local ok,err = userAPI:GetUserFrontPage(userID, sortBy, startAt, range)
+  local ok,err = userAPI:GetUserFrontPage(userID, nil, sortBy, startAt, range)
   if ok then
     return {json = {status = 'success', data = ok or {}}}
   else
@@ -203,7 +203,9 @@ function m.GetFilterPosts(request)
 end
 
 function m.UploadImage(request)
-
+  -- if true then
+  --   return {status = 400}
+  -- end
 
   if not request.session.userID then
     return {json = {status = 'error', data = {'you must be logged in to upload'}}}
@@ -212,12 +214,17 @@ function m.UploadImage(request)
   local fileData = request.params.file
   ngx.log(ngx.ERR, request.params.name, fileData.filename)
   if not request.params.file and (fileData.content == '') then
-    return {json = {status = 'error', message = 'no file data'}}
+    return {json = {status = 'error', message = 'no file data'}, statu = 400}
   end
 
   local ok, err = imageAPI:CreateImage(request.session.userID, fileData)
+-- return error code if needed
+  if not ok then
+    print(err)
+    return {json = {status = 'error'}, status = 500}
+  end
 
-  return {json = {status = 'success', data = ok or {}}}
+  return {json = {status = 'success', data = ok.id or {}}}
 
 end
 

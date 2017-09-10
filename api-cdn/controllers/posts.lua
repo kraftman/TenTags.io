@@ -154,7 +154,7 @@ function m.CreatePost(request)
   if request.params.postimages then
     for k, v in pairs(from_json(request.params.postimages)) do
       if v.text then
-        imageAPI:AddText(v.id, v.text)
+        imageAPI:AddText(request.session.userID, v.id, v.text)
         info.images[#info.images+1] =  v.id
       end
     end

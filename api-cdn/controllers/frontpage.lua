@@ -19,7 +19,7 @@ function m.FrontPage(request)
   request.pageNum = request.params.page or 1
   local startAt = 20*(request.pageNum-1)
   local sortBy = request.req.parsed_url.path:match('/(%w+)$') or 'fresh'
-  request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default', sortBy, startAt, startAt+20)
+  request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default', nil, sortBy, startAt, startAt+20)
 
   --print(to_json(request.posts))
 

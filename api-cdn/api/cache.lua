@@ -17,7 +17,7 @@ local cache = {}
 local filterDict = ngx.shared.filters
 local userUpdateDict = ngx.shared.userupdates
 local userSessionSeenPostDict = ngx.shared.usersessionseenpost
-local userFilterIDs = ngx.shared.userFilterIDs
+local viewFilterIDs = ngx.shared.viewFilterIDs
 local searchResults = ngx.shared.searchresults
 local postDict = ngx.shared.posts
 local userAlertDict = ngx.shared.userAlerts
@@ -189,8 +189,8 @@ function cache:PurgeKey(keyInfo)
     end
   elseif keyInfo.keyType == 'postvote' then
     voteDict:delete('postVotes:'..keyInfo.id)
-  elseif keyInfo.keyType == 'userfilter' then
-    userFilterIDs:delete(keyInfo.id)
+  elseif keyInfo.keyType == 'view' then
+    viewFilterIDs:delete(keyInfo.id)
   elseif keyInfo.keyType == 'frontpage' then
 
   end
@@ -615,6 +615,12 @@ function cache:GetUserSeenPosts(userID, startAt, range)
 end
 
 
+function cache:GetView(viewID)
+  -- TODO cache
+  return redisRead:GetView(viewID)
+end
+
+
 function cache:GetFilterID(filterName)
   --cache later
   return redisRead:GetFilterID(filterName)
@@ -629,6 +635,7 @@ function cache:GetFilterByName(filterName)
 end
 
 function cache:GetFilterByID(filterID)
+  --print(to_json(filterID))
   local ok, err, result
 
   if ENABLE_CACHE then
@@ -686,9 +693,9 @@ function cache:GetFiltersBySubs(startAt,endAt)
   return self:GetFilterInfo(filterIDs)
 end
 
-function cache:GetIndexedUserFilterIDs(userID)
+function cache:GetIndexedViewFilterIDs(viewID)
   local indexed = {}
-  for _,v in pairs(self:GetUserFilterIDs(userID)) do
+  for _,v in pairs(self:GetViewFilterIDs(viewID)) do
     indexed[v] = true
   end
   return indexed
@@ -735,15 +742,25 @@ function cache:UpdateUserSessionSeenPosts(userID,indexedSeenPosts)
 end
 
 
-function cache:GetFreshUserPosts(userID, sortBy, startAt, range)
+function cache:GetFreshUserPosts(userID, viewID, sortBy, startAt, range)
 
   local freshPosts = {}
   local count = 0
+  local user = self:GetUser(userID)
+  local view
+
+  if viewID then
+    view = self:GetView(viewID)
+  else
+    view = self:GetView(user.currentView)
+  end
+
+
 
   while #freshPosts < range do
     count = count + 1
-    local userFilterIDs = self:GetUserFilterIDs(userID)
-    local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, userFilterIDs, startAt, range)
+
+    local userPostIDs, err = redisRead:GetFrontPage(userID, sortBy, view.filters, startAt, range)
     if err then
       return nil, err
     end
@@ -834,10 +851,10 @@ function cache:GetUserPostVotes(userID)
 
 end
 
-function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
+function cache:GetCachedUserFrontPage(userID, viewID, sortBy, startAt, range)
   local ok, err, userFrontPagePosts
   if ENABLE_CACHE then
-    ok, err = userFrontPagePostDict:get(userID..':'..sortBy..':'..startAt..':'..range)
+    ok, err = userFrontPagePostDict:get(userID..':'..(viewID or '')..':'..sortBy..':'..startAt..':'..range)
     if err then
       ngx.log(ngx.ERR, 'unable to get commentvotes: ',err)
     end
@@ -848,12 +865,12 @@ function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
   end
 
   if not userFrontPagePosts then
-    userFrontPagePosts,err = self:GetFreshUserPosts(userID, sortBy, startAt, range)
+    userFrontPagePosts,err = self:GetFreshUserPosts(userID, viewID, sortBy, startAt, range)
     if not userFrontPagePosts then
       print(err)
     end
 
-    userFrontPagePostDict:set(userID..':'..sortBy, to_json(userFrontPagePosts),60)
+    userFrontPagePostDict:set(userID..':'..(viewID or '')..':'..sortBy..':'..range, to_json(userFrontPagePosts),60)
   end
 
   return userFrontPagePosts
@@ -861,7 +878,7 @@ function cache:GetCachedUserFrontPage(userID, sortBy, startAt, range)
 end
 
 
-function cache:GetUserFrontPage(userID,sortBy,startAt, range)
+function cache:GetUserFrontPage(userID, viewID, sortBy,startAt, range)
 
   local user = self:GetUser(userID)
 
@@ -870,7 +887,7 @@ function cache:GetUserFrontPage(userID,sortBy,startAt, range)
   local sessionSeenPosts = cache:GetUserSessionSeenPosts(userID)
 
   -- this will be cached for say 5 minutes
-  local freshPosts = cache:GetCachedUserFrontPage(userID,sortBy, startAt, range)
+  local freshPosts = cache:GetCachedUserFrontPage(userID, viewID, sortBy, startAt, range)
 
   local newPosts = {}
   local post
@@ -920,11 +937,11 @@ end
 
 
 
-function cache:GetUserFilterIDs(userID)
+function cache:GetViewFilterIDs(viewID)
   local ok, err, res
 
   if ENABLE_CACHE then
-    ok, err = userFilterIDs:get(userID)
+    ok, err = viewFilterIDs:get(viewID)
     if err then
       ngx.log(ngx.ERR, 'unable to get from shdict filterlist: ',err)
     end
@@ -935,12 +952,12 @@ function cache:GetUserFilterIDs(userID)
     end
   end
 
-  res, err = userRead:GetUserFilterIDs(userID)
+  res, err = self:GetView(viewID).filters
   if not res then
     return res, err
   end
 
-  ok, err = userFilterIDs:set(userID,to_json(res))
+  ok, err = viewFilterIDs:set(viewID,to_json(res))
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to set user filter: ',err)

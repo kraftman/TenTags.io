@@ -213,6 +213,7 @@ function userwrite:CreateSubUser(user)
 
   local hashedUser = {}
 
+  -- TODO fix this mess
   for k,v in pairs(user) do
     --print(k)
     if k == 'filters' then
@@ -227,6 +228,8 @@ function userwrite:CreateSubUser(user)
       hashedUser['postSubscribers:'] = to_json(v)
     elseif k == 'blockedUsers' then
       hashedUser['blockedUsers:'] = to_json(v)
+    elseif k == 'views' then
+      hashedUser['views:'] = to_json(v)
     else
       hashedUser[k] = v
     end

@@ -164,6 +164,24 @@ function write:FlushSiteStats()
   return ok, err
 end
 
+function write:CreateView(view)
+
+  local red = self:GetRedisWriteConnection()
+  local newView = {}
+  for k, v in pairs(view) do
+    if type(v) == 'table' then
+      newView[k] = self:to_json(v)
+    else
+      newView[k] = v
+    end
+  end
+
+  local ok, err = red:hmset('view:'..view.id, newView)
+
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:LogUniqueSiteView(baseKey, statTime, userID, value)
   local red = self:GetRedisWriteConnection()
   local times = {}

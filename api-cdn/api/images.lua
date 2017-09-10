@@ -37,6 +37,33 @@ function api:GetImage(imageID)
 
 end
 
+function api:AddText(userID, imageID, text)
+
+  local ok, err = self:RateLimit('EditImageText:', userID, 40,60)
+  if not ok then
+    return ok, err
+  end
+
+  text = self:SanitiseUserInput(text, 400)
+
+  local image = cache:GetImage(imageID)
+
+  if image.createdBy ~= userID then
+    local user = cache:GetUser(userID)
+    if user.role  ~= 'Admin' then
+        return nil, 'need to be adming to do that'
+    end
+  end
+
+  image.text = text
+
+  ok, err = self.redisWrite:CreateImage(image)
+
+  return ok, err
+
+
+end
+
 function api:CreateImage(userID, fileData)
   --[[
     upload the image to backblaze
@@ -66,6 +93,8 @@ function api:CreateImage(userID, fileData)
 
 
   local fileExtension = fileData.filename:match("^.+(%..+)$")
+  fileExtension = fileExtension:lower()
+  print(fileExtension)
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end
@@ -83,8 +112,11 @@ function api:CreateImage(userID, fileData)
     return ok, err
   end
   ok, err = self.redisWrite:QueueJob('ConvertImage', file)
+  if not ok then
+    return ok, err
+  end
 
-  return ok, err
+  return file, err
 end
 
 return api

@@ -312,6 +312,39 @@ a {
   color: $alert-green;
 }
 
+.hidden-template {
+  display: none;
+}
+
+
+// DROPZONE
+
+.dropzone .dz-preview {
+  width: 300px;
+  height: auto;
+  background-color: black;
+  border-radius: 20px;
+}
+
+.dropzone .dz-preview.dz-image-preview {
+  background-color: black;
+}
+
+.dropzone .dz-preview .dz-image {
+  width: 300px;
+  height: 200px;
+}
+
+.dropzone-description {
+  padding-left: 20px;
+  //resize: none;
+  width: 280px;
+  textarea {
+    width: 260px;
+    height: 40px;
+  }
+}
+
 
 .filter-bar {
   @include card1();
@@ -321,6 +354,7 @@ a {
   position: static;
   border-radius: 0px;
   z-index: 8;
+  max-height: 100vh;
   .hamburger {
     display: none;
   }

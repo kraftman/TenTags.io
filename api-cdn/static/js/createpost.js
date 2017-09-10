@@ -1,18 +1,30 @@
 var knownFilters = [];
 
 
-   Dropzone.autoDiscover = false;
+  Dropzone.autoDiscover = false;
 
 $(function() {
 
   //$("#tagselect").chosen();
   //$('#filterselect').chosen();
+  //
+  // $('textarea').each(function () {
+  //   this.setAttribute('style', 'height:' + (this.scrollHeight) + 'px;overflow-y:hidden;');
+  // }).on('input', function () {
+  //   this.style.height = 'auto';
+  //   this.style.height = (this.scrollHeight) + 'px';
+  // });
 
   $("#image-dropzone").dropzone({
             maxFiles: 20,
             url: "/api/i/",
+            thumbnailWidth: 300,
+            thumbnailHeight: 200,
+            previewTemplate: $('#template-preview').html(),
             success: function (file, response) {
                 console.log(response);
+                console.log(file.previewElement);
+                $(file.previewElement).data('fileID', response.data)
             }
         });
 
@@ -39,7 +51,8 @@ $(function() {
     }});
 
 
-  AddNewPostFilterSearch()
+  AddNewPostFilterSearch();
+  OverrideSubmit();
 
 });
 
@@ -96,6 +109,8 @@ function FilterSelected(value, item){
 
   UpdateFilterStyles()
 
+  OverrideSubmit();
+
 
 }
 
@@ -109,6 +124,52 @@ function SetBanned(filterName, tagName){
 
   $(tagItem).addClass('banned');
   $(filterItem).addClass('banned');
+}
+
+function OverrideSubmit(){
+  $('#submitButton').click( function(e) {
+    e.preventDefault();
+    // get the selected tags from chosen
+    var selectedtags =  $("#selectedtags").val()
+    // get the selected images with descriptions from dropzone
+
+
+    var uploadedImages = []
+    $('.dz-complete').each( function(){
+      var imageID = $(this).data('fileID')
+      var imageDescription = $(this).find('.form-input').first().val()
+      console.log(imageID)
+      console.log( imageDescription)
+      uploadedImages.push({id: imageID, text: imageDescription})
+    })
+
+
+    var form = {
+      selectedtags: JSON.stringify(selectedtags),
+      posttitle: $('#posttitle').val(),
+      postlink: $('#postlink').val(),
+      posttext: $('#posttext').val(),
+      postimages: JSON.stringify(uploadedImages)
+    }
+    $.ajax({
+      type: "POST",
+      url: '/p/new',
+      data: form,
+      success: function(data) {
+        console.log('this '+data)
+        console.log(data)
+        if (data.id) {
+          window.location.assign('/p/'+data.id);
+        }
+        $('#submitError').html(data);
+      },
+      error: function(data) {
+        console.log('that');
+        console.log(data.responseText);
+      },
+      dataType: 'json'
+    });
+  });
 }
 
 function UpdateFilterStyles(){
