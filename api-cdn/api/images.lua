@@ -11,11 +11,13 @@ local bb = require('lib.backblaze')
 
 local allowedExtensions = {
   ['.mp4'] = 'vid',
+  ['.mkv'] = 'vid',
   ['.gif'] = 'vid',
   ['.png'] = 'pic',
   ['.jpg'] = 'pic',
   ['.jpeg'] = 'pic'
 }
+
 
 function api:GetImage(imageID)
 
@@ -44,13 +46,16 @@ function api:GetImageData(userID, imageID, imageSize)
     return ok, err
   end
 
+
   local image, err = self:GetImage(imageID)
+  print(to_json(image))
   if not image then
     ngx.log(ngx.ERR, 'couldnt load')
     return nil, 'no image found'
   end
 
   local bbID = image.rawID
+  print(imageSize, image[imageSize])
   if imageSize and image[imageSize] then
     print('getting correct size')
     bbID = image[imageSize]
@@ -137,6 +142,8 @@ function api:CreateImage(userID, fileData)
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end
+
+  file.type = allowedExtensions[fileExtension]
 
   file.extension = fileExtension
   local rawID, err = bb:UploadImage(file.id..fileExtension, fileData.content)

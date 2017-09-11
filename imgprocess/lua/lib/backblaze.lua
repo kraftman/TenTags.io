@@ -131,7 +131,7 @@ end
 
 function bb:Upload(fileName, fileContent)
   local sink = {}
-  local content = fileContent:get_blob()
+  local content = fileContent
   local r,c,h = https.request{
     url = uploadUrl,
     method = 'POST',

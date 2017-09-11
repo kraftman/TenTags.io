@@ -18,6 +18,8 @@ function m:Register(app)
   app:get('smallimage', '/i/s/:imageID', function(request) return self.GetImage(request, 'iconID') end)
   app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'iconID') end)
   app:get('bigimage', '/i/b/:imageID', function(request) return self.GetImage(request, 'imgID') end)
+  app:get('previewVid', '/i/v/:imageID', function(request) return self.GetImage(request, 'previewID') end)
+  app:get('gifVid', '/i/gv/:imageID', function(request) return self.GetImage(request, 'gifID') end)
 end
 
 function m.GetIcon(request)

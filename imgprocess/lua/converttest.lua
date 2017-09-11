@@ -2,41 +2,20 @@
 local fileName = 'bigbuck'
 local fileExtension = '.mp4'
 
+local pathIn = 'SES.mp4'
+local pathOut = 'processed.gif'
 
--- get the total length
-local handle = io.popen('ffprobe '..fileName..fileExtension..' 2>&1')
-local imgURL = handle:read("*a")
+local command = 'ffmpeg -y -i '..pathIn..[[ -filter_complex "scale=iw*min(1\,min(1920/iw\,1080/ih)):-1:flags=lanczos,palettegen=stats_mode=full" ]]..pathOut..' 2>&1'
+print(command)
+local handle = io.popen(command)
+local output = handle:read('*a')
+--
+--
+-- -- get the total length
+-- local handle = io.popen('ffprobe '..fileName..fileExtension..' 2>&1')
+-- local imgURL = handle:read("*a")
 
-local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
-local totalTime = seconds + minutes*60 + hours*60*60
-
--- calculate what we need
-local segmentCount = 10
-local startTime, command, handle, output
-for i = 1, segmentCount do
-  startTime = math.floor((totalTime/segmentCount)*i)
-  command = 'ffmpeg -y -ss '..startTime..' -i '..fileName..fileExtension..' -t 1 -f mpegts out/'..fileName..'-out'..i..'.ts'
-  print(command)
-  handle = io.popen(command)
-  output = handle:read('*all')
-  print(output)
-end
-
-local concat = 'concat:'
-
-for i = 1, segmentCount do
-  if i == 1 then
-    concat = concat..'output'..i..'.ts'
-  else
-    concat = concat..'|output'..i..'.ts'
-  end
-end
-
-command = 'ffmpeg -y -i "'..concat..'" -c copy  finished.mp4'
-
-handle = io.popen(command)
-output = handle:read('*all')
-io.popen('rm '..fileName..'-out')
+--ffmpeg -i inputfile.mkv -vf "select=eq(n\,0)" -vf scale=320:-2 -q:v 3 output_image.jpg
 
 -- generate the output videos
 
