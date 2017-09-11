@@ -396,26 +396,74 @@ function loader:AddBBIDToImage(imageID, key, bbID)
   return true
 end
 
+function readAll(file)
+    local f = io.open(file, "rb")
+    local content = f:read("*all")
+    f:close()
+    return content
+end
+
+function loader:GeneratePreview(fileName)
+  local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
+  local totalTime = seconds + minutes*60 + hours*60*60
+
+  -- calculate what we need
+  local segmentCount = 10
+  local startTime, command, handle, output
+  for i = 1, segmentCount do
+    startTime = math.floor((totalTime/segmentCount)*i)
+    command = 'ffmpeg -y -ss '..startTime..' -i '..fileName..fileExtension..' -t 1 -f mpegts out/'..fileName..'-out'..i..'.ts'
+    print(command)
+    handle = io.popen(command)
+    output = handle:read('*all')
+    print(output)
+  end
+
+  local concat = 'concat:'
+
+  for i = 1, segmentCount do
+    if i == 1 then
+      concat = concat..'output'..i..'.ts'
+    else
+      concat = concat..'|output'..i..'.ts'
+    end
+  end
+
+  command = 'ffmpeg -y -i "'..concat..'" -c copy  finished.mp4'
+
+  handle = io.popen(command)
+  output = handle:read('*all')
+  io.popen('rm '..fileName..'-out')
+end
+
+function loader:ConvertRawVideo(image)
+  local mp4fileName = self:ConvertToMp4(image)
+end
+
 function loader:ConvertImage(image)
-  -- animated images have: rawID, iconID (still icon), previewID, videoID
-  -- long -> previewID
-  -- gif -> preview
-  -- shortVid -> preview
-  -- convert long video to preview video
-  -- convert gif to video
-  -- convert short video to gif
-  -- label image as animated
 
   --is it a gif or a video
-  if image.extension == '.gif' then
-    -- convert to mp4
-    -- create still
-  elseif image.extension == '.mp4' then
-    --check the duration
-    -- convert short mp4s to fallback gifs
-    -- create still
-    -- generate previews for long mp4s
-  else
+
+  -- animated images have: rawID, iconID, gifID, videoID
+  -- could also generate optimised files too
+
+  -- need to convert ALL videos to mp4 first
+
+  local newVid = loader:ConvertRawVideo(image)
+
+
+  if loader:ImageIsVideo(image) then
+    if loader:ImageIsLongVideo(image) then
+      loader:GeneratePreview(image)
+    end
+    loader:ConvertToGif(image)
+    loader:CreateStill(image)
+    loader:RemoveRaw(image)
+  elseif loader:ImageIsGif(image) then
+    loader:ConvertToMp4(image)
+    loader:CreateStill(image)
+    loader:RemoveRaw(image)
+  end
 
     -- local imageData =  bb:GetImage(image.rawID)
     -- local data =  assert(magick.load_image_from_blob(imageData))

@@ -10,13 +10,12 @@ local imgURL = handle:read("*a")
 local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
 local totalTime = seconds + minutes*60 + hours*60*60
 
-
 -- calculate what we need
 local segmentCount = 10
 local startTime, command, handle, output
 for i = 1, segmentCount do
   startTime = math.floor((totalTime/segmentCount)*i)
-  command = 'ffmpeg -y -ss '..startTime..' -i '..fileName..fileExtension..' -t 1 -f mpegts output'..i..'.ts'
+  command = 'ffmpeg -y -ss '..startTime..' -i '..fileName..fileExtension..' -t 1 -f mpegts out/'..fileName..'-out'..i..'.ts'
   print(command)
   handle = io.popen(command)
   output = handle:read('*all')
@@ -34,10 +33,10 @@ for i = 1, segmentCount do
 end
 
 command = 'ffmpeg -y -i "'..concat..'" -c copy  finished.mp4'
-print(command)
+
 handle = io.popen(command)
 output = handle:read('*all')
-print(output)
+io.popen('rm '..fileName..'-out')
 
 -- generate the output videos
 
