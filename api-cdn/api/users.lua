@@ -712,8 +712,9 @@ function api:GetUserFilters(userID)
   end
 
 	local user = cache:GetUser(userID)
+	local viewID = user and user.currentView or 'default'
 
-  local filterIDs = cache:GetViewFilterIDs(user.currentView)
+  local filterIDs = cache:GetViewFilterIDs(viewID)
 
 
 	local filters = cache:GetFilterInfo(filterIDs)

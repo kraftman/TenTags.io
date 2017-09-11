@@ -89,12 +89,15 @@ function read:GetView(viewID)
   local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('view:'..viewID)
   self:SetKeepalive(red)
-  if not ok then
+  if not ok or ok == ngx.null then
     return nil, err
   end
   ok = self:ConvertListToTable(ok)
-  print(ok.filters)
-  ok.filters = self:from_json(ok.filters)
+  if ok.filters then
+    ok.filters = self:from_json(ok.filters)
+  else
+    ok.filters = {}
+  end
   for i = #ok.filters, 1, -1 do
     if ok.filters[i] == ngx.null then
       print(k)
@@ -519,7 +522,7 @@ function read:GetFilter(filterID)
     filter.requiredTagNames = ok
   end
 
-  if filter.ownerID:gsub(' ', '') == '' then
+  if not filter.ownerID or filter.ownerID:gsub(' ', '') == '' then
     filter.ownerID = filter.createdBy
   end
 
