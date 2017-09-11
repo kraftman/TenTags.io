@@ -752,7 +752,7 @@ function cache:GetFreshUserPosts(userID, viewID, sortBy, startAt, range)
   if viewID then
     view = self:GetView(viewID)
   else
-    view = self:GetView(user.currentView)
+    view = self:GetView(user and user.currentView or 'default')
   end
 
 

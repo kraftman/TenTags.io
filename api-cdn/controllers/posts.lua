@@ -307,7 +307,7 @@ function m.CreatePostForm(request)
   request.test = function()
     return [[<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
 
-    <link rel="stylesheet" type="text/css" href="/static/css/spare.min.css">]]
+    ]]
   end
 
 

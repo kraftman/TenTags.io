@@ -71,16 +71,13 @@ function M:Run(request)
 
 
 
-    if request.session.userID then
-      if userAPI:UserHasAlerts(request.session.userID) then
-        request.userHasAlerts = true
-      end
+  if request.session.userID then
+    if userAPI:UserHasAlerts(request.session.userID) then
+      request.userHasAlerts = true
     end
+  end
 
-
-    --ngx.log(ngx.ERR, to_json(user))
-
-    request.csrf_token = csrf.generate_token(request,request.session.userID)
-    request.userFilters = userAPI:GetUserFilters(request.session.userID or 'default') or {}
+  request.csrf_token = csrf.generate_token(request,request.session.userID)
+  request.userFilters = userAPI:GetUserFilters(request.session.userID or 'default') or {}
 end
 return M
