@@ -70,6 +70,7 @@ require 'alerts':Register(app)
 require 'api':Register(app)
 require 'admin':Register(app)
 require 'search':Register(app)
+require 'images':Register(app)
 
 if config._name == 'development' then
   require 'auto':Register(app)

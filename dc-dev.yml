@@ -13,6 +13,7 @@ services:
       - redis-user
 
   imgprocess:
+    tty: true
     links:
       - redis-general
     entrypoint: ""

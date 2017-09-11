@@ -178,7 +178,7 @@ function bb:GetImageFromBB(imageID)
   end
   --print(to_json(res))
   local imageInfo = {
-    ['Content-Type'] = res.headers['Content-Type'],
+    contetType = res.headers['Content-Type'],
     filename = res.headers['x-bz-file-name'],
     data = res.body
   }

@@ -56,12 +56,20 @@ function cache:GetThreads(userID, startAt, range)
 end
 
 function cache:GetImage(imageID)
-  local ok, err = imageDict:get(imageID)
+  -- local ok, err = imageDict:get(imageID)
+  -- if err then
+  --   print(err)
+  -- end
+  -- if ok then
+  --   return ok, err
+  -- end
+
+  local ok, err = redisRead:GetImage(imageID)
   if err then
-    print(err)
+    ngx.log(ngx.ERR, err)
+    return nil, 'image not found'
   end
-  if ok then
-  end
+
   return ok, err
 end
 

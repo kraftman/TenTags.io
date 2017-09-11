@@ -344,17 +344,34 @@ function loader:GetPostIcon(postURL, postID)
   return true
 end
 
-function loader:ProcessPostIcon(postID)
-  local postURL, err = self:LoadPost(postID)
+function loader:ProcessPostIcon(post)
+  local postURL, err = self:LoadPost(post.id)
   if not postURL then
     return true, err
   end
 
-  local ok, err = self:GetPostIcon(postURL, postID)
+  local ok, err = self:GetPostIcon(postURL, post.id)
   if not ok then
      return nil, err
   end
   print('got post icon')
+  return true
+end
+
+function loader:AddBBIDToImage(imageID, key, bbID)
+  local ok, err = red:hset('image:'..imageID, key, bbID)
+  if not ok then
+    print('error setting image bb id: ', err)
+  end
+
+  local timeInvalidated = socket.gettime()
+
+  local data = cjson.encode({keyType = 'image', id = imageID})
+
+  ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+  if not ok then
+    print('error setting invalidationRequests: ', err)
+  end
   return true
 end
 
@@ -370,26 +387,54 @@ function loader:ConvertImage(image)
     -- generate previews for long mp4s
   else
 
-    local imageData =  bb:GetImage(image.rawID)
-    local data =  assert(magick.load_image_from_blob(imageData))
-
-    data:set_format('jpg')
+    -- local imageData =  bb:GetImage(image.rawID)
+    -- local data =  assert(magick.load_image_from_blob(imageData))
+    --
+    -- data:set_format('jpg')
   end
 
+  print('converting image: ', image.id)
 
-  local imageData =  bb:GetImage(image.bbID)
-  image.data =  assert(magick.load_image_from_blob(imageData))
 
+  local imageData =  bb:GetImage(image.rawID)
+  image.data =  assert(magick.load_image_from_blob(imageData.data))
+
+  -- optimise
   image.data:set_format('jpg')
-  local bbID, err = self:SendImage(image.data, newID..'.jpg')
+  image.data:set_quality(90)
+  local bbID, err = self:SendImage(image.data, image.id)
+
+  if bbID then
+    print('sent to bb, adding to image')
+    self:AddBBIDToImage(image.id, 'imgID', bbID)
+  else
+    print(err)
+  end
+
   -- add this as imgID
 
+  -- shrink
   image.data:resize_and_crop(1000,1000)
 
-  local bbID, err = self:SendImage(image.data, newID..'.jpg')
-  --add as optID
+  bbID, err = self:SendImage(image.data, image.id)
+  if bbID then
+    print('sent to bb, adding to image big')
+    self:AddBBIDToImage(image.id, 'bigID', bbID)
+  else
+    print(err)
+  end
 
+  image.data:resize_and_crop(100,100)
 
+  bbID, err = self:SendImage(image.data, image.id)
+  if bbID then
+    print('sent to bb, adding to image icon')
+    self:AddBBIDToImage(image.id, 'iconID', bbID)
+  else
+    print(err)
+  end
+
+  return true
 end
 
 function loader:GetUpdates(queueName)
@@ -399,7 +444,7 @@ function loader:GetUpdates(queueName)
   end
   for k,v in pairs(ok) do
     red:zrem(queueName,v)
-    ok[k] = cjson.decode(v)
+    ok[k], err = cjson.decode(v)
   end
 
   return ok, err
@@ -435,7 +480,7 @@ function loader:GetNextPost(queueName, job)
 
   for _,postUpdate in pairs(updates) do
 
-    ok, err = self[job](postUpdate.id)
+    ok, err = self[job](self,postUpdate)
     if not ok then
       print('couldnt req: ', err)
       self:Requeue(queueName, postUpdate)
@@ -463,13 +508,13 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost('queue:GeneratePostIcon', 'ProcessPostIcon') end)
-  --print(status)
+
   if not status then
     print(err)
   end
 
   local status, err = pcall(function() loader:GetNextPost('queue:ConvertImage', 'ConvertImage') end)
-  --print(status)
+
   if not status then
     print(err)
   end

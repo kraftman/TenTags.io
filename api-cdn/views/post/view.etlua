@@ -19,6 +19,14 @@
   </div>
 <% end %>
 
+<% if post.images and next(post.images) then %>
+  <% for _,imageID in pairs(post.images) do %>
+    <a href="<%= url_for('bigimage',{imageID = imageID}) -%>">
+      <img class = 'linkImg' src="<%= url_for('iconimage',{imageID = imageID}) -%>" >
+    </a>
+  <% end %>
+<% end %>
+
 <!-- <% if post.bbID then %>
 
   <div class = 'panel panel-default panel-image'>
@@ -134,7 +142,7 @@
     <% for _,filter in pairs(filters or {}) do %>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
-  
+
 
   <% render("views.st.newcomment") %>
 

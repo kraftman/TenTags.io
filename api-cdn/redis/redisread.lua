@@ -609,6 +609,8 @@ function read:GetPost(postID)
   end
 
   self:SetKeepalive(red)
+  print(post.images)
+  post.images = self:from_json(post.images or '[]')
 
   --[[
   ok,err = red:smembers('postfilters:'..postID)
@@ -644,6 +646,18 @@ function read:GetFilterPosts(filter, sortBy,startAt, range)
   return ok
 end
 
+
+function read:GetImage(imageID)
+  local red = self:GetRedisReadConnection()
+  local ok, err = red:hgetall('image:'..imageID)
+  ok = self:ConvertListToTable(ok)
+  self:SetKeepalive(red)
+  if ok == ngx.null then
+    return nil
+  end
+
+  return ok, err
+end
 
 function read:GetAllNewPosts(rangeStart,rangeEnd)
   local red = self:GetRedisReadConnection()

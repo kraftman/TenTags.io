@@ -159,10 +159,12 @@ function OverrideSubmit(){
         //console.log('this '+data)
         //console.log(data)
         console.log('worked')
-        if (data.id) {
-          window.location.assign('/p/'+data.id);
+        console.log(data)
+        if (data.data.id) {
+          window.location.assign('/p/'+data.data.id);
         }
-        $('#submitError').html(data);
+        $('#submitError').html(data.data);
+        return false;
       },
       error: function(data) {
         console.log('that');
@@ -171,6 +173,7 @@ function OverrideSubmit(){
       dataType: 'json'
     });
   });
+  return false;
 }
 
 function UpdateFilterStyles(){
