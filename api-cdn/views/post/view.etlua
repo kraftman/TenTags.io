@@ -13,17 +13,20 @@
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
-    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) %>">
       <img class = 'linkImg' src="/icon/<%= post.id %>" >
     </a>
   </div>
 <% end %>
 
 <% if post.images and next(post.images) then %>
-  <% for _,imageID in pairs(post.images) do %>
-    <a href="<%= url_for('bigimage',{imageID = imageID}) -%>">
-      <img class = 'linkImg' src="<%= url_for('iconimage',{imageID = imageID}) -%>" >
+  <% for _,image in pairs(post.images) do %>
+    <a href="<%= url_for('bigimage',{imageID = image.id}) %>">
+      <img class = 'linkImg' src="<%= url_for('iconimage',{imageID = image.id}) %>" >
     </a>
+    <% if image.text then %>
+      <span><%= image.text %></span>
+    <% end %>
   <% end %>
 <% end %>
 

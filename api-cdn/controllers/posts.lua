@@ -217,6 +217,10 @@ function m.GetPost(request)
     end
   end
 
+  for k,v in pairs(post.images) do
+    post.images[k] = imageAPI:GetImage( v)
+  end
+
   request.comments = comments
 
 
