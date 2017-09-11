@@ -1,9 +1,7 @@
-FROM ubuntu:16.04
-
-RUN apt-get update #redo
+FROM jrottenberg/ffmpeg
 
 #lua and stuff to build imagemagick/lua-imagemagick
-RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN  DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
     git \
     lua5.1 \
     luajit \

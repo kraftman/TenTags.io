@@ -98,6 +98,27 @@ function loader:AddImgURLToPost(postID, imgURL)
   return true
 end
 
+function loader:IsGif(fileName)
+  local handle = io.popen('ffprobe '..fileName..' 2>&1')
+  local imgURL = handle:read("*a")
+
+  local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
+  local totalTime = seconds + minutes*60 + hours*60*60
+  if totalTime > 15 then
+    return false
+  end
+end
+
+function loader:ConvertToMp4(imageID)
+  local handle = io.popen('ffmpeg -y -i out/'..imageID..' sample.mp4 2>&1')
+  local output = handle:read('*a')
+end
+
+function loader:ConvertToGif(imageID)
+  local handle = io.popen('ffmpeg -y -i out/'..imageID..' sample.gif 2>&1')
+  local output = handle:read('*a')
+end
+
 function loader:ProcessImgur(postURL, postID)
   local handle = io.popen('python pygur.py '..postURL..' '..postID)
   local imgURL = handle:read("*a")
@@ -376,6 +397,15 @@ function loader:AddBBIDToImage(imageID, key, bbID)
 end
 
 function loader:ConvertImage(image)
+  -- animated images have: rawID, iconID (still icon), previewID, videoID
+  -- long -> previewID
+  -- gif -> preview
+  -- shortVid -> preview
+  -- convert long video to preview video
+  -- convert gif to video
+  -- convert short video to gif
+  -- label image as animated
+
   --is it a gif or a video
   if image.extension == '.gif' then
     -- convert to mp4
