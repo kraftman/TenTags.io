@@ -1,6 +1,7 @@
 
 <div tabindex="-1" class=' filter-bar'>
-    
+  <img class = 'svg-icon-med hamburger' src="/static/svg/menu-1.svg" onerror="this.src='/static/icons/hamburger.png'">
+  
   <span class="ti-menu hamburger" ></span>
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>

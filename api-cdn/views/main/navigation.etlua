@@ -1,7 +1,8 @@
 
 <header class='top-nav'>
 
-  <span class="ti-menu hamburger" ></span>
+  
+  <img class = 'svg-icon-med hamburger' src="/static/svg/menu-1.svg" onerror="this.src='/static/icons/hamburger.png'">
   <a class='home-link' href="<%= url_for('home') %>">TenTags</a>
   <% if session.username then %>
     <form class='site-search' id='siteSearch' action='<%= url_for('searchposts') %>' method='post' accept-charset='UTF-8'>
