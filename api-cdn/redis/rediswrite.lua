@@ -1079,6 +1079,8 @@ function write:CreatePost(post)
       for time,edit in pairs(v) do
         hashedPost['edit:'..time] = self:to_json(edit)
       end
+    elseif type(v) == 'table' then
+      hashedPost[k] = self:to_json(v)
     else
       hashedPost[k] = v
     end

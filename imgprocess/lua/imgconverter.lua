@@ -34,6 +34,25 @@ end
 local loader = {}
 
 
+local function ReadFile(file)
+    local f = io.open(file, "rb")
+    local content = f:read("*a")
+    f:close()
+    return content
+end
+
+local function WriteFile(path, data)
+  local file, err = assert(io.open(path, 'w+'))
+  if err then
+    return nil, err
+  end
+
+  file:write(data)
+  file:close()
+  return true
+end
+
+
 function loader:LoadPost(postID)
 
   local post, err = red:hgetall('post:'..postID)
@@ -88,7 +107,7 @@ function loader:GetImageLinks(res)
 end
 
 function loader:SendImage(image, imageName)
-  local id, err = bb:UploadImage(image, imageName..'.jpg')
+  local id, err = bb:UploadImage(image, imageName)
   print(id, err)
   return id, err
 end
@@ -96,6 +115,27 @@ end
 function loader:AddImgURLToPost(postID, imgURL)
   red:hset('post:'..postID,'imgURL', imgURL)
   return true
+end
+
+function loader:IsGif(fileName)
+  local handle = io.popen('ffprobe '..fileName..' 2>&1')
+  local imgURL = handle:read("*a")
+
+  local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
+  local totalTime = seconds + minutes*60 + hours*60*60
+  if totalTime > 15 then
+    return false
+  end
+end
+
+function loader:ConvertToMp4(imageID)
+  local handle = io.popen('ffmpeg -y -i out/'..imageID..' sample.mp4 2>&1')
+  local output = handle:read('*a')
+end
+
+function loader:ConvertToGif(imageID)
+  local handle = io.popen('ffmpeg -y -i out/'..imageID..' sample.gif 2>&1')
+  local output = handle:read('*a')
 end
 
 function loader:ProcessImgur(postURL, postID)
@@ -119,7 +159,7 @@ function loader:ProcessImgur(postURL, postID)
   --finalImage.image:write('/lua/out/p2-'..postID..'.png')
   --finalImage.image = magick.load_image('/lua/out/p2-'..postID..'.png')
   local newID = uuid.generate_random()
-  local id, err = self:SendImage(image,newID..'b')
+  local id, err = self:SendImage(image:get_blob(),newID..'b')
   if not id then
     print('error sending image: ',err)
     return nil, 'couldnt send imgur full image'
@@ -133,7 +173,7 @@ function loader:ProcessImgur(postURL, postID)
     return ok, err
   end
   image:resize_and_crop(200,200)
-  id, err = self:SendImage(image,newID)
+  id, err = self:SendImage(image:get_blob(),newID)
   if not id then
     print('error sending image: ',err)
     return nil, 'couldnt send imgur thumb image'
@@ -309,7 +349,7 @@ function loader:GetPostIcon(postURL, postID)
   finalImage.image:set_format('jpg')
   local newID = uuid.generate_random()
 
-  local id,err = self:SendImage(finalImage.image, newID..'b')
+  local id,err = self:SendImage(finalImage.image:get_blob(), newID..'b')
   if not id then
     print('couldnt send image: ',err)
     return nil, err
@@ -330,7 +370,7 @@ function loader:GetPostIcon(postURL, postID)
   --   return ok, err
   -- end
 
-  id , err = self:SendImage(finalImage.image, newID)
+  id , err = self:SendImage(finalImage.image:get_blob(), newID)
   if not id then
     print('couldnt send small image:', err)
     return nil, err
@@ -344,13 +384,13 @@ function loader:GetPostIcon(postURL, postID)
   return true
 end
 
-function loader:ProcessPostIcon(postID)
-  local postURL, err = self:LoadPost(postID)
+function loader:ProcessPostIcon(post)
+  local postURL, err = self:LoadPost(post.id)
   if not postURL then
     return true, err
   end
 
-  local ok, err = self:GetPostIcon(postURL, postID)
+  local ok, err = self:GetPostIcon(postURL, post.id)
   if not ok then
      return nil, err
   end
@@ -358,37 +398,233 @@ function loader:ProcessPostIcon(postID)
   return true
 end
 
-function loader:ConvertImage(image)
-  --is it a gif or a video
-  if image.extension == '.gif' then
-    -- convert to mp4
-    -- create still
-  elseif image.extension == '.mp4' then
-    --check the duration
-    -- convert short mp4s to fallback gifs
-    -- create still
-    -- generate previews for long mp4s
-  else
-
-    local imageData =  bb:GetImage(image.rawID)
-    local data =  assert(magick.load_image_from_blob(imageData))
-
-    data:set_format('jpg')
+function loader:AddBBIDToImage(imageID, key, bbID)
+  local ok, err = red:hset('image:'..imageID, key, bbID)
+  if not ok then
+    print('error setting image bb id: ', err)
   end
 
+  local timeInvalidated = socket.gettime()
 
-  local imageData =  bb:GetImage(image.bbID)
-  image.data =  assert(magick.load_image_from_blob(imageData))
+  local data = cjson.encode({keyType = 'image', id = imageID})
 
-  image.data:set_format('jpg')
-  local bbID, err = self:SendImage(image.data, newID..'.jpg')
-  -- add this as imgID
+  ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+  if not ok then
+    print('error setting invalidationRequests: ', err)
+  end
+  return true
+end
 
-  image.data:resize_and_crop(1000,1000)
 
-  local bbID, err = self:SendImage(image.data, newID..'.jpg')
-  --add as optID
+function loader:GeneratePreview(image, pathIn, pathOut)
+  local hours, minutes, seconds = imgURL:match('Duration: (%d%d):(%d%d):(%d%d)%.%d%d')
+  local totalTime = seconds + minutes*60 + hours*60*60
 
+  -- calculate what we need
+  local segmentCount = 10
+  local startTime, command, handle, output
+  for i = 1, segmentCount do
+    startTime = math.floor((totalTime/segmentCount)*i)
+    command = 'ffmpeg -y -ss '..startTime..' -i '..pathIn..' -t 1 -f mpegts '..pathIn..'-out'..i..'.ts'
+    print(command)
+    handle = io.popen(command)
+    output = handle:read('*all')
+    print(output)
+  end
+
+  local concat = 'concat:'
+
+  for i = 1, segmentCount do
+    if i == 1 then
+      concat = concat..'output'..i..'.ts'
+    else
+      concat = concat..'|output'..i..'.ts'
+    end
+  end
+
+  command = 'ffmpeg -y -i "'..concat..'" -c copy '..pathOut
+
+  handle = io.popen(command)
+  output = handle:read('*all')
+  io.popen('rm '..pathIn..'-out')
+
+  --TODO check for errors
+
+  return true
+end
+
+
+
+function loader:ConvertAndUpload(image, pathIn, pathOut, width, height, tag)
+  local command = 'ffmpeg -y -i '..pathIn..[[ -filter_complex "scale=iw*min(1\,min(]]
+                        ..height..[[/iw\,]]..width..[[/ih)):-1" ]]..pathOut..' 2>&1'
+  local handle = io.popen(command)
+  local output = handle:read('*a')
+  --TODO check output
+
+
+  local fileData, err = ReadFile(pathOut)
+  if not fileData then
+    return ok, err
+  end
+
+  local ok, err = self:SendImage(fileData, image.id..'-'..tag)
+  print(tag, ' - ', ok)
+  if not ok then
+    return ok, err
+  end
+
+  return self:AddBBIDToImage(image.id, tag, ok)
+
+end
+
+function loader:GetFirstFrame(image, pathIn)
+  --https://stackoverflow.com/questions/4425413/how-to-extract-the-1st-frame-and-restore-as-an-image-with-ffmpeg
+  local ok, err, fileData
+  local pathOut = pathIn..'-icon.jpg'
+  local command = 'ffmpeg -i '..pathIn..' -vf '..[["select=eq(n\,0)"]]..' -vf scale=100:-2 -q:v 3 '..pathOut..' 2>&1'
+  local handle = io.popen(command)
+  local output = handle:read('*a')
+  print(output)
+  --TODO check output
+
+  fileData, err = ReadFile(pathOut)
+  if not fileData then
+    return fileData, err
+  end
+
+  ok, err = self:SendImage(fileData, image.id..'-'..'icon')
+  if not ok then
+    return ok, err
+  end
+
+  return self:AddBBIDToImage(image.id, 'iconID', ok)
+
+
+end
+
+function loader:ConvertRawVideo(image)
+
+  -- download the raw file
+  local file, err = bb:GetImage(image.rawID)
+  if not file then
+    return file, err
+  end
+  print('got raw')
+
+  --write locally
+  local ok, err = WriteFile('out/'..image.id, file.data)
+  if not ok then
+    return ok, err
+  end
+
+  print('wrote locally')
+
+  local pathIn = 'out/'..image.id
+  local pathOut = 'out/'..image.id..'-processed.mp4'
+
+  -- convert to mp4 and upload
+  local ok, err = self:ConvertAndUpload(image, pathIn, pathOut, 1920, 1080, 'videoID')
+  if not ok then
+    return ok, err
+  end
+  print('converted to mp4')
+
+
+  -- create preview and upload
+  pathOut = 'out/'..image.id..'-preview.mp4'
+  if self:IsGif(pathIn) then
+    ok, err = self:GeneratePreview(pathIn, pathOut)
+  else
+    ok, err = self:ConvertAndUpload(image, pathIn, pathOut, 854, 480, 'previewID')
+    if not ok then
+      return ok, err
+    end
+  end
+  print('converted to preview')
+
+  -- by now we have either a condensed 10 sec preview or just a shrunk 15 sec vid
+  -- convert to gif as fallback
+
+  -- use the output from above
+  pathIn = pathOut
+  pathOut = 'out/'..image.id..'-processed.gif'
+  ok, err = self:ConvertAndUpload(image, pathIn, pathOut, 854, 480, 'gifID')
+  if not ok then
+    return ok, err
+  end
+  print('converted to gif')
+  -- use the preview for image as its already smaller
+  ok, err = self:GetFirstFrame(image, pathIn)
+  if not ok then
+    return ok, err
+  end
+  print('converted icon')
+
+  --TODO cleanup local files
+  --TODO remove raw from image/backblaze.
+
+
+  return true
+end
+
+
+function loader:ConvertStaticImage(image)
+
+    local imageData =  bb:GetImage(image.rawID)
+    image.data =  assert(magick.load_image_from_blob(imageData.data))
+
+    -- optimise
+    image.data:set_format('jpg')
+    image.data:set_quality(90)
+    local bbID, err = self:SendImage(image.data:get_blob(), image.id)
+
+    if bbID then
+      print('sent to bb, adding to image')
+      self:AddBBIDToImage(image.id, 'imgID', bbID)
+    else
+      print(err)
+    end
+
+    -- add this as imgID
+
+    -- shrink
+    image.data:resize_and_crop(1000,1000)
+
+    bbID, err = self:SendImage(image.data:get_blob(), image.id)
+    if bbID then
+      print('sent to bb, adding to image big')
+      self:AddBBIDToImage(image.id, 'bigID', bbID)
+    else
+      print(err)
+    end
+
+    image.data:resize_and_crop(100,100)
+
+    bbID, err = self:SendImage(image.data:get_blob(), image.id)
+    if bbID then
+      print('sent to bb, adding to image icon')
+      self:AddBBIDToImage(image.id, 'iconID', bbID)
+    else
+      print(err)
+    end
+
+    return true
+end
+
+function loader:ConvertImage(image)
+
+
+  if image.type == 'vid' then
+    local ok, err = self:ConvertRawVideo(image)
+    if not ok then
+      print('failed to process:', err)
+    end
+    return ok, err
+  else
+    local ok, err = self:ConvertStaticImage(image)
+    return ok, err
+  end
 
 end
 
@@ -399,7 +635,7 @@ function loader:GetUpdates(queueName)
   end
   for k,v in pairs(ok) do
     red:zrem(queueName,v)
-    ok[k] = cjson.decode(v)
+    ok[k], err = cjson.decode(v)
   end
 
   return ok, err
@@ -435,7 +671,7 @@ function loader:GetNextPost(queueName, job)
 
   for _,postUpdate in pairs(updates) do
 
-    ok, err = self[job](postUpdate.id)
+    ok, err = self[job](self,postUpdate)
     if not ok then
       print('couldnt req: ', err)
       self:Requeue(queueName, postUpdate)
@@ -463,13 +699,13 @@ while true do
 
 
   local status, err = pcall(function() loader:GetNextPost('queue:GeneratePostIcon', 'ProcessPostIcon') end)
-  --print(status)
+
   if not status then
     print(err)
   end
 
   local status, err = pcall(function() loader:GetNextPost('queue:ConvertImage', 'ConvertImage') end)
-  --print(status)
+
   if not status then
     print(err)
   end

@@ -139,7 +139,7 @@ function m.CreatePost(request)
   for word in request.params.selectedtags:gmatch('%S+') do
     table.insert(info.tags, word)
   end
-
+  local ok, err
 
   -- if they have no js let them form upload one image
   local fileData = request.params.upload_file
@@ -152,9 +152,12 @@ function m.CreatePost(request)
   end
   -- otherwise let them assign multiple preuploaded images
   if request.params.postimages then
-    for k, v in pairs(from_json(request.params.postimages)) do
+    for _, v in pairs(from_json(request.params.postimages)) do
       if v.text then
-        imageAPI:AddText(request.session.userID, v.id, v.text)
+        ok, err = imageAPI:AddText(request.session.userID, v.id, v.text)
+        if not ok then
+          return {json = {error = true, data = {err}}}
+        end
         info.images[#info.images+1] =  v.id
       end
     end
@@ -163,7 +166,9 @@ function m.CreatePost(request)
   local newPost, err = postAPI:CreatePost(request.session.userID, info)
 
   if newPost then
-    return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
+    print('returning new post')
+    return {json = {error = false, data = newPost}}
+    --return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
   else
     ngx.log(ngx.ERR, 'error from api: ',err or 'none')
     return 'error creating post: '.. err
@@ -210,6 +215,10 @@ function m.GetPost(request)
       request.userSubbed = true
       break
     end
+  end
+
+  for k,v in pairs(post.images) do
+    post.images[k] = imageAPI:GetImage( v)
   end
 
   request.comments = comments

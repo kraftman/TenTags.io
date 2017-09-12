@@ -11,11 +11,13 @@ local bb = require('lib.backblaze')
 
 local allowedExtensions = {
   ['.mp4'] = 'vid',
+  ['.mkv'] = 'vid',
   ['.gif'] = 'vid',
   ['.png'] = 'pic',
   ['.jpg'] = 'pic',
   ['.jpeg'] = 'pic'
 }
+
 
 function api:GetImage(imageID)
 
@@ -37,6 +39,44 @@ function api:GetImage(imageID)
 
 end
 
+function api:GetImageData(userID, imageID, imageSize)
+  print('getting image data')
+  local ok, err = self:RateLimit('GetImageData:', userID, 10,300)
+  if not ok then
+    return ok, err
+  end
+
+
+  local image, err = self:GetImage(imageID)
+  print(to_json(image))
+  if not image then
+    ngx.log(ngx.ERR, 'couldnt load')
+    return nil, 'no image found'
+  end
+
+  local bbID = image.rawID
+  print(imageSize, image[imageSize])
+  if imageSize and image[imageSize] then
+    print('getting correct size')
+    bbID = image[imageSize]
+  elseif image.imgID then
+    print('falling back to img')
+    bbID = image.imgID
+  else
+    print('using raw')
+  end
+
+  local imageData, err = bb:GetImage(bbID)
+  if not imageData then
+    ngx.log(ngx.ERR, 'error retrieving image from bb: ',err)
+    return nil, 'couldnt load image'
+  end
+
+  return imageData
+
+end
+
+
 function api:AddText(userID, imageID, text)
 
   local ok, err = self:RateLimit('EditImageText:', userID, 40,60)
@@ -47,6 +87,10 @@ function api:AddText(userID, imageID, text)
   text = self:SanitiseUserInput(text, 400)
 
   local image = cache:GetImage(imageID)
+  if not image then
+    print('couldnt find image: ',imageID)
+    return nil, 'image not found'
+  end
 
   if image.createdBy ~= userID then
     local user = cache:GetUser(userID)
@@ -98,6 +142,8 @@ function api:CreateImage(userID, fileData)
   if not allowedExtensions[fileExtension] then
     return nil, 'invalid file type'
   end
+
+  file.type = allowedExtensions[fileExtension]
 
   file.extension = fileExtension
   local rawID, err = bb:UploadImage(file.id..fileExtension, fileData.content)

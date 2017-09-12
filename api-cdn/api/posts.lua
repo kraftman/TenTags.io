@@ -395,11 +395,14 @@ function api:ConvertUserPostToPost(userID, post)
 		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
 		filters = {},
-    bbID = post.bbID
+    bbID = post.bbID,
+    images = post.images,
 	}
 	if newPost.link:gsub(' ','') == '' then
 		newPost.link = nil
 	end
+
+
 
 	newPost.tags = {}
 	if post.tags == ngx.null then
