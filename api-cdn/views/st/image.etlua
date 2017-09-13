@@ -1,0 +1,14 @@
+<% if image.banned then %>
+  <img src='/static/icons/removed.jpg' alt='image removed'>
+<% else %>
+  <% if image.type == 'vid' then %>
+    <video  controls>
+      <source src="<%= url_for('previewVid',{imageID = image.id}) %>" type="video/mp4" />
+      <img src="<%= url_for('gifVid',{imageID = image.id}) %>" title="Your browser does not support the <video> tag">
+    </video>
+  <% else %>
+    <a href="<%= url_for('medimage',{imageID = image.id}) %>">
+      <img class = 'linkImg' src="<%= url_for('bigimage',{imageID = image.id}) %>" >
+    </a>
+  <% end %>
+<% end %>

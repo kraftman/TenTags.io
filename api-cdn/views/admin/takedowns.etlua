@@ -1,0 +1,26 @@
+
+
+
+<% render('views.admin.adminbar') %>
+
+<div class = 'panel panel-default'>
+  <h3> Takedowns: </h3>
+</div>
+
+<div class = 'panel panel-default'>
+  <% for k,v in pairs(takedowns) do %>
+    <div>
+      <% render("views.st.image",{image = v.image}) %>
+      <div class='image-title'><%= v.reason %></div>
+      <div>
+        <form action='<%= url_for("canceltakedown", {takedownID = v.id}) %>' method='get' accept-charset='UTF-8'>
+          <input class='btn' id='submitButton' type='submit' name='Submit' value='Cancel' />
+        </form>
+        <form action='<%= url_for("confirmtakedown", {takedownID = v.id}) %>' method='get' accept-charset='UTF-8'>
+          <input class='btn' id='submitButton' type='submit' name='Submit' value='Ban' />
+        </form>
+      </div>
+
+    </div>
+  <% end %>
+</div>

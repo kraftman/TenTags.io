@@ -28,7 +28,7 @@ config("development", {
   dict_useralerts = '1m',
   dict_sessionlastseen = '1m',
   dict_userfrontpageposts = '1m',
-  dict_images = '10m',
+  dict_images = '100m',
 
 })
 

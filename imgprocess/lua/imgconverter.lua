@@ -35,7 +35,11 @@ local loader = {}
 
 
 local function ReadFile(file)
-    local f = io.open(file, "rb")
+    local f, err = io.open(file, "rb")
+    if not f then
+      print('couldnt read file: ', file, ' err: ',err)
+      return nil, err
+    end
     local content = f:read("*a")
     f:close()
     return content
@@ -402,6 +406,7 @@ function loader:AddBBIDToImage(imageID, key, bbID)
   local ok, err = red:hset('image:'..imageID, key, bbID)
   if not ok then
     print('error setting image bb id: ', err)
+    return nil, err
   end
 
   local timeInvalidated = socket.gettime()
@@ -411,6 +416,7 @@ function loader:AddBBIDToImage(imageID, key, bbID)
   ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
   if not ok then
     print('error setting invalidationRequests: ', err)
+    return nil, err
   end
   return true
 end
@@ -456,15 +462,19 @@ end
 
 
 function loader:ConvertAndUpload(image, pathIn, pathOut, width, height, tag)
+  print('converting==', pathIn, '===', pathOut,'====')
   local command = 'ffmpeg -y -i '..pathIn..[[ -filter_complex "scale=iw*min(1\,min(]]
                         ..height..[[/iw\,]]..width..[[/ih)):-1" ]]..pathOut..' 2>&1'
   local handle = io.popen(command)
   local output = handle:read('*a')
+  print('output for ', tag)
+  print(output)
   --TODO check output
 
 
   local fileData, err = ReadFile(pathOut)
   if not fileData then
+    print('couldnt read file: ', pathOut)
     return ok, err
   end
 
@@ -688,7 +698,8 @@ end
 loader.queueName = 'queue:GeneratePostIcon'
 
 while true do
-  socket.sleep(1)
+  socket.sleep(5)
+  print('checking')
 
   if not red then
      red, err = redis.connect(redisURL, redisPort)

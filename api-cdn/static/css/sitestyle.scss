@@ -312,6 +312,41 @@ a {
 
 }
 
+.imagepreview {
+  margin-left: auto;
+  margin-right: auto;
+  border-top: 1px black;
+  background: lightgrey;
+  margin-top: 5px;
+  border-radius: 5px;
+
+  video {
+    display: block;
+    margin: 0 auto;
+  }
+  div {
+    display: block;
+    margin: 0 auto;
+  }
+}
+
+.image-title {
+  background-color: grey;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.image-controls {
+  float: right;
+  display: inline-block;
+  img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .settings-alert {
   color: $alert-green;
 }
@@ -718,6 +753,13 @@ ul {
   max-width: 100%;
   margin-left: auto;
   margin-right: auto;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.image-description {
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .post-line-1 {

@@ -247,6 +247,32 @@ function write:InvalidateKey(keyType, id)
   return ok, err
 end
 
+function write:CreateTakedown(request)
+
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:hmset('takedown:'..request.id, request)
+  if not ok then
+    self:SetKeepalive(red)
+    return nil, err
+  end
+
+  ok, err = red:zadd('pendingTakedowns', request.createdAt, request.id)
+  if not ok then
+    self:SetKeepalive(red)
+    return nil, err
+  end
+  ok, err = red:zadd('allTakedowns', request.createdAt, request.id)
+
+  return ok, err
+end
+
+function write:AcknowledgeTakedown(requestID)
+  local red = self:GetRedisWriteConnection()
+  local ok, err = red:zrem('pendingTakedowns', requestID)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 function write:LoadScript(script)
   local red = self:GetRedisWriteConnection()
   local ok, err = red:script('load',script)
@@ -1048,7 +1074,15 @@ end
 
 function write:CreateImage(image)
   local red = self:GetRedisWriteConnection()
-  local ok, err = red:hmset('image:'..image.id, image)
+  local tempImage = {}
+  for k, v in pairs(image) do
+    if type(v) == 'table' then
+      tempImage[k] = self:to_json(v)
+    else
+      tempImage[k] = v
+    end
+  end
+  local ok, err = red:hmset('image:'..image.id, tempImage)
   self:SetKeepalive(red)
   return ok, err
 
