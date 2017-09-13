@@ -7,6 +7,9 @@ local imageAPI = require 'api.images'
 local uuid = require 'lib.uuid'
 
 
+local respond_to = (require 'lapis.application').respond_to
+
+
 local m = {}
 
 -- o = orig (optimised)
@@ -16,14 +19,62 @@ function m:Register(app)
 
   app:get('iconimage', '/i/i/:imageID', function(request) return self.GetImage(request, 'iconID') end)
   app:get('smallimage', '/i/s/:imageID', function(request) return self.GetImage(request, 'iconID') end)
-  app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'iconID') end)
+  app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'bigID') end)
   app:get('bigimage', '/i/b/:imageID', function(request) return self.GetImage(request, 'imgID') end)
   app:get('previewVid', '/i/v/:imageID', function(request) return self.GetImage(request, 'previewID') end)
   app:get('gifVid', '/i/gv/:imageID', function(request) return self.GetImage(request, 'gifID') end)
+  app:match('dmca','/i/dmca/:imageID', respond_to({
+    GET = self.DmcaForm,
+    POST = self.DmcaPost
+  }))
 end
 
 function m.GetIcon(request)
   -- dont want to fallback to fullsize image if we cant find an image
+end
+
+function m.DmcaForm(request)
+  if not request.params.imageID then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  print(request.params.imageID)
+  local image, err = imageAPI:GetImage( request.params.imageID)
+  if not image then
+    --display error page
+    print(err)
+    return 'couldnt find image'
+  end
+
+  request.image = image
+
+  return {render = 'image.dmca'}
+end
+
+function m.DmcaPost(request)
+  if not request.params.imageID then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local userID = request.session.userID or ngx.ctx.userID
+  local takedownText = request.params.takedowntext
+
+
+  local ok, err = imageAPI:SubmitTakedown(userID, request.params.imageID, takedownText)
+  if ok then
+    return 'your request has been submitted, thank you'
+  else
+    ngx.log(ngx.ERR, 'error submitting takedown: ',err)
+    return 'there was an error with your request, please try again later'
+  end
+
 end
 
 

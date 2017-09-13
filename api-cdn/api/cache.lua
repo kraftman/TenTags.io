@@ -56,15 +56,9 @@ function cache:GetThreads(userID, startAt, range)
 end
 
 function cache:GetImage(imageID)
-  -- local ok, err = imageDict:get(imageID)
-  -- if err then
-  --   print(err)
-  -- end
-  -- if ok then
-  --   return ok, err
-  -- end
 
   local ok, err = redisRead:GetImage(imageID)
+  print(to_json(ok))
   if err then
     ngx.log(ngx.ERR, err)
     return nil, 'image not found'
@@ -73,8 +67,18 @@ function cache:GetImage(imageID)
   return ok, err
 end
 
-function cache:SetImage(imageID, imageData)
-  local ok, err = imageDict:set(imageID, imageData)
+function cache:GetImageData(imageID)
+   local ok, err = imageDict:get(imageID)
+  if err then
+    print(err)
+  end
+  if ok then
+    return from_json(ok), err
+  end
+end
+
+function cache:SetImageData(imageID, imageData)
+  local ok, err = imageDict:set(imageID, to_json(imageData))
   if not ok then
     print('error setting image: ', err)
   end
@@ -201,6 +205,8 @@ function cache:PurgeKey(keyInfo)
     viewFilterIDs:delete(keyInfo.id)
   elseif keyInfo.keyType == 'frontpage' then
 
+  elseif keyInfo.keyType == 'image' then
+    imageDict:delete(keyInfo.id)
   end
 end
 
