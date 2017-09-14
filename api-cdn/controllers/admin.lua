@@ -14,9 +14,11 @@ function m.ViewSettings(request)
   if not request.account then
     return 'you must be logged in to access this'
   end
+
   if request.account.role ~= 'Admin' then
     return 'you suck go away'
   end
+  
   local newUsers = adminAPI:GetNewUsers(request.session.userID) or {}
   request.newUsers = {}
   local accountID, email

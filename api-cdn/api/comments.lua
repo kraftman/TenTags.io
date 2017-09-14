@@ -13,6 +13,11 @@ local userlib = require 'lib.userlib'
 local userAPI = require 'api.users'
 
 
+local app_helpers = require("lapis.application")
+local assert_error = app_helpers.assert_error
+
+
+
 
 
 function api:VoteComment(userID, postID, commentID,direction)
@@ -249,8 +254,6 @@ end
 
 
 function api:GetPostComments(userID, postID,sortBy)
-
-
 
 	local comments = cache:GetSortedComments(userID, postID,sortBy)
 

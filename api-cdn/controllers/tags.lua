@@ -2,20 +2,14 @@
 
 local uuid = require 'lib.uuid'
 local tagAPI = require 'api.tags'
+local app = require 'app'
 
 local m = {}
 m.__index = m
 
 
-function m:Register(app)
-  app:get('/tag/*',self.ParseTags)
 
-  app:get('newtag','/createtag',function()    return {render = 'createtag'}  end)
-
-  app:post('/createtagpost',self.CreateTag)
-end
-
-function m.ParseTags(request)
+app:get('parsetags','/tag/*',function(request)
 
   local tagName = request.params.splat:match('(%w+)')
   tagName = tagName:lower()
@@ -28,10 +22,11 @@ function m.ParseTags(request)
     return DisplayTag(request, res)
     ---return res.name..' '..res.title..' '..res.description
   end
-end
+end)
 
-function m.CreateTag(request)
+app:get('newtag','/createtag',function()    return {render = 'createtag'}  end)
 
+app:post('/createtagpost',function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -49,8 +44,4 @@ function m.CreateTag(request)
   else
     return 'error! '..(err or 'no error')
   end
-end
-
-
-
-return m
+end)

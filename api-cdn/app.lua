@@ -2,6 +2,7 @@
 
 local lapis = require("lapis")
 local app = lapis.Application()
+package.loaded.app = app
 local date = require("date")
 local util = require 'util'
 local errorHandler = require 'middleware.errorhandler'
@@ -9,6 +10,7 @@ local errorHandler = require 'middleware.errorhandler'
 local checksession = require 'middleware.checksession'
 local config = require("lapis.config").get()
 local markdown = require 'lib.markdown'
+
 
 
 app:enable("etlua")
@@ -21,6 +23,7 @@ end
 
 
 -- DEV ONLY
+-- TODO move this to env
 to_json = (require 'lapis.util').to_json
 from_json = (require 'lapis.util').from_json
 
@@ -57,9 +60,9 @@ app:get('about', '/about',function() return {render = true} end)
 
 
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec
+require 'tags'
+require 'posts'
 
-require 'tags':Register(app)
-require 'posts':Register(app)
 require 'frontpage':Register(app)
 require 'user':Register(app)
 require 'settings':Register(app)
@@ -75,28 +78,30 @@ require 'images':Register(app)
 if config._name == 'development' then
   require 'auto':Register(app)
   require 'testing.perftest':Register(app)
+
+
+  -- TESTING
+  app:get('/test', function(request)
+    local test = 'test: '
+    test = test..(ngx.var.geoip_region or 'no region')
+    test = test..(ngx.var.geoip_org or 'no org')
+    test = test..(ngx.var.geoip_city or 'no city')
+    test = test..(ngx.var.geoip_region_name or 'no region')
+    test = test..ngx.var.remote_addr
+
+    for k,v in pairs(request.req.headers) do
+      if type(v) == 'string' then
+        print(k, ' ', v)
+      end
+    end
+    print('this')
+
+
+    return test
+
+  end)
 end
 
--- TESTING
-app:get('/test', function(request)
-  local test = 'test: '
-  test = test..(ngx.var.geoip_region or 'no region')
-  test = test..(ngx.var.geoip_org or 'no org')
-  test = test..(ngx.var.geoip_city or 'no city')
-  test = test..(ngx.var.geoip_region_name or 'no region')
-  test = test..ngx.var.remote_addr
-
-  for k,v in pairs(request.req.headers) do
-    if type(v) == 'string' then
-      print(k, ' ', v)
-    end
-  end
-  print('this')
-
-
-  return test
-
-end)
 
 
 return app

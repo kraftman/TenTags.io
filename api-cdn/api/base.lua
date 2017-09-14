@@ -72,6 +72,14 @@ function M:SanitiseUserInput(msg, length)
 
 end
 
+function M:Authorize(user, role)
+	-- add more later
+	if user.role == role then
+		return true
+	end
+	return nil
+end
+
 
 function M:RateLimit(action, userID, limit, duration)
 

@@ -609,7 +609,7 @@ function read:GetPost(postID)
   end
 
   self:SetKeepalive(red)
-  print(post.images)
+  
   post.images = self:from_json(post.images or '[]')
 
   --[[
