@@ -26,13 +26,11 @@ function api:GetImage(imageID)
     return nil, 'image not found'
   end
 
-  print('getting image: ', imageID)
 
   -- all our images are jpeg
 
   local image = cache:GetImage(imageID)
   if image then
-    print('got image from cache:')
     return image
   end
   return nil, 'image not found'
@@ -61,7 +59,7 @@ function api:GetPendingTakedowns(userID, limit)
   local takedowns = {}
   local request
   for k, v in pairs(ok) do
-    print(v)
+    
     request = self.redisRead:GetTakedown(v)
     takedowns[#takedowns+1] = request
   end

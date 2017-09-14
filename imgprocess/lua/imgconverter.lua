@@ -72,7 +72,7 @@ function loader:LoadPost(postID)
   if post.bbID then
     return post.bbID
   end
-  return post.link
+  return post
 end
 
 
@@ -389,12 +389,12 @@ function loader:GetPostIcon(postURL, postID)
 end
 
 function loader:ProcessPostIcon(post)
-  local postURL, err = self:LoadPost(post.id)
-  if not postURL then
+  local fullPost, err = self:LoadPost(post.id)
+  if not fullPost.link then
     return true, err
   end
 
-  local ok, err = self:GetPostIcon(postURL, post.id)
+  local ok, err = self:GetPostIcon(fullPost.link, post.id)
   if not ok then
      return nil, err
   end
@@ -695,7 +695,6 @@ end
 --=====================================================
 
 
-loader.queueName = 'queue:GeneratePostIcon'
 
 while true do
   socket.sleep(5)

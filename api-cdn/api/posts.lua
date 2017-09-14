@@ -402,6 +402,10 @@ function api:ConvertUserPostToPost(userID, post)
 		newPost.link = nil
 	end
 
+  if post.images and #post.images > 1 then
+
+  end
+
 
 
 	newPost.tags = {}
@@ -423,10 +427,15 @@ function api:ConvertUserPostToPost(userID, post)
 		end
 	end
 
-  if (not post.link) or trim(post.link) == '' or post.bbID then
-    if post.bbID then
-		  newPost.postType = 'self-image'
-      tinsert(newPost.tags,'meta:self-image')
+  if (not post.link) or trim(post.link) == '' then
+    if post.images then
+      if #post.images > 1 then
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image')
+      else
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image-album')
+      end
     else
       newPost.postType = 'self'
       tinsert(newPost.tags,'meta:self')
