@@ -58,7 +58,7 @@ end
 function cache:GetImage(imageID)
 
   local ok, err = redisRead:GetImage(imageID)
-  print(to_json(ok))
+  
   if err then
     ngx.log(ngx.ERR, err)
     return nil, 'image not found'

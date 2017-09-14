@@ -4,6 +4,7 @@
 
 local postAPI = require 'api.posts'
 local imageAPI = require 'api.images'
+local userAPI = require 'api.users'
 local uuid = require 'lib.uuid'
 
 
@@ -17,7 +18,7 @@ local m = {}
 -- i = icon (100)
 function m:Register(app)
 
-  app:get('iconimage', '/i/i/:imageID', function(request) return self.GetImage(request, 'iconID') end)
+  app:get('postIcon', '/p/i/:postID', self.GetPostIcon)
   app:get('smallimage', '/i/s/:imageID', function(request) return self.GetImage(request, 'iconID') end)
   app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'bigID') end)
   app:get('bigimage', '/i/b/:imageID', function(request) return self.GetImage(request, 'imgID') end)
@@ -27,6 +28,42 @@ function m:Register(app)
     GET = self.DmcaForm,
     POST = self.DmcaPost
   }))
+end
+
+function m.GetPostIcon(request)
+  local userID = request.session.userID or ngx.ctx.userID
+
+  local post, err = postAPI:GetPost(userID, request.params.postID)
+  if not post then
+    ngx.log(ngx.ERR, 'couldnt find post ', request.params.postID, ' err: ',err)
+  end
+
+  local user = userAPI:GetUser(userID)
+  if not user then
+    -- panic
+    user = {}
+  end
+
+  if post.postType == 'self' then
+    return {redirect_to = '/static/icons/self.svg'}
+  end
+
+  if post.nsfl and not user.showNSFL then
+    return {redirect_to = '/static/icons/nsfw.jpg'}
+  end
+
+  if post.nsfwLevel and user.nsfwLevel < post.nsfwLevel then
+    return {redirect_to = '/static/icons/nsfw.jpg'}
+  end
+
+  if #post.images > 0 then
+    request.params.imageID = post.images[1]
+    print(post.images[1])
+    return m.GetImage(request, 'iconID')
+  end
+
+  return { redirect_to = '/static/icons/notfound.png' }
+
 end
 
 function m.GetIcon(request)
