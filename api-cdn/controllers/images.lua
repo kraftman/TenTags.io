@@ -19,6 +19,7 @@ local m = {}
 function m:Register(app)
 
   app:get('postIcon', '/p/i/:postID', self.GetPostIcon)
+  app:get('imagereload', '/i/:imageID/reload', self.ReloadImage)
   app:get('smallimage', '/i/s/:imageID', function(request) return self.GetImage(request, 'iconID') end)
   app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'bigID') end)
   app:get('bigimage', '/i/b/:imageID', function(request) return self.GetImage(request, 'imgID') end)
@@ -62,12 +63,47 @@ function m.GetPostIcon(request)
     return m.GetImage(request, 'iconID')
   end
 
+  -- need to handle icons now
+  if post.bigIcon or post.smallIcon then
+
+    local size = request.params.size == 'small' and 'smallIcon' or 'bigIcon'
+    print('getting icon: ', size, post[size])
+    local imageData, err = imageAPI:GetImageDataByBBID(userID, post[size])
+    if not imageData then
+      ngx.log(ngx.ERR, 'error: ', err)
+      return { redirect_to = '/static/icons/notfound.png' }
+    end
+    print('got image data')
+
+    ngx.header['Content-Type'] = imageData.contentType
+    ngx.header['Cache-Control'] = 'max-age=86400'
+    ngx.say(imageData.data)
+    return ngx.exit(ngx.HTTP_OK)
+  end
+
   return { redirect_to = '/static/icons/notfound.png' }
 
 end
 
 function m.GetIcon(request)
   -- dont want to fallback to fullsize image if we cant find an image
+end
+
+function m.ReloadImage(request)
+
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local ok, err = imageAPI:ReloadImage(request.session.userID, request.params.imageID)
+
+  if ok then
+    return 'reloading!'
+  else
+    print(err)
+    return 'failed!'
+  end
+
 end
 
 function m.DmcaForm(request)

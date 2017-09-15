@@ -59,7 +59,7 @@ function api:GetPendingTakedowns(userID, limit)
   local takedowns = {}
   local request
   for k, v in pairs(ok) do
-    
+
     request = self.redisRead:GetTakedown(v)
     takedowns[#takedowns+1] = request
   end
@@ -131,6 +131,37 @@ function api:SubmitTakedown(userID, imageID, takedownText)
   ok, err = self.redisWrite:CreateImage(image)
 
   return ok, err
+end
+
+function api:GetImageDataByBBID(userID, bbID)
+  local ok, err = self:RateLimit('GetImageData:', userID, 10,300)
+  if not ok then
+    return ok, err
+  end
+
+
+  --TODO move this all to cache?
+  local imageData = cache:GetImageData(bbID)
+  if imageData then
+    print('got from cache')
+    return imageData
+  end
+
+  imageData, err = bb:GetImage(bbID)
+  print('got from bb  ')
+  if not imageData then
+    ngx.log(ngx.ERR, 'error retrieving image from bb: ',err)
+    return nil, 'couldnt load image'
+  end
+
+  ok, err = cache:SetImageData(bbID, imageData)
+  if not ok then
+    return ok, err
+  end
+
+  return imageData
+
+
 end
 
 function api:GetImageData(userID, imageID, imageSize)
@@ -231,9 +262,6 @@ function api:CreateImage(userID, fileData)
 
   --check image size
 
-
-  local uuid = require 'lib.uuid'
-
   local file = {
     createdBy = userID,
     createdAt = ngx.time(),
@@ -270,6 +298,24 @@ function api:CreateImage(userID, fileData)
   end
 
   return file, err
+end
+
+function api:ReloadImage(userID, imageID)
+  local user = cache:GetUser(userID)
+  if not user or user.role ~= 'Admin' then
+    return nil, 'no auth'
+  end
+
+  local image = cache:GetImage(imageID)
+
+  if not image then
+    return nil, 'image not found'
+  end
+
+  local ok, err = self.redisWrite:QueueJob('ConvertImage', image)
+
+  return ok, err
+
 end
 
 return api

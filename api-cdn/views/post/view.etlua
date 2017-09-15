@@ -14,7 +14,7 @@
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
     <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) %>">
-      <img class = 'linkImg' src="/icon/<%= post.id %>" >
+      <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.id}) -%>" >
     </a>
   </div>
 <% end %>
@@ -29,6 +29,12 @@
           </span>
 
           <div class = 'image-controls'>
+            <% if account and account.role == 'Admin' then %>
+              <a href="<%= url_for('imagereload',{imageID = image.id}) %>">
+                <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/133-spinner11.svg" onerror="this.src='/static/icons/hamburger.png'">
+              </a>
+            <% end %>
+
             <a href="<%= url_for('dmca',{imageID = image.id}) %>">
               <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/264-warning.svg" onerror="this.src='/static/icons/hamburger.png'">
             </a>

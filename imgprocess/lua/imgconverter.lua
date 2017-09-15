@@ -5,6 +5,9 @@ local magick = require 'magick'
 local redis = require 'redis'
 local socket = require 'socket'
 
+require("ssl")
+local https = require("ssl.https")
+
 local http = require("socket.http")
 local ltn12 = require("ltn12")
 local giflib = require("giflib")
@@ -69,9 +72,9 @@ function loader:LoadPost(postID)
     print('no post link found!')
     return true
   end
-  if post.bbID then
-    return post.bbID
-  end
+  -- if post.bbID then
+  --   return post.bbID
+  -- end
   return post
 end
 
@@ -80,7 +83,8 @@ function loader:LoadImage(imageLink)
   local res, c = http.request ( imageLink )
 
 	if c ~= 200 then
-		--print(' cant laod image: ',imageInfo.link, ' err: ',err)
+
+		print(' cant laod image: ',imageLink, ' err: ',err)
     print(c)
 		return nil, 'cant load image:'
 	end
@@ -196,19 +200,39 @@ function loader:ProcessImgur(postURL, postID)
 end
 
 function loader:ProcessGfycat(postURL)
-  --print(postURL)
-  local gfyName = postURL:match('gfycat.com/detail/(%w+)') or postURL:match('gfycat.com/gifs/detail/(%w+)')
-  --print(gfyName)
-  if not gfyName then
-    gfyName = postURL:match('gfycat.com/(%w+)')
-  end
 
-  --print(gfyName)
+
+  -- cant use just the url because sometimes the urls are lowercase
+  -- and gifycats cdn is case sensitive
+
+  local res, c, h = https.request ( postURL )
+
+  if not res then
+    --print(res, err)
+    return res, err
+  end
+  if c ~= 200 then
+    for k, v in pairs(h) do
+      --print(k,v)
+    end
+
+    print('error loading gfycat: ', err)
+  end
+  --print(res)
+  local gfyName = res:match('https://thumbs%.gfycat%.com/(%w-)%-mobile%.jpg')
+
+
+  -- local gfyName = postURL:match('gfycat.com/detail/(%w+)') or postURL:match('gfycat.com/gifs/detail/(%w+)')
+  --
+  -- if not gfyName then
+  --   gfyName = postURL:match('gfycat.com/(%w+)')
+  -- end
+
   local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
-  --print(newURL)
 
   local imageBlob, err = self:LoadImage(newURL)
   if not imageBlob then
+    print('couldnt get image from gyf: ', err)
     return imageBlob, err
   end
 
@@ -334,10 +358,7 @@ function loader:GetPostIcon(postURL, postID)
 
   local finalImage
   if postURL:find('imgur.com') then
-    --if postURL:find('.gif') or postURL:find('gallery') or postURL:find('.jpg') or postURL:find('.jpeg') or postURL:find('.png') then
       return self:ProcessImgur(postURL, postID)
-    --end
-    --return nil, 'imgur gallery'
   elseif postURL:find('gfycat.com/%w+') then
     finalImage = self:ProcessGfycat(postURL)
   elseif not postURL:find('http') then
@@ -349,8 +370,14 @@ function loader:GetPostIcon(postURL, postID)
 	if not finalImage then
 		return nil, 'no final image!'
 	end
+  finalImage.data = finalImage.image
+
+
+
 
   finalImage.image:set_format('jpg')
+  finalImage.image:set_quality(90)
+
   local newID = uuid.generate_random()
 
   local id,err = self:SendImage(finalImage.image:get_blob(), newID..'b')
@@ -368,11 +395,6 @@ function loader:GetPostIcon(postURL, postID)
   finalImage.image:resize_and_crop(100,100)
 
 
-  -- ok, err = self:AddImgURLToPost(postID, finalImage.link)
-  -- if not ok then
-  --   print('couldnt add to post:', err)
-  --   return ok, err
-  -- end
 
   id , err = self:SendImage(finalImage.image:get_blob(), newID)
   if not id then
@@ -405,8 +427,10 @@ end
 function loader:AddBBIDToImage(imageID, key, bbID)
   local ok, err = red:hset('image:'..imageID, key, bbID)
   if not ok then
-    print('error setting image bb id: ', err)
-    return nil, err
+    if ok ~= false then
+      print('error setting image bb id: ', err)
+      return nil, err
+    end
   end
 
   local timeInvalidated = socket.gettime()
