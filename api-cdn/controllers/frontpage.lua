@@ -3,19 +3,17 @@
 local userAPI = require 'api.users'
 local commentAPI = require 'api.comments'
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local m = {}
+local app = require 'app'
 
 
-function m:Register(app)
-  app:get('home','/',self.FrontPage)
-  app:post('home', '/',self.StopIt)
-  app:get('new','/new',self.FrontPage)
-  app:get('best','/best',self.FrontPage)
-  app:get('seen','/seen',self.FrontPage)
-end
 
 
-function m.FrontPage(request)
+local captured = capture_errors(function(request)
   request.pageNum = request.params.page or 1
   local startAt = 20*(request.pageNum-1)
   local sortBy = request.req.parsed_url.path:match('/(%w+)$') or 'fresh'
@@ -50,11 +48,10 @@ function m.FrontPage(request)
   end
 
   return {render = 'frontpage'}
-end
+end)
 
-function m.StopIt()
-  return 'stop it'
-end
-
-
-return m
+app:get('home','/',captured)
+app:post('home', '/',function() return 'stopit' end)
+app:get('new','/new',captured)
+app:get('best','/best',captured)
+app:get('seen','/seen',captured)

@@ -8,6 +8,10 @@ local adminAPI = require 'api.admin'
 local imageAPI = require 'api.images'
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local httpc = http.new()
 
 function m.ViewSettings(request)
@@ -18,7 +22,7 @@ function m.ViewSettings(request)
   if request.account.role ~= 'Admin' then
     return 'you suck go away'
   end
-  
+
   local newUsers = adminAPI:GetNewUsers(request.session.userID) or {}
   request.newUsers = {}
   local accountID, email

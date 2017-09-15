@@ -62,8 +62,8 @@ app:get('about', '/about',function() return {render = true} end)
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec
 require 'tags'
 require 'posts'
+require 'frontpage'
 
-require 'frontpage':Register(app)
 require 'user':Register(app)
 require 'settings':Register(app)
 require 'messages':Register(app)

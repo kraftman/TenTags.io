@@ -3,6 +3,10 @@
 local m = {}
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local respond_to = (require 'lapis.application').respond_to
 
 local tinsert = table.insert
@@ -22,7 +26,7 @@ function m.SearchPosts(request)
     ngx.log(ngx.ERR, err)
     return {render = 'search.failed'}
   end
-  
+
   if search:find('^http') and ok.hits.total == 0 then
 
     request.postLink = search

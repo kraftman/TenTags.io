@@ -5,6 +5,9 @@ local m = {}
 local threadAPI = require 'api.threads'
 local respond_to = (require 'lapis.application').respond_to
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 local to_json = (require 'lapis.util').to_json
 
 

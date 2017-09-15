@@ -12,6 +12,10 @@ local postAPI = require 'api.posts'
 local commentAPI = require 'api.comments'
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 function m:Register(app)
   app:match('apisubscribefilter', '/api/filter/:filterID/sub', self.SubscribeFilter)
   app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)

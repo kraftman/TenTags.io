@@ -8,6 +8,9 @@ local m = {}
 m.__index = m
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 
 app:get('parsetags','/tag/*',function(request)
 

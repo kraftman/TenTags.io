@@ -10,6 +10,10 @@ local respond_to = (require 'lapis.application').respond_to
 local m = {}
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 
 function m:Register(app)
   app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({

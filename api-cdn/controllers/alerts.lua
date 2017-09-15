@@ -11,6 +11,10 @@ local postAPI = require 'api.posts'
 local tinsert = table.insert
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 function m:Register(app)
   app:match('viewalerts','/alerts/view',respond_to({GET = self.ViewAlerts}))
 end
@@ -19,7 +23,7 @@ function m.ViewAlerts(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  
+
   local alerts = userAPI:GetUserAlerts(request.session.userID)
 
   request.alerts = {}

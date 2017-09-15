@@ -214,7 +214,6 @@ app:match('newpost','/p/new', respond_to({
   end
 }))
 
-
 app:match('viewpost','/p/:postID', respond_to({
   GET = capture_errors(function(request)
     local sortBy = request.params.sort or 'best'
@@ -322,7 +321,7 @@ app:match('viewpost','/p/:postID', respond_to({
     end
 
 
-  end,
+  end
 }))
 
 

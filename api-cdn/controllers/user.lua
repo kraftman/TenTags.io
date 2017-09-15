@@ -15,62 +15,30 @@ local http = require 'lib.http'
 local encode_query_string = (require 'lapis.util').encode_query_string
 local woothee = require "resty.woothee"
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
+local app = require 'app'
 
-function m:Register(app)
+app:match('newsubuser','/sub/new', respond_to({
+  GET = self.NewSubUser,
+  POST = self.CreateSubUser
+}))
 
-  app:match('newsubuser','/sub/new', respond_to({
-    GET = self.NewSubUser,
-    POST = self.CreateSubUser
-  }))
+app:match('login','/login',respond_to({
+  POST = self.NewLogin,
+  GET = function() return 'Please login using the top bar'  end
+}))
 
-  app:match('login','/login',respond_to({
-    POST = self.NewLogin,
-    GET = function() return 'Please login using the top bar'  end
-  }))
+app:get('viewuser','/user/:username', self.ViewUser)
+app:get('deleteuser', '/user/:username/delete', self.DeleteUser)
 
-  app:get('viewuser','/user/:username', self.ViewUser)
-  app:get('deleteuser', '/user/:username/delete', self.DeleteUser)
+app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
+app:post('taguser', '/user/tag/:userID', self.TagUser)
 
-  app:get('confirmLogin', '/confirmlogin', self.ConfirmLogin)
-  app:post('taguser', '/user/tag/:userID', self.TagUser)
-
-  app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
-  app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
-  app:get('viewuserupvoted','/user/:username/posts/upvoted', self.ViewUserUpvoted)
-  app:get('logout','/logout', self.LogOut)
-  app:get('switchuser','/user/switch/:userID', self.SwitchUser)
-  app:get('listusers','/user/list',self.ListUsers)
-  app:get('subscribeusercomment','/user/:username/comments/sub',self.SubUserComment)
-  app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
-  app:post('blockuser','/user/:username/block',self.BlockUser)
-
-end
-
-function m.ListUsers(request)
-  if not request.session.accountID then
-    return {render = 'pleaselogin'}
-  end
-  request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
-  return {render = 'listusers'}
-end
-
-function m.BlockUser(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-  local userToBlockID = userAPI:GetUserID(request.params.username)
-
-  local ok, err = userAPI:BlockUser(request.session.userID, userToBlockID)
-  if ok then
-    return { redirect_to = request:url_for("viewuser", {username = request.params.username}) }
-  else
-    print(err)
-    return 'error blocking user'
-  end
-end
-
-function m.ViewUserUpvoted(request)
+app:get('viewusercomments','/user/:username/comments', self.ViewUserComments)
+app:get('viewuserposts','/user/:username/posts', self.ViewUserPosts)
+app:get('viewuserupvoted','/user/:username/posts/upvoted', capture_errors(function(request)
   local userID = userAPI:GetUserID(request.params.username)
   if not userID then
     return 'user not found'
@@ -87,9 +55,20 @@ function m.ViewUserUpvoted(request)
   print(to_json(posts))
   request.posts = posts
   return {render = 'user.viewsubupvotes'}
-end
+end))
 
-function m.SubUserComment(request)
+
+app:get('logout','/logout', self.LogOut)
+app:get('switchuser','/user/switch/:userID', self.SwitchUser)
+app:get('listusers','/user/list',capture_errors(function(request)
+  if not request.session.accountID then
+    return {render = 'pleaselogin'}
+  end
+  request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
+  return {render = 'listusers'}
+end))
+
+app:get('subscribeusercomment','/user/:username/comments/sub',capture_errors(function(request)
   local userID = request.session.userID
   local username = request.params.username
   if not userID then
@@ -107,6 +86,30 @@ function m.SubUserComment(request)
   end
 
   return { redirect_to = request:url_for("viewusercomments", {username = request.params.username}) }
+
+end))
+app:get('subscribeuserpost','/user/:username/posts/sub',self.SubUserPost)
+app:post('blockuser','/user/:username/block',capture_errors(function(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local userToBlockID = userAPI:GetUserID(request.params.username)
+
+  local ok, err = userAPI:BlockUser(request.session.userID, userToBlockID)
+  if ok then
+    return { redirect_to = request:url_for("viewuser", {username = request.params.username}) }
+  else
+    print(err)
+    return 'error blocking user'
+  end
+end))
+
+
+function m.ViewUserUpvoted(request)
+
+end
+
+function m.SubUserComment(request)
 
 end
 
