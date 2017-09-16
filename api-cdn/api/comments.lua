@@ -15,6 +15,7 @@ local userAPI = require 'api.users'
 
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
+local app = require 'app'
 
 
 

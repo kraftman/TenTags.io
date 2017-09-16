@@ -43,6 +43,17 @@ function m.HashIsValid(request)
   return true
 end
 
+app:post('taguser', '/user/tag/:userID', capture_errors(function(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local userTag = request.params.tagUser
+
+  local ok, err = assert_error(userAPI:LabelUser(request.session.userID, request.params.userID, userTag))
+
+  return {json = {error = {err}, data = {}}}
+end))
 
 
 function m.UpvoteComment(request)

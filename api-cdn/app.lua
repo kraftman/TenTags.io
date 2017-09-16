@@ -63,11 +63,11 @@ app:get('about', '/about',function() return {render = true} end)
 require 'tags'
 require 'posts'
 require 'frontpage'
+require 'user'
+require 'settings'
+require 'messages'
+require 'filters'
 
-require 'user':Register(app)
-require 'settings':Register(app)
-require 'messages':Register(app)
-require 'filters':Register(app)
 require 'comments':Register(app)
 require 'alerts':Register(app)
 require 'api':Register(app)
