@@ -1,4 +1,10 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
+
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
 local render_html = (require 'lapis.html').render_html
@@ -23,10 +29,7 @@ local app = require 'app'
 
 function api:VoteComment(userID, postID, commentID,direction)
 
-	local ok, err = self:RateLimit('VoteComment:', userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
+	local ok, err = assert_error(self:RateLimit('VoteComment:', userID, 5, 10))
 
 	if self:UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
@@ -40,7 +43,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 		id = userID..':'..commentID
 	}
 
-	return self.redisWrite:QueueJob('commentvote', commentVote)
+	return assert_error(self.redisWrite:QueueJob('commentvote', commentVote))
 
 end
 
@@ -51,10 +54,10 @@ function api:ConvertUserCommentToComment(userID, comment)
 
 	if user.role == 'Admin' and user.fakeNames then
 
-		local account = cache:GetAccount(user.parentID)
+		local account = assert_error(cache:GetAccount(user.parentID))
     local newUserName = userlib:GetRandom()
 
-    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
+    user = assert_error(userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName))
     if user then
       comment.createdBy = user.id
     end
@@ -80,10 +83,8 @@ end
 
 function api:SubscribeComment(userID, postID, commentID)
 
-	local ok, err = self:RateLimit('SubscribeComment:', userID, 3, 10)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self:RateLimit('SubscribeComment:', userID, 3, 10))
+
 
 	local commentSub = {
 		userID = userID,
@@ -93,7 +94,7 @@ function api:SubscribeComment(userID, postID, commentID)
 		id = userID..':'..commentID
 	}
 
-	return self.redisWrite:QueueJob('commentsub', commentSub)
+	return assert_error(self.redisWrite:QueueJob('commentsub', commentSub))
 
 end
 
@@ -101,19 +102,15 @@ end
 function api:EditComment(userID, userComment)
 	-- not moving this to backend for now
 	-- fairly low cost and users want immediate updates
-	local ok, err = self:RateLimit('EditComment:', userID, 4, 120)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self:RateLimit('EditComment:', userID, 4, 120))
+
 
 	if not userComment or not userComment.id or not userComment.postID then
 		return nil, 'invalid comment provided'
 	end
 
-	local comment = cache:GetComment(userComment.postID, userComment.id)
-	if not comment then
-		return nil, 'comment not found'
-	end
+	local comment = assert_error(cache:GetComment(userComment.postID, userComment.id))
+
 
 	if comment.createdBy ~= userID then
 		local user = cache:GetUser(userID)
@@ -126,61 +123,45 @@ function api:EditComment(userID, userComment)
 	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-  ok, err = self.commentWrite:CreateComment(comment)
-  if not ok then
-    return ok, err
-  end
-	ok, err = self:InvalidateKey('comment', userComment.postID)
+	assert_error(self.commentWrite:CreateComment(comment))
 
-  return ok, err
+	return assert_error(self:InvalidateKey('comment', userComment.postID))
 
 end
 
 function api:CreateComment(userID, userComment)
 
-		local ok, err = self:RateLimit('CreateComment:', userID, 1, 30)
-		if not ok then
-			return ok, err
-		end
+	assert_error(self:RateLimit('CreateComment:', userID, 1, 30))
 
-		local newComment = api:ConvertUserCommentToComment(userID, userComment)
+	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
-		local parentPost = cache:GetPost(newComment.postID)
-		if not parentPost then
-			return nil, 'could not find parent post'
-		end
+	local parentPost = assert_error(cache:GetPost(newComment.postID))
 
-		ok, err = self.commentWrite:CreateComment(newComment)
-		if not ok then
-			ngx.log(ngx.ERR, 'unable to create comment: ', err)
-			return nil, 'error creating comment'
-		end
 
-		local commentUpdate = {
-			id = newComment.postID..':'..newComment.id,
-			postID = newComment.postID,
-			commentID = newComment.id,
-			userID = userID,
-			viewID = user.currentView
-		}
+	assert_error(self.commentWrite:CreateComment(newComment))
 
-		-- queue the rest
+	local user = assert_error(cache:GetUser(userID))
 
-		ok, err = self:InvalidateKey('comment', newComment.postID)
-		ok, err = self.redisWrite:QueueJob('CreateComment', commentUpdate)
-		if not ok then
-			ngx.log(ngx.ERR, 'unable to queue comment create: ', err)
-			return nil, 'error creating comment'
-		end
 
-		return true
+	local commentUpdate = {
+		id = newComment.postID..':'..newComment.id,
+		postID = newComment.postID,
+		commentID = newComment.id,
+		userID = userID,
+		viewID = user.currentView
+	}
 
+	assert_error(self:InvalidateKey('comment', newComment.postID))
+	assert_error(self.redisWrite:QueueJob('CreateComment', commentUpdate))
+
+	return true
 end
 
 function api:GetComment(postID, commentID)
 	if not postID then
 		return nil, 'no postID or commentURL'
 	end
+
 	if not commentID then
 	 	local postIDCommentID = cache:ConvertShortURL(postID)
 		postID, commentID = postIDCommentID:match('(%w+):(%w+)')
@@ -189,7 +170,7 @@ function api:GetComment(postID, commentID)
 		end
 	end
 
-  return cache:GetComment(postID, commentID)
+  return assert_error(cache:GetComment(postID, commentID))
 end
 
 
@@ -209,57 +190,49 @@ function api:GetUserComments(userID, targetUserID, sortBy, startAt, range)
 	end
 
 	-- check if they allow it
-	local targetUser = cache:GetUser(targetUserID)
+	local targetUser = assert_error(cache:GetUser(targetUserID))
 	if not targetUser then
 		return nil, 'could not find user by ID '..targetUserID
 	end
 
 	if targetUser.hideComments then
-		local user = cache:GetUser(userID)
+		local user = assert_error(cache:GetUser(userID))
 		if not user.role == 'Admin' then
 			return nil, 'user has disabled comment viewing'
 		end
 	end
 
-  local comments = cache:GetUserComments(targetUserID, sortBy,startAt, range)
+  local comments = assert_error(cache:GetUserComments(targetUserID, sortBy,startAt, range))
 	for _,v in pairs(comments) do
-    v.username = cache:GetUser(v.createdBy).username
-		v.post = cache:GetPost(v.postID)
+    v.username = assert_error(cache:GetUser(v.createdBy).username)
+		v.post = assert_error(cache:GetPost(v.postID))
   end
   return comments
 end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	local ok, err = self:RateLimit('DeleteComment:', userID, 6, 60)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self:RateLimit('DeleteComment:', userID, 6, 60))
 
-	local post = cache:GetPost(postID)
+
+	local post = assert_error(cache:GetPost(postID))
 	if userID ~= post.createdBy then
-		local user = cache:GetUser(userID)
+		local user = assert_error(cache:GetUser(userID))
 		if user.role ~= 'Admin' then
 			return nil, 'cannot delete other users posts'
 		end
 	end
 
-	local comment = cache:GetComment(postID, commentID)
+	local comment = assert_error(cache:GetComment(postID, commentID))
 	if not comment then
 		return nil, 'error loading comment'
 	end
 	comment.deleted = 'true'
-	return self.self.commentWrite:UpdateComment(comment)
+	return assert_error(self.commentWrite:UpdateComment(comment))
 
 end
-
 
 function api:GetPostComments(userID, postID,sortBy)
-
-	local comments = cache:GetSortedComments(userID, postID,sortBy)
-
-	return comments
+	return assert_error(cache:GetSortedComments(userID, postID,sortBy))
 end
-
-
 return api

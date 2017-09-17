@@ -67,13 +67,12 @@ require 'user'
 require 'settings'
 require 'messages'
 require 'filters'
-
-require 'comments':Register(app)
-require 'alerts':Register(app)
-require 'api':Register(app)
-require 'admin':Register(app)
-require 'search':Register(app)
-require 'images':Register(app)
+require 'comments'
+require 'alerts'
+require 'api'
+require 'admin'
+require 'search'
+require 'images'
 
 if config._name == 'development' then
   require 'auto':Register(app)

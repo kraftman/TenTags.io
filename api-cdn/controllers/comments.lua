@@ -11,20 +11,29 @@ local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 local app = require 'app'
 
-
-app:match('deletecomment','/comment/delete/:postID/:commentID',respond_to({
-  GET = m.DeleteComment,
-  POST = m.DeleteComment
-}))
-app:get('viewcomment','/comment/:postID/:commentID',capture_errors(function(request)
-  request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
-
-  request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
-  if request.commentInfo.shortURL then
-    return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
+local function HashIsValid(request)
+  local realHash = ngx.md5(request.params.commentID..request.session.userID)
+  if realHash ~= request.params.commentHash then
+    ngx.log(ngx.ERR, 'hashes dont match!')
+    return false
   end
-  return {render = 'viewcomment'}
+  return true
+end
+
+
+app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(function(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+  local postID = request.params.postID
+  local userID = request.session.userID
+  local commentID = request.params.commentID
+
+  assert_error(commentAPI:DeleteComment(userID, postID, commentID))
+  return 'deleted'
 end))
+
+
 
 app:get('viewcommentshort','/c/:commentShortURL', capture_errors(function(request)
   request.commentInfo = commentAPI:GetComment(request.params.commentShortURL)
@@ -48,28 +57,20 @@ app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', captu
   if not m.HashIsValid(request) then
     return 'hashes dont match'
   end
-  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
-  if ok then
-    return 'success!'
-  else
-    return 'fail: ', err
-  end
+  assert_error(commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up'))
+  return 'success'
 end))
 
 app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  if not m.HashIsValid(request) then
+  if not HashIsValid(request) then
     return 'hashes dont match'
   end
 
-  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
-  if ok then
-    return 'success'
-  else
-    return 'fail: ',err
-  end
+  assert_error(commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down'))
+  return 'success'
 end))
 
 app:post('newcomment','/comment/', capture_errors(function(request)
@@ -85,18 +86,22 @@ app:post('newcomment','/comment/', capture_errors(function(request)
     text = request.params.commentText,
   }
   --ngx.log(ngx.ERR, to_json(request.params))
-  local ok,err = commentAPI:CreateComment(request.session.userID, commentInfo)
-  if ok then
-    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
-  else
+  assert_error(commentAPI:CreateComment(request.session.userID, commentInfo))
 
-    return 'failed!'..(err or '')
-  end
+  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
 
 end))
 
 app:match('viewcomment','/comment/:postID/:commentID', respond_to({
-  GET = m.ViewComment,
+  GET = capture_errors(function(request)
+    request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
+
+    request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
+    if request.commentInfo.shortURL then
+    return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
+    end
+    return {render = 'viewcomment'}
+  end),
   POST = capture_errors(function(request)
     if not request.session.userID then
       return {render = 'pleaselogin'}
@@ -108,50 +113,9 @@ app:match('viewcomment','/comment/:postID/:commentID', respond_to({
       id = request.params.commentID
     }
 
-    local ok,err = commentAPI:EditComment(request.session.userID, commentInfo)
-    if ok then
-      return 'created!'
-    else
-      return 'failed: '..err
-    end
+    assert_error(commentAPI:EditComment(request.session.userID, commentInfo))
+
+    return 'created!'
+
   end)
 }))
-
-
-
-function m.HashIsValid(request)
-  local realHash = ngx.md5(request.params.commentID..request.session.userID)
-  if realHash ~= request.params.commentHash then
-    ngx.log(ngx.ERR, 'hashes dont match!')
-    return false
-  end
-  return true
-end
-
-
-function m.UpvoteComment(request)
-
-end
-
-function m.DownVoteComment(request)
-
-end
-
-function m.DeleteComment(request)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-  local postID = request.params.postID
-  local userID = request.session.userID
-  local commentID = request.params.commentID
-
-  local ok, err = commentAPI:DeleteComment(userID, postID, commentID)
-  if ok then
-    return 'deleted!'
-  else
-    return 'failed'..err
-  end
-end
-
-return m

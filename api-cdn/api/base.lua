@@ -1,4 +1,7 @@
 
+local app_helpers = require("lapis.application")
+
+local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
 
 local trim = (require 'lapis.util').trim
 local rateDict = ngx.shared.ratelimit
@@ -94,9 +97,9 @@ function M:RateLimit(action, userID, limit, duration)
 	end
 	local key = action..userID
 
-	local ok, err = rateDict:get(key)
+	assert_error(rateDict:get(key))
 	if err then
-		ngx.log(ngx.ERR, 'error getting rate limit key ',key)
+		yield_error('error getting rate limit key ',key)
 	end
 
 	if not ok then

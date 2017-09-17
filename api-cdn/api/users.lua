@@ -1,4 +1,8 @@
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 local base = require 'api.base'
@@ -21,10 +25,8 @@ end
 function api:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
 
-	local ok, err = self:RateLimit('GetFrontPage:'..sortBy,userID, 5, 30)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('GetFrontPage:'..sortBy,userID, 5, 30)
+
 
 
 	if sortBy == 'seen' then
@@ -40,9 +42,7 @@ end
 
 function api:GetRecentPostVotes(userID, targetUserID, direction)
 	local ok, err = self:RateLimit('GetRecentPostVotes:',userID, 10, 60)
-	if not ok then
-		return ok, err
-	end
+
 	local user = cache:GetUser(userID)
 	local targetUser = cache:GetUser(targetUserID)
 	if not user or  not targetUser then
@@ -52,23 +52,15 @@ function api:GetRecentPostVotes(userID, targetUserID, direction)
 		return nil, 'you cant view other users voted posts'
 	end
 
-	ok, err = cache:GetRecentPostVotes(targetUserID,direction)
-	if not ok then
-		return ok, err
-	end
-	ok, err = cache:GetPosts(ok)
+	cache:GetRecentPostVotes(targetUserID,direction)
+	cache:GetPosts(ok)
 	return ok, err
 end
 
 function api:LabelUser(userID, targetUserID, label)
 
-	local ok, err = self:RateLimit('UpdateUser:',userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
-
-	ok, err = self.userWrite:LabelUser(userID, targetUserID, label)
-	return ok, err
+	self:RateLimit('UpdateUser:',userID, 1, 60)
+	return self.userWrite:LabelUser(userID, targetUserID, label)
 
 end
 
@@ -89,10 +81,8 @@ end
 
 function api:BlockUser(userID, userToBlockID)
 	print(userID,' == ', userToBlockID)
-	local ok, err = self:RateLimit('BlockUser:',userID, 3, 60)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('BlockUser:',userID, 3, 60)
+
 
 	local user = cache:GetUser(userID)
 	local found
@@ -106,22 +96,15 @@ function api:BlockUser(userID, userToBlockID)
 		table.insert(user.blockedUsers, userToBlockID)
 	end
 
-	ok, err = self.userWrite:UpdateBlockedUsers(user)
-	if not ok then
-		print(err)
-		return ok, err
-	end
+	self.userWrite:UpdateBlockedUsers(user)
 
-	ok, err = self:InvalidateKey('user', userID)
-	return ok, err
+	return self:InvalidateKey('user', userID)
 
 end
 
 function api:ToggleCommentSubscription(userID, userToSubToID)
-	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+
 	local user = cache:GetUser(userID)
 	local userToSubTo = cache:GetUser(userToSubToID)
 	if not userToSubTo then
@@ -135,18 +118,15 @@ function api:ToggleCommentSubscription(userID, userToSubToID)
 
 	user.commentSubscriptions[userToSubToID] = userToSubTo.commentSubscribers[userID]
 
-	local ok, err = self.userWrite:UpdateUserField(user.id, 'commentSubscriptions:', to_json(user.commentSubscriptions))
-	ok, err = self.userWrite:UpdateUserField(userToSubToID, 'commentSubscribers:', to_json(userToSubTo.commentSubscribers))
-	ok, err = self:InvalidateKey('user', userToSubToID)
-	ok, err = self:InvalidateKey('user', userID)
-	return ok, err
+	self.userWrite:UpdateUserField(user.id, 'commentSubscriptions:', to_json(user.commentSubscriptions))
+	self.userWrite:UpdateUserField(userToSubToID, 'commentSubscribers:', to_json(userToSubTo.commentSubscribers))
+	self:InvalidateKey('user', userToSubToID)
+	return self:InvalidateKey('user', userID)
 end
 
 function api:TogglePostSubscription(userID, userToSubToID)
-	local ok, err = self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
+
 	local user = cache:GetUser(userID)
 	local userToSubTo = cache:GetUser(userToSubToID)
 	if not userToSubTo then
@@ -161,31 +141,23 @@ function api:TogglePostSubscription(userID, userToSubToID)
 
 	user.postSubscriptions[userToSubToID] = userToSubTo.postSubscribers[userID]
 
-	local ok, err = self.userWrite:UpdateUserField(user.id, 'postSubscriptions:', to_json(user.commentSubscriptions))
-	ok, err = self.userWrite:UpdateUserField(userToSubToID, 'postSubscribers:', to_json(userToSubTo.commentSubscribers))
-	ok, err = self:InvalidateKey('user', userToSubToID)
-	ok, err = self:InvalidateKey('user', userID)
-	return ok, err
+	self.userWrite:UpdateUserField(user.id, 'postSubscriptions:', to_json(user.commentSubscriptions))
+	self.userWrite:UpdateUserField(userToSubToID, 'postSubscribers:', to_json(userToSubTo.commentSubscribers))
+	self:InvalidateKey('user', userToSubToID)
+	return self:InvalidateKey('user', userID)
+
 end
 
 function api:DeleteUser(userID, username)
-	local ok, err = self:RateLimit('DeleteUser:',userID, 3, 60)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('DeleteUser:',userID, 3, 60)
+
 	local userToDeleteID = cache:GetUserID(username)
-	if not userToDeleteID then
-		return nil, 'couldnt find user'
-	end
 
 	if userID == userToDeleteID then
 		return nil, 'cannot delete the current user, switch to delete'
 	end
 
 	local user = cache:GetUser(userID)
-	if not user then
-		return nil, 'unknown users'
-	end
 
 	local account = cache:GetAccount(user.parentID)
 
@@ -209,71 +181,40 @@ function api:DeleteUser(userID, username)
 		end
 	end
 	account.userCount = account.userCount - 1
-	ok, err = self.userWrite:CreateAccount(account)
-	if not ok then
-		ngx.log(ngx.ERR, 'error deleting user:', userToDeleteID, ' from account ', account.id, err )
-		return nil, 'failed to delete users'
-	end
+	self.userWrite:CreateAccount(account)
 
-	ok, err = self:InvalidateKey('account', account.id)
+	self:InvalidateKey('account', account.id)
 
 
 	local userToDelete = cache:GetUser(userToDeleteID)
 	if not userToDelete then
 		return nil, 'couldnt find user to delete'
 	end
-	ok, err = self.userWrite:DeleteUser(userToDeleteID, userToDelete.username)
-
-	if ok then
-		return true
-	else
-		print('error from redis: ', err)
-		return nil, 'error deleting user'
-	end
+	return self.userWrite:DeleteUser(userToDeleteID, userToDelete.username)
 
 end
 
 function api:ToggleSavePost(userID,postID)
-	local ok, err = self:RateLimit('ToggleSavePost:',userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('ToggleSavePost:',userID, 1, 60)
+
 	local user = cache:GetUser(userID)
-	if not user then
-		return nil, 'user not found'
-	end
 
 	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
 
-	ok, err = self.userRead:SavedPostExists(userID, post.id)
-	print('saved post exists: ',ok)
-	if ok == nil then
-		print('couldnt get savedpost exits')
-		return nil, err
-	end
+	local ok = self.userRead:SavedPostExists(userID, post.id)
+
 
 	if tonumber(ok) == 1 then
-		print('removing saved post')
-		ok, err = self.userWrite:RemoveSavedPost(userID, post.id)
+		self.userWrite:RemoveSavedPost(userID, post.id)
 	else
-		print('addingsaved post')
-		ok, err = self.userWrite:AddSavedPost(userID, post.id)
+		self.userWrite:AddSavedPost(userID, post.id)
 	end
-	self:InvalidateKey('user', userID)
+	return self:InvalidateKey('user', userID)
 
-	return ok, err
 end
 
 function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
-
-
-	local ok, err = self:RateLimit('Toggle FilterSub:', userID, 60, 120)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('Toggle FilterSub:', userID, 60, 120)
 
 	local user = cache:GetUser(userID)
 	if userID ~= userToUpdateID then
@@ -296,38 +237,20 @@ function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
 
 	-- create a view if they have default
 	if user.currentView == 'default' then
-		local defaultView, err = cache:GetView('default')
-		if not defaultView then
-			ngx.log(ngx.ERR, err)
-			return nil, 'eek'
-		end
+		local defaultView = cache:GetView('default')
 
-		ok, err = self:CreateView(userID, defaultView.filters)
-		if not ok then
-			ngx.log(ngx.ERR, err)
-			return nil, 'error creating new view'
-		else
+		local ok = self:CreateView(userID, defaultView.filters)
 			-- we're done, they have a new view, no need to toggle it
-			return ok
-		end
+		return ok
+
 	end
 
 
 	view = cache:GetView(user.currentView)
 
+	self:ToggleViewFilter(view, filterID)
 
-	ok, err = self:ToggleViewFilter(view, filterID)
-
-	if not ok then
-		print('fail:', err)
-		return nil, err
-	end
-
-
-	self:InvalidateKey('userfilter', userToUpdateID)
-
-	return ok, err
-
+	return self:InvalidateKey('userfilter', userToUpdateID)
 
 end
 
@@ -425,14 +348,10 @@ function api:CreateView(userID, filters)
   user.views[#user.views+1] = newView.id
 	user.currentView = newView.id
 
-  local ok, err = self.redisWrite:CreateView(newView)
-  if not ok then
-    return ok, err
-  end
+  self.redisWrite:CreateView(newView)
 
-  ok, err = self.userWrite:CreateSubUser(user)
-	self:InvalidateKey('user', userID)
-  return ok, err
+  self.userWrite:CreateSubUser(user)
+	return self:InvalidateKey('user', userID)
 
 end
 
@@ -450,9 +369,8 @@ function api:CreateDefaultView(userID)
 		public = true
 	}
 
-	local ok, err = self.redisWrite:CreateView(newView)
+	return self.redisWrite:CreateView(newView)
 
-	return ok, err
 end
 
 function api:ToggleViewSubscription(userID, viewID)
@@ -476,15 +394,10 @@ function api:ToggleViewSubscription(userID, viewID)
 		user.views[#user.views+1]= viewID
 	end
 
-	local ok, err = self.userWrite:CreateSubUser(user)
-	if not ok then
-		return ok, err
-	end
+	self.userWrite:CreateSubUser(user)
 
 
-	ok, err = self.redisWrite:CreateView(view)
-
-	return ok, err
+	return self.redisWrite:CreateView(view)
 
 
 end
@@ -529,27 +442,18 @@ function api:CreateSubUser(accountID, username)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
 	account.currentUserID = subUser.id
-	local ok, err = self.userWrite:CreateAccount(account)
-	if not ok then
-		return ok, err
-	end
+	self.userWrite:CreateAccount(account)
 
-	ok, err = self:InvalidateKey('account', account.id)
+
+	self:InvalidateKey('account', account.id)
 	if account.role == 'Admin' then
 		subUser.role = 'Admin'
 	end
 
-	ok, err = self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
-	if not ok then
-		ngx.log(ngx.ERR, 'couldnt set stat: ', err)
-	end
+	self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
 
-	ok, err = self.userWrite:CreateSubUser(subUser)
-	if ok then
-		return subUser
-	else
-		return ok, err
-	end
+	return self.userWrite:CreateSubUser(subUser)
+
 end
 
 function api:GetAccount(userAccountID, targetAccountID)
@@ -568,18 +472,12 @@ end
 
 function api:GetAccountUsers(userAccountID, accountID)
 	local userAccount = cache:GetAccount(userAccountID)
-	if not userAccount then
-		return nil, 'couldnt find account'
-	end
 
 	if userAccount.role ~= 'Admin' and userAccountID ~= accountID then
 		return nil, 'must be admin to view other users'
 	end
 
 	local queryAccount = cache:GetAccount(accountID)
-	if not queryAccount then
-		return nil, 'account not found'
-	end
 
 	local users = {}
 	local subUser
@@ -595,33 +493,19 @@ end
 
 
 function api:GetUserAlerts(userID)
-	local ok, err , alerts
-	ok, err = self:RateLimit('GetUserAlerts:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
-	-- can only get their own
-  alerts,err = cache:GetUserAlerts(userID)
-	if not alerts then
-		ngx.log(ngx.ERR, 'error loading user alerts: ', err)
-		return nil, 'couldnt load user alerts'
-	end
+	local alerts
+	self:RateLimit('GetUserAlerts:',userID, 5, 10)
 
-	if alerts and not err then
-		-- its not from cache, so update the last time checked
-		print('setting last check to ',ngx.time())
-		ok, err =  self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
-		if not ok then
-			print('coldnt update alert: ', err)
-		end
+  alerts = cache:GetUserAlerts(userID)
+
+	if alerts then
+		self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
 		self:InvalidateKey('user', userID)
-	  ok, err = self:InvalidateKey('useralert', userID)
+	  self:InvalidateKey('useralert', userID)
 	end
 
   return alerts
 end
-
-
 
 function api:SwitchUser(accountID, userID)
 	local account = cache:GetAccount(accountID)
@@ -634,14 +518,10 @@ function api:SwitchUser(accountID, userID)
 	account.currentUserID = user.id
 	account.currentUsername = user.username
 
-	local ok, err = self.userWrite:CreateAccount(account)
-	if not ok then
-		return ok, err
-	end
+	self.userWrite:CreateAccount(account)
 
-	ok, err = self:InvalidateKey('account', account.id)
+	return self:InvalidateKey('account', account.id)
 
-	return user
 end
 
 
@@ -653,15 +533,11 @@ end
 
 function api:UpdateUser(userID, userToUpdate)
 
-	local ok, err = self:RateLimit('UpdateUser:',userID, 3, 30)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('UpdateUser:',userID, 3, 30)
+
 
 	local user = cache:GetUser(userID)
-	if not user then
-		print(userID,' not found')
-	end
+
 	if user.role == 'Admin' then
 
 	else
@@ -696,12 +572,9 @@ function api:UpdateUser(userID, userToUpdate)
 		self.userWrite:IncrementUserStat(userID, 'SettingsChanged',1)
 	end
 
-	ok, err = self.userWrite:CreateSubUser(userInfo)
-	if not ok then
-		return ok, err
-	end
-	ok, err = self:InvalidateKey('user', userID)
-	return ok, err
+	self.userWrite:CreateSubUser(userInfo)
+	return self:InvalidateKey('user', userID)
+
 end
 
 
@@ -723,10 +596,7 @@ function api:GetUserFilters(userID)
 end
 
 function api:GetIndexedViewFilterIDs(userID)
-	local ok, err = self:RateLimit('GetIndexedUserFilterIDs', 5, 1)
-	if not ok then
-		return nil, err
-	end
+	self:RateLimit('GetIndexedUserFilterIDs', 5, 1)
 
 	local user = cache:GetUser(userID)
 	if userID == 'default' then
@@ -739,18 +609,13 @@ end
 
 
 function api:GetUserSettings(userID)
-	local ok, user, err
+	self:RateLimit('GetUserSettings', 5, 1)
 
-	ok, err = self:RateLimit('GetUserSettings', 5, 1)
-	if not ok then
-		return nil, err
-	end
 	if not userID or userID:gsub(' ', '') == '' then
 		return nil, 'no userID given'
 	end
 
-	user, err = cache:GetUser(userID)
-	return user, err
+  return cache:GetUser(userID)
 
 end
 

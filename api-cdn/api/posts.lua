@@ -1,4 +1,7 @@
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
@@ -45,7 +48,6 @@ function api:UserCanAddTag(userID, newTag, tags)
 				return nil, 'you cannot add any more tags'
 			end
 		end
-
 	end
 
   return true
@@ -61,30 +63,20 @@ function api:ReloadImage(userID, postID)
   end
 
   local post = cache:GetPost(postID)
-  if not post then
-    return nil, 'post not found'
-  end
+
   if (not post.link) or post.link == "" then
     return nil, 'post has no link'
   end
 
-	local ok, err = self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
-	if not ok then
-    ngx.log(ngx.ERR, 'unable to queu job: ', err)
-    return nil, 'error generating post icon'
-  end
+  assert_error(self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id}))
 
   return true
-
 end
 
 
 
 function api:ReportPost(userID, postID, reportText)
-  local ok, err = self:RateLimit('ReportPost:', userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
+  assert_error(self:RateLimit('ReportPost:', userID, 1, 60))
 
   local post = cache:GetPost(postID)
   if post.reports[userID] then
@@ -94,12 +86,12 @@ function api:ReportPost(userID, postID, reportText)
   post.reports = post.reports or {}
   post.reports[userID] = self:SanitiseUserInput(reportText, 300)
 
-  ok, err = self.redisWrite:CreatePost(post)
+  self.redisWrite:CreatePost(post)
   if not ok then
     return nil, err
   end
-  ok, err = self.redisWrite:AddReport(userID, postID)
-  ok, err = self:InvalidateKey('post',postID)
+  self.redisWrite:AddReport(userID, postID)
+  self:InvalidateKey('post',postID)
 
   return ok,err
 
@@ -120,10 +112,6 @@ function api:AddPostTag(userID, postID, tagName)
 	end
 
 	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
-
 
   local newTag = tagAPI:CreateTag(userID, tagName)
 
@@ -131,7 +119,6 @@ function api:AddPostTag(userID, postID, tagName)
   if not ok then
     return nil, err
   end
-
 
   self.userWrite:IncrementUserStat(userID, 'TagsAdded', 1)
 
@@ -143,13 +130,9 @@ function api:AddPostTag(userID, postID, tagName)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
-	if not ok then
-		return ok, err
-	end
+	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
-	ok, err = self.redisWrite:UpdatePostTags(post)
-	return ok, err
+	return self.redisWrite:UpdatePostTags(post)
 
 end
 
@@ -172,16 +155,12 @@ function api:VotePost(userID, postID, direction)
 		cache:AddSeenPost(userID, postID)
 	end
 
-  ok,err = self.redisWrite:QueueJob('votepost',postVote)
-  return ok ,err
+  return self.redisWrite:QueueJob('votepost',postVote)
 
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = self:RateLimit('SubscribePost:', userID, 3, 30)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('SubscribePost:', userID, 3, 30)
 
 	local post = cache:GetPost(postID)
   local found
@@ -194,9 +173,8 @@ function api:SubscribePost(userID, postID)
   if not found then
 	   tinsert(post.viewers, userID)
   end
-	ok, err = self.redisWrite:CreatePost(post)
-  self:InvalidateKey('post', post.id)
-	return ok, err
+	self.redisWrite:CreatePost(post)
+  return self:InvalidateKey('post', post.id)
 
 end
 
@@ -221,10 +199,7 @@ end
 
 function api:AddSource(userID, postID, sourceURL)
 
-	local ok, err = self:RateLimit('AddSource:', userID, 1, 600)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('AddSource:', userID, 1, 600)
 
 	local sourcePostID = sourceURL:match('/p/(%w+)')
 	if not sourcePostID then
@@ -246,18 +221,10 @@ function api:AddSource(userID, postID, sourceURL)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = self.redisWrite:UpdatePostTags(post)
-	if not ok then
-		return ok,err
-	end
-
-
+	self.redisWrite:UpdatePostTags(post)
   self.userWrite:IncrementUserStat(userID, 'SourcesAdded', 1)
 
-	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
-	if not ok then
-		return ok, err
-	end
+	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	return true
 end
@@ -284,14 +251,7 @@ function api:GetPost(userID, postID)
   end
 
 	local post = cache:GetPost(postID)
-
-	if not post then
-		return nil, 'post not found'
-	end
-
 	local userVotedTags = cache:GetUserTagVotes(userID)
-
-
 	local user = cache:GetUser(userID)
 
 
@@ -310,16 +270,10 @@ end
 
 
 function api:EditPost(userID, userPost)
-	local ok, err = self:RateLimit('EditPost:', userID, 4, 300)
-	if not ok then
-		return ok, err
-	end
+	self:RateLimit('EditPost:', userID, 4, 300)
 
 	local post = cache:GetPost(userPost.id)
 
-	if not post then
-		return nil, 'could not find post'
-	end
 
 	if post.createdBy ~= userID then
 		local user = cache:GetUser(userID)
@@ -346,14 +300,9 @@ function api:EditPost(userID, userPost)
 	post.editedAt = ngx.time()
 
 
-	ok, err = self.redisWrite:CreatePost(post)
-  if not ok then
-    return ok, err
-  end
-  ok,err = self:InvalidateKey('post', post.id)
+	self.redisWrite:CreatePost(post)
 
-	return ok, err
-
+  return self:InvalidateKey('post', post.id)
 end
 
 -- sanitise user input
@@ -370,7 +319,6 @@ function api:ConvertUserPostToPost(userID, post)
   local user = cache:GetUser(userID)
   if user.role == 'Admin' and user.fakeNames then
 
-
     local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
 
@@ -381,7 +329,6 @@ function api:ConvertUserPostToPost(userID, post)
   else
     post.createdBy = userID
   end
-
 
 	local newID = uuid.generate_random()
 
@@ -405,8 +352,6 @@ function api:ConvertUserPostToPost(userID, post)
   if post.images and #post.images > 1 then
 
   end
-
-
 
 	newPost.tags = {}
 	if post.tags == ngx.null then
@@ -489,50 +434,31 @@ function api:GetUserPosts(userID, targetUserID, startAt, range)
     end
   end
 
-  local posts = cache:GetUserPosts(targetUserID, startAt, range)
+  return cache:GetUserPosts(targetUserID, startAt, range)
 
-  return posts
 end
 
 
 function api:AddImage(postID, bbID)
   return self.redisWrite:AddImage(postID, bbID)
-
 end
 
 function api:CreatePost(userID, postInfo)
 
-	local newPost, ok, err
+	self:RateLimit('CreatePost:',userID, 1, 300)
 
-	ok, err = self:RateLimit('CreatePost:',userID, 1, 300)
-	if not ok then
-		return ok, err
-	end
-
-	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
-	if not newPost then
-    ngx.log(ngx.ERR, 'error creating post: ',err)
-		return newPost, 'error creating post'
-	end
+	local newPost = self:ConvertUserPostToPost(userID, postInfo)
 
   self:CreatePostTags(userID, newPost)
-  ok, err = self.redisWrite:CreatePost(newPost)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to createpost: ',err)
-    return nil, 'error creating new post'
-  end
+  self.redisWrite:CreatePost(newPost)
+
 
   local info = {
     id = newPost.id
   }
 
-  ok, err = self.redisWrite:QueueJob('CreatePost', info)
-  if not ok then
-    ngx.log(ngx.ERR, 'couldnt queue createpost: ', err)
-    return nil, 'error processing post'
-  end
+  return self.redisWrite:QueueJob('CreatePost', info)
 
-  return newPost
 end
 
 

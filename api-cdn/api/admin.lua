@@ -1,4 +1,7 @@
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 
 local redisRead = (require 'redis.db').redisRead
 local cache = require 'api.cache'
@@ -6,18 +9,11 @@ local cache = require 'api.cache'
 local M = {}
 
 function M:GetBacklogStats(jobName, startAt, endAt)
-  local ok, err = redisRead:GetBacklogStats(jobName, startAt, endAt)
-  if not ok then
-    ngx.log(ngx.ERR, 'error getting stat backlog: ', err)
-    return nil, 'couldnt get stats'
-  end
-  return ok
+  return assert_error(redisRead:GetBacklogStats(jobName, startAt, endAt))
 end
 
 function M:GetSiteUniqueStats()
-  local ok, err = redisRead:GetSiteUniqueStats('sitestat:device:minutes')
-
-  return ok, err
+  return assert_error(redisRead:GetSiteUniqueStats('sitestat:device:minutes'))
 end
 
 function M:GetSiteStats()
@@ -25,21 +21,21 @@ function M:GetSiteStats()
 end
 
 function M:GetNewUsers(userID)
-  local user = cache:GetUser(userID)
+  local user = assert_error(cache:GetUser(userID))
   if not user.role == 'Admin' then
     return nil, 'no admin'
   end
 
-  return cache:GetNewUsers()
+  return assert_error(cache:GetNewUsers())
 end
 
 function M:GetReports(userID)
-  local user = cache:GetUser(userID)
+  local user = assert_error(cache:GetUser(userID))
   if not user.role == 'Admin' then
     return nil, 'no admin'
   end
 
-  return cache:GetReports()
+  return assert_error(cache:GetReports())
 end
 
 return M

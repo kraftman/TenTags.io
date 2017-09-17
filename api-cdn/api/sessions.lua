@@ -1,4 +1,9 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
 
 local base = require 'api.base'
@@ -45,9 +50,6 @@ end
 function api:SanitiseSession(session)
 
   local id = self:GetHash(ngx.time()..session.email..session.ip)
-  if not id then
-    return nil
-  end
 
 	local newSession = {
 		ip = session.ip,
@@ -74,11 +76,7 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'no sessionID!'
 	end
 
-	local account, err = self.userRead:GetAccount(accountID)
-	if not account then
-    print('couldnt get account: ', err)
-		return nil, 'account not found'
-	end
+	local account = self.userRead:GetAccount(accountID)
 
 	local session = account.sessions[sessionID]
 	if not session then
@@ -121,31 +119,14 @@ function api:RegisterAccount(session, confirmURL)
 	-- TODO rate limit
   local tempID = ngx.ctx.userID
 
-  local ok, err = self:RateLimit('registerAccount:', tempID, 1, 300)
-
-	if not ok then
-		return ok, 429, err
-	end
+  self:RateLimit('registerAccount:', tempID, 1, 300)
 
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
 	local emailLib = require 'email'
-	local ok, err = emailLib:IsValidEmail(session.email)
-	if not ok then
-		ngx.log(ngx.ERR, 'invalid email: ',session.email, ' ',err)
-		return false, 'Email provided is invalid'
-	end
+	emailLib:IsValidEmail(session.email)
 
-  --local accountID = self:GetHash(session.email)
-  --local account = self.userRead:GetAccount(accountID)
-
-
-	ok, err = self.redisWrite:QueueJob('registeraccount',session)
-  if not ok then
-    ngx.log(ngx.ERR, 'error processing registration: ',err)
-    return nil, 'error setting up account'
-  end
-	return ok
+	return self.redisWrite:QueueJob('registeraccount',session)
 end
 
 
@@ -158,9 +139,6 @@ function api:ConfirmLogin(userSession, key)
 		return nil, 'bad key'
 	end
 	local account = self.userRead:GetAccount(accountID)
-	if not account then
-		return nil, 'no account'
-	end
 
 	local accountSession = account.sessions[sessionID]
 	if not accountSession then
@@ -192,7 +170,7 @@ function api:ConfirmLogin(userSession, key)
 	account.lastSeen = ngx.time()
 	account.active = true
 	self.userWrite:CreateAccount(account)
-	ok, err = self:InvalidateKey('account', account.id)
+	self:InvalidateKey('account', account.id)
 
   self.userWrite:IncrementAccountStat(account.id, 'logins', 1)
 
@@ -218,9 +196,8 @@ function api:KillSession(accountID, sessionID)
 
   self.userWrite:CreateAccount(account)
 
-	ok, err = self:InvalidateKey('account', account.id)
-  return ok, err
-
+	return self:InvalidateKey('account', account.id)
+  
 end
 
 
