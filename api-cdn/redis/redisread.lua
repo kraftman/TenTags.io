@@ -4,10 +4,6 @@ local tinsert = table.insert
 local base = require 'redis.base'
 local read = setmetatable({}, base)
 
-
-
-
-
 function read:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -609,7 +605,7 @@ function read:GetPost(postID)
   end
 
   self:SetKeepalive(red)
-  
+
   post.images = self:from_json(post.images or '[]')
 
   --[[
