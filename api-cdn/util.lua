@@ -4,6 +4,12 @@ local util = {}
 util.locks = ngx.shared.locks
 
 
+local app_helpers = require("lapis.application")
+local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
+
+local rateDict = ngx.shared.ratelimit
+
+
 
 local filterStyles = {
   default = 'views.st.postelement',
@@ -29,6 +35,47 @@ end
 
 function util:RemLock(key)
   self.locks:delete(key)
+end
+
+
+local routes = {
+  deletecomment = {maxCalls = 20, duration = 300}
+
+}
+
+function util.RateLimit(request)
+
+  local userID = ngx.ctx.tempID
+  local route = routes[request.route_name]
+  if not routes[route] then
+    return true
+  end
+
+	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
+
+	if DISABLE_RATELIMIT == 'true' then
+		return
+	end
+
+	if not userID then
+	   yield_error('unkown user')
+	end
+	local key = route..userID
+
+	local ok = assert_error(rateDict:get(key))
+
+	if not ok then
+		assert_error(rateDict:set(key, 0, route.duration))
+	end
+
+	ok = assert_error(rateDict:incr(key,1))
+
+	if ok < route.maxCalls then
+		return ok
+	else
+		yield_error("you're doing that too much")
+	end
+
 end
 
 

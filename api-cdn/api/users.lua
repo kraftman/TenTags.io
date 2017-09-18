@@ -24,11 +24,6 @@ end
 
 function api:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
-
-	self:RateLimit('GetFrontPage:'..sortBy,userID, 5, 30)
-
-
-
 	if sortBy == 'seen' then
 		return cache:GetUserSeenPosts(userID, startAt, range)
 	end
@@ -41,7 +36,6 @@ end
 
 
 function api:GetRecentPostVotes(userID, targetUserID, direction)
-	local ok, err = self:RateLimit('GetRecentPostVotes:',userID, 10, 60)
 
 	local user = cache:GetUser(userID)
 	local targetUser = cache:GetUser(targetUserID)
@@ -59,7 +53,6 @@ end
 
 function api:LabelUser(userID, targetUserID, label)
 
-	self:RateLimit('UpdateUser:',userID, 1, 60)
 	return self.userWrite:LabelUser(userID, targetUserID, label)
 
 end
@@ -81,7 +74,6 @@ end
 
 function api:BlockUser(userID, userToBlockID)
 	print(userID,' == ', userToBlockID)
-	self:RateLimit('BlockUser:',userID, 3, 60)
 
 
 	local user = cache:GetUser(userID)
@@ -103,7 +95,6 @@ function api:BlockUser(userID, userToBlockID)
 end
 
 function api:ToggleCommentSubscription(userID, userToSubToID)
-	self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
 
 	local user = cache:GetUser(userID)
 	local userToSubTo = cache:GetUser(userToSubToID)
@@ -125,7 +116,6 @@ function api:ToggleCommentSubscription(userID, userToSubToID)
 end
 
 function api:TogglePostSubscription(userID, userToSubToID)
-	self:RateLimit('ToggleCommentSubscription:',userID, 3, 60)
 
 	local user = cache:GetUser(userID)
 	local userToSubTo = cache:GetUser(userToSubToID)
@@ -149,7 +139,6 @@ function api:TogglePostSubscription(userID, userToSubToID)
 end
 
 function api:DeleteUser(userID, username)
-	self:RateLimit('DeleteUser:',userID, 3, 60)
 
 	local userToDeleteID = cache:GetUserID(username)
 
@@ -195,7 +184,6 @@ function api:DeleteUser(userID, username)
 end
 
 function api:ToggleSavePost(userID,postID)
-	self:RateLimit('ToggleSavePost:',userID, 1, 60)
 
 	local user = cache:GetUser(userID)
 
@@ -214,7 +202,6 @@ function api:ToggleSavePost(userID,postID)
 end
 
 function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
-	self:RateLimit('Toggle FilterSub:', userID, 60, 120)
 
 	local user = cache:GetUser(userID)
 	if userID ~= userToUpdateID then
@@ -494,7 +481,6 @@ end
 
 function api:GetUserAlerts(userID)
 	local alerts
-	self:RateLimit('GetUserAlerts:',userID, 5, 10)
 
   alerts = cache:GetUserAlerts(userID)
 
@@ -532,8 +518,6 @@ end
 
 
 function api:UpdateUser(userID, userToUpdate)
-
-	self:RateLimit('UpdateUser:',userID, 3, 30)
 
 
 	local user = cache:GetUser(userID)
@@ -596,7 +580,6 @@ function api:GetUserFilters(userID)
 end
 
 function api:GetIndexedViewFilterIDs(userID)
-	self:RateLimit('GetIndexedUserFilterIDs', 5, 1)
 
 	local user = cache:GetUser(userID)
 	if userID == 'default' then
@@ -609,7 +592,6 @@ end
 
 
 function api:GetUserSettings(userID)
-	self:RateLimit('GetUserSettings', 5, 1)
 
 	if not userID or userID:gsub(' ', '') == '' then
 		return nil, 'no userID given'

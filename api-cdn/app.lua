@@ -44,6 +44,8 @@ app:before_filter(function(self)
   self.UserHasFilter = util.UserHasFilter
   self.TimeAgo = util.TimeAgo
   self.Paginate = util.Paginate
+  self.handle_error = errorHandler
+  util.RateLimit(self)
 
 end)
 

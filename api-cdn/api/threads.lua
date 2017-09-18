@@ -18,7 +18,6 @@ end
 function api:GetThreads(userID, startAt, range)
   startAt = startAt or 0
   range = range or 10
-	local ok, err = self:RateLimit('GetThreads:', userID, 5, 10)
 
   return cache:GetThreads(userID, startAt, range)
 end
@@ -90,9 +89,6 @@ end
 
 function api:CreateThread(userID, messageInfo)
 
-	self:RateLimit('CreateThread:', userID, 2, 60)
-
-
 	self:VerifyMessageSender(userID, messageInfo)
 
 	messageInfo.title = messageInfo.title or ''
@@ -143,7 +139,7 @@ function api:CreateThread(userID, messageInfo)
   self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
   self:InvalidateKey('useralert', recipientID)
   return self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
-  
+
 end
 
 return api

@@ -76,7 +76,6 @@ end
 
 
 function api:ReportPost(userID, postID, reportText)
-  assert_error(self:RateLimit('ReportPost:', userID, 1, 60))
 
   local post = cache:GetPost(postID)
   if post.reports[userID] then
@@ -101,11 +100,6 @@ function api:ReportPost(userID, postID, reportText)
 end
 
 function api:AddPostTag(userID, postID, tagName)
-
-	local ok, err = self:RateLimit('AddPostTag:', userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
 
 	if tagName:find('^meta:') then
 		return nil, 'users cannot add meta tags'
@@ -138,10 +132,6 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-	local ok, err = self:RateLimit('VotePost:', userID, 10, 60)
-	if not ok then
-		return ok, err
-	end
 
   local postVote = {
     userID = userID,
@@ -160,7 +150,6 @@ function api:VotePost(userID, postID, direction)
 end
 
 function api:SubscribePost(userID, postID)
-	self:RateLimit('SubscribePost:', userID, 3, 30)
 
 	local post = cache:GetPost(postID)
   local found
@@ -198,8 +187,6 @@ end
 
 
 function api:AddSource(userID, postID, sourceURL)
-
-	self:RateLimit('AddSource:', userID, 1, 600)
 
 	local sourcePostID = sourceURL:match('/p/(%w+)')
 	if not sourcePostID then
@@ -270,7 +257,6 @@ end
 
 
 function api:EditPost(userID, userPost)
-	self:RateLimit('EditPost:', userID, 4, 300)
 
 	local post = cache:GetPost(userPost.id)
 
@@ -445,7 +431,6 @@ end
 
 function api:CreatePost(userID, postInfo)
 
-	self:RateLimit('CreatePost:',userID, 1, 300)
 
 	local newPost = self:ConvertUserPostToPost(userID, postInfo)
 

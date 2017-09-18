@@ -35,7 +35,6 @@ function api:CreateFilter(userID, filterInfo)
 
 	local newFilter, err, ok
 
-	assert_error(self:RateLimit('CreateFilter:', userID, 1, 600))
 
 	local user = cache:GetUser(userID)
 	local account = cache:GetAccount(user.parentID)
@@ -230,16 +229,7 @@ end
 
 
 function api:UpdateFilterTitle(userID, filterID, newTitle)
-	local ok, err = self:RateLimit('EditFilterTitle:', userID, 4, 120)
-	if not ok then
-		return ok, err
-	end
-
 	local filter = cache:GetFilterByID(filterID)
-	if not filter then
-		return nil, 'could not find filter'
-	end
-
 	if userID ~= filter.ownerID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
@@ -249,21 +239,14 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	ok, err = self.redisWrite:UpdateFilterTitle(filter)
-	if not ok then
-		return ok, err
-	end
-	ok,err = self:InvalidateKey('filter', filter.id)
-	return ok, err
+	self.redisWrite:UpdateFilterTitle(filter)
+	return self:InvalidateKey('filter', filter.id)
+
 end
 
 
 
 function api:UpdateFilterDescription(userID, filterID, newDescription)
-	local ok, err = self:RateLimit('EditFilter:', userID, 4, 120)
-	if not ok then
-		return ok, err
-	end
 
 	local filter = cache:GetFilterByID(filterID)
 	if not filter then
@@ -289,10 +272,7 @@ end
 
 
 function api:SearchFilters(userID, searchString)
-	local ok, err = self:RateLimit('SearchFilters:',userID, 20, 10)
-	if not ok then
-		return ok, err
-	end
+
 	searchString = self:SanitiseUserInput(searchString, 100)
 	searchString = searchString:lower()
 	if searchString:len() < 2 then
@@ -333,10 +313,7 @@ end
 
 function api:FilterBanUser(userID, filterID, banInfo)
 	local ok, err, filter
-	ok, err = self:RateLimit('FilterBanUser:',userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
+
 
 	filter, err = self:UserCanEditFilter(userID, filterID)
 	if not filter then

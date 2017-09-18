@@ -214,14 +214,14 @@ app:match('newpost','/p/new', respond_to({
   end
 }))
 
-app:match('viewpost','/p/:postID', respond_to({
+app:match('post.view','/p/:postID', respond_to({
   GET = capture_errors(function(request)
     local sortBy = request.params.sort or 'best'
     sortBy = sortBy:lower()
     local userID = request.session.userID or 'default'
     local postID = request.params.postID
 
-    local post, err = assert_error(postAPI:GetPost(userID, postID))
+    local post = assert_error(postAPI:GetPost(userID, postID))
 
     request.page_title = post.title
 

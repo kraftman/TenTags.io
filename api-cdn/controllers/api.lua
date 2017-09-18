@@ -15,6 +15,14 @@ local capture_errors, assert_error = app_helpers.capture_errors_json, app_helper
 
 
 
+local function GetFilterPosts(request)
+
+  local startAt = request.params.startAt or 1
+  local endAt = request.params.endAt or 100
+  local sortBy = request.params.sortby or 'fresh'
+
+end
+
 local function HashIsValid(request)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
   if realHash ~= request.params.commentHash then
@@ -71,7 +79,7 @@ app:match('/api/post/:postID/upvote', capture_errors(function(request)
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok = assert_error(postAPI:VotePost(request.session.userID, request.params.postID, 'up'))
+  assert_error(postAPI:VotePost(request.session.userID, request.params.postID, 'up'))
 
   return { json = {status = 'success', data = {}} }
 end))
@@ -135,7 +143,7 @@ app:match('/api/frontpage', capture_errors(function(request)
   return {json = {status = 'success', data = ok or {}}}
 end))
 
-app:match('/api/f/:filterName/posts', self.GetFilterPosts)
+app:match('/api/f/:filterName/posts', GetFilterPosts)
 app:match('/api/filters/create', capture_errors(function(request)
 
   if not request.session.userID then
@@ -214,14 +222,4 @@ local function HashIsValid(request)
     return false
   end
   return true
-end
-
-
-
-function m.GetFilterPosts(request)
-
-  local startAt = request.params.startAt or 1
-  local endAt = request.params.endAt or 100
-  local sortBy = request.params.sortby or 'fresh'
-  
 end

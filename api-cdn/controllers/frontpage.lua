@@ -4,7 +4,7 @@ local userAPI = require 'api.users'
 local commentAPI = require 'api.comments'
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local capture_errors, assert_error, yield_error = app_helpers.capture_errors, app_helpers.assert_error, app_helpers.yield_error
 
 
 local m = {}
@@ -22,6 +22,7 @@ local captured = capture_errors(function(request)
   --print(to_json(request.posts))
 
   --defer until we need it
+
   if request:GetFilterTemplate():find('filtta') then
     for _,post in pairs(request.posts) do
       local comments = commentAPI:GetPostComments(request.session.userID, post.id, 'best')

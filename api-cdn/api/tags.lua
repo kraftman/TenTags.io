@@ -92,10 +92,6 @@ end
 
 function api:VoteTag(userID, postID, tagName, direction)
 
-	if not self:RateLimit('VoteTag:', userID, 5, 30) then
-		return nil, 'rate limited'
-	end
-
 	if not userAPI:UserCanVoteTag(userID, postID, tagName) then
 		return nil, 'cannot vote again!'
 	end
@@ -147,7 +143,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	return self.redisWrite:UpdatePostTags(post)
-	
+
 end
 
 function api:GetMatchingTags(userFilterIDs, postFilterIDs)

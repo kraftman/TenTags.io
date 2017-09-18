@@ -25,6 +25,7 @@ app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(f
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
+  
   local postID = request.params.postID
   local userID = request.session.userID
   local commentID = request.params.commentID

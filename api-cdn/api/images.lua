@@ -118,7 +118,6 @@ function api:SubmitTakedown(userID, imageID, takedownText)
 end
 
 function api:GetImageDataByBBID(userID, bbID)
-  assert_error(self:RateLimit('GetImageData:', userID, 10,300))
 
   --TODO move this all to cache?
   local imageData = cache:GetImageData(bbID)
@@ -137,7 +136,6 @@ end
 
 function api:GetImageData(userID, imageID, imageSize)
 
-  assert_error(self:RateLimit('GetImageData:', userID, 10,300))
 
   local image = self:GetImage(imageID)
   local bbID = image.rawID
@@ -173,7 +171,6 @@ end
 
 function api:AddText(userID, imageID, text)
 
-  assert_error(self:RateLimit('EditImageText:', userID, 40,60))
 
   text = self:SanitiseUserInput(text, 400)
 
@@ -201,7 +198,7 @@ function api:CreateImage(userID, fileData)
 
   ]]
 
-  assert_error(self:RateLimit('UploadImage:', userID, 40,120))
+
 
   --check image size
 

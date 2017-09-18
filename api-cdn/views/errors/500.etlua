@@ -1,9 +1,7 @@
-
+<% print('this') %>
 <div class = 'panel panel-default error-500' >
   <h1>Something broke</h1>
-  <p> Something went wrong our side. We're very sorry. </p>
-  <p>Someone is getting an angry email about this as we speak, but if that's not
-  enough for you, you can send this magic code:</p>
-    <%= error.id %>
-  <p>to admin@filtta.com</p>
+  <% for k, v in pairs(errors) do %>
+  <%= k %><%= v %>
+  <% end %>
 </div>

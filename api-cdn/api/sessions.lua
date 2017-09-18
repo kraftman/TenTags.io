@@ -119,7 +119,6 @@ function api:RegisterAccount(session, confirmURL)
 	-- TODO rate limit
   local tempID = ngx.ctx.userID
 
-  self:RateLimit('registerAccount:', tempID, 1, 300)
 
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
@@ -197,7 +196,7 @@ function api:KillSession(accountID, sessionID)
   self.userWrite:CreateAccount(account)
 
 	return self:InvalidateKey('account', account.id)
-  
+
 end
 
 

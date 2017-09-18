@@ -53,11 +53,9 @@ function api:ConvertUserCommentToComment(userID, comment)
 	local user = cache:GetUser(userID)
 
 	if user.role == 'Admin' and user.fakeNames then
-
-		local account = assert_error(cache:GetAccount(user.parentID))
+		local account = cache:GetAccount(user.parentID)
     local newUserName = userlib:GetRandom()
-
-    user = assert_error(userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName))
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUserID(newUserName)
     if user then
       comment.createdBy = user.id
     end
@@ -131,13 +129,11 @@ end
 
 function api:CreateComment(userID, userComment)
 
-	assert_error(self:RateLimit('CreateComment:', userID, 1, 30))
+	self:RateLimit('CreateComment:', userID, 1, 30)
 
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
-	local parentPost = assert_error(cache:GetPost(newComment.postID))
-
-
+	-- queue the comment
 	assert_error(self.commentWrite:CreateComment(newComment))
 
 	local user = assert_error(cache:GetUser(userID))
