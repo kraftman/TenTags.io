@@ -44,6 +44,7 @@ function config.Run(_,self)
 
   self:GetNewComments()
   self:GetCommentEdits()
+  self:GetCommentDeletions()
 
 end
 
@@ -80,6 +81,29 @@ function config:GetCommentEdits()
   ok, err = self.redisWrite:InvalidateKey('comment', comment.postID)
   if not ok then
     ngx.log(ngx.ERR, 'couldnt invalidate cache: ', err)
+  end
+
+end
+
+function config:GetCommentDeletions()
+  local comment, err = updateDict:rpop('comment:delete')
+	if not comment then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+  comment = from_json(comment)
+  
+  local ok, err = self.commentWrite:UpdateCommentField(comment.postID, comment.id, 'deleted', 'true')
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to update comment: ', err)
+  end
+
+  ok , err = self.redisWrite:InvalidateKey('comment', comment.postID)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to flush comment: ', err)
   end
 
 end

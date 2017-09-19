@@ -50,7 +50,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = false --os.getenv('ENABLE_CACHE')
+local ENABLE_CACHE = os.getenv('ENABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -569,7 +569,7 @@ function cache:GetPost(postID)
   end
 
   if not post then
-    
+
     post, err = redisRead:GetPost(postID)
 
     if err then

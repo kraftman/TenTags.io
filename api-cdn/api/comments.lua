@@ -181,10 +181,7 @@ end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	assert_error(self:RateLimit('DeleteComment:', userID, 6, 60))
-
-
-	local post = assert_error(cache:GetPost(postID))
+	local post = cache:GetPost(postID)
 	if userID ~= post.createdBy then
 		local user = assert_error(cache:GetUser(userID))
 		if user.role ~= 'Admin' then
@@ -192,12 +189,16 @@ function api:DeleteComment(userID, postID, commentID)
 		end
 	end
 
-	local comment = assert_error(cache:GetComment(postID, commentID))
-	if not comment then
-		return nil, 'error loading comment'
-	end
-	comment.deleted = 'true'
-	return assert_error(self.commentWrite:UpdateComment(comment))
+	local comment = cache:GetComment(postID, commentID)
+
+	-- update cache
+	local postComments = cache:GetPostComments(comment.postID)
+	postComments[comment.id].deleted = true
+	cache:WritePostComments(comment.postID, postComments)
+
+	self:QueueUpdate('comment:delete', comment)
+
+	return comment
 
 end
 

@@ -21,7 +21,7 @@ local function HashIsValid(request)
 end
 
 
-app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(function(request)
+app:match('deletecomment','/c/delete/:postID/:commentID', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -30,8 +30,8 @@ app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(f
   local userID = request.session.userID
   local commentID = request.params.commentID
 
-  commentAPI:DeleteComment(userID, postID, commentID)
-  return 'deleted'
+  local comment = commentAPI:DeleteComment(userID, postID, commentID)
+  return {redirect_to = request:url_for('post.view', {postID = comment.postID})}
 end))
 
 local EditComment = capture_errors(function(request)

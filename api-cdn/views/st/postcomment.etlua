@@ -56,14 +56,15 @@
         <% if child.shortURL then %>
           <a class='comment-reply-button' href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
             <span class="ti-comments"></span>
-          </a
+          </a>
         <% else %>
           <a class='comment-reply-button' href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >
             <span class="ti-comments"></span>
           </a>
         <% end %>
+
         <% if session.userID and (child.createdBy == session.userID or account.role == 'Admin') then %>
-          <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>">
+          <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>" >
             <span class="ti-trash"></span>
           </a>
         <% end %>
