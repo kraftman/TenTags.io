@@ -240,7 +240,7 @@ function config:GetPostDeletions()
 	end
 end
 
-function config:GetPostDeletions()
+function config:GetPostVotes()
 	local postVote, err = updateDict:rpop('post:vote')
 	if not postVote then
 		if err then

@@ -109,7 +109,7 @@ function config:GetCommentDeletions()
 
 end
 
-function config:GetCommentDeletions()
+function config:GetCommentVotes()
   local commentVote, err = updateDict:rpop('comment:delete')
 	if not commentVote then
 		if err then

@@ -9,17 +9,17 @@ function m:SendMessage(subject, body, recipient)
     local msg = {
         headers = {
             to = '<'..recipient..'>',
-            from = '<admin@filtta.com>',
+            from = '<admin@tentags.io>',
             subject = subject
         },
         body = body
     }
     print('sending email')
     local ok, err = smtp.send {
-        from = '<admin@filtta.com>',
+        from = '<admin@tentags.io>',
         rcpt = '<'..recipient..'>',
         source = smtp.message(msg),
-        user = 'admin@filtta.com',
+        user = 'admin@tentags.io',
         password = password,
         server = 'mail.privateemail.com',
         port = 465,
