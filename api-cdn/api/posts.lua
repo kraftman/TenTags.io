@@ -320,7 +320,6 @@ function api:AddImage(postID, bbID)
 end
 
 function api:CreatePost(userID, post)
-  print(userID)
 
 	local newPost = self:ConvertUserPostToPost(userID, post)
 
@@ -351,7 +350,6 @@ function api:DodgyAdminHack(user, post)
 end
 
 function api:ConvertUserPostToPost(userID, post)
-  print(userID)
 	post.createdBy = post.createdBy or userID
 
   local user = cache:GetUser(userID)
@@ -415,7 +413,6 @@ function api:ConvertUserPostToPost(userID, post)
   end
 
   if newPost.bbID then
-    print(ngx.var.host)
     newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
   end
 

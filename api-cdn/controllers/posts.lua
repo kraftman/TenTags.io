@@ -219,8 +219,6 @@ app:match('post.view','/p/:postID', respond_to({
     local postID = request.params.postID
 
     local post = postAPI:GetPost(userID, postID)
-    print('got post ', type(post))
-
 
     request.page_title = post.title
 
@@ -228,9 +226,7 @@ app:match('post.view','/p/:postID', respond_to({
       return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
     end
     postID = post.id
-    print('asdvasdv')
     local comments = commentAPI:GetPostComments(userID, postID, sortBy)
-    print('a')
 
     -- add comments to post
     for _,v in pairs(comments) do
@@ -254,7 +250,6 @@ app:match('post.view','/p/:postID', respond_to({
         break
       end
     end
-    print('b')
 
     -- get images
     for k,v in pairs(post.images) do
@@ -269,12 +264,10 @@ app:match('post.view','/p/:postID', respond_to({
         local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
 
         if sourcePostID then
-          print(v.name, sourcePostID)
 
           local parentPost = postAPI:GetPost(userID, sourcePostID)
 
           if v.name and parentPost and parentPost.title then
-            print(parentPost.title)
             v.fakeName = parentPost.title
             v.postID = sourcePostID
           end
@@ -291,10 +284,7 @@ app:match('post.view','/p/:postID', respond_to({
     end
 
     request.post = post
-    print('test:',type(request.post))
-
     request.GetColorForDepth = GetColorForDepth
-
     request.GetColorForName = GetColorForName
 
     return {render = true}

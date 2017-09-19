@@ -58,7 +58,8 @@ function api:ConvertUserCommentToComment(userID, comment)
 		viewers = {comment.createdBy},
 		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
 		parentID = self:SanitiseUserInput(comment.parentID),
-		postID = self:SanitiseUserInput(comment.postID)
+		postID = self:SanitiseUserInput(comment.postID),
+		viewID = user.currentView
 	}
 
 	return newComment
@@ -112,21 +113,28 @@ function api:CreateComment(userID, userComment)
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
 	-- queue the comment
-	self.commentWrite:CreateComment(newComment)
+	--self.commentWrite:CreateComment(newComment)
 
 	local user = assert_error(cache:GetUser(userID))
 
-	local commentUpdate = {
-		id = newComment.postID..':'..newComment.id,
-		postID = newComment.postID,
-		commentID = newComment.id,
-		userID = userID,
-		viewID = user.currentView
-	}
+	-- local commentUpdate = {
+	-- 	id = newComment.postID..':'..newComment.id,
+	-- 	postID = newComment.postID,
+	-- 	commentID = newComment.id,
+	-- 	userID = userID,
+	-- 	viewID = user.currentView
+	-- }
 
 	self:InvalidateKey('comment', newComment.postID)
 
-	self.redisWrite:QueueJob('CreateComment', commentUpdate)
+	-- need to get all of the post comments
+	-- add ours
+	-- save that back to cache
+	local postComments = cache:GetPostComments(newComment.postID)
+	table.insert(postComments, newComment)
+	cache:WritePostComments(newComment.postID, postComments)
+	self:QueueUpdate('comment:create', newComment)
+	--self.redisWrite:QueueJob('CreateComment', commentUpdate)
 
 	return newComment
 end

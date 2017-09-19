@@ -50,7 +50,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = true --os.getenv('ENABLE_CACHE')
+local ENABLE_CACHE = false --os.getenv('ENABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -393,6 +393,10 @@ function cache:GetUsername(userID)
   end
 end
 
+function cache:WritePostComments(postID, postComments)
+  assert_error(commentDict:set(postID, to_json(postComments),DEFAULT_CACHE_TIME))
+end
+
 function cache:GetPostComments(postID)
 
   local ok, err, flatComments
@@ -411,8 +415,7 @@ function cache:GetPostComments(postID)
   for k,v in pairs(flatComments) do
     flatComments[k] = from_json(v)
   end
-
-  commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
+  self:WritePostComments(postID, flatComments)
 
   return flatComments
 
@@ -566,13 +569,13 @@ function cache:GetPost(postID)
   end
 
   if not post then
-    print('getting post from redis')
+    
     post, err = redisRead:GetPost(postID)
 
     if err then
       return post, err
     end
-    print(to_json(post))
+
     post.creatorName = self:GetUsername(post.createdBy) or 'unknown'
 
     self:WritePost(post)

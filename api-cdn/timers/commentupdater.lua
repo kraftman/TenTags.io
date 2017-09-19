@@ -10,6 +10,8 @@ local userAPI = require 'api.users'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
+local updateDict = ngx.shared.updateQueue
 
 
 local common = require 'timers.common'
@@ -39,6 +41,23 @@ function config.Run(_,self)
   self:ProcessJob('commentsub', 'ProcessCommentSub')
   self:ProcessJob('CreateComment', 'CreateComment')
 
+
+  self:GetNewComments()
+
+end
+
+function config:GetNewComments()
+	local comment, err = updateDict:rpop('comment:create')
+	if not comment then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	comment = from_json(comment)
+
+	self:CreateComment(comment)
 end
 
 
@@ -174,17 +193,20 @@ function config:AddAlerts(post, comment)
 
 end
 
-function config:CreateComment(commentInfo)
-  -- commentInfo.id is postID:commentID, just needed for unique processing
+function config:CreateComment(comment)
+
   local ok, err
-  local comment = self.commentRead:GetComment(commentInfo.postID, commentInfo.commentID)
+
   if not comment then
     return true, 'comment not found'
   end
   local post = cache:GetPost(comment.postID)
   if not post then
-    return nil, 'no parent post for comment: ', comment.commentID, ' postID: ', commentInfo.postID
+    return nil, 'no parent post for comment: ', comment.id, ' postID: ', comment.postID
   end
+
+
+  ok, err = self.commentWrite:CreateComment(comment)
 
   -- add stats, but dont return if they fail
 	ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'CommentsCreated', 1)
@@ -197,7 +219,7 @@ function config:CreateComment(commentInfo)
 		ngx.log(ngx.ERR, 'unable to add stat')
 	end
 
-  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = commentInfo.postID..':'..commentInfo.commentID})
+  ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = comment.postID..':'..comment.id})
   if not ok then
     return ok, err
   end
@@ -215,7 +237,6 @@ function config:CreateComment(commentInfo)
     comment.filters = ok
   end
 
-  ok, err = self.commentWrite:CreateComment(comment)
 
   if not ok then
     ngx.log(ngx.ERR, 'unable to create comment: ', err)
