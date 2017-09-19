@@ -176,6 +176,12 @@ function cache:SearchPost(queryString)
 
 end
 
+function cache:UpdateKey(key, object)
+  if key == 'post' then
+    self:WritePost(object)
+  end
+end
+
 function cache:PurgeKey(keyInfo)
   --print('purging: ', to_json(keyInfo))
   if keyInfo.keyType == 'account' then
@@ -387,24 +393,24 @@ end
 
 function cache:GetPostComments(postID)
 
-  local ok, err,flatComments
+  local ok, err, flatComments
 
   if ENABLE_CACHE then
-    ok = assert_error(commentDict:get(postID))
+    ok = commentDict:get(postID)
 
     if ok then
       return from_json(ok)
     end
   end
 
-  flatComments = assert_error(commentRead:GetPostComments(postID))
+  flatComments = commentRead:GetPostComments(postID)
 
 
   for k,v in pairs(flatComments) do
     flatComments[k] = from_json(v)
   end
 
-  assert_error(commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME))
+  commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
 
   return flatComments
 
@@ -521,6 +527,15 @@ function cache:GetPosts(postIDs)
 
 end
 
+function cache:WritePost(post)
+  local ok, err = postDict:set(post.id, to_json(post))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set postDict: ',err)
+  end
+
+  return ok
+end
+
 function cache:GetPost(postID)
   local ok, err, post
 
@@ -532,6 +547,7 @@ function cache:GetPost(postID)
   end
 
   if ENABLE_CACHE then
+    
     ok, err = postDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -542,17 +558,15 @@ function cache:GetPost(postID)
   end
 
   if not post then
+    print('getting post from redis')
     post, err = redisRead:GetPost(postID)
 
     if err then
-      return result, err
+      return post, err
     end
     post.creatorName = self:GetUsername(post.createdBy) or 'unknown'
 
-    ok, err = postDict:set(postID,to_json(post))
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to set postDict: ',err)
-    end
+    self:WritePost(post)
   end
   return post
 
@@ -935,13 +949,10 @@ function cache:GetUserFrontPage(userID, viewID, sortBy,startAt, range)
   return distinctPosts
 end
 
-
 function cache:GetTag(tagName)
   local tag = redisRead:GetTag(tagName)
   return tag
 end
-
-
 
 function cache:GetViewFilterIDs(viewID)
   local ok, err, res

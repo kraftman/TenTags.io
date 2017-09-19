@@ -1,4 +1,4 @@
-<a class='post-icon-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+<a class='post-icon-link' href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
 
   <img class = 'post-icon'
         src="<%= url_for('postIcon',{postID = post.shortURL or post.id}) -%>"

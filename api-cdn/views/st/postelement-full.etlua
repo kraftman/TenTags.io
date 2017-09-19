@@ -6,7 +6,7 @@
   <% end %>-->
 
   <div class = 'post-full-topbar'>
-    <a class ='post-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+    <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
 
 
 
@@ -14,7 +14,7 @@
   </div>
 
   <% if post.bigIcon then %>
-    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
       <% if post.nsfl and not userInfo.showNSFL then %>
         <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
       <% elseif post.nsfwLevel then %>
@@ -32,7 +32,7 @@
 
 
   <% else %>
-  <a class = 'postelement-text' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+  <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
     <p ><%= post.text:sub(1,300) %></p>
   </a>
   <% end %>
@@ -60,7 +60,7 @@
         <a class ='banButton' href=" <%= url_for('banpost',{postID = post.id, filterlabel= thisfilter.name}) %>"><span class="ti-na"></span></a>
       <% end %>
 
-      <a class=' comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> <span class="ti-comments"></span></a>
+      <a class=' comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> <span class="ti-comments"></span></a>
 
       <a class='post-save-button' href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">
         <% if post.userSaved then %>

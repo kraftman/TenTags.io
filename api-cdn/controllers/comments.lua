@@ -48,7 +48,7 @@ app:get('subscribecomment','/comment/subscribe/:postID/:commentID', capture_erro
   end
   commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
-  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+  return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
 end))
 
 app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', capture_errors(function(request)
@@ -89,7 +89,7 @@ app:post('newcomment','/comment/', capture_errors(function(request)
   --ngx.log(ngx.ERR, to_json(request.params))
   commentAPI:CreateComment(request.session.userID, commentInfo)
 
-  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+  return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
 
 end))
 

@@ -1,13 +1,6 @@
 
-
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
-
-
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
-local render_html = (require 'lapis.html').render_html
 
 local base = require 'api.base'
 local api = setmetatable({}, base)
@@ -18,18 +11,10 @@ local COMMENT_LENGTH_LIMIT = 2000
 local userlib = require 'lib.userlib'
 local userAPI = require 'api.users'
 
-
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
-local app = require 'app'
-
-
-
-
 
 function api:VoteComment(userID, postID, commentID,direction)
-
-	local ok, err = assert_error(self:RateLimit('VoteComment:', userID, 5, 10))
 
 	if self:UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
@@ -49,7 +34,7 @@ end
 
 function api:ConvertUserCommentToComment(userID, comment)
 
-	comment.createdBy = comment.createdBy or userID
+
 	local user = cache:GetUser(userID)
 
 	if user.role == 'Admin' and user.fakeNames then
@@ -81,9 +66,6 @@ end
 
 function api:SubscribeComment(userID, postID, commentID)
 
-	assert_error(self:RateLimit('SubscribeComment:', userID, 3, 10))
-
-
 	local commentSub = {
 		userID = userID,
 		postID = postID,
@@ -100,8 +82,6 @@ end
 function api:EditComment(userID, userComment)
 	-- not moving this to backend for now
 	-- fairly low cost and users want immediate updates
-	assert_error(self:RateLimit('EditComment:', userID, 4, 120))
-
 
 	if not userComment or not userComment.id or not userComment.postID then
 		return nil, 'invalid comment provided'
@@ -129,15 +109,12 @@ end
 
 function api:CreateComment(userID, userComment)
 
-	self:RateLimit('CreateComment:', userID, 1, 30)
-
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
 	-- queue the comment
-	assert_error(self.commentWrite:CreateComment(newComment))
+	self.commentWrite:CreateComment(newComment)
 
 	local user = assert_error(cache:GetUser(userID))
-
 
 	local commentUpdate = {
 		id = newComment.postID..':'..newComment.id,
@@ -147,10 +124,11 @@ function api:CreateComment(userID, userComment)
 		viewID = user.currentView
 	}
 
-	assert_error(self:InvalidateKey('comment', newComment.postID))
-	assert_error(self.redisWrite:QueueJob('CreateComment', commentUpdate))
+	self:InvalidateKey('comment', newComment.postID)
 
-	return true
+	self.redisWrite:QueueJob('CreateComment', commentUpdate)
+
+	return newComment
 end
 
 function api:GetComment(postID, commentID)
@@ -229,6 +207,6 @@ function api:DeleteComment(userID, postID, commentID)
 end
 
 function api:GetPostComments(userID, postID,sortBy)
-	return assert_error(cache:GetSortedComments(userID, postID,sortBy))
+	return cache:GetSortedComments(userID, postID,sortBy)
 end
 return api

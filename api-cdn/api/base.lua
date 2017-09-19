@@ -4,7 +4,7 @@ local app_helpers = require("lapis.application")
 local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
 
 local trim = (require 'lapis.util').trim
-local rateDict = ngx.shared.ratelimit
+local updateDict = ngx.shared.updateQueue
 local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
 
@@ -30,16 +30,20 @@ end
 
 function M:InvalidateKey(key, id)
 	cache:PurgeKey({keyType = key, id = id})
-	local ok, err = self.redisWrite:InvalidateKey(key,id)
-	return ok, err
+	self.redisWrite:InvalidateKey(key,id)
 end
 
-
+function M:QueueUpdate(key, object)
+	print('writing ', key, ' to update q')
+	local ok, err = updateDict:lpush(key, to_json(object))
+	if not ok then
+		print(err)
+	end
+end
 
 function M:GetDomain(url)
   return url:match('^%w+://([^/]+)')
 end
-
 
 function M:GetScore(up,down)
 	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html

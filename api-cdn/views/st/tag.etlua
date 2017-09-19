@@ -7,7 +7,7 @@
   <% end %>
 
   <% if tag.fakeName then %>
-     <a href="<%= url_for('viewpost',{postID = tag.postID}) %>">
+     <a href="<%= url_for('post.view',{postID = tag.postID}) %>">
       <span class='tagname'><%= tag.fakeName or tag.name %></span>
     </a>
   <% else %>

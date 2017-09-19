@@ -169,10 +169,9 @@ end
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
-		--print(tagName)
 
 		tagName = trim(tagName:lower())
-		postInfo.tags[k] = tagAPI:CreateTag(postInfo.createdBy, tagName)
+		postInfo.tags[k] = {name = tagName}
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -294,13 +293,6 @@ end
 -- sanitise user input
 function api:ConvertUserPostToPost(userID, post)
 
-	if not userID then
-		return nil, 'no userID'
-	end
-	if not post then
-		return nil, 'no post info'
-	end
-
 	post.createdBy = post.createdBy or userID
   local user = cache:GetUser(userID)
   if user.role == 'Admin' and user.fakeNames then
@@ -335,17 +327,9 @@ function api:ConvertUserPostToPost(userID, post)
 		newPost.link = nil
 	end
 
-  if post.images and #post.images > 1 then
-
-  end
-
 	newPost.tags = {}
-	if post.tags == ngx.null then
-		return nil, 'post needs tags!'
-	end
-
-	if not post.tags then
-		return nil, 'post has no tags!'
+	if post.tags == ngx.null  or not post.tags then
+		yield_error('post needs tags!')
 	end
 
 	for _,v in pairs(post.tags) do
@@ -431,18 +415,18 @@ end
 
 function api:CreatePost(userID, postInfo)
 
-
 	local newPost = self:ConvertUserPostToPost(userID, postInfo)
 
   self:CreatePostTags(userID, newPost)
-  self.redisWrite:CreatePost(newPost)
 
+  --self.redisWrite:CreatePost(newPost)
+  -- add the post to our local cache
 
-  local info = {
-    id = newPost.id
-  }
-
-  return self.redisWrite:QueueJob('CreatePost', info)
+  cache:UpdateKey('post', newPost)
+  self:QueueUpdate('post:create', newPost)
+  -- queue the post up for processing and adding to redis
+  --self.redisWrite:QueueJob('CreatePost', info)
+  return newPost
 
 end
 

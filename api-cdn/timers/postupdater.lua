@@ -9,9 +9,12 @@ config.cjson = require 'cjson'
 local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
+
+local updateDict = ngx.shared.updateQueue
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.25
 local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
 local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
@@ -52,13 +55,14 @@ function config.Run(_,self)
   -- no need to lock since we should be grabbing a different one each time anyway
 	self.startTime = ngx.now()
   self:ProcessJob('CheckReposts', 'CheckReposts')
-	self:ProcessJob('CreatePost', 'CreatePost')
 	self:ProcessJob('votepost', 'VotePost')
 	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
 	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
 	self:ProcessJob('ReIndexPost', 'ReIndexPost')
 	self:EmptyOldFilters()
 	self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
+
+	self:GetNewPosts()
 
 end
 
@@ -180,13 +184,28 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 	return score / count
 end
 
-function config:CreatePost(post)
-	post = self.redisRead:GetPost(post.id)
-	if not post then
-		return nil, 'couldnt load post'
+function config:GetNewPosts()
+	local ok, err = updateDict:rpop('post:create')
+	if not ok then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
 	end
 
+	print('creating post ', ok)
+	ok = from_json(ok)
+
+	self:CreatePost(ok)
+end
+
+function config:CreatePost(post)
+
 	local ok, err
+	ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'couldnt create new post:', err)
+	end
 
 	-- add stats, but dont return if they fail
 	ok, err = self.userWrite:IncrementUserStat(post.createdBy, 'PostsCreated', 1)

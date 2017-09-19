@@ -7,12 +7,12 @@
     <% render("views.post.icon",{post = post}) %>
 
   <div class = 'post-body'>
-    <a class ='post-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+    <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
       <p class = 'post-text'><%= post.title -%></p>
     </a>
     </br>
     <span class='comment-views'><%= post.views or 0 %> views</span>
-    <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+    <a class='comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
     <a class='user-link' href="<%= url_for('user.viewsub',{username = post.creatorName or ''}) %>"> <%= post.creatorName -%></a>
     <% if post.filters then %>
     <% for i = 1,5  do

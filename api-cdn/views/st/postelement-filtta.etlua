@@ -6,7 +6,7 @@
       <% render("views.post.icon",{post = post}) %>
 
       <div class = 'post-body'>
-        <a class ='post-link' href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+        <a class ='post-link' href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
         </br>
 
         <% for _,filter in pairs(post.filters) do %>
@@ -17,7 +17,7 @@
 
     </div>
     <div>
-      <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
+      <a class='comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
       <div class='postTopComment'><%= post.topComment and post.topComment.text or '' %></div>
     </div>
   </div>

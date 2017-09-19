@@ -29,6 +29,7 @@ config("development", {
   dict_sessionlastseen = '1m',
   dict_userfrontpageposts = '1m',
   dict_images = '100m',
+  dict_updatequeue = '10m'
 
 })
 
@@ -53,7 +54,8 @@ config("production", {
   dict_useralerts = '1m',
   dict_sessionlastseen = '1m',
   dict_userfrontpageposts = '1m',
-  dict_images = '500m',
+  dict_images = '2000m',
+  dict_updatequeue = '100m',
   hide_errors = true,
   num_workers = 'auto',
   logging = {

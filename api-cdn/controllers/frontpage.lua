@@ -1,17 +1,10 @@
-
-
 local userAPI = require 'api.users'
 local commentAPI = require 'api.comments'
 
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error, yield_error = app_helpers.capture_errors, app_helpers.assert_error, app_helpers.yield_error
 
-
-local m = {}
 local app = require 'app'
-
-
-
 
 local captured = capture_errors(function(request)
   request.pageNum = request.params.page or 1
