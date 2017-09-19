@@ -4,6 +4,14 @@ local util = {}
 util.locks = ngx.shared.locks
 
 
+local app_helpers = require("lapis.application")
+local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+local rateDict = ngx.shared.ratelimit
+local routes = (require 'routes').routes
+
+
 
 local filterStyles = {
   default = 'views.st.postelement',
@@ -31,6 +39,46 @@ function util:RemLock(key)
   self.locks:delete(key)
 end
 
+
+
+function util.RateLimit(request)
+
+  local userID = ngx.ctx.userID
+
+  if not userID then
+	  yield_error('unkown user')
+	end
+
+  local route = routes[request.route_name]
+
+  if not route then
+    ngx.log(ngx.ERR, 'no ratelimiting for route: ', request.route_name)
+    return true
+  end
+
+	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
+
+	if DISABLE_RATELIMIT == 'true' then
+    print('not ratelimiting')
+		return
+	end
+
+	local key = request.route_name..userID
+	local ok = rateDict:get(key)
+
+	if not ok then
+		assert_error(rateDict:set(key, 0, route.duration))
+	end
+
+	ok = assert_error(rateDict:incr(key,1))
+
+	if ok < route.maxCalls then
+		return ok
+	else
+		yield_error("You're doing that too much, please try again in a bit...")
+	end
+
+end
 
 
 function util:GetScore(up,down)

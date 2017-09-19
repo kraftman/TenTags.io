@@ -8,36 +8,21 @@ local userAPI = require 'api.users'
 local uuid = require 'lib.uuid'
 
 
+local app = require 'app'
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 local respond_to = (require 'lapis.application').respond_to
 
-
-local m = {}
 
 -- o = orig (optimised)
 -- b = big (960)
 -- i = icon (100)
-function m:Register(app)
 
-  app:get('postIcon', '/p/i/:postID', self.GetPostIcon)
-  app:get('imagereload', '/i/:imageID/reload', self.ReloadImage)
-  app:get('smallimage', '/i/s/:imageID', function(request) return self.GetImage(request, 'iconID') end)
-  app:get('medimage', '/i/m/:imageID',function(request) return self.GetImage(request, 'bigID') end)
-  app:get('bigimage', '/i/b/:imageID', function(request) return self.GetImage(request, 'imgID') end)
-  app:get('previewVid', '/i/v/:imageID', function(request) return self.GetImage(request, 'previewID') end)
-  app:get('gifVid', '/i/gv/:imageID', function(request) return self.GetImage(request, 'gifID') end)
-  app:match('dmca','/i/dmca/:imageID', respond_to({
-    GET = self.DmcaForm,
-    POST = self.DmcaPost
-  }))
-end
-
-function m.GetPostIcon(request)
+app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
   local userID = request.session.userID or ngx.ctx.userID
 
-  local post, err = postAPI:GetPost(userID, request.params.postID)
-  if not post then
-    ngx.log(ngx.ERR, 'couldnt find post ', request.params.postID, ' err: ',err)
-  end
+  local post = assert_error(postAPI:GetPost(userID, request.params.postID))
 
   local user = userAPI:GetUser(userID)
   if not user then
@@ -68,12 +53,7 @@ function m.GetPostIcon(request)
 
     local size = request.params.size == 'small' and 'smallIcon' or 'bigIcon'
     print('getting icon: ', size, post[size])
-    local imageData, err = imageAPI:GetImageDataByBBID(userID, post[size])
-    if not imageData then
-      ngx.log(ngx.ERR, 'error: ', err)
-      return { redirect_to = '/static/icons/notfound.png' }
-    end
-    print('got image data')
+    local imageData = assert_error(imageAPI:GetImageDataByBBID(userID, post[size]))
 
     ngx.header['Content-Type'] = imageData.contentType
     ngx.header['Cache-Control'] = 'max-age=86400'
@@ -83,85 +63,28 @@ function m.GetPostIcon(request)
 
   return { redirect_to = '/static/icons/notfound.png' }
 
-end
+end))
 
-function m.GetIcon(request)
-  -- dont want to fallback to fullsize image if we cant find an image
-end
-
-function m.ReloadImage(request)
+app:get('imagereload', '/i/:imageID/reload', capture_errors(function(request)
 
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
 
-  local ok, err = imageAPI:ReloadImage(request.session.userID, request.params.imageID)
+  assert_error(imageAPI:ReloadImage(request.session.userID, request.params.imageID))
 
-  if ok then
-    return 'reloading!'
-  else
-    print(err)
-    return 'failed!'
-  end
-
-end
-
-function m.DmcaForm(request)
-  if not request.params.imageID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
-  print(request.params.imageID)
-  local image, err = imageAPI:GetImage( request.params.imageID)
-  if not image then
-    --display error page
-    print(err)
-    return 'couldnt find image'
-  end
-
-  request.image = image
-
-  return {render = 'image.dmca'}
-end
-
-function m.DmcaPost(request)
-  if not request.params.imageID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
-  local userID = request.session.userID or ngx.ctx.userID
-  local takedownText = request.params.takedowntext
+  return 'reloading!'
+end))
 
 
-  local ok, err = imageAPI:SubmitTakedown(userID, request.params.imageID, takedownText)
-  if ok then
-    return 'your request has been submitted, thank you'
-  else
-    ngx.log(ngx.ERR, 'error submitting takedown: ',err)
-    return 'there was an error with your request, please try again later'
-  end
-
-end
-
-
-function m.GetImage(request,imageSize)
+local function GetImage(request,imageSize)
   if not request.params.imageID then
     return { redirect_to = '/static/icons/notfound.png' }
   end
   -- ratelimit based on session even if logged out
   local userID = request.session.userID or ngx.ctx.userID
-  local imageData, err = imageAPI:GetImageData(userID, request.params.imageID, imageSize)
+  local imageData = assert_error(imageAPI:GetImageData(userID, request.params.imageID, imageSize))
 
-  if not imageData then
-    return nil, 'image not found'
-  end
 
   request.iconData = imageData.data
   if not request.iconData then
@@ -175,7 +98,47 @@ function m.GetImage(request,imageSize)
   return ngx.exit(ngx.HTTP_OK)
 end
 
+app:get('smallimage', '/i/s/:imageID', capture_errors(function(request) return GetImage(request, 'iconID') end))
+app:get('medimage', '/i/m/:imageID', capture_errors(function(request) return GetImage(request, 'bigID') end))
+app:get('bigimage', '/i/b/:imageID', capture_errors(function(request) return self.GetImage(request, 'imgID') end))
+app:get('previewVid', '/i/v/:imageID', capture_errors(function(request) return self.GetImage(request, 'previewID') end))
+app:get('gifVid', '/i/gv/:imageID', capture_errors(function(request) return self.GetImage(request, 'gifID') end))
+
+app:match('dmca','/i/dmca/:imageID', respond_to({
+  GET = capture_errors(function(request)
+    if not request.params.imageID then
+      return { redirect_to = '/static/icons/notfound.png' }
+    end
+    if not request.session.userID then
+      return {render = 'pleaselogin'}
+    end
+
+    print(request.params.imageID)
+    local image = imageAPI:GetImage( request.params.imageID)
+    if not image then
+      return { redirect_to = '/static/icons/notfound.png' }
+    end
+
+    request.image = image
+
+    return {render = 'image.dmca'}
+  end),
+  POST = capture_errors(function(request)
+    if not request.params.imageID then
+      return { redirect_to = '/static/icons/notfound.png' }
+    end
+
+    if not request.session.userID then
+      return {render = 'pleaselogin'}
+    end
+
+    local userID = request.session.userID or ngx.ctx.userID
+    local takedownText = request.params.takedowntext
 
 
+    assert_error(imageAPI:SubmitTakedown(userID, request.params.imageID, takedownText))
 
-return m
+    return 'your request has been submitted, thank you'
+
+  end)
+}))

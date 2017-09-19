@@ -1,4 +1,9 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
 
@@ -13,10 +18,6 @@ end
 function api:GetThreads(userID, startAt, range)
   startAt = startAt or 0
   range = range or 10
-	local ok, err = self:RateLimit('GetThreads:', userID, 5, 10)
-	if not ok then
-		return ok, err
-	end
 
   return cache:GetThreads(userID, startAt, range)
 end
@@ -47,10 +48,8 @@ function api:CreateMessageReply(userID, userMessage)
 		return newMessage, err
 	end
 
-  ok, err = self.redisWrite:CreateMessage(userMessage)
-	if not ok then
-		return ok, err
-	end
+  self.redisWrite:CreateMessage(userMessage)
+
   self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
 
   local thread = cache:GetThread(newMessage.threadID)
@@ -82,9 +81,6 @@ function api:ConvertUserMessageToMessage(userID, userMessage)
 	}
 
 	local ok, err = self:VerifyMessageSender(userID, newInfo)
-	if not ok then
-		return ok, err
-	end
 
 	return newInfo
 end
@@ -93,17 +89,7 @@ end
 
 function api:CreateThread(userID, messageInfo)
 
-
-	local ok, err = self:RateLimit('CreateThread:', userID, 2, 60)
-	if not ok then
-		return ok, err
-	end
-
-	ok, err = self:VerifyMessageSender(userID, messageInfo)
-	if not ok then
-		return nil, err
-	end
-
+	self:VerifyMessageSender(userID, messageInfo)
 
 	messageInfo.title = messageInfo.title or ''
 	messageInfo.body = messageInfo.body or ''
@@ -146,27 +132,14 @@ function api:CreateThread(userID, messageInfo)
     threadID = thread.id
   }
 
-  ok, err = self.redisWrite:CreateThread(thread)
-	if not ok then
-    ngx.log(ngx.ERR, 'unable to create thread: ',err)
-    return nil, 'failed'
-	end
+  self.redisWrite:CreateThread(thread)
 
-  ok, err = self.redisWrite:CreateMessage(msg)
-	if not ok then
-    ngx.log(ngx.ERR, 'unable to create message: ',err)
-    return nil, 'failed'
-	end
-
+  self.redisWrite:CreateMessage(msg)
 
   self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
-  ok, err = self:InvalidateKey('useralert', recipientID)
-  ok, err = self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to add user alert: ', err )
-    return nil, 'failed'
-  end
-	return ok, err
+  self:InvalidateKey('useralert', recipientID)
+  return self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
+
 end
 
 return api

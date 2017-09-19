@@ -1,7 +1,7 @@
 <div class = 'contents'>
 
     <% render("views.st.threadelement",{thread = thread}) %>
-   <form action= "<%= url_for('replymessage',{threadID = thread.id}) %>" method="POST">
+   <form action= "<%= url_for('message.reply',{threadID = thread.id}) %>" method="POST">
      Message:<br>
      <input class='form-input' type="text" name="body">
      <button type="submit" >Send</button>

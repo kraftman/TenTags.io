@@ -1,4 +1,9 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
 local to_json = (require 'lapis.util').to_json
 local base = require 'api.base'
@@ -71,11 +76,9 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  local existingTag, err = self.redisWrite:CreateTag(tagInfo)
+  local existingTag = self.redisWrite:CreateTag(tagInfo)
 	-- tag might exist but not be in cache
-	if err then
-		ngx.log(ngx.ERR, 'err creating tag: ', err)
-	end
+
 	if existingTag and existingTag ~= true then
 		print('tag exists')
 		return existingTag
@@ -88,10 +91,6 @@ end
 
 
 function api:VoteTag(userID, postID, tagName, direction)
-
-	if not self:RateLimit('VoteTag:', userID, 5, 30) then
-		return nil, 'rate limited'
-	end
 
 	if not userAPI:UserCanVoteTag(userID, postID, tagName) then
 		return nil, 'cannot vote again!'
@@ -110,10 +109,8 @@ function api:VoteTag(userID, postID, tagName, direction)
 	CheckPostParent(post)
 
 	-- mark tag as voted on by user
-	local ok, err = self.userWrite:AddUserTagVotes(userID, postID, {tagName})
-	if not ok then
-		return ok, err
-	end
+	self.userWrite:AddUserTagVotes(userID, postID, {tagName})
+
 
 	-- increment how many tags the user has voted on
 	print('voting on tag made by ', cache:GetUsername(thisTag.createdBy))
@@ -127,31 +124,25 @@ function api:VoteTag(userID, postID, tagName, direction)
 	for _,tag in pairs(post.tags) do
 		if tag.name:find('meta:self') then
 			if direction == 'up' then
-				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
+				self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvoteup',1)
 			else
-				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
+				self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:selftagvotedown',1)
 			end
 			break -- stop as soon as we know what kind of post it is
 		elseif tag.name:find('meta:link') then
 			if direction == 'up' then
-				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
+				self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvoteup',1)
 			else
-				ok, err = self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
+				self.userWrite:IncrementUserStat(thisTag.createdBy, 'stat:linktagvotedown',1)
 			end
 			break
 		end
 	end
 
-	if not ok then
-		return ok, err
-	end
 
-	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
-	if not ok then
-		return ok, err
-	end
-	ok, err = self.redisWrite:UpdatePostTags(post)
-	return ok, err
+	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+
+	return self.redisWrite:UpdatePostTags(post)
 
 end
 

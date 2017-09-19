@@ -41,7 +41,7 @@
     <div class='post-filters' >
     <% for i = 1, math.min(#post.filters, 8) do %>
       <% local filter = post.filters[i] %>
-        <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+        <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
     <% end %>
     </div>
     <div class = 'post-full-bottombar'>

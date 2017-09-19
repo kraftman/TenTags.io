@@ -1,4 +1,7 @@
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 
 
 local cache = require 'api.cache'
@@ -51,20 +54,16 @@ function api:GetPendingTakedowns(userID, limit)
     return nil, 'access denied'
   end
   limit = limit or 10
-  local ok, err = self.redisRead:GetPendingTakedowns(limit)
-  if not ok then
-    return ok, err
-  end
+  assert_error(self.redisRead:GetPendingTakedowns(limit))
 
   local takedowns = {}
   local request
-  for k, v in pairs(ok) do
-
-    request = self.redisRead:GetTakedown(v)
+  for _, v in pairs(ok) do
+    request = assert_error(self.redisRead:GetTakedown(v))
     takedowns[#takedowns+1] = request
   end
 
-  return takedowns, err
+  return takedowns
 end
 
 function api:AcknowledgeTakedown(userID, requestID)
@@ -73,10 +72,7 @@ function api:AcknowledgeTakedown(userID, requestID)
     return nil, 'access denied'
   end
 
-  local ok, err = self.redisWrite:AcknowledgeTakedown(requestID)
-
-  return ok, err
-
+  return assert_error(self.redisWrite:AcknowledgeTakedown(requestID))
 end
 
 function api:BanImage(userID, requestID)
@@ -85,20 +81,12 @@ function api:BanImage(userID, requestID)
     return nil, 'access denied'
   end
 
-  local request, err = self.redisRead:GetTakedown(requestID)
-  if not request then
-    return request, err
-  end
-
-  local image, err = cache:GetImage(request.imageID)
-  if not image then
-    return image, err
-  end
+  local request = assert_error(self.redisRead:GetTakedown(requestID))
+  local image = assert_error(cache:GetImage(request.imageID))
 
   image.banned = 1
-  local ok, err = self.redisWrite:CreateImage(image)
+  return assert_error(self.redisWrite:CreateImage(image))
   --TODO purge cache too
-  return ok, err
 end
 
 function api:SubmitTakedown(userID, imageID, takedownText)
@@ -119,26 +107,17 @@ function api:SubmitTakedown(userID, imageID, takedownText)
   }
 
   -- create the takedown
-  local ok, err = self.redisWrite:IncrementSiteStat('takedownRequests', 1)
-  ok, err = self.redisWrite:CreateTakedown(request)
+  assert_error(self.redisWrite:IncrementSiteStat('takedownRequests', 1))
+  assert_error(self.redisWrite:CreateTakedown(request))
 
-  local image, err = cache:GetImage(imageID)
-  if not image then
-    return image, err
-  end
+  local image = assert_error(cache:GetImage(imageID))
+
   -- add the takedown to the image
   image.takedowns[#image.takedowns+1] = request.id
-  ok, err = self.redisWrite:CreateImage(image)
-
-  return ok, err
+  return assert_error(self.redisWrite:CreateImage(image))
 end
 
 function api:GetImageDataByBBID(userID, bbID)
-  local ok, err = self:RateLimit('GetImageData:', userID, 10,300)
-  if not ok then
-    return ok, err
-  end
-
 
   --TODO move this all to cache?
   local imageData = cache:GetImageData(bbID)
@@ -147,42 +126,21 @@ function api:GetImageDataByBBID(userID, bbID)
     return imageData
   end
 
-  imageData, err = bb:GetImage(bbID)
-  print('got from bb  ')
-  if not imageData then
-    ngx.log(ngx.ERR, 'error retrieving image from bb: ',err)
-    return nil, 'couldnt load image'
-  end
+  imageData = assert_error(bb:GetImage(bbID))
 
-  ok, err = cache:SetImageData(bbID, imageData)
-  if not ok then
-    return ok, err
-  end
+  assert_error(cache:SetImageData(bbID, imageData))
 
   return imageData
-
 
 end
 
 function api:GetImageData(userID, imageID, imageSize)
-  print('getting image data')
-  local ok, err = self:RateLimit('GetImageData:', userID, 10,300)
-  if not ok then
-    return ok, err
-  end
 
 
-  local image, err = self:GetImage(imageID)
-
-  if not image then
-    ngx.log(ngx.ERR, 'couldnt load')
-    return nil, 'no image found'
-  end
-
+  local image = self:GetImage(imageID)
   local bbID = image.rawID
 
   if imageSize and image[imageSize] then
-
     bbID = image[imageSize]
   elseif image.imgID then
     bbID = image.imgID
@@ -194,21 +152,17 @@ function api:GetImageData(userID, imageID, imageSize)
   --TODO move this all to cache?
   local imageData = cache:GetImageData(bbID)
   if imageData then
-    print('got from cache')
     return imageData
   end
 
   imageData, err = bb:GetImage(bbID)
-  print('got from bb  ')
+
   if not imageData then
     ngx.log(ngx.ERR, 'error retrieving image from bb: ',err)
     return nil, 'couldnt load image'
   end
 
-  ok, err = cache:SetImageData(bbID, imageData)
-  if not ok then
-    return ok, err
-  end
+  cache:SetImageData(bbID, imageData)
 
   return imageData
 
@@ -217,18 +171,10 @@ end
 
 function api:AddText(userID, imageID, text)
 
-  local ok, err = self:RateLimit('EditImageText:', userID, 40,60)
-  if not ok then
-    return ok, err
-  end
 
   text = self:SanitiseUserInput(text, 400)
 
   local image = cache:GetImage(imageID)
-  if not image then
-    print('couldnt find image: ',imageID)
-    return nil, 'image not found'
-  end
 
   if image.createdBy ~= userID then
     local user = cache:GetUser(userID)
@@ -239,10 +185,7 @@ function api:AddText(userID, imageID, text)
 
   image.text = text
 
-  ok, err = self.redisWrite:CreateImage(image)
-
-  return ok, err
-
+  return assert_error(self.redisWrite:CreateImage(image))
 
 end
 
@@ -255,10 +198,7 @@ function api:CreateImage(userID, fileData)
 
   ]]
 
-  local ok, err = self:RateLimit('UploadImage:', userID, 40,120)
-	if not ok then
-		return ok, err
-	end
+
 
   --check image size
 
@@ -281,23 +221,14 @@ function api:CreateImage(userID, fileData)
   file.type = allowedExtensions[fileExtension]
 
   file.extension = fileExtension
-  local rawID, err = bb:UploadImage(file.id..fileExtension, fileData.content)
-  if not rawID then
-    ngx.log(ngx.ERR, 'file upload failed: ', err)
-    return nil, 'error uploading file'
-  end
+  local rawID = assert_error(bb:UploadImage(file.id..fileExtension, fileData.content))
+
   file.rawID = rawID
 
-  ok, err = self.redisWrite:CreateImage(file)
-  if not ok then
-    return ok, err
-  end
-  ok, err = self.redisWrite:QueueJob('ConvertImage', file)
-  if not ok then
-    return ok, err
-  end
+  assert_error(self.redisWrite:CreateImage(file))
 
-  return file, err
+  return assert_error(self.redisWrite:QueueJob('ConvertImage', file))
+
 end
 
 function api:ReloadImage(userID, imageID)
@@ -308,13 +239,7 @@ function api:ReloadImage(userID, imageID)
 
   local image = cache:GetImage(imageID)
 
-  if not image then
-    return nil, 'image not found'
-  end
-
-  local ok, err = self.redisWrite:QueueJob('ConvertImage', image)
-
-  return ok, err
+  return assert_error(self.redisWrite:QueueJob('ConvertImage', image))
 
 end
 

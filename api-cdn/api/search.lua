@@ -1,5 +1,9 @@
 
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
 local base = require 'api.base'
 local api = setmetatable({}, base)
@@ -21,24 +25,15 @@ function api:SearchPost(queryString)
   local ok, err
 
   if queryString:find('^http') then
-    ok, err = cache:SearchURL(queryString)
-    if not ok then
-      ngx.log(ngx.ERR, 'failed to search posts: ', err)
-      return nil, 'failed to search posts'
-    end
+    ok = cache:SearchURL(queryString)
     ok = from_json(ok)
     return ok
 
   else
     ok, err = cache:SearchPost(queryString)
-    if not ok then
-      ngx.log(ngx.ERR, 'failed to search posts: ', err)
-      return nil, 'failed to search posts'
-    end
   end
 
   return ok, err
-
 end
 
 return api

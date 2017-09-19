@@ -1,10 +1,10 @@
 
 <div class='filter-nav'>
 
-    <a href="<%= url_for('adminpanel') %>">Admin</a>
-    <a href="<%= url_for('adminstats') %>">Stats</a>
-    <a href="<%= url_for('adminreports') %>">Reports</a>
-    <a href="<%= url_for('admintakedowns') %>">Takedowns</a>
+    <a href="<%= url_for('admin.view') %>">Admin</a>
+    <a href="<%= url_for('admin.stats') %>">Stats</a>
+    <a href="<%= url_for('admin.reports') %>">Reports</a>
+    <a href="<%= url_for('admin.takedowns') %>">Takedowns</a>
 
   </ul>
 </div>

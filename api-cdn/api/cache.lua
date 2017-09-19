@@ -1,4 +1,8 @@
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 --[[
 caching the most with the leas
 LRU great for complex objects (tables) but expensive
@@ -26,6 +30,9 @@ local userDict = ngx.shared.users
 local commentDict = ngx.shared.comments
 local voteDict = ngx.shared.userVotes
 local imageDict = ngx.shared.images
+
+local app_helpers = require("lapis.application")
+local assert_error = app_helpers.assert_error
 
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
@@ -58,7 +65,7 @@ end
 function cache:GetImage(imageID)
 
   local ok, err = redisRead:GetImage(imageID)
-  
+
   if err then
     ngx.log(ngx.ERR, err)
     return nil, 'image not found'
@@ -383,32 +390,21 @@ function cache:GetPostComments(postID)
   local ok, err,flatComments
 
   if ENABLE_CACHE then
-    ok, err = commentDict:get(postID)
-    if err then
-      ngx.log(ngx.ERR, 'could not get post comments: ',err)
-    end
+    ok = assert_error(commentDict:get(postID))
 
     if ok then
       return from_json(ok)
     end
   end
 
-  flatComments, err = commentRead:GetPostComments(postID)
+  flatComments = assert_error(commentRead:GetPostComments(postID))
 
-  if err then
-    return flatComments, err
-  end
 
   for k,v in pairs(flatComments) do
     flatComments[k] = from_json(v)
   end
 
-  ok, err = commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME)
-  if err then
-    ngx.log(ngx.ERR, 'error setting postcomments: ', err)
-    return ok,err
-  end
-
+  assert_error(commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME))
 
   return flatComments
 
@@ -448,11 +444,7 @@ end
 
 function cache:GetSortedComments(userID, postID,sortBy)
 
-  local flatComments,err = self:GetPostComments(postID)
-  if err then
-    return flatComments, err
-  end
-
+  local flatComments = assert_error(self:GetPostComments(postID))
   local indexedComments = {}
   -- format flatcomments
 

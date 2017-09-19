@@ -2,6 +2,6 @@
   <div class = 'panel panel-default post'>
     <h2><%= thread.title %></br></h2>
     <p><% render("views.st.messageelement",{message = message}) %></p>
-    <a href="<%= url_for('replymessage',{threadID = thread.id}) %>">reply</a>
+    <a href="<%= url_for('message.reply',{threadID = thread.id}) %>">reply</a>
   </div>
 <% end %>

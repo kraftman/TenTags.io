@@ -1,6 +1,6 @@
 <li class='panel panel-default filter-item'>
 
-  <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+  <a class='post-link' href="<%= url_for('filter.view',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
 
@@ -21,6 +21,6 @@
   </form>
 
   <% if isAdmin or isMod then %>
-    <a class='post-link' href="<%= url_for('updatefilter',{filterlabel = filter.name}) %>">Settings</a>
+    <a class='post-link' href="<%= url_for('filter.edit',{filterlabel = filter.name}) %>">Settings</a>
   <% end %>
 </li>

@@ -1,8 +1,4 @@
 
-
-local m = {}
-
-
 local respond_to = (require 'lapis.application').respond_to
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
@@ -12,25 +8,15 @@ local postAPI = require 'api.posts'
 local commentAPI = require 'api.comments'
 
 
-function m:Register(app)
-  app:match('apisubscribefilter', '/api/filter/:filterID/sub', self.SubscribeFilter)
-  app:match('filtersearch', '/api/filter/search/:searchString', self.SearchFilter)
-  app:match('userfilters', '/api/user/filters', self.GetUserFilters)
-  app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
-  app:match('/api/post/:postID/upvote', self.UpvotePost)
-  app:match('/api/comment/upvote/:postID/:commentID/:commentHash', m.UpvoteComment)
-  app:match('/api/comment/downvote/:postID/:commentID/:commentHash', m.DownVoteComment)
-  app:match('/api/post/:postID/downvote', self.DownvotePost)
-  app:match('/api/user/:userID/settings', self.GetUserSettings)
-  app:match('/api/frontpage', self.GetFrontPage)
-  app:match('/api/f/:filterName/posts', self.GetFilterPosts)
-  app:match('/api/filters/create', self.CreateFilter)
-  app:match('/api/tags/:searchString', self.SearchTags)
-  app:post('/api/i/', self.UploadImage)
-end
+local app = require 'app'
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors_json, app_helpers.assert_error
 
 
-function m.HashIsValid(request)
+
+
+
+local function HashIsValid(request)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
   if realHash ~= request.params.commentHash then
     ngx.log(ngx.ERR, 'hashes dont match!')
@@ -39,147 +25,88 @@ function m.HashIsValid(request)
   return true
 end
 
-
-
-function m.UpvoteComment(request)
-  if not request.session.userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
-  if not m.HashIsValid(request) then
-    return 'hashes dont match'
-  end
-  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
-  if ok then
-    return {json = {error = false, data = {true}} }
-  else
-    return {json = {error = {err}, data = {}}}
-  end
-end
-
-function m.DownVoteComment(request)
-  if not request.session.userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
-  if not m.HashIsValid(request) then
-    return 'hashes dont match'
-  end
-
-  local ok, err = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
-  if ok then
-    return {json = {error = false, data = {true}} }
-  else
-    return {json = {error = {err}, data = {}}}
-  end
-end
-
-function m.SubscribeFilter(request)
+app:match('api-subscribefilter', '/api/filter/:filterID/sub', capture_errors(function(request)
   local userID = request.session.userID
   local filterID = request.params.filterID
-  if not userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
-  local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
 
-  if ok then
-    return {json = {error = false, data = ok} }
-  else
-    return {json = {error = {err}, data = {}}}
-  end
+  local ok = userAPI:ToggleFilterSubscription(userID, userID, filterID)
 
-end
+  return {json = {error = false, data = ok} }
 
-function m.SearchFilter(request)
+end))
 
-  if not request.session.userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
+app:match('api-filtersearch', '/api/filter/search/:searchString', capture_errors(function(request)
+
   if not request.params.searchString then
     return {json = {error = 'no searchString provided', data = {}}}
   end
+
+  local ok = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
+
+  return {json ={error = false, data = ok} }
+end))
+
+app:match('api-userfilters', '/api/user/filters', capture_errors(function(request)
+
+  local ok = userAPI:GetUserFilters(request.session.userID)
+
+  return {json ={error = false, data = ok} }
+end))
+
+--app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
+app:match('api-upvotepost', '/api/post/:postID/upvote', capture_errors(function(request)
+
+  if not HashIsValid(request) then
+    return 'invalid hash'
+  end
+  postAPI:VotePost(request.session.userID, request.params.postID, 'up')
+
+  return { json = {status = 'success', data = {}} }
+end))
+
+app:match('api-upvotecomment', '/api/comment/upvote/:postID/:commentID/:commentHash', capture_errors(function(request)
+
+  if not HashIsValid(request) then
+    return 'hashes dont match'
+  end
+  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
+
+  return {json = {error = false, data = {true}} }
+end))
+
+app:match('api-downvotecomment', '/api/comment/downvote/:postID/:commentID/:commentHash', capture_errors(function(request)
   if not request.session.userID then
     return {json = {error = 'you must be logged in!', data = {}}}
   end
-
-  local ok, err = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
-
-  if ok then
-    return {json ={error = false, data = ok} }
-  else
-    return {json = {error = {err}, data = {}}}
+  if not HashIsValid(request) then
+    return 'hashes dont match'
   end
-end
---
-function m.GetUserFilters(request)
 
-  if not request.session.userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
-  local ok, err = userAPI:GetUserFilters(request.session.userID)
-  if ok then
-    return {json ={error = false, data = ok} }
-  else
-    return {json = {error = {err}, data = {}}}
-  end
-end
+  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
 
-local function GetUserRecentSeen()
+  return {json = {error = false, data = {true}} }
+end))
 
-end
-
-local function HashIsValid(request)
-  --print(request.params.postID, request.session.userID)
-  local realHash = ngx.md5(request.params.postID..request.session.userID)
-  if realHash ~= request.params.hash then
-    ngx.log(ngx.ERR, 'hashes dont match!')
-    return false
-  end
-  return true
-end
-
-
-function m.UpvotePost(request)
+app:match('api-downvotepost', '/api/post/:postID/downvote', capture_errors(function(request)
   if not request.session.userID then
     return {json = {status = 'error', data = {'you must be logged in to vote'}}}
   end
   if not HashIsValid(request) then
     return 'invalid hash'
   end
-  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'up')
-  if ok then
-    return { json = {status = 'success', data = {}} }
-  else
-    return { json = {status = "error" }}
-  end
-end
+  postAPI:VotePost(request.session.userID, request.params.postID, 'down')
 
-function m.DownvotePost(request)
-  if not request.session.userID then
-    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
-  end
-  if not HashIsValid(request) then
-    return 'invalid hash'
-  end
-  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'down')
-  if ok then
-    return { json = {status = 'success', data = {}} }
-  else
-    return { json = {status = "error" }}
-  end
-end
+  return { json = {status = 'success', data = {}} }
+end))
 
-function m.GetUserSettings(request)
-  if not request.session.userID then
-    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
-  end
-  local ok, err = userAPI:GetUserSettings(request.session.userID)
-  if ok then
-    return {json = {status = 'success', data = ok}}
-  else
-    return {json = {status = 'error', message = err}}
-  end
-end
+app:match('api-settings', '/api/user/:userID/settings', capture_errors(function(request)
 
-function m.GetFrontPage(request)
+  local ok = userAPI:GetUserSettings(request.session.userID)
+
+  return {json = {status = 'success', data = ok}}
+end))
+
+app:match('api-frontpage', '/api/frontpage', capture_errors(function(request)
   local startAt = request.params.startAt or 1
   local range = request.params.range or 100
   local sortBy = request.params.sortby or 'fresh'
@@ -187,54 +114,12 @@ function m.GetFrontPage(request)
 
   range = tonumber(range)
 
-  local ok,err = userAPI:GetUserFrontPage(userID, nil, sortBy, startAt, range)
-  if ok then
-    return {json = {status = 'success', data = ok or {}}}
-  else
-    return {json = {status = 'error', message = err}}
-  end
-end
+  local ok = userAPI:GetUserFrontPage(userID, nil, sortBy, startAt, range)
+  return {json = {status = 'success', data = ok or {}}}
+end))
 
-function m.GetFilterPosts(request)
-
-  local startAt = request.params.startAt or 1
-  local endAt = request.params.endAt or 100
-  local sortBy = request.params.sortby or 'fresh'
-  --local ok, err = api:GetFilterPosts(userID, self.params.filterName, )
-end
-
-function m.UploadImage(request)
-  -- if true then
-  --   return {status = 400}
-  -- end
-
-  if not request.session.userID then
-    return {json = {status = 'error', data = {'you must be logged in to upload'}}}
-  end
-
-  local fileData = request.params.file
-  ngx.log(ngx.ERR, request.params.name, fileData.filename)
-  if not request.params.file and (fileData.content == '') then
-    return {json = {status = 'error', message = 'no file data'}, statu = 400}
-  end
-
-  local ok, err = imageAPI:CreateImage(request.session.userID, fileData)
--- return error code if needed
-  if not ok then
-    print(err)
-    return {json = {status = 'error'}, status = 500}
-  end
-
-  return {json = {status = 'success', data = ok.id or {}}}
-
-end
-
-
-function m.CreateFilter(request)
-
-  if not request.session.userID then
-    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
-  end
+--app:match('api-filterposts', '/api/f/:filterName/posts', GetFilterPosts)
+app:match('api-createfilter', '/api/filters/create', capture_errors(function(request)
 
   local requiredTagNames = from_json(request.params.requiredTagNames)
   local bannedTagNames = from_json(request.params.bannedTagNames)
@@ -251,28 +136,47 @@ function m.CreateFilter(request)
   info.bannedTagNames = bannedTagNames
   info.requiredTagNames = requiredTagNames
 
-  local ok, err = filterAPI:CreateFilter(request.session.userID, info)
-  if ok then
-    return { json = {status = 'success', data = ok }}
-  else
-    ngx.log(ngx.ERR, 'error creating filter: ',err)
-    return {json = {status = 'error', error = err}}
-  end
-end
+  local ok = filterAPI:CreateFilter(request.session.userID, info)
 
-function m.SearchTags(request)
+  return { json = {status = 'success', data = ok }}
+end))
+
+app:match('api-searchtags', '/api/tags/:searchString', capture_errors(function(request)
   local searchString = request.params.searchString
   if not searchString or type(searchString) ~= 'string' or searchString:gsub(' ','') == '' then
     return {json = {status = 'error', error = 'empty or bad string'}}
   end
-  local ok, err = tagAPI:SearchTags(searchString)
-  print('tt',to_json(ok))
-  if ok then
-    return {json = {status = 'success', data = ok}}
-  else
-    return {json = {status = 'error', data = err}}
+  local ok = tagAPI:SearchTags(searchString)
+
+  return {json = {status = 'success', data = ok}}
+end))
+
+app:post('api-uploadfile', '/api/i/', capture_errors(function(request)
+
+    if not request.session.userID then
+      return {json = {status = 'error', data = {'you must be logged in to upload'}}}
+    end
+
+    local fileData = request.params.file
+    ngx.log(ngx.ERR, request.params.name, fileData.filename)
+    if not request.params.file and (fileData.content == '') then
+      return {json = {status = 'error', message = 'no file data'}, statu = 400}
+    end
+
+    local ok = imageAPI:CreateImage(request.session.userID, fileData)
+
+    return {json = {status = 'success', data = ok.id or {}}}
+
+end))
+
+app:post('api-taguser', '/user/tag/:userID', capture_errors(function(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
   end
-end
 
+  local userTag = request.params.tagUser
 
-return m
+  userAPI:LabelUser(request.session.userID, request.params.userID, userTag)
+
+  return {json = {error = {err}, data = {}}}
+end))

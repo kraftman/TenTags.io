@@ -28,7 +28,11 @@
       <% render("views.main.filterbar") %>
       <main class = 'contents'>
         <% render("views.main.infobar") %>
-        <% content_for("inner") %>
+        <% if errors then %>
+          <% render('views.errors.500') %>
+        <% else %>
+          <% content_for("inner") %>
+        <% end %>
       </main>
     </div>
 

@@ -6,6 +6,10 @@ local tinsert = table.insert
 local postAPI = require 'api.posts'
 local filterAPI = require 'api.filters'
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 local filters = {
   {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
   {title = 'funny', name = 'funny', description = 'funny', requiredTagNames = {'funny'}, bannedTagNames = {'nsfw'}},
