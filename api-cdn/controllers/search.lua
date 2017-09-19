@@ -7,7 +7,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 local searchAPI = require 'api.search'
 local trim = (require 'lapis.util').trim
 
-app:match('searchposts','/search/post',capture_errors(function(request)
+app:match('search.results','/search/post',capture_errors(function(request)
   local search = trim(request.params.searchquery or '')
   if search == '' then
     return {redirect_to = request:url_for("newpost")}

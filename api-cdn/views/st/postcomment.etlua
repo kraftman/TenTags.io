@@ -11,7 +11,7 @@
       <% if child.deleted then %>
         <p>[deleted]</p>
       <% else %>
-        <a href="<%= url_for('viewuser',{username = child.username}) %>">
+        <a href="<%= url_for('user.viewsub',{username = child.username}) %>">
           <span <%- GetColorForName(child.username) %> ><%= child.username -%> </span>
           <% if userLabels and userLabels[child.createdBy] then %>
             <%= userLabels[child.createdBy] -%>

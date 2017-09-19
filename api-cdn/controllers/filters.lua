@@ -11,8 +11,7 @@ local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
 
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local capture_errors = (require("lapis.application")).capture_errors
 local app = require 'app'
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
@@ -180,9 +179,7 @@ end
 
 
 app:get('subscribefilter', '/f/:filterID/sub', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+
   local userID = request.session.userID
 
   local filterID = request.params.filterID
@@ -195,11 +192,11 @@ app:get('subscribefilter', '/f/:filterID/sub', capture_errors(function(request)
 end))
 
 
-app:match('filter','/f/:filterlabel',respond_to({
+app:match('filter.view','/f/:filterlabel',respond_to({
   GET = capture_errors(function(request)
 
     -- does the filter exist? if not then let them make it
-    local filter = assert_error(filterAPI:GetFilterByName(request.params.filterlabel))
+    local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
     request.page_title = filter.name
 
@@ -210,15 +207,15 @@ app:match('filter','/f/:filterlabel',respond_to({
 
     local ownerID = filter.ownerID or filter.createdBy
 
-    local owner = assert(userAPI:GetUser(ownerID))
+    local owner = userAPI:GetUser(ownerID)
 
     filter.ownerName = owner.username
-    filter.relatedFilters = assert_error(filterAPI:GetFilters(filter.relatedFilterIDs))
+    filter.relatedFilters = filterAPI:GetFilters(filter.relatedFilterIDs)
     filter.description = request.markdown.markdown(filter.description)
     filter.description = sanitize_html(filter.description)
     request.thisfilter = filter
     if request.session.userID then
-      request.isMod = assert_error(filterAPI:UserCanEditFilter(request.session.userID, filter.id))
+      request.isMod = filterAPI:UserCanEditFilter(request.session.userID, filter.id)
     end
 
     local sortBy = request.params.sortBy or 'fresh'
@@ -234,19 +231,19 @@ app:match('filter','/f/:filterlabel',respond_to({
       end
     end
 
-    return {render = 'filter.view'}
+    return {render = true}
   end),
   POST = function() return {redirect_to = '/filters/create'} end
 }))
 
-app:match('newfilter','/filters/create',respond_to({
+app:match('filter.create','/filters/create',respond_to({
   GET = function(request)
     if not request.session.userID then
       return { render = 'pleaselogin' }
     end
     request.page_title = 'Create Filter'
     request.tags = tagAPI:GetAllTags()
-    return {render = 'filter.create'}
+    return {render = true}
   end,
   POST = capture_errors(function(request)
 
@@ -287,7 +284,7 @@ app:match('newfilter','/filters/create',respond_to({
   end)
 }))
 
-app:match('updatefilter','/filters/:filterlabel',respond_to({
+app:match('filter.edit','/filters/:filterlabel',respond_to({
   GET = capture_errors(function(request)
 
       local filter = filterAPI:GetFilterByName(request.params.filterlabel)
@@ -299,7 +296,6 @@ app:match('updatefilter','/filters/:filterlabel',respond_to({
         return {render = 'pleaselogin'}
       end
       local user = userAPI:GetUser(request.session.userID)
-
 
       --maybe move to api
       if user.role ~= 'Admin' then
@@ -352,6 +348,7 @@ app:match('updatefilter','/filters/:filterlabel',respond_to({
       request.selectedFilter = filter
       return {render = 'filter.edit'}
   end),
+
   POST = capture_errors(function(request)
 
       if not request.session.userID then
@@ -395,7 +392,7 @@ app:match('updatefilter','/filters/:filterlabel',respond_to({
   end)
 }))
 
-app:get('allfilters','/f',capture_errors(function(request)
+app:get('filter.all','/f',capture_errors(function(request)
   local user = request.userInfo
   if user and user.role == 'Admin' then
     request.isAdmin = true
@@ -416,7 +413,7 @@ app:get('allfilters','/f',capture_errors(function(request)
     end
   end
 
-  return {render = 'filter.all'}
+  return {render = true}
 end))
 
 app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',capture_errors(function(request)
@@ -425,9 +422,9 @@ app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',capture_erro
     return {render = 'pleaselogin'}
   end
 
-  local filter = assert_error(filterAPI:GetFilterByName(request.params.filterlabel))
+  local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
-  assert_error(filterAPI:FilterUnbanUser(filter.id, request.params.userID))
+  filterAPI:FilterUnbanUser(filter.id, request.params.userID)
 
   return 'success'
 end))
@@ -438,9 +435,9 @@ app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName', cap
     return {render = 'pleaselogin'}
   end
 
-  local filter = assert_error(filterAPI:GetFilterByName(request.params.filterlabel))
+  local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
-  assert_error(filterAPI:FilterUnbanDomain(request.session.userID, filter.id, request.params.domainName))
+  filterAPI:FilterUnbanDomain(request.session.userID, filter.id, request.params.domainName)
 
   return 'success'
 
@@ -451,9 +448,9 @@ app:get('banpost', '/filters/:filterlabel/banpost/:postID', capture_errors(funct
     return {render = 'pleaselogin'}
   end
 
-  local filter = assert_error(filterAPI:GetFilterByName(request.params.filterlabel))
+  local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
-  assert_error(filterAPI:FilterBanPost(request.session.userID, filter.id, request.params.postID))
+  filterAPI:FilterBanPost(request.session.userID, filter.id, request.params.postID)
 
   return 'ok'
 
@@ -467,7 +464,7 @@ app:match('searchfilters', '/filters/search', capture_errors(function(request)
   if not request.session.userID then
     return 'you must be logged in!'
   end
-  local filters = assert_error(filterAPI:SearchFilters(request.session.userID, request.params.searchString))
+  local filters = filterAPI:SearchFilters(request.session.userID, request.params.searchString)
 
   request.filters = filters
   if not next(filters) then
@@ -475,12 +472,12 @@ app:match('searchfilters', '/filters/search', capture_errors(function(request)
   end
 
 
-  local user = assert_error(userAPI:GetUser(request.session.userID))
+  local user = userAPI:GetUser(request.session.userID)
   if user and user.role == 'Admin' then
     request.isAdmin = true
   end
 
-  request.userFilterIDs = assert_error(userAPI:GetIndexedViewilterIDs(user.currentView))
+  request.userFilterIDs = userAPI:GetIndexedViewilterIDs(user.currentView)
   request.searchString = request.params.searchString
   return {render = 'filter.all'}
 end))

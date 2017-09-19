@@ -1,4 +1,4 @@
-<form method="POST" class='panel panel-default' action="<%= url_for('newmessage') %>">
+<form method="POST" class='panel panel-default' action="<%= url_for('message.create') %>">
   <h3>Send Message</h3>
     <input class='form-input' type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
     </br>

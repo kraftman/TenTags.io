@@ -14,7 +14,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 
 
 
-  app:match('usersettings','/settings', respond_to({
+  app:match('user.subsettings','/settings', respond_to({
     GET = capture_errors(function(request)
 
         if not request.session.accountID then
@@ -46,7 +46,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
         request.nsfwLevel = tonumber(user.nsfwLevel)
 
 
-        return {render = 'user.subsettings'}
+        return {render = true}
     end),
     POST = capture_errors(function(request)
 
@@ -63,7 +63,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
         if user.role == 'Admin' then
           assert_error(userAPI:CreateDefaultView(request.session.userID))
         end
-        return {redirect_to = request:url_for('usersettings')}
+        return {redirect_to = request:url_for('user.subsettings')}
       end
 
       user.enablePM = request.params.enablePM and true or false
@@ -82,7 +82,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
       if request.params.stage=='1' then
         return {redirect_to = request:url_for('home')}
       else
-        return {redirect_to = request:url_for('usersettings')}
+        return {redirect_to = request:url_for('user.subsettings')}
       end
     end)
   }))
@@ -127,7 +127,7 @@ app:get('killsession', '/sessions/:sessionID/kill', capture_errors(function(requ
 
   local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
   if ok then
-    return {redirect_to = request:url_for('usersettings')}
+    return {redirect_to = request:url_for('user.subsettings')}
   else
     print(err)
     return 'not killed!'

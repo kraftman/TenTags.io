@@ -7,7 +7,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 local to_json = (require 'lapis.util').to_json
 local app = require 'app'
 
-app:match('viewmessages','/messages',capture_errors(function(request)
+app:match('message.view','/messages',capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -23,15 +23,15 @@ app:match('viewmessages','/messages',capture_errors(function(request)
 
   request.threads = threadAPI:GetThreads(request.session.userID, startAt, range)
   ngx.log(ngx.ERR, to_json(request.threads))
-  return {render = 'message.view'}
+  return {render = true}
 end))
 
-app:match('newmessage','/messages/new',respond_to({
+app:match('message.create','/messages/new',respond_to({
   GET = capture_errors(function(request)
     if not request.session.userID then
       return { render = 'pleaselogin' }
     end
-    return {render = 'message.create'}
+    return {render = true}
   end),
 
   POST = capture_errors(function(request)
@@ -55,7 +55,7 @@ app:match('newmessage','/messages/new',respond_to({
   end)
 }))
 
-app:match('replymessage','/messages/reply/:threadID',respond_to({
+app:match('message.reply','/messages/reply/:threadID',respond_to({
   GET = capture_errors(function(request)
     if not request.session.userID then
       return {render = 'pleaselogin'}

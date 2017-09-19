@@ -60,7 +60,7 @@ function M:LoadUser(request)
   end
 
   ngx.ctx.userID = request.session.userID or request.session.tempID
-  print('ctx:',ngx.ctx.userID)
+
   request.cookies.cacheKey = ngx.md5(ngx.ctx.userID)
 end
 

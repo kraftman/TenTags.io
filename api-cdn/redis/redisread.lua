@@ -54,7 +54,6 @@ end
 
 function read:GetOldestJob(queueName)
   local realQName = 'queue:'..queueName
-  --print('getting job: ',realQName)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange(realQName, 0, 1)
   self:SetKeepalive(red)
@@ -96,12 +95,9 @@ function read:GetView(viewID)
   end
   for i = #ok.filters, 1, -1 do
     if ok.filters[i] == ngx.null then
-      print(k)
       table.remove(ok.filters, i)
-      print('removing nullf from filters')
     end
   end
-  print(to_json(ok.filters))
 
 
   return ok
@@ -111,7 +107,6 @@ end
 function read:GetBacklogStats(jobName,startAt, endAt)
   jobName = 'backlog:'..jobName
   local red = self:GetRedisReadConnection()
-  print('zrangebyscore ',jobName, ' ', startAt, ' ', endAt)
   local ok, err = red:zrangebyscore(jobName, startAt, endAt)
 
   self:SetKeepalive(red)
@@ -241,7 +236,6 @@ function read:GetRelevantFilters(tags)
       elseif filterType == 'banned' then
         -- we need to be confident so we dont accidentally hide the post
         -- see issue gh-30
-        print(tag.up)
         if tonumber(tag.up) > 20 then
           newList[filterID] = 'banned'
         end
@@ -271,7 +265,6 @@ function read:VerifyReset(emailAddr, resetKey)
   end
 
   if ok == resetKey then
-    print('key is valid')
     return true
   end
 
@@ -335,7 +328,6 @@ function read:GetUserThreads(userID, startAt, range)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
   self:SetKeepalive(red)
-  print(startAt, range, #ok)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
     return {}
@@ -528,9 +520,7 @@ end
 function read:SearchFilters(searchString)
   searchString = '*'..searchString..'*'
   local red = self:GetRedisReadConnection()
-  print(searchString)
   local ok,err = red:sscan('filterNames', 0, 'match', searchString)
-  print(self:to_json(ok))
   if ok then
     return ok[2]
   end
@@ -759,7 +749,6 @@ function read:GenerateUserFrontPage(userID, userFilterIDs, range, sortBy)
   table.insert(keyedFilterIDs, 'MAX')
   local ok, err = red:zunionstore(destinationKey,#keyedFilterIDs-2,unpack(keyedFilterIDs))
   if not ok then
-    print(err)
     return nil, err
   end
   ok, err = red:expire(destinationKey, 300)

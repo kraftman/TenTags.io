@@ -11,6 +11,9 @@ local checksession = require 'middleware.checksession'
 local config = require("lapis.config").get()
 local markdown = require 'lib.markdown'
 
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
 
 
 app:enable("etlua")
@@ -45,13 +48,15 @@ app:before_filter(function(self)
   self.TimeAgo = util.TimeAgo
   self.Paginate = util.Paginate
   self.handle_error = errorHandler
-  util.RateLimit(self)
+  capture_errors(util.RateLimit)(self)
 
 end)
 
 app.handle_error = errorHandler
 app.handle_404 = function(self)
   ngx.log(ngx.NOTICE, 'Accessed unkown route: ',self.req.cmd_url)
+
+
   return {render = 'errors.404'}
 end
 
@@ -62,7 +67,7 @@ app:get('about', '/about',function() return {render = true} end)
 
 
 --TODO: change to this: https://gist.github.com/leafo/92ef8250f1f61e3f45ec
-require 'tags'
+
 require 'posts'
 require 'frontpage'
 require 'user'

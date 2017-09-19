@@ -44,7 +44,7 @@ app:match('newsubuser','/sub/new', respond_to({
 
     request.session.username = succ.username
     request.session.userID = succ.id
-    return { redirect_to = request:url_for("usersettings")..'?stage=1' }
+    return { redirect_to = request:url_for("user.subsettings")..'?stage=1' }
 
   end)
 }))
@@ -84,11 +84,8 @@ app:match('login','/login',respond_to({
   GET = function() return 'Please login using the top bar'  end
 }))
 
-app:get('viewuser','/user/:username', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
+app:get('user.viewsub','/user/:username', capture_errors(function(request)
+  -- deny public by default
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
   if not request.userInfo then
@@ -96,7 +93,7 @@ app:get('viewuser','/user/:username', capture_errors(function(request)
   end
 
   if request.session.userID then
-    print('this')
+
     local viewingUser = userAPI:GetUser(request.session.userID)
     for _,v in pairs(request.userInfo.blockedUsers) do
       if viewingUser.id == v then
@@ -132,7 +129,7 @@ app:get('deleteuser', '/user/:username/delete', capture_errors(function(request)
 end))
 
 app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
-  local session = m.GetSession(request)
+  local session = GetSession(request)
   local account, sessionID = sessionAPI:ConfirmLogin(session, request.params.key)
 
   if not account then
@@ -159,7 +156,7 @@ app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
 end))
 
 
-app:get('viewusercomments','/user/:username/comments', capture_errors(function(request)
+app:get('user.viewsubcomments','/user/:username/comments', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -176,10 +173,10 @@ app:get('viewusercomments','/user/:username/comments', capture_errors(function(r
 
   request.comments = commentAPI:GetUserComments(request.session.userID, request.userID, sortBy, startAt, range)
 
-  return {render = 'user.viewsubcomments'}
+  return {render = true}
 end))
 
-app:get('viewuserposts','/user/:username/posts', capture_errors(function(request)
+app:get('user.viewsubposts','/user/:username/posts', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -193,10 +190,10 @@ app:get('viewuserposts','/user/:username/posts', capture_errors(function(request
     range = math.min(range, 50)
 
   request.posts = postAPI:GetUserPosts(request.session.userID, request.userID, startAt,range)
-  return {render = 'user.viewsubposts'}
+  return {render = true}
 end))
 
-app:get('viewuserupvoted','/user/:username/posts/upvoted', capture_errors(function(request)
+app:get('user.viewsubupvotes','/user/:username/posts/upvoted', capture_errors(function(request)
   local userID = userAPI:GetUserID(request.params.username)
   if not userID then
     return 'user not found'
@@ -208,7 +205,7 @@ app:get('viewuserupvoted','/user/:username/posts/upvoted', capture_errors(functi
   local posts = assert_error(userAPI:GetRecentPostVotes(request.session.userID, userID,'up'))
 
   request.posts = posts
-  return {render = 'user.viewsubupvotes'}
+  return {render = true}
 end))
 
 
@@ -237,7 +234,7 @@ app:get('listusers','/user/list',capture_errors(function(request)
     return {render = 'pleaselogin'}
   end
   request.otherUsers = userAPI:GetAccountUsers(request.session.accountID, request.session.accountID)
-  return {render = 'listusers'}
+  return {render = true}
 end))
 
 app:get('subscribeusercomment','/user/:username/comments/sub',capture_errors(function(request)
@@ -254,7 +251,7 @@ app:get('subscribeusercomment','/user/:username/comments/sub',capture_errors(fun
 
   assert_error(userAPI:ToggleCommentSubscription(userID, userToSubToID))
 
-  return { redirect_to = request:url_for("viewusercomments", {username = request.params.username}) }
+  return { redirect_to = request:url_for("user.viewsubcomments", {username = request.params.username}) }
 
 end))
 
@@ -283,6 +280,6 @@ app:post('blockuser','/user/:username/block',capture_errors(function(request)
 
   assert_error(userAPI:BlockUser(request.session.userID, userToBlockID))
 
-  return { redirect_to = request:url_for("viewuser", {username = request.params.username}) }
+  return { redirect_to = request:url_for("user.viewsub", {username = request.params.username}) }
 
 end))

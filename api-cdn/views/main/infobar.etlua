@@ -12,7 +12,7 @@
         Related Filters:
           </br>
           <% for _,filter in pairs(thisfilter.relatedFilters) do %>
-          <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
+          <a class='post-link' href="<%= url_for('filter.view',{filterlabel = filter.name}) %>">
             <%= filter.name -%>
           </a>
           <% end %>

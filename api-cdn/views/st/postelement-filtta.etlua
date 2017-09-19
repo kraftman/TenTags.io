@@ -10,7 +10,7 @@
         </br>
 
         <% for _,filter in pairs(post.filters) do %>
-            <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+            <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
         <% end %>
 
       </div>

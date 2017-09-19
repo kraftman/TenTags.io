@@ -33,7 +33,7 @@
   <div class = 'panel panel-default' >
 
     <h3>Tag User</h3>
-    <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
+    <form id="tagform" method="post" action="<%= url_for("api-taguser",{userID = userID}) %>" >
       <input type='text' class='form-input' name='tagUser' id='tagUser' ></input>
       </br>
       <input class = 'btn' type='submit' value="Add Tag"></input>

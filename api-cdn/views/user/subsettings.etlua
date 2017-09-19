@@ -5,16 +5,16 @@
 
 <% if account.role == 'Admin' then %>
   <h2>Admin Settings</h2>
-  <form action="<%= url_for('usersettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+  <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
     <div class="checkbox">
       <label><input type="checkbox" name='fakeNames' <%= fakeNames -%>>Use fake usernames</label>
     </div>
-    <form action="<%= url_for('usersettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+    <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
 
     <button class='btn btn-default' type="submit" value="Submit">Save</button>
   </form>
   </br>
-  <form action="<%= url_for('usersettings')..('?resetdefaultview=1') %>" method = 'POST'>
+  <form action="<%= url_for('user.subsettings')..('?resetdefaultview=1') %>" method = 'POST'>
     <button class='btn btn-default' type="submit" value="Submit">Reset Default View</button>
   </form>
 
@@ -22,7 +22,7 @@
 </div>
 <div class = 'panel panel-default'>
 
-  <form action="<%= url_for('usersettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+  <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
 
     <h2>User Settings</h2>
 

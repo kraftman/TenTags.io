@@ -14,9 +14,7 @@ local app = require 'app'
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
-
-
-app:get('viewalerts','/alerts/view',capture_errors(function(request)
+app:get('alerts','/alerts/view',capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -44,7 +42,7 @@ app:get('viewalerts','/alerts/view',capture_errors(function(request)
       tinsert(request.alerts, {alertType = 'post', data = post})
     end
   end
-  return { render = 'alerts'}
+  return { render = true}
 end))
 
 

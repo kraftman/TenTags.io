@@ -34,7 +34,7 @@ local httpc = http.new()
 
 
 
-app:get('adminpanel','/admin',capture_errors(function(request)
+app:get('admin.view','/admin',capture_errors(function(request)
   if not request.account then
     return 'you must be logged in to access this'
   end
@@ -81,7 +81,7 @@ app:get('ele', '/ele', capture_errors(function()
   end
 end))
 
-app:get('adminstats', '/admin/stats', capture_errors(function(request)
+app:get('admin.stats', '/admin/stats', capture_errors(function(request)
 
     if not request.account then
       return 'you must be logged in to access this'
@@ -112,7 +112,7 @@ app:get('score', '/admin/score/:up/:down', capture_errors(function(request)
   return ''..(phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
 end))
 
-app:get('adminreports','/admin/reports',capture_errors(function(request)
+app:get('admin.reports','/admin/reports',capture_errors(function(request)
   if not request.account then
     return 'you must be logged in to access this'
   end
@@ -127,7 +127,7 @@ app:get('adminreports','/admin/reports',capture_errors(function(request)
 
 end))
 
-app:get('admintakedowns','/admin/takedowns',capture_errors(function(request)
+app:get('admin.takedowns','/admin/takedowns',capture_errors(function(request)
   if not request.account then
     return 'you must be logged in to access this'
   end
@@ -168,7 +168,7 @@ app:get('confirmtakedown', '/admin/takedown/:takedownID/confirm', capture_errors
 
   assert_error(imageAPI:AcknowledgeTakedown(request.session.userID, request.params.takedownID))
   assert_error(imageAPI:BanImage(request.session.userID, request.params.takedownID))
-  return {redirect_to = request.url_for( 'admintakedowns')}
+  return {redirect_to = request.url_for( 'admin.takedowns')}
 
 end))
 
@@ -193,7 +193,7 @@ app:get('canceltakedown', '/admin/takedown/:takedownID/cancel', capture_errors(f
 
   ok, err = imageAPI:BanImage(request.session.userID, request.session.takedownID)
   if ok then
-    return {redirect_to = request.url_for( 'admintakedowns')}
+    return {redirect_to = request.url_for( 'admin.takedowns')}
   else
     return 'failed:'..err
   end

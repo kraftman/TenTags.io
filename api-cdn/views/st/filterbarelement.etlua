@@ -7,7 +7,7 @@
       <span class="ti-star"></span>
     <% end %>
   </a>
-  <a href ='<%=url_for('filter',{filterlabel = filter.name})%>' class='filterbar-link'>
+  <a href ='<%=url_for('filter.view',{filterlabel = filter.name})%>' class='filterbar-link'>
     <span><%= filter.name %></span>
   </a>
 </li>

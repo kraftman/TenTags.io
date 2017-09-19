@@ -13,7 +13,7 @@
     </br>
     <span class='comment-views'><%= post.views or 0 %> views</span>
     <a class='comment-link' href="<%= url_for('viewpost',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> comments</a>
-    <a class='user-link' href="<%= url_for('viewuser',{username = post.creatorName or ''}) %>"> <%= post.creatorName -%></a>
+    <a class='user-link' href="<%= url_for('user.viewsub',{username = post.creatorName or ''}) %>"> <%= post.creatorName -%></a>
     <% if post.filters then %>
     <% for i = 1,5  do
       local filter = post.filters[i]
@@ -21,7 +21,7 @@
       <% if not filter or not filter.name then %>
         <a class ='filter-icon' href="" style='display: none'></a>
       <% else %>
-        <a class ='filter-icon' href=" <%= url_for('filter',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+        <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
       <% end %>
     <% end %>
     <% end %>

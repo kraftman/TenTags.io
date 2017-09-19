@@ -64,6 +64,7 @@ app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
   return { redirect_to = '/static/icons/notfound.png' }
 
 end))
+
 app:get('imagereload', '/i/:imageID/reload', capture_errors(function(request)
 
   if not request.session.userID then
@@ -113,7 +114,7 @@ app:match('dmca','/i/dmca/:imageID', respond_to({
     end
 
     print(request.params.imageID)
-    local image, err = imageAPI:GetImage( request.params.imageID)
+    local image = imageAPI:GetImage( request.params.imageID)
     if not image then
       return { redirect_to = '/static/icons/notfound.png' }
     end

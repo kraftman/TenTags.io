@@ -1,12 +1,12 @@
 
 <nav class='filter-nav'>
-  <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=fresh'>Fresh</a>
-  <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=new'>New</a>
-  <a href='<%= url_for("filter",{filterlabel = thisfilter.name}) %>?sortBy=best'>Best</a>
+  <a href='<%= url_for("filter.view",{filterlabel = thisfilter.name}) %>?sortBy=fresh'>Fresh</a>
+  <a href='<%= url_for("filter.view",{filterlabel = thisfilter.name}) %>?sortBy=new'>New</a>
+  <a href='<%= url_for("filter.view",{filterlabel = thisfilter.name}) %>?sortBy=best'>Best</a>
   <a href="<%= url_for('seen') %>">Seen</a>
   <a href="#" class = 'toggle-filterstyle'>Style</a>
   <% if thisfilter and (isMod or isAdmin) then %>
-    <a href='<%= url_for("updatefilter",{filterlabel = thisfilter.name}) %>'>Filter Settings</a>
+    <a href='<%= url_for("filter.edit",{filterlabel = thisfilter.name}) %>'>Filter Settings</a>
   <% end %>
 
 </nav>
@@ -22,11 +22,11 @@
 </div>
 
 <% if params.startAt and tonumber(params.startAt) >= 10 then %>
-  <a href="<%= url_for("filter",{filterlabel = params.filterlabel}) %><%= Paginate(params,'back') %>">
+  <a href="<%= url_for("filter.view",{filterlabel = params.filterlabel}) %><%= Paginate(params,'back') %>">
     Prev
   </a>
 <% end %>
 
 <% if #posts > 9 then %>
-  <a href="<%= url_for("filter",{filterlabel = params.filterlabel}) %><%= Paginate(params,'forward') %>">Next</a>
+  <a href="<%= url_for("filter.view",{filterlabel = params.filterlabel}) %><%= Paginate(params,'forward') %>">Next</a>
 <% end %>

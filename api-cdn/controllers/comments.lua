@@ -25,12 +25,12 @@ app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(f
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  
+
   local postID = request.params.postID
   local userID = request.session.userID
   local commentID = request.params.commentID
 
-  assert_error(commentAPI:DeleteComment(userID, postID, commentID))
+  commentAPI:DeleteComment(userID, postID, commentID)
   return 'deleted'
 end))
 
@@ -55,11 +55,11 @@ app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', captu
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
-  if not m.HashIsValid(request) then
+  if not HashIsValid(request) then
     return 'hashes dont match'
   end
-  assert_error(commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up'))
-  return 'success'
+  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
+    return 'success'
 end))
 
 app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', capture_errors(function(request)
@@ -70,7 +70,7 @@ app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', c
     return 'hashes dont match'
   end
 
-  assert_error(commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down'))
+  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
   return 'success'
 end))
 
@@ -87,7 +87,7 @@ app:post('newcomment','/comment/', capture_errors(function(request)
     text = request.params.commentText,
   }
   --ngx.log(ngx.ERR, to_json(request.params))
-  assert_error(commentAPI:CreateComment(request.session.userID, commentInfo))
+  commentAPI:CreateComment(request.session.userID, commentInfo)
 
   return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
 
@@ -114,7 +114,7 @@ app:match('viewcomment','/comment/:postID/:commentID', respond_to({
       id = request.params.commentID
     }
 
-    assert_error(commentAPI:EditComment(request.session.userID, commentInfo))
+    commentAPI:EditComment(request.session.userID, commentInfo)
 
     return 'created!'
 

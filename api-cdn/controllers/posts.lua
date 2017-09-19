@@ -142,7 +142,7 @@ end
 
 --========== requests
 
-app:match('newpost','/p/new', respond_to({
+app:match('post.create','/p/new', respond_to({
   GET = function(request)
     if not request.session.userID then
       return { render = 'pleaselogin' }
@@ -152,8 +152,9 @@ app:match('newpost','/p/new', respond_to({
 
     request.tags = tags
 
-    return { render = 'post.create' }
+    return { render = true }
   end,
+
   POST = function(request)
 
       if not request.session.userID then
@@ -291,8 +292,9 @@ app:match('post.view','/p/:postID', respond_to({
 
     request.GetColorForName = GetColorForName
 
-    return {render = 'post.view'}
+    return {render = true}
   end),
+
   POST = function(request)
 
     if not request.session.userID then
@@ -319,8 +321,6 @@ app:match('post.view','/p/:postID', respond_to({
     else
       return 'fail: '..err
     end
-
-
   end
 }))
 
@@ -350,14 +350,13 @@ app:match('deletepost','/p/delete/:postID', function(request)
 
 end)
 
-
-app:match('reportpost', '/p/:postID/report', respond_to({
+app:match('post.report', '/p/:postID/report', respond_to({
   GET = function(request)
     if not request.session.userID then
       return {render = 'pleaselogin'}
     end
 
-    local ok, err = postAPI:GetPost(request.session.userID, request.params.postID)
+    local ok = postAPI:GetPost(request.session.userID, request.params.postID)
     request.post = ok
     return {render = 'post.report'}
   end,
@@ -373,6 +372,7 @@ app:match('reportpost', '/p/:postID/report', respond_to({
     end
   end
 }))
+
 
 app:get('upvotetag','/post/upvotetag/:tagName/:postID',function(request)
   if not request.session.userID then
@@ -393,6 +393,7 @@ app:get('downvotetag','/post/downvotetag/:tagName/:postID',function(request)
   return 'meep'
 
 end)
+
 app:get('upvotepost','/post/:postID/upvote', function(request)
   if not request.session.userID then
     return 'You must be logged in to vote'
@@ -407,6 +408,7 @@ app:get('upvotepost','/post/:postID/upvote', function(request)
     return 'fail: ', err
   end
 end)
+
 app:get('downvotepost','/post/:postID/downvote', function(request)
   if not request.session.userID then
     return 'You must be logged in to vote'
@@ -421,6 +423,7 @@ app:get('downvotepost','/post/:postID/downvote', function(request)
     return 'fail: ', err
   end
 end)
+
 app:get('subscribepost', '/post/:postID/subscribe', function(request)
 
   if not request.session.userID then
