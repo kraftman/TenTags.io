@@ -1,13 +1,6 @@
 
-
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
-
-
 local uuid = require 'lib.uuid'
 local cache = require 'api.cache'
-local render_html = (require 'lapis.html').render_html
 
 local base = require 'api.base'
 local api = setmetatable({}, base)
@@ -18,18 +11,10 @@ local COMMENT_LENGTH_LIMIT = 2000
 local userlib = require 'lib.userlib'
 local userAPI = require 'api.users'
 
-
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
-local app = require 'app'
-
-
-
-
 
 function api:VoteComment(userID, postID, commentID,direction)
-
-	local ok, err = assert_error(self:RateLimit('VoteComment:', userID, 5, 10))
 
 	if self:UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
@@ -42,14 +27,14 @@ function api:VoteComment(userID, postID, commentID,direction)
 		direction = direction,
 		id = userID..':'..commentID
 	}
-
-	return assert_error(self.redisWrite:QueueJob('commentvote', commentVote))
+	self:QueueUpdate('comment:vote', commentVote)
+	return commentVote
 
 end
 
 function api:ConvertUserCommentToComment(userID, comment)
 
-	comment.createdBy = comment.createdBy or userID
+
 	local user = cache:GetUser(userID)
 
 	if user.role == 'Admin' and user.fakeNames then
@@ -73,16 +58,14 @@ function api:ConvertUserCommentToComment(userID, comment)
 		viewers = {comment.createdBy},
 		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
 		parentID = self:SanitiseUserInput(comment.parentID),
-		postID = self:SanitiseUserInput(comment.postID)
+		postID = self:SanitiseUserInput(comment.postID),
+		viewID = user.currentView
 	}
 
 	return newComment
 end
 
 function api:SubscribeComment(userID, postID, commentID)
-
-	assert_error(self:RateLimit('SubscribeComment:', userID, 3, 10))
-
 
 	local commentSub = {
 		userID = userID,
@@ -100,15 +83,12 @@ end
 function api:EditComment(userID, userComment)
 	-- not moving this to backend for now
 	-- fairly low cost and users want immediate updates
-	assert_error(self:RateLimit('EditComment:', userID, 4, 120))
-
 
 	if not userComment or not userComment.id or not userComment.postID then
 		return nil, 'invalid comment provided'
 	end
 
-	local comment = assert_error(cache:GetComment(userComment.postID, userComment.id))
-
+	local comment = cache:GetComment(userComment.postID, userComment.id)
 
 	if comment.createdBy ~= userID then
 		local user = cache:GetUser(userID)
@@ -117,40 +97,33 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
-
 	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-	assert_error(self.commentWrite:CreateComment(comment))
+	local postComments = cache:GetPostComments(comment.postID)
+	postComments[comment.id] = comment
+	cache:WritePostComments(comment.postID, postComments)
+	self:QueueUpdate('comment:edit', comment)
+	--assert_error(self.commentWrite:CreateComment(comment))
 
-	return assert_error(self:InvalidateKey('comment', userComment.postID))
-
+	--return assert_error(self:InvalidateKey('comment', userComment.postID))
+	print(to_json(comment))
+	return comment
 end
 
 function api:CreateComment(userID, userComment)
 
-	self:RateLimit('CreateComment:', userID, 1, 30)
-
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
-	-- queue the comment
-	assert_error(self.commentWrite:CreateComment(newComment))
+	self:InvalidateKey('comment', newComment.postID)
 
-	local user = assert_error(cache:GetUser(userID))
+	-- add our new comment to the cache
+	local postComments = cache:GetPostComments(newComment.postID)
+	postComments[newComment.id] = newComment
+	cache:WritePostComments(newComment.postID, postComments)
+	self:QueueUpdate('comment:create', newComment)
 
-
-	local commentUpdate = {
-		id = newComment.postID..':'..newComment.id,
-		postID = newComment.postID,
-		commentID = newComment.id,
-		userID = userID,
-		viewID = user.currentView
-	}
-
-	assert_error(self:InvalidateKey('comment', newComment.postID))
-	assert_error(self.redisWrite:QueueJob('CreateComment', commentUpdate))
-
-	return true
+	return newComment
 end
 
 function api:GetComment(postID, commentID)
@@ -208,10 +181,7 @@ end
 
 function api:DeleteComment(userID, postID, commentID)
 
-	assert_error(self:RateLimit('DeleteComment:', userID, 6, 60))
-
-
-	local post = assert_error(cache:GetPost(postID))
+	local post = cache:GetPost(postID)
 	if userID ~= post.createdBy then
 		local user = assert_error(cache:GetUser(userID))
 		if user.role ~= 'Admin' then
@@ -219,16 +189,20 @@ function api:DeleteComment(userID, postID, commentID)
 		end
 	end
 
-	local comment = assert_error(cache:GetComment(postID, commentID))
-	if not comment then
-		return nil, 'error loading comment'
-	end
-	comment.deleted = 'true'
-	return assert_error(self.commentWrite:UpdateComment(comment))
+	local comment = cache:GetComment(postID, commentID)
+
+	-- update cache
+	local postComments = cache:GetPostComments(comment.postID)
+	postComments[comment.id].deleted = true
+	cache:WritePostComments(comment.postID, postComments)
+
+	self:QueueUpdate('comment:delete', comment)
+
+	return comment
 
 end
 
 function api:GetPostComments(userID, postID,sortBy)
-	return assert_error(cache:GetSortedComments(userID, postID,sortBy))
+	return cache:GetSortedComments(userID, postID,sortBy)
 end
 return api

@@ -59,7 +59,6 @@ function util.RateLimit(request)
 	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 
 	if DISABLE_RATELIMIT == 'true' then
-    print('not ratelimiting')
 		return
 	end
 

@@ -80,13 +80,12 @@ end
 
 
 function M:SetKeepalive(red)
-  local ok, err = red:set_keepalive(1000, 1000)
+  local ok, err = red:set_keepalive(100, 1000)
   if not ok then
       ngx.log(ngx.ERR, "failed to set keepalive: ", err)
       return
   end
 end
-
 
 M.__index = M
 

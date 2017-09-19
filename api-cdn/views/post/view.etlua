@@ -13,7 +13,7 @@
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
-    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) %>">
+    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) %>">
       <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.id}) -%>" >
     </a>
   </div>
@@ -52,7 +52,7 @@
 
   <div class = 'panel panel-default panel-image'>
 
-    <a href="<%= post.link or url_for('viewpost',{postID = post.shortURL or post.id}) -%>">
+    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/image/<%= post.id %>" >
     </a>
   </div>
@@ -142,17 +142,17 @@
   <div class = 'panel panel-default post-comments'>
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >
-    <option value="<%= url_for('viewpost',{postID = post.id})%>?sort=best"
+    <option value="<%= url_for('post.view',{postID = post.id})%>?sort=best"
       <% if not params or params.sort == 'best' then %>
         selected = 'selected'
       <% end %>
     >Best</option>
-    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=new"
+    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=new"
       <% if params.sort == 'new' then %>
         selected = 'selected'
       <% end %>
     >New</option>
-    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=top"
+    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=top"
       <% if not params or params.sort == 'top' then %>
         selected = 'selected'
       <% end %>

@@ -21,7 +21,7 @@ local function HashIsValid(request)
 end
 
 
-app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(function(request)
+app:match('deletecomment','/c/delete/:postID/:commentID', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
@@ -30,25 +30,50 @@ app:match('deletecomment','/comment/delete/:postID/:commentID', capture_errors(f
   local userID = request.session.userID
   local commentID = request.params.commentID
 
-  commentAPI:DeleteComment(userID, postID, commentID)
-  return 'deleted'
+  local comment = commentAPI:DeleteComment(userID, postID, commentID)
+  return {redirect_to = request:url_for('post.view', {postID = comment.postID})}
 end))
 
+local EditComment = capture_errors(function(request)
+  if not request.session.userID then
+    return {render = 'pleaselogin'}
+  end
+
+  local comment = {
+    postID = request.params.postID,
+    text = request.params.commentText,
+    id = request.params.commentID
+  }
+
+  if request.params.commentShortURL then
+    comment = commentAPI:GetComment(request.params.commentShortURL)
+    comment.text = request.params.commentText
+    print('setting comment text to ', request.params.commentText)
+  end
 
 
-app:get('viewcommentshort','/c/:commentShortURL', capture_errors(function(request)
+  comment = commentAPI:EditComment(request.session.userID, comment)
+
+  return {redirect_to = request:url_for('viewcommentshort', {commentShortURL = comment.shortURL})}
+
+end)
+
+app:match('viewcommentshort','/c/:commentShortURL', respond_to({
+  GET = capture_errors(function(request)
   request.commentInfo = commentAPI:GetComment(request.params.commentShortURL)
   request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
-  ngx.log(ngx.ERR, to_json(request.commentInfo))
   return {render = 'viewcomment'}
-end))
+  end),
+  POST = EditComment
+}))
+
 app:get('subscribecomment','/comment/subscribe/:postID/:commentID', capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end
   commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
-  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+  return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
 end))
 
 app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', capture_errors(function(request)
@@ -89,7 +114,7 @@ app:post('newcomment','/comment/', capture_errors(function(request)
   --ngx.log(ngx.ERR, to_json(request.params))
   commentAPI:CreateComment(request.session.userID, commentInfo)
 
-  return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+  return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
 
 end))
 
@@ -99,24 +124,9 @@ app:match('viewcomment','/comment/:postID/:commentID', respond_to({
 
     request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
     if request.commentInfo.shortURL then
-    return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
+      return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }
     end
     return {render = 'viewcomment'}
   end),
-  POST = capture_errors(function(request)
-    if not request.session.userID then
-      return {render = 'pleaselogin'}
-    end
-
-    local commentInfo = {
-      postID = request.params.postID,
-      text = request.params.commentText,
-      id = request.params.commentID
-    }
-
-    commentAPI:EditComment(request.session.userID, commentInfo)
-
-    return 'created!'
-
-  end)
+  POST = EditComment
 }))

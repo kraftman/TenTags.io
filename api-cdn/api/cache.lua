@@ -2,6 +2,8 @@
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
+local cjson = require("cjson")
+cjson.encode_sparse_array(true)
 
 --[[
 caching the most with the leas
@@ -174,6 +176,12 @@ function cache:SearchPost(queryString)
 
   return from_json(results)
 
+end
+
+function cache:UpdateKey(key, object)
+  if key == 'post' then
+    self:WritePost(object)
+  end
 end
 
 function cache:PurgeKey(keyInfo)
@@ -385,26 +393,29 @@ function cache:GetUsername(userID)
   end
 end
 
+function cache:WritePostComments(postID, postComments)
+  assert_error(commentDict:set(postID, to_json(postComments),DEFAULT_CACHE_TIME))
+end
+
 function cache:GetPostComments(postID)
 
-  local ok, err,flatComments
+  local ok, err, flatComments
 
   if ENABLE_CACHE then
-    ok = assert_error(commentDict:get(postID))
+    ok = commentDict:get(postID)
 
     if ok then
       return from_json(ok)
     end
   end
 
-  flatComments = assert_error(commentRead:GetPostComments(postID))
+  flatComments = commentRead:GetPostComments(postID)
 
 
   for k,v in pairs(flatComments) do
     flatComments[k] = from_json(v)
   end
-
-  assert_error(commentDict:set(postID, to_json(flatComments),DEFAULT_CACHE_TIME))
+  self:WritePostComments(postID, flatComments)
 
   return flatComments
 
@@ -521,6 +532,21 @@ function cache:GetPosts(postIDs)
 
 end
 
+function cache:WritePost(post)
+
+  if not post then
+    postDict:delete(post.id)
+    return
+  end
+
+  local ok, err = postDict:set(post.id, cjson.encode(post))
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to set postDict: ',err)
+  end
+
+  return ok
+end
+
 function cache:GetPost(postID)
   local ok, err, post
 
@@ -532,6 +558,7 @@ function cache:GetPost(postID)
   end
 
   if ENABLE_CACHE then
+
     ok, err = postDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -542,17 +569,16 @@ function cache:GetPost(postID)
   end
 
   if not post then
+
     post, err = redisRead:GetPost(postID)
 
     if err then
-      return result, err
+      return post, err
     end
+
     post.creatorName = self:GetUsername(post.createdBy) or 'unknown'
 
-    ok, err = postDict:set(postID,to_json(post))
-    if not ok then
-      ngx.log(ngx.ERR, 'unable to set postDict: ',err)
-    end
+    self:WritePost(post)
   end
   return post
 
@@ -935,13 +961,10 @@ function cache:GetUserFrontPage(userID, viewID, sortBy,startAt, range)
   return distinctPosts
 end
 
-
 function cache:GetTag(tagName)
   local tag = redisRead:GetTag(tagName)
   return tag
 end
-
-
 
 function cache:GetViewFilterIDs(viewID)
   local ok, err, res

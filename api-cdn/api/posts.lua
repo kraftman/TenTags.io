@@ -1,7 +1,6 @@
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
+local yield_error, assert_error = app_helpers.yield_error, app_helpers.assert_error
 
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
@@ -132,7 +131,6 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-
   local postVote = {
     userID = userID,
     postID = postID,
@@ -144,9 +142,10 @@ function api:VotePost(userID, postID, direction)
 	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
+  self:QueueUpdate('post:vote', postVote)
 
-  return self.redisWrite:QueueJob('votepost',postVote)
-
+  --return self.redisWrite:QueueJob('votepost',postVote)
+  return postVote
 end
 
 function api:SubscribePost(userID, postID)
@@ -169,10 +168,9 @@ end
 
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
-		--print(tagName)
 
 		tagName = trim(tagName:lower())
-		postInfo.tags[k] = tagAPI:CreateTag(postInfo.createdBy, tagName)
+		postInfo.tags[k] = {name = tagName}
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
@@ -227,7 +225,9 @@ function api:DeletePost(userID, postID)
 		end
 	end
 
-	return self.redisWrite:DeletePost(postID)
+  cache:UpdateKey('post', nil)
+  self:QueueUpdate('post:delete', post)
+  return post
 
 end
 
@@ -260,7 +260,7 @@ function api:EditPost(userID, userPost)
 
 	local post = cache:GetPost(userPost.id)
 
-
+  -- check permissions
 	if post.createdBy ~= userID then
 		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
@@ -273,7 +273,7 @@ function api:EditPost(userID, userPost)
 		post.title = self:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
 	end
 
-  -- save EditPost
+  -- update the post edits
   local newText = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
   if post.text ~= newText then
     -- save the edit history
@@ -282,126 +282,16 @@ function api:EditPost(userID, userPost)
   end
 
 	post.text = newText
-  print('setting new text to',newText)
 	post.editedAt = ngx.time()
 
-
-	self.redisWrite:CreatePost(post)
-
-  return self:InvalidateKey('post', post.id)
+	--self.redisWrite:CreatePost(post)
+  cache:UpdateKey('post', post)
+  self:QueueUpdate('post:edit', post)
+  return post
+  --return self:InvalidateKey('post', post.id)
 end
 
--- sanitise user input
-function api:ConvertUserPostToPost(userID, post)
 
-	if not userID then
-		return nil, 'no userID'
-	end
-	if not post then
-		return nil, 'no post info'
-	end
-
-	post.createdBy = post.createdBy or userID
-  local user = cache:GetUser(userID)
-  if user.role == 'Admin' and user.fakeNames then
-
-    local account = cache:GetAccount(user.parentID)
-    local newUserName = userlib:GetRandom()
-
-    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUser(cache:GetUserID(newUserName))
-    if user then
-      post.createdBy = user.id
-    end
-  else
-    post.createdBy = userID
-  end
-
-	local newID = uuid.generate_random()
-
-	local newPost = {
-		id = newID,
-		parentID = newID,
-		createdBy = post.createdBy,
-		commentCount = 0,
-		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
-		link = self:SanitiseUserInput(post.link, 2083),
-		text = self:SanitiseUserInput(post.text, 2000),
-		createdAt = ngx.time(),
-		filters = {},
-    bbID = post.bbID,
-    images = post.images,
-	}
-	if newPost.link:gsub(' ','') == '' then
-		newPost.link = nil
-	end
-
-  if post.images and #post.images > 1 then
-
-  end
-
-	newPost.tags = {}
-	if post.tags == ngx.null then
-		return nil, 'post needs tags!'
-	end
-
-	if not post.tags then
-		return nil, 'post has no tags!'
-	end
-
-	for _,v in pairs(post.tags) do
-		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
-	end
-
-  for k,tagName in pairs(newPost.tags) do
-		if tagName:find('^meta:') then
-			newPost.tags[k] = ''
-		end
-	end
-
-  if (not post.link) or trim(post.link) == '' then
-    if post.images then
-      if #post.images > 1 then
-        newPost.postType = 'self-image'
-        tinsert(newPost.tags,'meta:self-image')
-      else
-        newPost.postType = 'self-image'
-        tinsert(newPost.tags,'meta:self-image-album')
-      end
-    else
-      newPost.postType = 'self'
-      tinsert(newPost.tags,'meta:self')
-    end
-  end
-	tinsert(newPost.tags, 'meta:all')
-  tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
-  if user.role == 'Admin' then
-    tinsert(newPost.tags, 'meta:admin')
-  end
-
-  if newPost.bbID then
-    print(ngx.var.host)
-    newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
-  end
-
-  if newPost.link then
-
-    local domain  = self:GetDomain(newPost.link)
-    if not domain then
-      ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
-      return nil, 'invalid url'
-    end
-
-    newPost.domain = domain
-    tinsert(newPost.tags,'meta:link:'..newPost.link)
-    tinsert(newPost.tags,'meta:domain:'..domain)
-  end
-
-  newPost.viewers = {userID}
-
-
-	return newPost
-
-end
 
 function api:GetUserPosts(userID, targetUserID, startAt, range)
   startAt = startAt or 0 -- 0 index for redis
@@ -429,20 +319,119 @@ function api:AddImage(postID, bbID)
   return self.redisWrite:AddImage(postID, bbID)
 end
 
-function api:CreatePost(userID, postInfo)
+function api:CreatePost(userID, post)
 
-
-	local newPost = self:ConvertUserPostToPost(userID, postInfo)
+	local newPost = self:ConvertUserPostToPost(userID, post)
 
   self:CreatePostTags(userID, newPost)
-  self.redisWrite:CreatePost(newPost)
 
+  --self.redisWrite:CreatePost(newPost)
+  -- add the post to our local cache
 
-  local info = {
-    id = newPost.id
-  }
+  cache:UpdateKey('post', newPost)
+  self:QueueUpdate('post:create', newPost)
+  -- queue the post up for processing and adding to redis
+  --self.redisWrite:QueueJob('CreatePost', info)
+  return newPost
 
-  return self.redisWrite:QueueJob('CreatePost', info)
+end
+
+function api:DodgyAdminHack(user, post)
+  if user.role == 'Admin' and user.fakeNames then
+
+    local account = cache:GetAccount(user.parentID)
+    local newUserName = userlib:GetRandom()
+
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUser(cache:GetUserID(newUserName))
+    if user then
+      post.createdBy = user.id
+    end
+  end
+end
+
+function api:ConvertUserPostToPost(userID, post)
+	post.createdBy = post.createdBy or userID
+
+  local user = cache:GetUser(userID)
+
+  -- add fake user if needed
+  self:DodgyAdminHack(user, post)
+
+	local newID = uuid.generate_random()
+
+	local newPost = {
+		id = newID,
+		parentID = newID,
+		createdBy = post.createdBy,
+		commentCount = 0,
+		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
+		link = self:SanitiseUserInput(post.link, 2083),
+		text = self:SanitiseUserInput(post.text, 2000),
+		createdAt = ngx.time(),
+		filters = {},
+    bbID = post.bbID,
+    images = post.images,
+	}
+	if newPost.link:gsub(' ','') == '' then
+		newPost.link = nil
+	end
+
+	newPost.tags = {}
+	if post.tags == ngx.null  or not post.tags then
+		yield_error('post needs tags!')
+	end
+
+	for _,v in pairs(post.tags) do
+		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
+	end
+
+  -- remove any fake meta tags they may have added
+  for k,tagName in pairs(newPost.tags) do
+		if tagName:find('^meta:') then
+			newPost.tags[k] = ''
+		end
+	end
+
+  if (not post.link) or trim(post.link) == '' then
+    if post.images then
+      if #post.images > 1 then
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image')
+      else
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image-album')
+      end
+    else
+      newPost.postType = 'self'
+      tinsert(newPost.tags,'meta:self')
+    end
+  end
+	tinsert(newPost.tags, 'meta:all')
+  tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
+  if user.role == 'Admin' then
+    tinsert(newPost.tags, 'meta:admin')
+  end
+
+  if newPost.bbID then
+    newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
+  end
+
+  if newPost.link then
+
+    local domain  = self:GetDomain(newPost.link)
+    if not domain then
+      ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
+      return nil, 'invalid url'
+    end
+
+    newPost.domain = domain
+    tinsert(newPost.tags,'meta:link:'..newPost.link)
+    tinsert(newPost.tags,'meta:domain:'..domain)
+  end
+
+  newPost.viewers = {userID}
+
+	return newPost
 
 end
 

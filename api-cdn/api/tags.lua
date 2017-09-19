@@ -76,14 +76,6 @@ function api:CreateTag(userID, tagName)
     name = tagName
   }
 
-  local existingTag = self.redisWrite:CreateTag(tagInfo)
-	-- tag might exist but not be in cache
-
-	if existingTag and existingTag ~= true then
-		print('tag exists')
-		return existingTag
-	end
-
   return tagInfo
 end
 

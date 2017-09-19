@@ -1,6 +1,6 @@
 
 <div class = 'panel panel-default'>
-  <a  href="<%= url_for('viewpost',{postID = result.shortURL or result.id}) -%>">
+  <a  href="<%= url_for('post.view',{postID = result.shortURL or result.id}) -%>">
      <h3><%= result.title %></h3>
   </a>
 

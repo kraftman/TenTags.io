@@ -8,9 +8,6 @@ local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local imageAPI = require 'api.images'
 local util = require("lapis.util")
-local assert_valid = require("lapis.validate").assert_valid
-local uuid = require 'lib.uuid'
-local bb = require('lib.backblaze')
 local app_helpers = require("lapis.application")
 
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
@@ -25,7 +22,6 @@ my_whitelist.tags.img = false
 local sanitize_html = Sanitizer({whitelist = my_whitelist})
 
 local from_json = util.from_json
-local to_json = util.to_json
 
 
 local respond_to = (require 'lapis.application').respond_to
@@ -117,7 +113,7 @@ local function AddTag(request)
 
   local ok, err = postAPI:AddPostTag(userID, postID, tagName)
   if ok then
-    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+    return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
   else
     print('failed: ',err)
     return 'failed: '..err
@@ -206,7 +202,7 @@ app:match('post.create','/p/new', respond_to({
       if newPost then
         print('returning new post')
         return {json = {error = false, data = newPost}}
-        --return {redirect_to = request:url_for("viewpost",{postID = newPost.id})}
+        --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
       else
         ngx.log(ngx.ERR, 'error from api: ',err or 'none')
         return 'error creating post: '.. err
@@ -222,17 +218,17 @@ app:match('post.view','/p/:postID', respond_to({
     local userID = request.session.userID or 'default'
     local postID = request.params.postID
 
-    local post = assert_error(postAPI:GetPost(userID, postID))
+    local post = postAPI:GetPost(userID, postID)
 
     request.page_title = post.title
 
     if (#postID > 10) and post.shortURL then
-      return { redirect_to = request:url_for("viewpost",{postID = post.shortURL}) }
+      return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
     end
     postID = post.id
+    local comments = commentAPI:GetPostComments(userID, postID, sortBy)
 
-    local comments = assert_error(commentAPI:GetPostComments(userID, postID,sortBy))
-
+    -- add comments to post
     for _,v in pairs(comments) do
       -- one of the 'comments' is actually the postID
       -- may shift this to api later
@@ -245,18 +241,21 @@ app:match('post.view','/p/:postID', respond_to({
       end
     end
 
-    for k,v in pairs(post.viewers) do
+    request.comments = comments
+
+    -- get usernames
+    for _,v in pairs(post.viewers) do
       if v == userID then
         request.userSubbed = true
         break
       end
     end
 
+    -- get images
     for k,v in pairs(post.images) do
       post.images[k] = imageAPI:GetImage( v)
     end
 
-    request.comments = comments
 
     for _,v in pairs(post.tags) do
       if v.name:find('^meta:sourcePost:') then
@@ -265,12 +264,10 @@ app:match('post.view','/p/:postID', respond_to({
         local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
 
         if sourcePostID then
-          print(v.name, sourcePostID)
 
-          local parentPost = (postAPI:GetPost(userID, sourcePostID))
+          local parentPost = postAPI:GetPost(userID, sourcePostID)
 
           if v.name and parentPost and parentPost.title then
-            print(parentPost.title)
             v.fakeName = parentPost.title
             v.postID = sourcePostID
           end
@@ -287,9 +284,7 @@ app:match('post.view','/p/:postID', respond_to({
     end
 
     request.post = post
-
     request.GetColorForDepth = GetColorForDepth
-
     request.GetColorForName = GetColorForName
 
     return {render = true}
@@ -317,7 +312,7 @@ app:match('post.view','/p/:postID', respond_to({
 
     local ok,err = postAPI:EditPost(request.session.userID, post)
     if ok then
-      return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+      return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
     else
       return 'fail: '..err
     end
@@ -431,7 +426,7 @@ app:get('subscribepost', '/post/:postID/subscribe', function(request)
   end
   local ok, err = postAPI:SubscribePost(request.session.userID,request.params.postID)
   if ok then
-    return { redirect_to = request:url_for("viewpost",{postID = request.params.postID}) }
+    return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
   else
     return 'error subscribing: '..err
   end

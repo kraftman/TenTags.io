@@ -9,9 +9,12 @@ config.cjson = require 'cjson'
 local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
+
+local updateDict = ngx.shared.updateQueue
 local tinsert = table.insert
 local TAG_BOUNDARY = 0.25
 local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
 local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
@@ -52,13 +55,17 @@ function config.Run(_,self)
   -- no need to lock since we should be grabbing a different one each time anyway
 	self.startTime = ngx.now()
   self:ProcessJob('CheckReposts', 'CheckReposts')
-	self:ProcessJob('CreatePost', 'CreatePost')
 	self:ProcessJob('votepost', 'VotePost')
 	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
 	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
 	self:ProcessJob('ReIndexPost', 'ReIndexPost')
 	self:EmptyOldFilters()
 	self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
+
+	self:GetNewPosts()
+	self:GetPostEdits()
+	self:GetPostDeletions()
+	self:GetPostVotes()
 
 end
 
@@ -95,14 +102,13 @@ end
 
 function config:VotePost(postVote)
 
+	--[[
+		when we vote down a post as a whole we are saying
+		'this post is not good enough to be under these filters'
+		or 'the tags this post has that match the filters i care about are
+		not good'
 
-	  	--[[
-	  		when we vote down a post as a whole we are saying
-	  		'this post is not good enough to be under these filters'
-	  		or 'the tags this post has that match the filters i care about are
-	  		not good'
-
-	  	]]
+	]]
 
 	local user = cache:GetUser(postVote.userID)
 	if userAPI:UserHasVotedPost(postVote.userID, postVote.postID) then
@@ -137,7 +143,7 @@ function config:VotePost(postVote)
 	self.redisWrite:UpdatePostTags(post)
 
 
-	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	ok, err = self.userWrite:AddUserPostVotes(postVote.userID, post.createdAt, postVote.postID, postVote.direction)
@@ -146,7 +152,9 @@ function config:VotePost(postVote)
 	end
 	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
 	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
-	print('purged cache')
+	if not ok then
+		print('couldnt invalidate key post: ', err)
+	end
 
 	return true
 
@@ -180,13 +188,77 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 	return score / count
 end
 
-function config:CreatePost(post)
-	post = self.redisRead:GetPost(post.id)
-	if not post then
-		return nil, 'couldnt load post'
+function config:GetNewPosts()
+	local ok, err = updateDict:rpop('post:create')
+	if not ok then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
 	end
 
+	print('creating post ', ok)
+	ok = from_json(ok)
+
+	self:CreatePost(ok)
+end
+
+function config:GetPostEdits()
+	local post, err = updateDict:rpop('post:edit')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	print('creating post ', post)
+	post = from_json(post)
+	local ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	ok, err = self.redisWrite:InvalidateKey('post', post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	--self:CreatePost(ok)
+end
+
+function config:GetPostDeletions()
+	local post, err = updateDict:rpop('post:delete')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	post = from_json(post)
+	local ok, err = self.redisWrite:DeletePost(post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error deleting the post: ')
+	end
+end
+
+function config:GetPostDeletions()
+	local postVote, err = updateDict:rpop('post:vote')
+	if not postVote then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	postVote = from_json(postVote)
+	self:VotePost(postVote)
+end
+
+function config:CreatePost(post)
+
 	local ok, err
+	ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'couldnt create new post:', err)
+	end
 
 	-- add stats, but dont return if they fail
 	ok, err = self.userWrite:IncrementUserStat(post.createdBy, 'PostsCreated', 1)
