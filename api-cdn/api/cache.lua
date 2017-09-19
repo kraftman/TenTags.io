@@ -2,6 +2,8 @@
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
+local cjson = require("cjson")
+cjson.encode_sparse_array(true)
 
 --[[
 caching the most with the leas
@@ -48,7 +50,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = os.getenv('ENABLE_CACHE')
+local ENABLE_CACHE = true --os.getenv('ENABLE_CACHE')
 
 
 function cache:GetThread(threadID)
@@ -528,7 +530,13 @@ function cache:GetPosts(postIDs)
 end
 
 function cache:WritePost(post)
-  local ok, err = postDict:set(post.id, to_json(post))
+
+  if not post then
+    postDict:delete(post.id)
+    return
+  end
+
+  local ok, err = postDict:set(post.id, cjson.encode(post))
   if not ok then
     ngx.log(ngx.ERR, 'unable to set postDict: ',err)
   end
@@ -547,7 +555,7 @@ function cache:GetPost(postID)
   end
 
   if ENABLE_CACHE then
-    
+
     ok, err = postDict:get(postID)
     if err then
       ngx.log(ngx.ERR, 'unable to load post info: ', err)
@@ -564,6 +572,7 @@ function cache:GetPost(postID)
     if err then
       return post, err
     end
+    print(to_json(post))
     post.creatorName = self:GetUsername(post.createdBy) or 'unknown'
 
     self:WritePost(post)

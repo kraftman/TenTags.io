@@ -8,6 +8,8 @@ local updateDict = ngx.shared.updateQueue
 local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
 
+local cjson = require("cjson")
+
 local M = {}
 local db = require 'redis.db'
 
@@ -35,7 +37,8 @@ end
 
 function M:QueueUpdate(key, object)
 	print('writing ', key, ' to update q')
-	local ok, err = updateDict:lpush(key, to_json(object))
+	  cjson.encode_sparse_array(true)
+	local ok, err = updateDict:lpush(key, cjson.encode(object))
 	if not ok then
 		print(err)
 	end

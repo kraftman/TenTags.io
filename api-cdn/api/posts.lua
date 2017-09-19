@@ -1,7 +1,6 @@
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
+local yield_error, assert_error = app_helpers.yield_error, app_helpers.assert_error
 
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
@@ -226,7 +225,9 @@ function api:DeletePost(userID, postID)
 		end
 	end
 
-	return self.redisWrite:DeletePost(postID)
+  cache:UpdateKey('post', nil)
+  self:QueueUpdate('post:delete', post)
+  return post
 
 end
 
@@ -259,7 +260,7 @@ function api:EditPost(userID, userPost)
 
 	local post = cache:GetPost(userPost.id)
 
-
+  -- check permissions
 	if post.createdBy ~= userID then
 		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
@@ -272,7 +273,7 @@ function api:EditPost(userID, userPost)
 		post.title = self:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
 	end
 
-  -- save EditPost
+  -- update the post edits
   local newText = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
   if post.text ~= newText then
     -- save the edit history
@@ -281,20 +282,62 @@ function api:EditPost(userID, userPost)
   end
 
 	post.text = newText
-  print('setting new text to',newText)
 	post.editedAt = ngx.time()
 
-
-	self.redisWrite:CreatePost(post)
-
-  return self:InvalidateKey('post', post.id)
+	--self.redisWrite:CreatePost(post)
+  cache:UpdateKey('post', post)
+  self:QueueUpdate('post:edit', post)
+  return post
+  --return self:InvalidateKey('post', post.id)
 end
 
--- sanitise user input
-function api:ConvertUserPostToPost(userID, post)
 
-	post.createdBy = post.createdBy or userID
-  local user = cache:GetUser(userID)
+
+function api:GetUserPosts(userID, targetUserID, startAt, range)
+  startAt = startAt or 0 -- 0 index for redis
+  range = range or 20
+
+  -- check if they allow it
+  local targetUser = cache:GetUser(targetUserID)
+  if not targetUser then
+    return nil, 'could not find user by ID '..targetUserID
+  end
+
+  if targetUser.hidePosts then
+    local user = cache:GetUser(userID)
+    if not user.role == 'Admin' then
+      return nil, 'user has disabled comment viewing'
+    end
+  end
+
+  return cache:GetUserPosts(targetUserID, startAt, range)
+
+end
+
+
+function api:AddImage(postID, bbID)
+  return self.redisWrite:AddImage(postID, bbID)
+end
+
+function api:CreatePost(userID, post)
+  print(userID)
+
+	local newPost = self:ConvertUserPostToPost(userID, post)
+
+  self:CreatePostTags(userID, newPost)
+
+  --self.redisWrite:CreatePost(newPost)
+  -- add the post to our local cache
+
+  cache:UpdateKey('post', newPost)
+  self:QueueUpdate('post:create', newPost)
+  -- queue the post up for processing and adding to redis
+  --self.redisWrite:QueueJob('CreatePost', info)
+  return newPost
+
+end
+
+function api:DodgyAdminHack(user, post)
   if user.role == 'Admin' and user.fakeNames then
 
     local account = cache:GetAccount(user.parentID)
@@ -304,9 +347,17 @@ function api:ConvertUserPostToPost(userID, post)
     if user then
       post.createdBy = user.id
     end
-  else
-    post.createdBy = userID
   end
+end
+
+function api:ConvertUserPostToPost(userID, post)
+  print(userID)
+	post.createdBy = post.createdBy or userID
+
+  local user = cache:GetUser(userID)
+
+  -- add fake user if needed
+  self:DodgyAdminHack(user, post)
 
 	local newID = uuid.generate_random()
 
@@ -336,6 +387,7 @@ function api:ConvertUserPostToPost(userID, post)
 		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
 	end
 
+  -- remove any fake meta tags they may have added
   for k,tagName in pairs(newPost.tags) do
 		if tagName:find('^meta:') then
 			newPost.tags[k] = ''
@@ -382,51 +434,7 @@ function api:ConvertUserPostToPost(userID, post)
 
   newPost.viewers = {userID}
 
-
 	return newPost
-
-end
-
-function api:GetUserPosts(userID, targetUserID, startAt, range)
-  startAt = startAt or 0 -- 0 index for redis
-  range = range or 20
-
-  -- check if they allow it
-  local targetUser = cache:GetUser(targetUserID)
-  if not targetUser then
-    return nil, 'could not find user by ID '..targetUserID
-  end
-
-  if targetUser.hidePosts then
-    local user = cache:GetUser(userID)
-    if not user.role == 'Admin' then
-      return nil, 'user has disabled comment viewing'
-    end
-  end
-
-  return cache:GetUserPosts(targetUserID, startAt, range)
-
-end
-
-
-function api:AddImage(postID, bbID)
-  return self.redisWrite:AddImage(postID, bbID)
-end
-
-function api:CreatePost(userID, postInfo)
-
-	local newPost = self:ConvertUserPostToPost(userID, postInfo)
-
-  self:CreatePostTags(userID, newPost)
-
-  --self.redisWrite:CreatePost(newPost)
-  -- add the post to our local cache
-
-  cache:UpdateKey('post', newPost)
-  self:QueueUpdate('post:create', newPost)
-  -- queue the post up for processing and adding to redis
-  --self.redisWrite:QueueJob('CreatePost', info)
-  return newPost
 
 end
 

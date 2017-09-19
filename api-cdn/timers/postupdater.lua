@@ -63,6 +63,7 @@ function config.Run(_,self)
 	self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
 
 	self:GetNewPosts()
+	self:GetPostEdits()
 
 end
 
@@ -197,6 +198,43 @@ function config:GetNewPosts()
 	ok = from_json(ok)
 
 	self:CreatePost(ok)
+end
+
+function config:GetPostEdits()
+	local post, err = updateDict:rpop('post:edit')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	print('creating post ', post)
+	post = from_json(post)
+	local ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	ok, err = self.redisWrite:InvalidateKey('post', post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	--self:CreatePost(ok)
+end
+
+function config:GetPostDeletions()
+	local post, err = updateDict:rpop('post:delete')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	post = from_json(post)
+	local ok, err = self.redisWrite:DeletePost(post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error deleting the post: ')
+	end
 end
 
 function config:CreatePost(post)
