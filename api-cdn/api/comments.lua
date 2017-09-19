@@ -88,8 +88,7 @@ function api:EditComment(userID, userComment)
 		return nil, 'invalid comment provided'
 	end
 
-	local comment = assert_error(cache:GetComment(userComment.postID, userComment.id))
-
+	local comment = cache:GetComment(userComment.postID, userComment.id)
 
 	if comment.createdBy ~= userID then
 		local user = cache:GetUser(userID)
@@ -98,43 +97,31 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
-
 	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
-	assert_error(self.commentWrite:CreateComment(comment))
+	local postComments = cache:GetPostComments(comment.postID)
+	postComments[comment.id] = comment
+	cache:WritePostComments(comment.postID, postComments)
+	self:QueueUpdate('comment:edit', comment)
+	--assert_error(self.commentWrite:CreateComment(comment))
 
-	return assert_error(self:InvalidateKey('comment', userComment.postID))
-
+	--return assert_error(self:InvalidateKey('comment', userComment.postID))
+	print(to_json(comment))
+	return comment
 end
 
 function api:CreateComment(userID, userComment)
 
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
 
-	-- queue the comment
-	--self.commentWrite:CreateComment(newComment)
-
-	local user = assert_error(cache:GetUser(userID))
-
-	-- local commentUpdate = {
-	-- 	id = newComment.postID..':'..newComment.id,
-	-- 	postID = newComment.postID,
-	-- 	commentID = newComment.id,
-	-- 	userID = userID,
-	-- 	viewID = user.currentView
-	-- }
-
 	self:InvalidateKey('comment', newComment.postID)
 
-	-- need to get all of the post comments
-	-- add ours
-	-- save that back to cache
+	-- add our new comment to the cache
 	local postComments = cache:GetPostComments(newComment.postID)
-	table.insert(postComments, newComment)
+	postComments[newComment.id] = newComment
 	cache:WritePostComments(newComment.postID, postComments)
 	self:QueueUpdate('comment:create', newComment)
-	--self.redisWrite:QueueJob('CreateComment', commentUpdate)
 
 	return newComment
 end

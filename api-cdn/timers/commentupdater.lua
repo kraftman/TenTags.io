@@ -43,6 +43,7 @@ function config.Run(_,self)
 
 
   self:GetNewComments()
+  self:GetCommentEdits()
 
 end
 
@@ -58,6 +59,29 @@ function config:GetNewComments()
 	comment = from_json(comment)
 
 	self:CreateComment(comment)
+end
+
+function config:GetCommentEdits()
+	local comment, err = updateDict:rpop('comment:edit')
+	if not comment then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	comment = from_json(comment)
+
+  local ok, err = self.commentWrite:CreateComment(comment)
+  if not ok then
+    ngx.log(ngx.ERR, 'couldnt update comment: ', err)
+  end
+
+  ok, err = self.redisWrite:InvalidateKey('comment', comment.postID)
+  if not ok then
+    ngx.log(ngx.ERR, 'couldnt invalidate cache: ', err)
+  end
+
 end
 
 
