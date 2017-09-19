@@ -131,7 +131,6 @@ end
 
 function api:VotePost(userID, postID, direction)
 
-
   local postVote = {
     userID = userID,
     postID = postID,
@@ -143,9 +142,10 @@ function api:VotePost(userID, postID, direction)
 	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
+  self:QueueUpdate('post:vote', postVote)
 
-  return self.redisWrite:QueueJob('votepost',postVote)
-
+  --return self.redisWrite:QueueJob('votepost',postVote)
+  return postVote
 end
 
 function api:SubscribePost(userID, postID)

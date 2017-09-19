@@ -64,6 +64,8 @@ function config.Run(_,self)
 
 	self:GetNewPosts()
 	self:GetPostEdits()
+	self:GetPostDeletions()
+	self:GetPostVotes()
 
 end
 
@@ -100,14 +102,13 @@ end
 
 function config:VotePost(postVote)
 
+	--[[
+		when we vote down a post as a whole we are saying
+		'this post is not good enough to be under these filters'
+		or 'the tags this post has that match the filters i care about are
+		not good'
 
-	  	--[[
-	  		when we vote down a post as a whole we are saying
-	  		'this post is not good enough to be under these filters'
-	  		or 'the tags this post has that match the filters i care about are
-	  		not good'
-
-	  	]]
+	]]
 
 	local user = cache:GetUser(postVote.userID)
 	if userAPI:UserHasVotedPost(postVote.userID, postVote.postID) then
@@ -235,6 +236,18 @@ function config:GetPostDeletions()
 	if not ok then
 		ngx.log(ngx.ERR, 'error deleting the post: ')
 	end
+end
+
+function config:GetPostDeletions()
+	local postVote, err = updateDict:rpop('post:vote')
+	if not postVote then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	postVote = from_json(postVote)
+	self:VotePost(postVote)
 end
 
 function config:CreatePost(post)
