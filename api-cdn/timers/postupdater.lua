@@ -143,7 +143,7 @@ function config:VotePost(postVote)
 	self.redisWrite:UpdatePostTags(post)
 
 
-	ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	ok, err = self.userWrite:AddUserPostVotes(postVote.userID, post.createdAt, postVote.postID, postVote.direction)
@@ -152,7 +152,9 @@ function config:VotePost(postVote)
 	end
 	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
 	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
-	print('purged cache')
+	if not ok then
+		print('couldnt invalidate key post: ', err)
+	end
 
 	return true
 

@@ -27,8 +27,8 @@ function api:VoteComment(userID, postID, commentID,direction)
 		direction = direction,
 		id = userID..':'..commentID
 	}
-
-	return assert_error(self.redisWrite:QueueJob('commentvote', commentVote))
+	self:QueueUpdate('comment:vote', commentVote)
+	return commentVote
 
 end
 

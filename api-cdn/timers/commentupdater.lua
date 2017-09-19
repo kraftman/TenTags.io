@@ -37,7 +37,7 @@ function config.Run(_,self)
 
   -- no need to lock since we should be grabbing a different one each time anyway
   self.startTime = ngx.now()
-  self:ProcessJob('commentvote', 'ProcessCommentVote')
+  --self:ProcessJob('commentvote', 'ProcessCommentVote')
   self:ProcessJob('commentsub', 'ProcessCommentSub')
   self:ProcessJob('CreateComment', 'CreateComment')
 
@@ -45,6 +45,7 @@ function config.Run(_,self)
   self:GetNewComments()
   self:GetCommentEdits()
   self:GetCommentDeletions()
+  self:GetCommentVotes()
 
 end
 
@@ -95,7 +96,7 @@ function config:GetCommentDeletions()
 	end
 
   comment = from_json(comment)
-  
+
   local ok, err = self.commentWrite:UpdateCommentField(comment.postID, comment.id, 'deleted', 'true')
   if not ok then
     ngx.log(ngx.ERR, 'unable to update comment: ', err)
@@ -105,6 +106,20 @@ function config:GetCommentDeletions()
   if not ok then
     ngx.log(ngx.ERR, 'unable to flush comment: ', err)
   end
+
+end
+
+function config:GetCommentDeletions()
+  local commentVote, err = updateDict:rpop('comment:delete')
+	if not commentVote then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+  commentVote = from_json(commentVote)
+  self:ProcessCommentVote(commentVote)
 
 end
 
