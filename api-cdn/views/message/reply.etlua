@@ -1,9 +1,11 @@
-<div class = 'contents'>
-
-    <% render("views.st.threadelement",{thread = thread}) %>
+<div class = 'contents panel'>
+  
+  <% render("views.st.threadelement",{thread = thread}) %>
    <form action= "<%= url_for('message.reply',{threadID = thread.id}) %>" method="POST">
-     Message:<br>
+     <div>Message:</div>
+
      <input class='form-input' type="text" name="body">
+   </br>
      <button type="submit" >Send</button>
    </form>
 </div>

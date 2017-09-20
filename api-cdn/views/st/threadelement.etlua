@@ -1,7 +1,16 @@
-<% for i, message in pairs(thread.messages) do %>
-  <div class = 'panel panel-default post'>
+<% if errors then %>
+  <%= errors[1] %>
+<% else %>
+  <div class = 'panel thread' >
     <h2><%= thread.title %></br></h2>
-    <p><% render("views.st.messageelement",{message = message}) %></p>
+
+    <% for i, message in pairs(thread.messages) do %>
+      <div class = ''>
+
+        <p><% render("views.st.messageelement",{message = message}) %></p>
+
+      </div>
+    <% end %>
     <a href="<%= url_for('message.reply',{threadID = thread.id}) %>">reply</a>
   </div>
 <% end %>

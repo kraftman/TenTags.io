@@ -10,7 +10,7 @@ local uuid = require 'lib.uuid'
 local base = require 'api.base'
 local api = setmetatable({}, base)
 
-function api:GetThread(threadID)
+function api:GetThread(userID, threadID)
   return cache:GetThread(threadID)
 end
 
@@ -48,10 +48,11 @@ function api:CreateMessageReply(userID, userMessage)
 		return newMessage, err
 	end
 
-  self.redisWrite:CreateMessage(userMessage)
+  self.redisWrite:CreateMessage(newMessage)
 
   self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
 
+  print('adding message to ', newMessage.threadID)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then

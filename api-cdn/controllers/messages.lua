@@ -1,8 +1,10 @@
 local threadAPI = require 'api.threads'
+local userAPI = require 'api.users'
 local respond_to = (require 'lapis.application').respond_to
 
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local yield_error = app_helpers.yield_error
 
 local to_json = (require 'lapis.util').to_json
 local app = require 'app'
@@ -22,7 +24,12 @@ app:match('message.view','/messages',capture_errors(function(request)
   end
 
   request.threads = threadAPI:GetThreads(request.session.userID, startAt, range)
-  ngx.log(ngx.ERR, to_json(request.threads))
+  for k,thread in pairs(request.threads) do
+    for k,message in pairs(thread.messages) do
+      message.username = userAPI:GetUser(message.createdBy).username
+    end
+  end
+
   return {render = true}
 end))
 
@@ -46,11 +53,11 @@ app:match('message.create','/messages/new',respond_to({
       createdBy = request.session.userID
     }
 
-    assert_error(threadAPI:CreateThread(request.session.userID, msgInfo))
+    threadAPI:CreateThread(request.session.userID, msgInfo)
 
     request.threads = threadAPI:GetThreads(request.session.userID, 0, 10)
-    ngx.log(ngx.ERR, to_json(request.threads))
-    return {render = 'message.view'}
+
+    return {redirect_to = request:url_for('message.view')}
 
   end)
 }))
@@ -61,7 +68,32 @@ app:match('message.reply','/messages/reply/:threadID',respond_to({
       return {render = 'pleaselogin'}
     end
     --TODO check they are allowed to view the thread
-    request.thread = assert_error(threadAPI:GetThread(request.session.userID, request.params.threadID))
+    local userID = request.session.userID
+
+    local thread, err = threadAPI:GetThread(request.session.userID, request.params.threadID)
+    if not thread then
+      yield_error('thread not found')
+    end
+
+    local found
+    print(to_json(thread.messages))
+    for k,v in pairs(thread.viewers) do
+      if v == userID then
+        found = true
+        break
+      end
+    end
+    if not found then
+      print('viewer not found')
+      yield_error('you dont have permission to view this message')
+    end
+
+    request.thread = thread
+
+    for k,message in pairs(request.thread.messages) do
+      message.username = userAPI:GetUser(message.createdBy).username
+    end
+
     return {render = 'message.reply'}
   end),
   POST = capture_errors(function(request)
@@ -74,6 +106,7 @@ app:match('message.reply','/messages/reply/:threadID',respond_to({
     msgInfo.threadID = request.params.threadID
     msgInfo.body = request.params.body
     msgInfo.createdBy = request.session.userID
-    assert_error(threadAPI:CreateMessageReply(request.session.userID, msgInfo))
+    threadAPI:CreateMessageReply(request.session.userID, msgInfo)
+    return 'done'
   end)
 }))

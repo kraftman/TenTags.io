@@ -63,7 +63,7 @@
 
   <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
 
-    <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
+
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
 
       <h3>Edit Post</h3>
@@ -100,6 +100,10 @@
     <% end %>
   <% end %>
   <% if session.userID then %>
+    <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
+    <a href="<%= url_for('deletepost',{postID = post.id }) %>">Delete</a>
+    <% end %>
+
     <a href="<%= url_for('subscribepost',{postID = post.id }) %>"><%= userSubbed and 'Unsubscribe' or 'Subscribe'%></a>
     <a href='<%= url_for("post.report",{postID = post.id})%>'>Report</a>
     <form id='addsource' action='' method='post'accept-charset='UTF-8'>
