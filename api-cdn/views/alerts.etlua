@@ -1,18 +1,25 @@
 
 <div class = 'contents'>
-  <% for i, alert in pairs(alerts) do %>
-    <% if alert.alertType == 'thread' then %>
-      <% render("views.st.threadelement",{thread = alert.data}) %>
-    <% end %>
-    <% if alert.alertType == 'post' then %>
-      <% render("views.st.postelement",{post = alert.data}) %>
-    <% end %>
-    <% if alert.alertType == 'comment' then %>
-      <div class='alert-body'>
-        <p> <%= alert.data.text -%></p>
-        <p><a href="<%= url_for('user.viewsub', {username = alert.data.username}) %>"><%=  alert.data.username -%></a> </p>
-      </div>
-      <a href="<%= url_for('viewcomment',{postID = alert.data.postID,commentID = alert.data.id}) %>">reply</a>
-    <% end %>
+
+  <% if (next(alerts.threads)) then %> <h2>New messages:</h2><% end %>
+  <% for i, alert in pairs(alerts.threads) do %>
+
+    <% render("views.st.threadelement",{thread = alert.data}) %>
+  <% end %>
+
+  <% if (next(alerts.posts)) then %> <h2>New post replies:</h2><% end %>
+  <% for i, alert in pairs(alerts.posts) do %>
+
+    <% render("views.st.postelement",{post = alert.data}) %>
+  <% end %>
+
+  <% if (next(alerts.comments)) then %> <h2>New comment replies:</h2><% end %>
+  <% for i, alert in pairs(alerts.comments) do %>
+
+    <div class='alert-body'>
+      <p> <%= alert.data.text -%></p>
+      <p><a href="<%= url_for('user.viewsub', {username = alert.data.username}) %>"><%=  alert.data.username -%></a> </p>
+    </div>
+    <a href="<%= url_for('viewcomment',{postID = alert.data.postID,commentID = alert.data.id}) %>">reply</a>
   <% end %>
 </div>

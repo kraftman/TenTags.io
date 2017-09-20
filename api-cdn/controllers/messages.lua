@@ -1,4 +1,5 @@
 local threadAPI = require 'api.threads'
+local userAPI = require 'api.users'
 local respond_to = (require 'lapis.application').respond_to
 
 local app_helpers = require("lapis.application")
@@ -23,6 +24,11 @@ app:match('message.view','/messages',capture_errors(function(request)
   end
 
   request.threads = threadAPI:GetThreads(request.session.userID, startAt, range)
+  for k,thread in pairs(request.threads) do
+    for k,message in pairs(thread.messages) do
+      message.username = userAPI:GetUser(message.createdBy).username
+    end
+  end
 
   return {render = true}
 end))
@@ -83,6 +89,10 @@ app:match('message.reply','/messages/reply/:threadID',respond_to({
     end
 
     request.thread = thread
+
+    for k,message in pairs(request.thread.messages) do
+      message.username = userAPI:GetUser(message.createdBy).username
+    end
 
     return {render = 'message.reply'}
   end),
