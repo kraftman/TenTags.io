@@ -6,14 +6,13 @@
     <% end %>
     <a href="<%= url_for('user.viewsub',{username = session.username}) %>" >Profile</a>
     <a  href="<%= url_for('user.subsettings') %>" >Settings</a>
-    <a href="<%= url_for('newsubuser') %>">Create User</a>
 
     <a href="<%= url_for('listusers') %>" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Change user <span class="caret"></span></a>
 
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('admin.view') %>">Admin</a>
     <% end %>
-
+    <a href="<%= url_for('message.view') %>">Inbox</a>
     <a href="<%= url_for('message.create') %>">New Message</a>
     <a href="<%= url_for('post.create') %>">New Post</a>
     <a href="<%= url_for('filter.create') %>">Create Filter</a>

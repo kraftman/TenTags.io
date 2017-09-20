@@ -1,2 +1,3 @@
 
+<%= message.createdAt %>
 <%= message.body %>

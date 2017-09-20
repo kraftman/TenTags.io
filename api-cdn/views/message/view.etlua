@@ -7,10 +7,10 @@
 
 
   <% if params.startAt and tonumber(params.startAt) >= 10 then %>
-    <a href="<%= url_for("messages.view") %>?startAt=<%= params.startAt and params.startAt-10 or 0 %>">Prev</a>
+    <a href="<%= url_for("message.view") %>?startAt=<%= params.startAt and params.startAt-10 or 0 %>">Prev</a>
   <% end %>
 
   <% if #threads > 9 then %>
-    <a href="<%= url_for("messages.view") %>?startAt=<%= params.startAt and params.startAt+10 or 10 %>">Next</a>
+    <a href="<%= url_for("message.view") %>?startAt=<%= params.startAt and params.startAt+10 or 10 %>">Next</a>
   <% end %>
 </div>

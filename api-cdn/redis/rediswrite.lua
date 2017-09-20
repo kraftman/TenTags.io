@@ -1162,7 +1162,7 @@ end
 
 
 function write:CreateThread(thread)
-
+  print('creating thread: ', thread.id)
   local hashedThread = {}
   hashedThread.viewers = {}
   for k,v in pairs(thread) do
@@ -1193,8 +1193,9 @@ end
 function write:CreateMessage(msg)
   -- also need to update theead last userUpdate
   local red = self:GetRedisWriteConnection()
+  print(self:to_json(msg))
   red:init_pipeline()
-
+    print('adding message ', msg.id, ' to thread: ', msg.threadID)
     red:hset('ThreadMessages:'..msg.threadID,msg.id,self:to_json(msg))
     red:hset('Thread:'..msg.threadID,'lastUpdated',msg.createdAt)
 

@@ -28,12 +28,17 @@
   <% end %>
 
   <% if session.username then %>
+
+
+
     <div class = 'settings-cont ' >
+      <a href="" >
+        <img class = 'new-icon' alt='new button' src="/static/svg/267-plus.svg" onerror="this.src='/static/icons/hamburger.png'">
+      </a>
       <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('user.subsettings') %>" >
         <p><%= session.username %></p>
         <span class="ti-more-alt settings-micro"></span>
       </a>
-
     </div>
   <% end %>
 </header>

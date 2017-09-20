@@ -95,6 +95,13 @@ a {
   font-weight: bolder;
 }
 
+.new-icon {
+  width: 20px;
+  height: 20px;
+  font-weight: lighter;
+  padding-top: 10px;
+}
+
 .filterbar-all {
   display: inline-block;
   text-align: center;
@@ -281,12 +288,14 @@ a {
   display: inline-block;
 }
 
+
 .settings-cont {
   display: inline-block;
   float:right;
   clear:both;
   height: 100%;
 }
+
 .settings-link {
   color: $topbar-fontcolor;
   display: inline-block;

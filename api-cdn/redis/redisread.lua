@@ -326,7 +326,7 @@ end
 
 function read:GetUserThreads(userID, startAt, range)
   local red = self:GetRedisReadConnection()
-  local ok, err = red:zrange('UserThreads:'..userID,startAt,startAt+range)
+  local ok, err = red:zrevrange('UserThreads:'..userID,startAt,startAt+range)
   self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user threads: ',err)
@@ -362,16 +362,16 @@ end
 
 function read:GetThreadInfo(threadID)
   local red = self:GetRedisReadConnection()
-
   local ok, err = red:hgetall('Thread:'..threadID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get thread info:',err)
     return {}
   end
+  print(self:to_json(ok))
 
   local thread = read:ConvertThreadFromRedis(ok)
 
-  ok,err = red:hgetall('ThreadMessages:'..threadID)
+  ok, err = red:hgetall('ThreadMessages:'..threadID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to load thread messages: ',err)
     return thread
@@ -381,6 +381,7 @@ function read:GetThreadInfo(threadID)
   for k,v in pairs(thread.messages) do
     thread.messages[k] = self:from_json(v)
   end
+  --thread.viewers = self:from_json(thread.viewers)
 
   return thread
 end
