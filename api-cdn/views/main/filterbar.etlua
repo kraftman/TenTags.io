@@ -5,15 +5,11 @@
   <span class="ti-menu hamburger" ></span>
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
-        <input class='form-control form-search' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
+        <input class='form-control form-search' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="🔍 Search Filters"/>
         <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
-
-
-
-
-    <a href="<%= url_for('filter.all') %>" class='filterbar-all' >View All</a>
+    <a class = 'viewall-link' href="<%= url_for('filter.all') %>" class='filterbar-all' >View All</a>
     <ul class = 'filterbar-results'>
       <% for i, filter in pairs(userFilters or {}) do %>
         <% render("views.st.filterbarelement",{filter = filter}) %>

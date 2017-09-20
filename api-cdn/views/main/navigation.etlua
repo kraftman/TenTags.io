@@ -1,8 +1,8 @@
 
 <header class='top-nav'>
 
+  <img class = 'nav-icon hamburger' alt='new button' src="/static/svg/menu.svg" onerror="this.src='/static/icons/hamburger.png'">
 
-  <img class = 'svg-icon-med hamburger' src="/static/svg/menu-1.svg" onerror="this.src='/static/icons/hamburger.png'">
   <a class='home-link' href="<%= url_for('home') %>">TenTags</a>
   <% if session.username then %>
     <form class='site-search' id='siteSearch' action='<%= url_for("search.results") %>' method='post' accept-charset='UTF-8'>
@@ -15,7 +15,7 @@
 
   <% else %>
     <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
-      <input class='form-control form-search register-box' type='text' name='email' id='email' maxlength="50" placeholder="email"/>
+      <input class='form-control form-search register-box' type='text' name='email' id='email' maxlength="50" placeholder="📧 email"/>
 
       <button disabled
         class="g-recaptcha btn"
@@ -33,7 +33,7 @@
 
     <div class = 'settings-cont ' >
       <a href="" >
-        <img class = 'new-icon' alt='new button' src="/static/svg/267-plus.svg" onerror="this.src='/static/icons/hamburger.png'">
+        <img class = 'nav-icon' alt='new button' src="/static/svg/add.svg" onerror="this.src='/static/icons/hamburger.png'">
       </a>
       <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('user.subsettings') %>" >
         <p><%= session.username %></p>

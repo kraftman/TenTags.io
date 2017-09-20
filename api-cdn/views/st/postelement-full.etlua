@@ -8,34 +8,33 @@
   <div class = 'post-full-topbar'>
     <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
 
-
-
-
   </div>
 
-  <% if post.bigIcon then %>
-    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-      <% if post.nsfl and not userInfo.showNSFL then %>
-        <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
-      <% elseif post.nsfwLevel then %>
-        <% if userInfo.nsfwLevel >= post.nsfwLevel and post.postType ~= 'self' then %>
-          <img class = 'linkImg' src="/icon/<%= post.id %>" >
-        <% else %>
+  <div class = 'post-body' >
+    <% if post.bigIcon then %>
+      <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
+        <% if post.nsfl and not userInfo.showNSFL then %>
           <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
+        <% elseif post.nsfwLevel then %>
+          <% if userInfo.nsfwLevel >= post.nsfwLevel and post.postType ~= 'self' then %>
+            <img class = 'linkImg' src="/icon/<%= post.id %>" >
+          <% else %>
+            <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
+          <% end %>
+        <% elseif post.postType == 'self' then %>
+          <img class = 'linkImg' src="/static/icons/self.svg" >
+        <% else %>
+          <img class = 'linkImg' src="/icon/<%= post.id %>" >
         <% end %>
-      <% elseif post.postType == 'self' then %>
-        <img class = 'linkImg' src="/static/icons/self.svg" >
-      <% else %>
-        <img class = 'linkImg' src="/icon/<%= post.id %>" >
-      <% end %>
-    </a>
+      </a>
 
 
-  <% else %>
-  <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-    <p ><%= post.text:sub(1,300) %></p>
-  </a>
-  <% end %>
+    <% else %>
+      <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
+        <p ><%= post.text:sub(1,300) %></p>
+      </a>
+    <% end %>
+  </div>
 
   <div>
     <div class='post-filters' >

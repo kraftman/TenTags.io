@@ -126,10 +126,8 @@
 
     </form>
   <% end %>
-
-
-
   </div>
+  
   <div class = 'panel panel-default'>
     Filters:</br>
     <% for _,filter in pairs(filters or {}) do %>
