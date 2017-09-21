@@ -27,7 +27,10 @@ app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
   local user = userAPI:GetUser(userID)
   if not user then
     -- panic
-    user = {}
+    user = {
+      showNSFL = false,
+      nsfwLevel = 1
+    }
   end
 
   if post.postType == 'self' then

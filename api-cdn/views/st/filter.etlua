@@ -1,26 +1,27 @@
-<li class='panel panel-default filter-item'>
+<div class=' filter-item'>
 
   <a class='post-link' href="<%= url_for('filter.view',{filterlabel = filter.name}) %>">
     /f/<%= filter.name -%>: <%= filter.title -%>
   </a>
 
+  <div class = 'filter-buttons' >
+    <% if isAdmin then %>
+      <form action="/f/<%= filter.title -%>" method="post">
+        <input type="hidden" name="setdefault" value="true">
+        <input type="hidden" name="filterID" value="<%= filter.id -%>">
+        <button class='btn' type="submit"><%= filter.default and 'Remove Default' or 'Set Default' -%></button>
+      </form>
+    <% end %>
 
-<% if isAdmin then %>
-  <form action="/f/<%= filter.title -%>" method="post">
-    <input type="hidden" name="setdefault" value="true">
-    <input type="hidden" name="filterID" value="<%= filter.id -%>">
-    <button class='btn' type="submit"><%= filter.default and 'Remove Default' or 'Set Default' -%></button>
-  </form>
-<% end %>
 
+    <form action="/f/<%= filter.title -%>" method="post">
+      <input type="hidden" name="subscribe" value="true">
+      <input type="hidden" name="filterID" value="<%= filter.id -%>">
+      <button class = 'btn' type="submit"><%= userFilterIDs[filter.id] and 'Unsubscribe' or 'Subscribe' -%></button>
+    </form>
 
-  <form action="/f/<%= filter.title -%>" method="post">
-    <input type="hidden" name="subscribe" value="true">
-    <input type="hidden" name="filterID" value="<%= filter.id -%>">
-    <button class = 'btn' type="submit"><%= userFilterIDs[filter.id] and 'Unsubscribe' or 'Subscribe' -%></button>
-  </form>
-
-  <% if isAdmin or isMod then %>
-    <a class='post-link' href="<%= url_for('filter.edit',{filterlabel = filter.name}) %>">Settings</a>
-  <% end %>
-</li>
+    <% if isAdmin or isMod then %>
+      <a class='post-link' href="<%= url_for('filter.edit',{filterlabel = filter.name}) %>">Settings</a>
+    <% end %>
+  </div>
+</div>

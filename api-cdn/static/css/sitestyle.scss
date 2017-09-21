@@ -528,11 +528,7 @@ a {
   padding-bottom: 2px;
 }
 
-.filter-allsearch {
-  margin-left: 5px;
-  margin-right: 5px;
-  height: 25px;
-}
+
 
 .info-burger {
   height: 25px;
@@ -702,8 +698,6 @@ a {
   position: relative;
   overflow: hidden;
 
-  margin-left: 5px;
-  margin-right: 5px;
 }
 
 .box-wrap {
@@ -812,8 +806,7 @@ ul {
 .post {
   @include card1();
   background-color: $post-background;
-  margin: 5px;
-  margin-bottom: 0px;
+
   padding: 0px;
   min-height: 100px;
   &:hover {
@@ -894,9 +887,6 @@ ul {
 }
 
 .posts{
-  margin-left: 5px;
-  margin-right: 5px;
-  margin-bottom: 5px;
 }
 
 .create-post {
@@ -1301,9 +1291,28 @@ $alert-green: green;
   display: inline-block;
 }
 
+.filter-item {
+  background-color: $sidebar-background;
+  min-height: 30px;
+  margin-top: 5px;
+  padding-left: 5px;
+  line-height: 30px;
+}
+.filter-buttons {
+  display: inline-block;
+  float: right;
+  margin-right: 5px;
+}
+
+
+.filter-allsearch {
+  padding: 3px;
+  background-color: $post-bars;
+}
 
 .filter-searchbox-main {
-  width: 100px;
+  width: 150px;
+  height: 25px;
 }
 
 .filter-item form {
