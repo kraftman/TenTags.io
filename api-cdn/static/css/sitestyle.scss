@@ -24,6 +24,10 @@ $link-color: #eee;
 //form
 $form-search-bg: #fff;
 
+@import 'themify-icons';
+@import 'dropzone';
+@import 'basic';
+
 
 // // top bar
 //
@@ -137,7 +141,7 @@ a {
   vertical-align: middle;
   border-top: 1px solid;
   border-color: $sidebar-linecolor;
-  
+
   box-sizing: border-box;
   .filterbar-subscribe {
     display: table-cell;

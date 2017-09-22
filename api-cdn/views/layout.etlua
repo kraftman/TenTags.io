@@ -6,11 +6,6 @@
   <meta charset="UTF-8">
 
   <title><%= page_title or "TenTags" %></title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="/static/css/themify-icons.css">
-
-  <link rel="stylesheet" type="text/css" href="/static/css/dropzone.css">
-  <link rel="stylesheet" type="text/css" href="/static/css/basic.css">
   <link rel="stylesheet" type="text/css" href="/static/css/sitestyle.min.css">
   <link rel="shortcut icon" href="/static/icons/favicon.ico" type="image/x-icon">
 
