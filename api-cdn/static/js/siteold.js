@@ -5,10 +5,7 @@ var userID;
 var userFilters = [];
 
 $(function() {
-  userID = $('#userID').val()
-  AddMenuHandler();
-  AddFilterSearch();
-  GetUserSettings();
+  
   LoadKeybinds();
   LoadUserFilters();
   FilterToggle()
@@ -230,18 +227,6 @@ function LoadKeybinds(){
 
 var userFilters = {};
 
-function GetUserSettings(){
-  var userID = $('#userID').val()
-  if (!userID) {
-    return;
-  }
-  $.getJSON('/api/user/'+userID+'/settings',function(data){
-
-    if (data.status == 'success'){
-      userSettings = data.data
-    }
-  })
-}
 
 
 function ChangeFocus(value) {
@@ -297,43 +282,4 @@ function UpdateSidebar(filters){
 
 function AddFilterSearch(){
 
-  $('.filter-search-form').submit(function(e){
-    e.preventDefault()
-  })
-  $('#filterSearch').on('input', function(e) {
-    e.preventDefault();
-    clearTimeout($(this).data('timeout'));
-    var _self = this;
-    $(this).data('timeout', setTimeout(function () {
-      console.log('searching')
-
-      if (_self.value.trim()){
-        $.get('/api/filter/search/'+_self.value, {
-            search: _self.value
-        }, UpdateSidebar);
-      } else {
-        $.get('/api/user/filters', {
-            search: _self.value
-        }, UpdateSidebar);
-      }
-    }, 200));
-  })
-}
-
-function AddMenuHandler(){
-  $('.settings-link').click(function(e){
-    var settingsMenu = $('.settings-menu')
-    settingsMenu.toggle()
-    settingsMenu.focus()
-    settingsMenu.focusout(function(e){
-      if ($(e.relatedTarget).parents('.settings-menu').length){
-
-      } else {
-
-        settingsMenu.hide()
-      }
-    })
-
-    e.preventDefault();
-  })
 }

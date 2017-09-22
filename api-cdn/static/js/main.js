@@ -2,6 +2,7 @@
 var $ = require('jquery');
 require('jquery-ui')
 require('selectize')
+
 window.jQuery = $;
 window.$ = $;
 
