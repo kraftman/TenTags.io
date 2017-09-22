@@ -10,7 +10,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 
 local rateDict = ngx.shared.ratelimit
 local routes = (require 'routes').routes
-
+local userAPI = require 'api.users'
 
 
 local filterStyles = {

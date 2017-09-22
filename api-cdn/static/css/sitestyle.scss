@@ -1,26 +1,28 @@
 
 // top bar
 
-$topbar-background: #ffffff;
+$topbar-background: #C2E8F2;
 $topbar-fontcolor: #616171;
 
 // side bar
-$sidebar-background: #eeeeee;
+$sidebar-background: #192734;
 $sidebar-linecolor: #c1c1d1;
 
 //background
 
-$background-color: #ffffff;
+$background-color: #2E4257;
 
 //post elements
-$card-color: #ffffff;
-$post-background: #eeeeee;
-$post-bars: #eeeeee;
+$card-color: #fff;
+$post-background: #272727;
+$post-bars: #3E1E0F;
 
-$body-fontcolor: #c1c1d1;
+$body-fontcolor: #eee;
 
-$link-color: #414151;
+$link-color: #eee;
 
+//form
+$form-search-bg: #fff;
 
 
 // // top bar
@@ -100,10 +102,10 @@ a {
   margin: 10px;
 }
 
-.new-icon {
-  width: 20px;
-  height: 20px;
-  font-weight: lighter;
+.nav-icon {
+  width: 25px;
+  height: 25px;
+  stroke-width: 5px;
   padding-top: 10px;
 }
 
@@ -156,13 +158,30 @@ a {
   }
 }
 
+.register-box {
+
+}
+
+.viewall-link {
+  background-color: $topbar-background;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 30px;
+  color: #111111;
+  height: 30px;
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 5px;
+
+}
 
 .form-search {
   border: none;
   margin-left: 5px;
-  background-color: $post-bars;
-  color: #ffffff;
+  background-color: $form-search-bg;
+  color: #222222;
   border-radius: 3px;
+  padding-left: 5px;
 
 }
 
@@ -509,11 +528,7 @@ a {
   padding-bottom: 2px;
 }
 
-.filter-allsearch {
-  margin-left: 5px;
-  margin-right: 5px;
-  height: 25px;
-}
+
 
 .info-burger {
   height: 25px;
@@ -659,7 +674,13 @@ a {
 }
 
 .filter-search-form {
-  padding-left: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  .form-search {
+    width: 100%;
+    box-sizing: border-box;
+    margin-left: 0px;
+  }
 }
 
 
@@ -677,8 +698,6 @@ a {
   position: relative;
   overflow: hidden;
 
-  margin-left: 5px;
-  margin-right: 5px;
 }
 
 .box-wrap {
@@ -786,8 +805,8 @@ ul {
 
 .post {
   @include card1();
-  margin: 5px;
-  margin-bottom: 0px;
+  background-color: $post-background;
+
   padding: 0px;
   min-height: 100px;
   &:hover {
@@ -868,9 +887,6 @@ ul {
 }
 
 .posts{
-  margin-left: 5px;
-  margin-right: 5px;
-  margin-bottom: 5px;
 }
 
 .create-post {
@@ -947,6 +963,10 @@ ul {
     display: inline-block;
     width: 100%;
   }
+}
+
+.post-body {
+  background-color: $post-background;
 }
 
 
@@ -1271,9 +1291,28 @@ $alert-green: green;
   display: inline-block;
 }
 
+.filter-item {
+  background-color: $sidebar-background;
+  min-height: 30px;
+  margin-top: 5px;
+  padding-left: 5px;
+  line-height: 30px;
+}
+.filter-buttons {
+  display: inline-block;
+  float: right;
+  margin-right: 5px;
+}
+
+
+.filter-allsearch {
+  padding: 3px;
+  background-color: $post-bars;
+}
 
 .filter-searchbox-main {
-  width: 100px;
+  width: 150px;
+  height: 25px;
 }
 
 .filter-item form {

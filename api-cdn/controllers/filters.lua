@@ -197,6 +197,9 @@ app:match('filter.view','/f/:filterlabel',respond_to({
 
     -- does the filter exist? if not then let them make it
     local filter = filterAPI:GetFilterByName(request.params.filterlabel)
+    if not filter then
+      return {redirect_to = request:url_for('filter.create', {})}
+    end
 
     request.page_title = filter.name
 
@@ -229,6 +232,12 @@ app:match('filter.view','/f/:filterlabel',respond_to({
       for _,v in pairs(request.posts) do
         v.hash = ngx.md5(v.id..request.session.userID)
       end
+    end
+
+    if request.userInfo then
+      request.showNSFL = request.userInfo.showNSFL
+    else
+      request.showNSFL = false
     end
 
     return {render = true}
