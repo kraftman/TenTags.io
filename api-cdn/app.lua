@@ -55,6 +55,7 @@ app:before_filter(function(self)
   self.res.headers['X-Xss-Protection'] = '1; mode=block'
   self.res.headers['X-Content-Type-Options'] = 'nosniff'
   self.res.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+  self.res.headers['Cache-Control'] = 'max-age=60'
 end)
 
 app.handle_error = errorHandler
