@@ -130,15 +130,15 @@ a {
 
 .filterbarelement {
   display: table;
-  width: auto;
+  width: 100%;
   height: 30px;
   line-height: 30px;
   text-align: left;
   vertical-align: middle;
   border-top: 1px solid;
   border-color: $sidebar-linecolor;
-  margin-right: 3px;
-  margin-left: 5px;
+  
+  box-sizing: border-box;
   .filterbar-subscribe {
     display: table-cell;
     min: 10px;

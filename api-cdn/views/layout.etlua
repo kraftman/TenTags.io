@@ -36,13 +36,9 @@
       </main>
     </div>
 
-      <script src="/static/js/jquery-2.1.4.js" ></script>
-        <script src="/static/js/jquery-ui.js" ></script>
   <script src="/static/js/interact.min.js"></script>
-  <script src="/static/js/mousetrap.min.js"  ></script>
   <!-- Latest compiled and minified CSS -->
-  <script src="/static/selectize/js/standalone/selectize.min.js"  ></script>
-  <script src="/static/js/site.js"  ></script>
+  <script src="/static/js/bundle.js"  ></script>
 
   <% if not session.userID then %>
     <script src='https://www.google.com/recaptcha/api.js'></script>
