@@ -11,7 +11,6 @@
 
   <% content_for("css") %>
 
-
 </head>
 <body>
   <input type=hidden id='userID' value="<%= session.userID %>"/>
