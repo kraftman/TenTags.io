@@ -10,7 +10,7 @@
 
 <% if post.link then %>
 
-  <div class = 'panel panel-default panel-image'>
+  <div class = 'panel panel-default'>
     <% if account and account.role == 'Admin' then %>
       <a href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
@@ -51,7 +51,7 @@
 
 <!-- <% if post.bbID then %>
 
-  <div class = 'panel panel-default panel-image'>
+  <div class = 'panel panel-default'>
 
     <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
       <img class = 'linkImg' src="/image/<%= post.id %>" >

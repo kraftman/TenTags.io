@@ -1,0 +1,46 @@
+
+
+
+
+.filter-sort li {
+  display: inline-block;
+}
+
+.filter-item {
+  background-color: $sidebar-background;
+  min-height: 30px;
+  margin-top: 5px;
+  padding-left: 5px;
+  line-height: 30px;
+}
+.filter-buttons {
+  display: inline-block;
+  float: right;
+  margin-right: 5px;
+}
+
+
+.filter-allsearch {
+  padding: 3px;
+  background-color: $post-bars;
+}
+
+.filter-searchbox-main {
+  width: 150px;
+  height: 25px;
+}
+
+.filter-item form {
+  display: inline-block;
+}
+
+.filter-description {
+  display: inline-block;
+}
+
+.filter-sort {
+  margin-top: 5px;
+  background-color: #333;
+  white-space: nowrap;
+  overflow-y: scroll;
+}

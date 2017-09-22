@@ -177,42 +177,7 @@ function AddPostVoteListener(){
 
 
 
-function VotePost(post, direction){
 
-  //get the post
-  var postID = $(post).children('.postID').val()
-  var postHash = $(post).children('.postHash').val()
-  console.log(postID, postHash)
-
-  if (userSettings.hideVotedPosts == true) {
-    if ($.inArray(postID, seenPosts) == -1){
-      seenPosts.push(postID)
-    }
-
-
-    LoadMorePosts($(post));
-
-    $(post).hide(0, function() {
-      var nextPost = $(post).next()
-      if (nextPost.length) {
-        nextPost.focus()
-      }
-      $(post).remove();});
-  }
-
-  var uri;
-  if (direction == 'up'){
-    uri = '/api/post/'+postID+'/upvote?hash='+postHash
-  } else {
-    uri = '/api/post/'+postID+'/downvote?hash='+postHash
-  }
-  $(post).find('.post-upvote').addClass('disable-vote');
-  $(post).find('.post-downvote').addClass('disable-vote');
-
-  $.get(uri,function(data){
-    //console.log(data);
-  })
-}
 
 
 function LoadNewPosts(startAt = 10){

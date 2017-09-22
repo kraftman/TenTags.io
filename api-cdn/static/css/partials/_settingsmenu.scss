@@ -1,0 +1,27 @@
+
+
+
+.settings-menu {
+  @include card1();
+
+  height: auto;
+  width: 170px;
+  display: none;
+  float: none;
+  position: absolute;
+  top: 60px;
+  right: 5px;
+  z-index: 10;
+  padding-bottom: 3px;
+  padding-top: 3px;
+
+  a {
+    list-style-type: none;
+    display: block;
+    width: 100%;
+    line-height: 28px;
+    text-align: left;
+    vertical-align: middle;
+    padding-left: 10px;
+  }
+}

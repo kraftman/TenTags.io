@@ -1,0 +1,21 @@
+
+
+
+.info-bar {
+  margin: 15px;
+  width: 100%;
+  border-bottom: 1px solid;
+  border-color: $sidebar-linecolor;
+}
+
+.infobar-title{
+  display: inline-block;
+  width: 100%;
+  padding: 5px;
+  min-height: 20px;
+}
+
+.infobar-body{
+  padding: 5px;
+  display: none;
+}

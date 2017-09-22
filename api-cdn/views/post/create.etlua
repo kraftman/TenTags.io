@@ -49,7 +49,7 @@
 <div id="image-dropzone" class="dropzone square"></div>
 
 
-<form class="panel panel-default create-post" id='createpost' action='/p/new' method="POST" enctype="multipart/form-data" accept-charset='UTF-8'>
+<form class="panel panel-default" id='createpost' action='/p/new' method="POST" enctype="multipart/form-data" accept-charset='UTF-8'>
   <h3>Create Post</h3>
 
   <div id="submitError"></div>
