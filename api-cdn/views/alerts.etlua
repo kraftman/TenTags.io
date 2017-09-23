@@ -9,12 +9,21 @@
 
   <% if (next(alerts.posts)) then %> <h2>New post replies:</h2><% end %>
   <% for i, alert in pairs(alerts.posts) do %>
-
     <% render("views.st.postelement",{post = alert.data}) %>
   <% end %>
 
   <% if (next(alerts.comments)) then %> <h2>New comment replies:</h2><% end %>
   <% for i, alert in pairs(alerts.comments) do %>
+
+    <div class='alert-body'>
+      <p> <%= alert.data.text -%></p>
+      <p><a href="<%= url_for('user.viewsub', {username = alert.data.username}) %>"><%=  alert.data.username -%></a> </p>
+    </div>
+    <a href="<%= url_for('viewcomment',{postID = alert.data.postID,commentID = alert.data.id}) %>">reply</a>
+  <% end %>
+
+  <% if (next(alerts.commentMentions)) then %> <h2>New comment mentions:</h2><% end %>
+  <% for i, alert in pairs(alerts.commentMentions) do %>
 
     <div class='alert-body'>
       <p> <%= alert.data.text -%></p>

@@ -26,7 +26,7 @@
       <div class='image-title'>
         <% if not image.banned then %>
           <span>
-            <%- markdown.markdown(image.text or '') -%>
+            <%- markdown(image.text or '') -%>
           </span>
 
           <div class = 'image-controls'>
@@ -88,7 +88,7 @@
       <p> [deleted] </p>
     <% else %>
 
-      <%- markdown.markdown(post.text) -%>
+      <%- markdown(post.text or '') -%>
     <% end %>
   <% end %>
 

@@ -24,7 +24,8 @@ app:get('alerts','/alerts/view',capture_errors(function(request)
   request.alerts = {
     posts = {},
     comments = {},
-    threads = {}
+    threads = {},
+    commentMentions = {}
   }
 
   for _, v in pairs(alerts) do
@@ -49,6 +50,13 @@ app:get('alerts','/alerts/view',capture_errors(function(request)
       local post = postAPI:GetPost(request.session.userID, v:match('post:(%w+)'))
 
       tinsert(request.alerts.posts, {alertType = 'post', data = post})
+    elseif v:find('commentMention:') then
+      local postID, commentID = v:match('commentMention:(%w+):(%w+)')
+      local comment = commentAPI:GetComment(postID, commentID)
+      local creator = userAPI:GetUser(comment.createdBy)
+      comment.username = creator and creator.username or ''
+
+      tinsert(request.alerts.commentMentions,{alertType = 'commentMention', data = comment})
     end
   end
   return { render = true}

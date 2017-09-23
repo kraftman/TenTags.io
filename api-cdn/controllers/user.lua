@@ -86,7 +86,7 @@ app:match('login','/login',respond_to({
   GET = function() return 'Please login using the top bar'  end
 }))
 
-app:get('user.viewsub','/user/:username', capture_errors(function(request)
+app:get('user.viewsub','/u/:username', capture_errors(function(request)
   -- deny public by default
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
