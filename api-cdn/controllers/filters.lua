@@ -214,7 +214,7 @@ app:match('filter.view','/f/:filterlabel',respond_to({
 
     filter.ownerName = owner.username
     filter.relatedFilters = filterAPI:GetFilters(filter.relatedFilterIDs)
-    filter.description = request.markdown.markdown(filter.description)
+    filter.description = request.markdown(filter.description or '')
     filter.description = sanitize_html(filter.description)
     request.thisfilter = filter
     if request.session.userID then

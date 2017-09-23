@@ -49,7 +49,7 @@ RUN cd luarocks-2.4.2 && \
   make build &&\
   make install
 
-RUN luarocks install date
+RUN luarocks install date 
 #RUN echo "\n\n# Docker extra config \nuser=root\naddn-hosts=/etc/hosts\n" >> /etc/dnsmasq.conf
 
 

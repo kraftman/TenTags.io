@@ -211,6 +211,11 @@ app:match('post.create','/p/new', respond_to({
   end
 }))
 
+local function AddLinks(comment)
+	comment.text = comment.text:gsub('@(%S%S%S+)', '<a href = "/u/%1">@%1</a>')
+  comment.text = comment.text:gsub('/f/(%S%S%S+)', '<a href = "/f/%1">/f/%1</a>')
+end
+
 app:match('post.view','/p/:postID', respond_to({
   GET = capture_errors(function(request)
     local sortBy = request.params.sort or 'best'
@@ -233,8 +238,11 @@ app:match('post.view','/p/:postID', respond_to({
       -- one of the 'comments' is actually the postID
       -- may shift this to api later
       if v.text then
-        v.text = request.markdown.markdown(v.text)
+        v.text = request.markdown(v.text or '')
+        print('ran discount')
+        print(v.text)
         v.text = sanitize_html(v.text)
+        AddLinks(v)
       end
       if v.id and userID then
         v.commentHash = ngx.md5(v.id..userID)

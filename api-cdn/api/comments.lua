@@ -97,6 +97,9 @@ function api:EditComment(userID, userComment)
 		end
 	end
 
+
+	self:ProcessMentions(comment, userComment)
+
 	comment.text = self:SanitiseUserInput(userComment.text,2000)
 	comment.editedAt = ngx.time()
 
@@ -107,13 +110,46 @@ function api:EditComment(userID, userComment)
 	--assert_error(self.commentWrite:CreateComment(comment))
 
 	--return assert_error(self:InvalidateKey('comment', userComment.postID))
-	print(to_json(comment))
+
 	return comment
 end
+
+function api:GetMentionedUsers(text)
+	local mentionedUsers = {}
+	local user
+	for username in text:gmatch('@(%S%S%S%S+)') do
+		print(username)
+		user = cache:GetUserByName(username)
+		if user then
+			mentionedUsers[username] = user
+		end
+	end
+	return mentionedUsers
+end
+
+function api:ProcessMentions(oldComment, newComment)
+
+	oldComment = oldComment or {text = ''}
+	local oldUsers = self:GetMentionedUsers(oldComment.text)
+	local newUsers = self:GetMentionedUsers(newComment.text)
+
+	for k,v in pairs(newUsers) do
+		if not oldUsers[k] then
+			self.userWrite:AddUserAlert(ngx.time(), v.id, 'commentMention:'..newComment.postID..':'..newComment.id)
+			print('adding alert for ', k)
+		end
+	end
+
+end
+
+
 
 function api:CreateComment(userID, userComment)
 
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
+
+	self:ProcessMentions(nil, newComment)
+	--self:AddLinks(newComment)
 
 	self:InvalidateKey('comment', newComment.postID)
 

@@ -339,6 +339,14 @@ function cache:GetUserID(username)
   return userRead:GetUserID(username)
 end
 
+function cache:GetUserByName(username)
+  local userID = self:GetUserID(username)
+  if not userID then
+    return nil
+  end
+  return self:GetUser(userID)
+end
+
 function cache:GetComment(postID, commentID)
   return commentRead:GetComment(postID,commentID)
 end

@@ -30,7 +30,8 @@
         <p>[deleted]</p>
       <% else %>
         <div style='<%= child.hidden and "display: none" or ""%>' class="comment-text  <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
-          <%- markdown.markdown(child.text) -%>
+
+          <%- child.text -%>
         </div>
       <% end %>
 
