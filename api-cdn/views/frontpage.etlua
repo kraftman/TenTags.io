@@ -1,6 +1,4 @@
 
-<script src="/static/js/frontpage.js"  defer></script>
-
 <nav class='filter-nav'>
 
     <a href="<%= url_for('home') %>">Fresh</a>

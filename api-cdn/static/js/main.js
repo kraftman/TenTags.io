@@ -7,12 +7,23 @@ window.jQuery = $;
 window.$ = $;
 
 var site = require('./site');
-var mySiteListener = new site();
 var postHandler = require('./posthandler');
-var myPostHandler = new postHandler;
+var sideBar = require('./sidebar');
+var frontPage = require ('./frontpage');
 
 $(function() {
-  mySiteListener.load();
-  myPostHandler.load();
+  var userID = $('#userID').val()
+
+
+  $.getJSON('/api/user/'+userID+'/settings',function(data){
+
+    var userSettings = data.data;
+    (new site(userID, userSettings)).load();
+    (new postHandler(userID, userSettings)).load();
+    (new sideBar(userID, userSettings)).load();
+    (new frontPage(userID, userSettings)).load();
+
+  })
+
 
 });

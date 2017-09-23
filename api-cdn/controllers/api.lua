@@ -16,7 +16,7 @@ local capture_errors, assert_error = app_helpers.capture_errors_json, app_helper
 
 
 
-local function HashIsValid(request)
+local function HashIsValid(values)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
   if realHash ~= request.params.commentHash then
     ngx.log(ngx.ERR, 'hashes dont match!')
@@ -56,8 +56,14 @@ end))
 --app:match('userseenposts', '/api/user/seenposts', self.GetUserRecentSeen)
 app:match('api-upvotepost', '/api/post/:postID/upvote', capture_errors(function(request)
 
-  if not HashIsValid(request) then
-    return 'invalid hash'
+  local hash = request.params.hash
+  local postID = request.params.postID
+  local userID = request.params.userID
+  if not hash or not postID or not userID then
+    return {json = {error = 'invalid data!', data = {}}}
+  end
+  if not hash == ngx.md5(postID..userID) then
+    return {json = {error = 'invalid hash!', data = {}}}
   end
   postAPI:VotePost(request.session.userID, request.params.postID, 'up')
 

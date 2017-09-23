@@ -4,6 +4,8 @@
   <!--<% if not post.imgURL then %>
   <% render("views.post.icon",{post = post}) %>
   <% end %>-->
+  <input type="hidden" value="<%= post.id -%>" class='postID'>
+  <input type="hidden" value="<%= post.hash -%>" class='postHash'>
 
   <div class = 'post-full-topbar'>
     <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
@@ -34,11 +36,11 @@
     <div class = 'post-full-bottombar'>
 
       <% if not post.userHasVoted then %>
-        <a class =' upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+        <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
           <span class="ti-angle-up"></span>
         </a><!--
 
-     --><a class = ' downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+     --><a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
           <span class="ti-angle-down"></span>
         </a>
       <% end %>

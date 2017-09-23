@@ -109,13 +109,8 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 
       user['filterStyle:'..filterName] = filterStyle
 
-      assert_error(userAPI:UpdateUser(request.session.userID, user))
+      userAPI:UpdateUser(request.session.userID, user)
 
-      -- if filterName == 'frontPage' then
-      --   --return { redirect_to = request:url_for("home") }
-      -- else
-      --   --return { redirect_to = request:url_for("filter",{filterlabel = filterName}) }
-      -- end
       return { redirect_to = ngx.var.http_referer }
     end)
   }))
