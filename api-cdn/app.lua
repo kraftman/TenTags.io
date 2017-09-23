@@ -50,7 +50,7 @@ app:before_filter(function(self)
   self.Paginate = util.Paginate
   self.handle_error = errorHandler
   capture_errors(util.RateLimit)(self)
-  self.res.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' www.google-analytics.com;img-src 'self' www.google-analytics.com;"
+  self.res.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; frame-src 'self' www.google.com; script-src 'self' 'unsafe-inline' www.gstatic.com www.google.com www.google-analytics.com;img-src 'self' www.google-analytics.com;"
   self.res.headers['X-Frame-Options'] = 'x-frame-options: SAMEORIGIN'
   self.res.headers['X-Xss-Protection'] = '1; mode=block'
   self.res.headers['X-Content-Type-Options'] = 'nosniff'

@@ -10340,6 +10340,11 @@ var postHandler = __webpack_require__(8);
 var sideBar = __webpack_require__(9);
 var frontPage = __webpack_require__ (10);
 
+function SubmitLogin(e){
+  console.log(e)
+}
+window.SubmitLogin = SubmitLogin;
+
 $(function() {
   var userID = $('#userID').val()
 

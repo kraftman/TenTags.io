@@ -11,6 +11,11 @@ var postHandler = require('./posthandler');
 var sideBar = require('./sidebar');
 var frontPage = require ('./frontpage');
 
+function SubmitLogin(e){
+  console.log(e)
+}
+window.SubmitLogin = SubmitLogin;
+
 $(function() {
   var userID = $('#userID').val()
 

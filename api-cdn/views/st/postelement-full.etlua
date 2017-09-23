@@ -26,15 +26,15 @@
     <% end %>
   </div>
 
-  <div>
+  <div class = 'post-full-bottombar'>
     <div class='post-filters' >
-    <% for i = 1, math.min(#post.filters, 8) do %>
-      <% local filter = post.filters[i] %>
-        <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
-    <% end %>
+      <% for i = 1, math.min(#post.filters, 8) do %>
+        <% local filter = post.filters[i] %>
+          <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+      <% end %>
     </div>
-    <div class = 'post-full-bottombar'>
 
+    <div class = 'post-full-controls'>
       <% if not post.userHasVoted then %>
         <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
           <span class="ti-angle-up"></span>
@@ -58,9 +58,7 @@
           <span class=" ti-star">
         <% end %>
       </a>
-
-
-
     </div>
+    
   </div>
 </div>

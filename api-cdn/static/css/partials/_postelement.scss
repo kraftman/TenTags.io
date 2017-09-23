@@ -8,15 +8,6 @@
 
   padding: 0px;
   min-height: 100px;
-  &:hover {
-    .post-full-bottombar {
-      display: block;
-    }
-
-    .post-filters {
-      display: block;
-    }
-  }
 }
 
 .post-full-topbar {
@@ -24,10 +15,6 @@
   min-height: 20px;
   padding: 8px;
   word-wrap: break-word;
-}
-.post-filters {
-  float: left;
-  display: none;
 }
 
 
@@ -42,21 +29,18 @@
   }
 }
 
+.post-filters {
+  display: inline-block;
+}
 
-
+.post-full-controls {
+  display: inline-block;
+}
 
 .post-full-bottombar {
-  background-color: $post-bars;
+  display: none;
   height: 30px;
-  width: 220px;
-  float: right;
-  position:relative;
-  display:none;
-  right: 0px;
-  top:auto;
-  bottom: 10px;
-  vertical-align: bottom;
-
+  width: 100%;
 
   a {
     display: inline-block;
