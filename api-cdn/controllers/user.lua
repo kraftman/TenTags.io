@@ -71,13 +71,15 @@ app:match('login','/login',respond_to({
 
       local response = from_json(res.body)
       if response.success ~= true then
+        print(to_json(response))
         request.success = false
         request.errorMessage = 'Apparently you arent human, sorry!'
         return {render = 'user.login'}
       end
 
       local confirmURL = request:build_url("confirmlogin")
-      assert_error(sessionAPI:RegisterAccount(session, confirmURL))
+      sessionAPI:RegisterAccount(session, confirmURL)
+      request.success = true
 
       return {render = 'user.login'}
   end),

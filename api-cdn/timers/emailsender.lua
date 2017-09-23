@@ -89,9 +89,6 @@ function config:SendErrorEmails()
     ngx.log(ngx.ERR, 'error getting email from stack: ', err)
   end
 
-
-
-
 end
 
 return config

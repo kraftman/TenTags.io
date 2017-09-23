@@ -15,7 +15,7 @@ TagVoteListener.prototype = function() {
   var load = function(userID){
     addMenuListener.call(this);
     addInfoBar.call(this);
-    hideRecapchta.call(this);
+    //hideRecapchta.call(this);
     randomCrap.call(this);
   },
   randomCrap = function() {
@@ -41,17 +41,17 @@ TagVoteListener.prototype = function() {
       e.preventDefault()
     })
   },
-  hideRecapchta = function() {
-    $('.form-login').focusin(function(){
-      $('.form-login > div').show()
-    })
-
-    $('.form-login').focusout(function(){
-      $('.form-login > div').hide();
-    })
-
-    $('.g-recaptcha').prop('disabled',true)
-  },
+  // hideRecapchta = function() {
+  //   $('.form-login').focusin(function(){
+  //     $('.form-login > div').show()
+  //   })
+  //
+  //   $('.form-login').focusout(function(){
+  //     $('.form-login > div').hide();
+  //   })
+  //
+  //   $('.g-recaptcha').prop('disabled',true)
+  // },
 
   addMenuListener = function() {
     $('.settings-link').click(function(e){
