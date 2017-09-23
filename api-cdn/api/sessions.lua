@@ -116,14 +116,11 @@ end
 
 
 function api:RegisterAccount(session, confirmURL)
-	-- TODO rate limit
-  local tempID = ngx.ctx.userID
-
 
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
 	local emailLib = require 'email'
-	emailLib:IsValidEmail(session.email)
+	assert_error(emailLib:IsValidEmail(session.email))
 
 	return self.redisWrite:QueueJob('registeraccount',session)
 end

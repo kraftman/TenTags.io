@@ -107,6 +107,7 @@ function config:ProcessAccount(session)
     print('account already exists')
     print(to_json(account))
   end
+
   if not account then
     account = self:CreateAccount(accountID, session)
     print('adding to newusers')
@@ -114,9 +115,8 @@ function config:ProcessAccount(session)
     if not ok then
       ngx.log(ngx.ERR, 'unable to write new user: ', err)
     end
-
-
   end
+  
 	account.id = accountID
 
   if not session.id then

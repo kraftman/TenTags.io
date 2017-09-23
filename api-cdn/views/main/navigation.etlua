@@ -14,18 +14,20 @@
   <% if session.accountID then %>
 
   <% else %>
-    <form class='form-login' id='register' action='<%= url_for('login') %>' method='post' accept-charset='UTF-8'>
+    <form class='form-login' id='register' action="<%= url_for('login') %>" method='post' accept-charset='UTF-8'>
       <input class='form-control form-search register-box' type='text' name='email' id='email' maxlength="50" placeholder="📧 email"/>
-
-      <button disabled
-        class="g-recaptcha btn"
-        data-badge="inline"
-        data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
-        data-callback="SubmitLogin">
+      <div class="g-recaptcha"
+             data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
+             data-callback="SubmitLogin"
+             data-size="invisible">
+       </div>
+      <button >
           Sign In/Up
       </button>
     </form>
   <% end %>
+
+
 
   <% if session.username then %>
 
