@@ -1,8 +1,6 @@
 
 
 
-<script src="/static/js/mousetrap.min.js"  ></script>
-<script src="/static/js/post.js"  defer></script>
 
 <!-- <% render("views.st.postelement",{post = post}) %> -->
 <div class = 'post-full-topbar'>
@@ -104,40 +102,36 @@
 
   </div>
   </br>
+
+  <div class = 'panel panel-default'>
+    <div class = 'post-full-topbar'>
+      <h2 class= 'post-header'>Sources</h2>
+    </div>
+    <div class = 'post-sources' >
+      <% for _,tag in pairs(post.tags or {}) do %>
+        <% if tag.name:find('^meta:sourcePost') then %>
+          <% render("views.st.tag",{tag = tag}) %>
+        <% end %>
+      <% end %>
+
+      <h3>Add Repost Source (URL):</h3>
+      <form id='addsource' action='' method='post'accept-charset='UTF-8'>
+        <input type='text' class='form-input' name='sourceurl' id='sourceurl' value=""/>
+        <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+      </form>
+    </div>
+
+
+  </div>
+
+
+
   <div class = 'panel panel-default'>
 
 
-  <% if post.containsSources then print('has sources')%>
-    <h3> Sources: </h3>
-    <% for _,tag in pairs(post.tags or {}) do %>
-      <% if tag.name:find('^meta:sourcePost') then %>
-        <% render("views.st.tag",{tag = tag}) %>
-      <% end %>
-    <% end %>
-  <% end %>
+
   <% if session.userID then %>
 
-
-
-    <form id='addsource' action='' method='post'accept-charset='UTF-8'>
-
-      <h3>Add Repost Source</h3>
-
-      <label for='sourceurl' >Source URL:</label>
-      <input type='text' class='form-input' name='sourceurl' id='sourceurl' value=""/>
-
-      <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
-
-    </form>
-
-
-    <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
-
-      <label for='addtag' >Add Tag:</label>
-      <input type='text' class='form-input' name='addtag' id='addtag' value=""/>
-      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
-
-    </form>
   <% end %>
   </div>
 
@@ -163,15 +157,24 @@
           <% render("views.st.tag",{tag = tag}) %>
         <% end %>
       <% end %>
+      <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
+
+        <label for='addtag' >Add Tag:</label>
+        <input type='text' class='form-input' name='addtag' id='addtag' value=""/>
+        <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+
+      </form>
     </div>
+
   </div>
 
   </br>
 
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Comments</h2>
+  </div>
   <div class = 'panel panel-default post-comments'>
-    <div class = 'post-full-topbar'>
-      <h2 class= 'post-header'>Comments</h2>
-    </div>
+
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >
     <option value="<%= url_for('post.view',{postID = post.id})%>?sort=best"
@@ -198,10 +201,12 @@
 
 
   <% render("views.st.newcomment") %>
-
-  <% for _,child in pairs(comments[post.id].children or {}) do local depth = depth and depth+1 or 1  %>
-    <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
-  <% end %>
-
+  <div class = 'comment-body'>
+    <div class = 'commentInfo'>
+      <% for _,child in pairs(comments[post.id].children or {}) do local depth = depth and depth+1 or 1  %>
+        <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
+      <% end %>
+    </div>
+  </div>
 
 </div>
