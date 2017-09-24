@@ -1,11 +1,14 @@
 
 
-
+.posts {
+  display: flex;
+  flex-wrap: wrap;
+}
 
 .post {
   @include card1();
   background-color: $post-background;
-
+  width: 100%;
   padding: 0px;
   margin-bottom: 10px;
   color: $font-light;
@@ -48,6 +51,7 @@
 .post-full-bottombar {
 
   width: 100%;
+  max-height: 100px;
 
   a {
     display: inline-block;
@@ -77,11 +81,21 @@
 
 .post-grid {
   //@include card1();
+  flex-grow: 1;
   margin: 5px;
   padding: 0px;
   background-color: $postelement-color;
   display: inline-block;
   width: 250px;
+  height: 300px;
+
+  .post-body {
+    height: 200px;
+  }
+  a {
+    display: inline-block;
+    height: 100%;
+  }
 }
 
 .post-filterlist {
@@ -127,10 +141,8 @@
 .linkImg {
   display: block;
   max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 15px;
-  border-radius: 4px;
+  max-height: 100%;
+  box-sizing: border-box;
 }
 
 .post-line-1 {
@@ -181,10 +193,10 @@
     display: table-cell;
     display: inline-block;
     //vertical-align: top;
-    height: 100%;
     width: 100%;
     padding-left: 5px;
     padding-right: 5px;
+    box-sizing: border-box;
     .post-text {
       word-wrap: break-word;
       margin: 0px;

@@ -1,18 +1,15 @@
 
 <nav class='filter-nav'>
-
-    <a href="<%= url_for('home') %>">Fresh</a>
-    <a href="<%= url_for('new') %>">New</a>
-    <a href="<%= url_for('best') %>">Best</a>
-    <a href="<%= url_for('seen') %>">Seen</a>
-    <a href="#" class = 'toggle-filterstyle'>Style</a>
-
-  </ul>
+  <a href="<%= url_for('home') %>">Fresh</a>
+  <a href="<%= url_for('new') %>">New</a>
+  <a href="<%= url_for('best') %>">Best</a>
+  <a href="<%= url_for('seen') %>">Seen</a>
+  <a href="#" class = 'toggle-filterstyle'>Style</a>
 </nav>
 
 <% render('views.st.filterstyles') %>
 
-<div class='posts'>
+<div class='posts' >
   <% for i, post in pairs(posts) do %>
     <% render(GetFilterTemplate(),{post = post}) %>
   <% end %>

@@ -19,7 +19,7 @@
       <% end %>
     </div>
   <% else %>
-    <p class='welcome-message'>Welcome to TenTags, If you're new please check out our <a href="<%= url_for('about') %>">FAQ</a>!</p>
+    <p class='welcome-message'>Welcome to TenTags, if you're new please check out our <a href="<%= url_for('about') %>">FAQ</a>!</p>
   <% end %>
   <% if enableAds then %><% end %>
 </div>

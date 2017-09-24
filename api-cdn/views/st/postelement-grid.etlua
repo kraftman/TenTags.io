@@ -4,69 +4,67 @@
   <!--<% if not post.imgURL then %>
   <% render("views.post.icon",{post = post}) %>
   <% end %>-->
+  <input type="hidden" value="<%= post.id -%>" class='postID'>
+  <input type="hidden" value="<%= post.hash -%>" class='postHash'>
 
   <div class = 'post-full-topbar'>
     <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
-
-    <% for _,filter in pairs(post.filters) do %>
-        <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
-    <% end %>
-
   </div>
 
-
-  <% if post.bigIcon then %>
-    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-      <% if post.nsfl and not userInfo.showNSFL then %>
-        <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
-      <% elseif post.nsfwLevel then %>
-        <% if userInfo.nsfwLevel >= post.nsfwLevel and post.postType ~= 'self' then %>
-          <img class = 'linkImg' src="/icon/<%= post.id %>" >
-        <% else %>
-          <img class = 'linkImg' src="/static/icons/nsfw.jpg" >
-        <% end %>
-      <% elseif post.postType == 'self' then %>
-        <img class = 'linkImg' src="/static/icons/self.svg" >
-      <% else %>
-        <img class = 'linkImg' src="/icon/<%= post.id %>" >
-      <% end %>
-    </a>
+  <div class = 'post-body' >
+    <% if post.bigIcon then %>
+      <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
+        <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.shortURL or post.id}) %>" >
+      </a>
 
 
-  <% else %>
-  <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-    <p ><%= post.text:sub(1,300) %></p>
-  </a>
-  <% end %>
+    <% else %>
+      <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
+        <p ><%= post.text:sub(1,300) %></p>
+      </a>
+    <% end %>
+  </div>
+
+  <div class='post-filters' >
+    <% for i = 1, math.min(#post.filters, 8) do %>
+      <% local filter = post.filters[i] %>
+        <a class ='filter-icon' href=" <%= url_for('filter.view',{filterlabel = filter.name}) %>"><%= filter.name %></a>
+    <% end %>
+  </div>
 
   <div class = 'post-full-bottombar'>
 
-    <% if not post.userHasVoted then %>
-      <a class =' upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
-        <span class="ti-angle-up"></span>
-      </a><!--
+      <% if not post.userHasVoted then %>
+        <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+          <img class = 'svg-icon-small' src="/static/svg/up-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+        </a><!--
 
-   --><a class = ' downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
-        <span class="ti-angle-down"></span>
-      </a>
-    <% end %>
-    <span class="ti-eye"></span><a> <%= post.views or 0 %></a>
-    <% if isMod then %>
-      <a class ='banButton' href=" <%= url_for('banpost',{postID = post.id, filterlabel= thisfilter.name}) %>"><span class="ti-na"></span></a>
-    <% end %>
-
-    <a class=' comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%> <span class="ti-comments"></span></a>
-
-    <a class='post-save-button' href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">
-      <% if post.userSaved then %>
-        <span class=" ti-trash">
-      <% else %>
-        <span class=" ti-star">
+     --><a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+         <img class = 'svg-icon-small' src="/static/svg/down-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+       </a>
       <% end %>
-    </a>
+
+      <% if isMod then %>
+        <a class ='banButton' href=" <%= url_for('banpost',{postID = post.id, filterlabel= thisfilter.name}) %>"><span class="ti-na"></span></a>
+      <% end %>
+
+      <a class='post-save-button' href="<%= url_for('savepost', {postID = post.shortURL or post.id}) %>">
+        <% if post.userSaved then %>
+          <img class = 'svg-icon-small' src="/static/svg/star.svg" onerror="this.src='/static/icons/hamburger.png'">
+        <% else %>
+          <img class = 'svg-icon-small' src="/static/svg/star-1.svg" onerror="this.src='/static/icons/hamburger.png'">
+        <% end %>
+      </a>
+
+      <a class=' comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>"> <%= post.commentCount -%>
+        <img class = 'svg-icon-small' src="/static/svg/comments.svg" onerror="this.src='/static/icons/hamburger.png'">
+      </a>
 
 
+      <a>
+        <%= post.views or 0 %>
+        <img class = 'svg-icon-small' src="/static/svg/eye-open.svg" onerror="this.src='/static/icons/hamburger.png'">
+      </a>
 
   </div>
-
 </div>

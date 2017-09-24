@@ -12,7 +12,7 @@ html,body {
   height: 100%;
   margin: 0 auto;
   background-color: $background-color;
-  max-width: 960px;
+  max-width: 95%;
 }
 
 a {
@@ -58,6 +58,10 @@ ul {
   overflow: visible;
   color: $font-light;
 
+}
+
+.panel-default {
+  padding: 5px;
 }
 
 .form-input {

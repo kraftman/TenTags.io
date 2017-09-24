@@ -7,6 +7,9 @@
 }
 
 @media only screen and (max-width: 1026px) {
+  body {
+    width: 100%;
+  }
   .filter-bar {
     @include card1();
     border-radius: 0px;

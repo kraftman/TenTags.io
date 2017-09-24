@@ -72,14 +72,14 @@
 </div>
 </br>
 
-
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Edit Post</h2>
+</div>
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>" />
 
   <% if userCanEdit then %>
-    <div class = 'post-full-topbar'>
-      <h2 class= 'post-header'>Edit Post</h2>
-    </div>
+
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
 
       <% if ((ngx.time() - post.createdAt) < 600) then %>
@@ -103,10 +103,11 @@
   </div>
   </br>
 
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Sources</h2>
+  </div>
   <div class = 'panel panel-default'>
-    <div class = 'post-full-topbar'>
-      <h2 class= 'post-header'>Sources</h2>
-    </div>
+
     <div class = 'post-sources' >
       <% for _,tag in pairs(post.tags or {}) do %>
         <% if tag.name:find('^meta:sourcePost') then %>
@@ -127,19 +128,17 @@
 
 
   <div class = 'panel panel-default'>
-
-
-
   <% if session.userID then %>
 
   <% end %>
   </div>
 
   </br>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Filters</h2>
+  </div>
   <div class = 'panel panel-default'>
-    <div class = 'post-full-topbar'>
-      <h2 class= 'post-header'>Filters</h2>
-    </div>
+
     <div class = 'post-filterlist'>
       <% for _,filter in pairs(filters or {}) do %>
         <% render("views.st.postfilterelement",{filter = filter}) %>

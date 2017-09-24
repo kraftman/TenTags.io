@@ -1,8 +1,11 @@
 
 <% render("views.user.userbar",{username = params.username}) %>
 
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Stats</h2>
+</div>
 <div class = 'panel panel-default' >
-  <h3>Stats:</h3>
+
   Posts created: <%= userInfo.PostsCreated or 0%></br>
   Comments created: <%= userInfo.CommentsCreated or 0%></br>
   Posts voted: <%= userInfo.PostsVoted or 0%></br>
@@ -28,9 +31,13 @@
   <% render("views.message.create",{recipient = params.username}) %>
 
 <% end %>
-
+</br>
 <% if session.userID then %>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Interact</h2>
+  </div>
   <div class = 'panel panel-default' >
+
 
     <h3>Tag User</h3>
     <form id="tagform" method="post" action="<%= url_for("api-taguser",{userID = userID}) %>" >

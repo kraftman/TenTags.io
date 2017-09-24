@@ -1,11 +1,9 @@
 
 <div class='filter-nav'>
-
-    <a href="<%= url_for('user.viewsub', {username = username}) %>"><%= username %></a>
-    <a href="<%= url_for('user.viewsubcomments',{username = username}) %>">Comments</a>
-    <a href="<%= url_for('user.viewsubposts',{username = username}) %>">Posts</a>
-    <% if session.username == username then %>
-    <a href="<%= url_for('user.viewsubupvotes',{username = username}) %>">Upvoted</a>
-    <% end %>
-  </ul>
+  <a href="<%= url_for('user.viewsub', {username = username}) %>"><%= username %></a>
+  <a href="<%= url_for('user.viewsubcomments',{username = username}) %>">Comments</a>
+  <a href="<%= url_for('user.viewsubposts',{username = username}) %>">Posts</a>
+  <% if session.username == username then %>
+  <a href="<%= url_for('user.viewsubupvotes',{username = username}) %>">Upvoted</a>
+  <% end %>
 </div>
