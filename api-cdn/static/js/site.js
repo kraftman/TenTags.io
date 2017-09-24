@@ -63,14 +63,14 @@ TagVoteListener.prototype = function() {
     $('.settings-link').click(function(e){
       var settingsMenu = $('.settings-menu')
       settingsMenu.toggle()
-      settingsMenu.focus()
-      settingsMenu.focusout(function(e){
-        if ($(e.relatedTarget).parents('.settings-menu').length){
-
-        } else {
-          settingsMenu.hide()
-        }
-      })
+      // settingsMenu.focus()
+      // settingsMenu.focusout(function(e){
+      //   if ($(e.relatedTarget).parents('.settings-menu').length){
+      //
+      //   } else {
+      //     settingsMenu.hide()
+      //   }
+      // })
 
       e.preventDefault();
     })

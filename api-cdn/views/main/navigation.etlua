@@ -33,8 +33,9 @@
     <div class = 'settings-cont ' >
       <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('user.subsettings') %>" >
         <p><%= session.username %></p>
-        
+
       </a>
     </div>
   <% end %>
+  <% render("views.main.settings-menu") %>
 </header>

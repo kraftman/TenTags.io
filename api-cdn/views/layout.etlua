@@ -16,7 +16,7 @@
 
     <% render("views.main.navigation") %>
 
-    <% render("views.main.settings-menu") %>
+
     <div class="main">
       <% render("views.main.filterbar") %>
       <main class = 'contents'>

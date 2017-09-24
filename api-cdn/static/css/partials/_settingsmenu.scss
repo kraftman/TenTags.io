@@ -6,19 +6,21 @@
 
   height: auto;
   width: 170px;
-  display: none;
   float: none;
   position: absolute;
-  top: 60px;
-  right: 5px;
+  top: 45px;
+  right: 0px;
   z-index: 10;
   padding-bottom: 3px;
   padding-top: 3px;
+  display: none;
 
   a {
+    color: black;
     list-style-type: none;
     display: block;
     width: 100%;
+    box-sizing: border-box;
     line-height: 28px;
     text-align: left;
     vertical-align: middle;
