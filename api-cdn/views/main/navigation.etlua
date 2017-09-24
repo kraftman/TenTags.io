@@ -21,7 +21,7 @@
              data-callback="SubmitLogin"
              data-size="invisible">
        </div>
-      <button >
+      <button class = 'btn'>
           Sign In/Up
       </button>
     </form>
