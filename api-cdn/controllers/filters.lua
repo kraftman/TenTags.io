@@ -125,15 +125,12 @@ local function ToggleDefault(request)
 
   if request.params.setdefault == 'true' then
     userAPI:ToggleFilterSubscription(userID, 'default', filterID)
-
-    return {redirect_to = request:url_for("allfilters") }
+    return {redirect_to = request:url_for("filter.all") }
   end
 
-  local ok, err = userAPI:ToggleFilterSubscription(userID, userID,filterID)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to toggle filter sub: ',err)
-  end
-  return {redirect_to = request:url_for("allfilters") }
+  userAPI:ToggleFilterSubscription(userID, userID,filterID)
+
+  return {redirect_to = request:url_for("filter.all") }
 end
 
 
@@ -179,16 +176,16 @@ end
 
 
 app:get('subscribefilter', '/f/:filterID/sub', capture_errors(function(request)
-
-  local userID = request.session.userID
-
-  local filterID = request.params.filterID
-
-  local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to toggle filter sub: ',err)
-  end
-  return {redirect_to = request:url_for("allfilters") }
+  return ToggleDefault(request)
+  -- local userID = request.session.userID
+  --
+  -- local filterID = request.params.filterID
+  --
+  -- local ok, err = userAPI:ToggleFilterSubscription(userID, userID, filterID)
+  -- if not ok then
+  --   ngx.log(ngx.ERR, 'unable to toggle filter sub: ',err)
+  -- end
+  -- return {redirect_to = request:url_for("filter.all") }
 end))
 
 
@@ -402,7 +399,11 @@ app:match('filter.edit','/filters/:filterlabel',respond_to({
 }))
 
 app:get('filter.all','/f',capture_errors(function(request)
-  local user = request.userInfo
+  if not request.session.userID then
+    return 'login'
+  end
+  local user = userAPI:GetUser(request.session.userID)
+
   if user and user.role == 'Admin' then
     request.isAdmin = true
   end
@@ -414,8 +415,11 @@ app:get('filter.all','/f',capture_errors(function(request)
   request.filters = filterAPI:GetFiltersBySubs()
 
   local defaultFilters = userAPI:GetIndexedViewFilterIDs('default')
-  for k,v in pairs(request.filters) do
-    if defaultFilters[k] then
+
+  for _,v in pairs(request.filters) do
+    print(v.createdAt)
+    v.timeAgo = request:TimeAgo(ngx.time() - (tonumber(v.createdAt) or 0))
+    if defaultFilters[v.id] then
       v.default = true
     else
       v.default = false
@@ -486,7 +490,7 @@ app:match('searchfilters', '/filters/search', capture_errors(function(request)
     request.isAdmin = true
   end
 
-  request.userFilterIDs = userAPI:GetIndexedViewilterIDs(user.currentView)
+  request.userFilterIDs = userAPI:GetIndexedViewFilterIDs(user.id)
   request.searchString = request.params.searchString
   return {render = 'filter.all'}
 end))

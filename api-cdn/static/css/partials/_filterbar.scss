@@ -5,6 +5,7 @@
   @include card1();
   background-color: $sidebar-background;
   display: table-cell;
+  display: none;
   width: 250px;
   position: static;
   border-radius: 0px;

@@ -7,13 +7,17 @@
   background-color: $post-background;
 
   padding: 0px;
-  min-height: 100px;
+  margin-bottom: 10px;
+  color: $font-light;
+}
+
+.post-sources {
+  padding: 5px;
 }
 
 .post-full-topbar {
   background-color: $post-bars;
   min-height: 20px;
-  padding: 8px;
   word-wrap: break-word;
 }
 
@@ -30,27 +34,26 @@
 }
 
 .post-filters {
-  display: inline-block;
+  float: right;
+  padding: 5px;
 }
 
-.post-full-controls {
-  display: inline-block;
-}
 
 .post-full-bottombar {
-  display: none;
-  height: 30px;
+
   width: 100%;
 
   a {
     display: inline-block;
     min-width: 10px;
-    padding-right: 8px;
-    padding-left: 8px;
-    line-height: 25px;
-    min-height: 25px;
-    height: 100%;
+    padding: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: $font-light;
     vertical-align: middle;
+  }
+  object path{
+    fill: $font-light !important;
   }
   .comment-link {
     font-size: 14px;
@@ -61,8 +64,7 @@
 
 .postelement-text {
   display: inline-block;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding: 7px;
 }
 
 
@@ -76,7 +78,9 @@
   width: 250px;
 }
 
-
+.post-filterlist {
+  padding: 5px;
+}
 
 .filter-icon {
   display: inline-block;
@@ -89,6 +93,8 @@
   font-size:  10px;
   text-decoration: none;
 }
+
+
 
 .filter-label > a:hover {
   background-color: $hight-font-color;
@@ -183,6 +189,7 @@
   .post-link {
     display: inline-block;
     width: 100%;
+
   }
 }
 
@@ -210,6 +217,9 @@
 
 .post-link {
   font-weight: bold;
+  padding: 7px;
+  display: inline-block;
+
 }
 
 

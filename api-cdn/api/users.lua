@@ -217,6 +217,11 @@ function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
 			return nil, 'no auth'
 		end
 		local view = cache:GetView('default')
+		if not view then
+			self:CreateDefaultView(request.session.userID)
+			view = cache:GetView('default')
+		end
+
 		return self:ToggleViewFilter(view, filterID)
 	end
 
@@ -274,10 +279,9 @@ function api:GetUser(userID)
 	if not userID or userID == '' then
 		return nil
 	end
+	print(userID)
+	return cache:GetUser(userID)
 
-	local userInfo  = cache:GetUser(userID)
-
-	return userInfo
 end
 
 --[[
@@ -580,10 +584,15 @@ function api:GetUserFilters(userID)
 end
 
 function api:GetIndexedViewFilterIDs(userID)
-
-	local user = cache:GetUser(userID)
+	print(userID)
 	if userID == 'default' then
 		return cache:GetIndexedViewFilterIDs('default')
+	end
+
+	local user, err = cache:GetUser(userID)
+	if not user then
+		print(userID)
+		print('cant get users, ',err)
 	end
 
 	return cache:GetIndexedViewFilterIDs(user.currentView) or {}

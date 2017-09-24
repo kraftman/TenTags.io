@@ -10,22 +10,23 @@ html,body {
   font-size: 14px;
 
   height: 100%;
-  margin: 0px;
+  margin: 0 auto;
   background-color: $background-color;
+  max-width: 960px;
 }
 
 a {
   color: $link-color;
   text-decoration: none;
   &:hover {
-    background-color: #fff;
+    background-color: $topbar-background;
+    color: black;
   }
 }
 
 ul {
   list-style-type: none;
 }
-
 
 
 .form-search {
@@ -55,6 +56,7 @@ ul {
   background-color: $post-background;
 
   overflow: visible;
+  color: $font-light;
 
 }
 

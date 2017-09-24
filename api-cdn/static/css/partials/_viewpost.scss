@@ -5,6 +5,32 @@
 }
 
 
+.post-header {
+  font-weight: bold;
+  color: $font-light;
+  padding: 7px;
+}
+
+.post-edit-links {
+  display: table;
+  margin: auto;
+}
+
+.post-edit-button {
+  margin: 0 auto;
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.post-text {
+  padding: 20px;
+  p {
+    max-width: 800px;
+    margin: auto;
+    color: $font-light;
+  }
+}
 
 .comment-collapse {
   display: table-cell;
@@ -12,6 +38,8 @@
   width: 20px;
   border-radius: 2px;
 }
+
+.form-
 
 .comment-body {
   display: table-cell;

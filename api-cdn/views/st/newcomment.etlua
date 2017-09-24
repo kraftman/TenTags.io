@@ -4,7 +4,7 @@
   <input id="parentID" name='parentID' type="hidden" value="<%= post.id%>" name="name">
   <input name='postID' type="hidden" value="<%= post.id%>" name="name">
 
-  <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="5"></textarea>
+  <textarea class='form-input textbox-large' name='commentText' id='commentText' cols='100' rows="15"></textarea>
   </br>
-  <input type='submit' value='Reply'></input>
+  <input class = 'btn post-edit-button' type='submit' value='Reply'></input>
 </form>

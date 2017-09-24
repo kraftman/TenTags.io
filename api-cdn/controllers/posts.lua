@@ -290,7 +290,13 @@ app:match('post.view','/p/:postID', respond_to({
       post.userHasVoted = userAPI:UserHasVotedPost(userID, post.id)
       request.userLabels = userAPI:GetUser(userID).userLabels
     end
+    local user = userAPI:GetUser(userID)
 
+    if userID == post.createdBy or (user and user.role == 'Admin') then
+      request.userCanEdit = true
+    else
+      post.text = request.markdown(post.text)
+    end
     request.post = post
     request.GetColorForDepth = GetColorForDepth
     request.GetColorForName = GetColorForName

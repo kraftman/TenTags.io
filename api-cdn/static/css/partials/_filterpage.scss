@@ -8,15 +8,43 @@
 
 .filter-item {
   background-color: $sidebar-background;
-  min-height: 30px;
+  min-height: 35px;
   margin-top: 5px;
-  padding-left: 5px;
   line-height: 30px;
+  clear: both;
 }
+
+.post-link {
+  display: inline-block;
+  padding: 3px;
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.filter-body {
+  display: none;
+  background-color: $post-background;
+  color: $body-fontcolor;
+  padding: 5px;
+}
+
+.filter-description {
+}
+
+.filter-stats {
+  font-size: 10px;
+}
+
 .filter-buttons {
   display: inline-block;
   float: right;
-  margin-right: 5px;
+
+  a {
+    display: inline-block;
+    text-align: center;
+    min-width: 100px;
+    padding: 3px;
+  }
 }
 
 

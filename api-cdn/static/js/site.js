@@ -17,6 +17,12 @@ TagVoteListener.prototype = function() {
     addInfoBar.call(this);
     //hideRecapchta.call(this);
     randomCrap.call(this);
+    togglePosts.call(this);
+  },
+  togglePosts = function() {
+    $('.filter-topbar').click(function(e){
+      $(e.currentTarget).parent().find('.filter-body').toggle()
+    })
   },
   randomCrap = function() {
     $('.post-full-topbar').click(function(e){

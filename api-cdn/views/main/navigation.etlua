@@ -6,7 +6,7 @@
   <a class='home-link' href="<%= url_for('home') %>">TenTags</a>
   <% if session.username then %>
     <form class='site-search' id='siteSearch' action='<%= url_for("search.results") %>' method='post' accept-charset='UTF-8'>
-      <input class='form-control form-search ' type='text' name='searchquery' id='searchquery' maxlength="2038" placeholder="Submit/Search"/>
+      <input class='form-control form-search ' type='text' name='searchquery' id='searchquery' maxlength="2038" placeholder="🔍 Submit / Search Site"/>
       <input class='hidden-search-input' tabindex="-1" type='submit' style="visibility:hidden" name='Submit' value='Search/Post' />
     </form>
   <% end %>
@@ -30,16 +30,10 @@
 
 
   <% if session.username then %>
-
-
-
     <div class = 'settings-cont ' >
-      <a href="" >
-        <img class = 'nav-icon' alt='new button' src="/static/svg/add.svg" onerror="this.src='/static/icons/hamburger.png'">
-      </a>
       <a  class='settings-link <%= userHasAlerts and "settings-alert" or "" %>' href="<%= url_for('user.subsettings') %>" >
         <p><%= session.username %></p>
-        <span class="ti-more-alt settings-micro"></span>
+        
       </a>
     </div>
   <% end %>
