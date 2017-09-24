@@ -60,13 +60,13 @@ frontPage.prototype = function(){
     newPost.find('.comment-link').attr('href','/p/'+postInfo.shortURL || postInfo.id);
     newPost.find('.comment-link').text(postInfo.commentCount+' comments')
 
-    if (postInfo.userHasVoted == null) {
-      newPost.find('.postUpvote').show()
-      newPost.find('.postDownvote').show()
-    } else {
-      newPost.find('.postUpvote').hide()
-      newPost.find('.postDownvote').hide()
-    }
+    // if (postInfo.userHasVoted == null) {
+    //   newPost.find('.postUpvote').show()
+    //   newPost.find('.postDownvote').show()
+    // } else {
+    //   newPost.find('.postUpvote').hide()
+    //   newPost.find('.postDownvote').hide()
+    // }
     var filterIcons = newPost.find('.filter-icon')
     $.each(filterIcons, function(k,v){
       $(v).hide()
@@ -134,22 +134,30 @@ frontPage.prototype = function(){
   },
   addListeners = function(){
     var context = this;
-    $('.post-controls').hide();
-    $( ".post" ).focus(function() {
-      var postControls = $(this).find('.post-controls')
-      $(postControls).show()
-    });
-    $( ".post" ).focusout(function() {
-      var postControls = $(this).find('.post-controls')
-      $(postControls).hide();
-    });
+    // $('.post-controls').hide();
+    // $( ".post" ).focus(function() {
+    //   var postControls = $(this).find('.post-controls')
+    //   $(postControls).show()
+    // });
+    // $( ".post" ).focusout(function() {
+    //   var postControls = $(this).find('.post-controls')
+    //   $(postControls).hide();
+    // });
 
     $('.post-save-button').click(function(e){
       e.preventDefault()
       e.stopPropagation()
-      $(e.currentTarget).children().toggleClass('ti-star')
-      $(e.currentTarget).children().toggleClass('ti-trash')
+      // $(e.currentTarget).children().toggleClass('ti-star')
+      // $(e.currentTarget).children().toggleClass('ti-trash')
+      var saveButton = $(e.currentTarget).find('img').first()
 
+      if (!saveButton.hasClass('saved')) {
+        saveButton.attr('src', '/static/svg/star.svg');
+        saveButton.addClass('saved')
+      } else  {
+        saveButton.attr('src', '/static/svg/star-1.svg');
+        saveButton.removeClass('saved')
+      }
 
       var url = $(e.currentTarget).attr('href')
 
@@ -160,12 +168,14 @@ frontPage.prototype = function(){
 
     $(".post-upvote, .upvoteButton").click(function(e) {
       e.preventDefault();
-      $('.upvoteButton, .downvoteButton').hide();
+      //$('.upvoteButton, .downvoteButton').hide();
+      $('.upvoteButton, .downvoteButton').off('click');
+      $('.upvoteButton, .downvoteButton').removeAttr('href');
       votePost.call(context, $(this).parents('.post'), 'up');
     })
     $(".post-downvote, .downvoteButton").click(function(e){
       e.preventDefault();
-      $('.upvoteButton, .downvoteButton').hide();
+      //$('.upvoteButton, .downvoteButton').hide();
       votePost.call(context, $(this).parents('.post'),'down');
     });
     if ($(window).width() < 769){
