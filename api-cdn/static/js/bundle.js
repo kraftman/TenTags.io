@@ -16187,40 +16187,56 @@ postHandler.prototype = function() {
     addKeyboardListeners.call(this);
   }
   addListeners = function(){
+
+    $(document).on('click', '.togglefiltercomment', function(e) {
+      $(this).toggleClass('togglefilter-selected');
+      var className = '.'+$(this).attr('data-filterID')
+      console.log(className);
+      $(className).toggle();
+      e.preventDefault();
+    });
+
+
+    $('.comment-reply-button').click(function(e) {
+      var parent = $(e.currentTarget).closest('.comment')
+
+      $('#commentform').insertAfter(parent);
+      $('#commentform').children('#parentID').val($(parent).data('commentid'))
+      e.preventDefault();
+      e.stopPropagation();
+    })
+
+    $('.post-comments').click(function(e){
+      console.log('clicked')
+      console.log(this)
+      console.log(e.currentTarget)
+      if ($(e.currentTarget).hasClass('post-comments')) {
+          console.log('moving')
+         $('#commentform').prependTo($(e.currentTarget))
+         $('#commentform').children('#parentID').val($('#postID').val())
+       } else {
+         console.log('nooope')
+       }
+    })
+
+    $('.upvotecomment-button, .downvotecomment-button').click(function(e){
+      e.stopPropagation()
+      console.log(e.currentTarget)
+      e.preventDefault();
+      console.log('/api'+$(e.currentTarget).attr('href'))
+       $.get('/api'+$(e.currentTarget).attr('href'),function(data){
+         console.log(data);
+         if(data.error == false ){
+           $(e.currentTarget).parent().children('.upvotecomment-button, .downvotecomment-button').hide()
+         }
+       })
+    })
+
     $('.comment-collapse').click( function(e) {
       e.preventDefault();
 
       $(this).parent().find('.commentInfo').toggle()
       $(this).parent().find('.comment-title').toggle()
-
-      $('.comment-reply-button').click(function(e) {
-        var parent = $(e.currentTarget).closest('.comment')
-
-        $('#commentform').insertAfter(parent);
-        $('#commentform').children('#parentID').val($(parent).data('commentid'))
-        e.preventDefault();
-        e.stopPropagation();
-      })
-      $('.post-comments').click(function(e){
-
-        if ($(e.target).hasClass('post-comments')) {
-           $('#commentform').prependTo($('.post-comments'))
-           $('#commentform').children('#parentID').val($('#postID').val())
-         }
-      })
-
-      $('.upvotecomment-button, .downvotecomment-button').click(function(e){
-        e.stopPropagation()
-        console.log(e.currentTarget)
-        e.preventDefault();
-        console.log('/api'+$(e.currentTarget).attr('href'))
-         $.get('/api'+$(e.currentTarget).attr('href'),function(data){
-           console.log(data);
-           if(data.error == false ){
-             $(e.currentTarget).parent().children('.upvotecomment-button, .downvotecomment-button').hide()
-           }
-         })
-      })
 
     })
   },
