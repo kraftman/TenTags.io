@@ -7,6 +7,7 @@
   background-color: $post-background;
 
   padding: 0px;
+  margin-bottom: 10px;
 }
 
 .post-full-topbar {
@@ -29,6 +30,7 @@
 
 .post-filters {
   float: right;
+  padding: 5px;
 }
 
 
@@ -71,7 +73,9 @@
   width: 250px;
 }
 
-
+.post-filterlist {
+  padding: 5px;
+}
 
 .filter-icon {
   display: inline-block;
@@ -84,6 +88,8 @@
   font-size:  10px;
   text-decoration: none;
 }
+
+
 
 .filter-label > a:hover {
   background-color: $hight-font-color;

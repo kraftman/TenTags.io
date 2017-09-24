@@ -1,3 +1,3 @@
 <div class='filter-label tag-med' >
-  <a href ='#' class='filtername'><%= filter.name %></a>
+  <a href ='<%=url_for("filter.view", {filsterlabel = filter.name}) %>' class='filtername'><%= filter.name %></a>
 </div>

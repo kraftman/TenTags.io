@@ -1,4 +1,8 @@
 .textbox-large {
-  width: 100%;
-  max-width: 500px;
+  display: block;
+  box-sizing: border-box;
+  margin: 0 auto;
+  background-color: grey;
+  color: $font-light;
+
 }

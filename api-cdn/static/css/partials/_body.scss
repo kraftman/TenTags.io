@@ -10,8 +10,9 @@ html,body {
   font-size: 14px;
 
   height: 100%;
-  margin: 0px;
+  margin: 0 auto;
   background-color: $background-color;
+  max-width: 960px;
 }
 
 a {
@@ -26,7 +27,6 @@ a {
 ul {
   list-style-type: none;
 }
-
 
 
 .form-search {

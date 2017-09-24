@@ -5,11 +5,11 @@ var hasFocus = false
 var currentParent
 
 $(function() {
-  $('.filtername').click( function(e) {
-
-    $('.filter_' + $(this).html()).toggle()
-    e.preventDefault();
-  })
+  // $('.filtername').click( function(e) {
+  //
+  //   $('.filter_' + $(this).html()).toggle()
+  //   e.preventDefault();
+  // })
 
   $('.comment-collapse').click( function(e) {
     e.preventDefault();

@@ -6,5 +6,5 @@
 
   <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="5"></textarea>
   </br>
-  <input type='submit' value='Reply'></input>
+  <input class = 'btn' type='submit' value='Reply'></input>
 </form>
