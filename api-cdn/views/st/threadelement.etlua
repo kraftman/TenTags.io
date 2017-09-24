@@ -1,16 +1,18 @@
 <% if errors then %>
   <%= errors[1] %>
 <% else %>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'><%= thread.title %></h2>
+  </div>
+
   <div class = 'panel thread' >
-    <h2><%= thread.title %></br></h2>
 
     <% for i, message in pairs(thread.messages) do %>
-      <div class = ''>
-
+      <div class = 'messageelement'>
         <p><% render("views.st.messageelement",{message = message}) %></p>
-
       </div>
     <% end %>
-    <a href="<%= url_for('message.reply',{threadID = thread.id}) %>">reply</a>
+  </br>
+    <a class = 'btn' href="<%= url_for('message.reply',{threadID = thread.id}) %>">reply</a>
   </div>
 <% end %>

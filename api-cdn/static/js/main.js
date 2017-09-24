@@ -1,8 +1,7 @@
 
 var $ = require('jquery');
-require('jquery-ui')
-require('selectize')
-
+require('jquery-ui');
+require('jquery-ui-sortable');
 window.jQuery = $;
 window.$ = $;
 
@@ -10,7 +9,7 @@ var site = require('./site');
 var postHandler = require('./posthandler');
 var sideBar = require('./sidebar');
 var frontPage = require ('./frontpage');
-var validate = require('validate.js');
+var createPost = require('./createpost');
 
 function SubmitLogin(e){
   console.log('done')
@@ -23,29 +22,7 @@ window.SubmitLogin = SubmitLogin;
 $(function() {
   var userID = $('#userID').val()
 
-  $('.form-login').submit(function(e){
-    e.preventDefault()
-    var email = $('.register-box').val().replace(' ', '')
-    if (!email) {
-      window.location.replace('/login');
-    };
-    var constraints = {
-      from: {
-        email: true
-      }
-    };
 
-
-    var isInvalid = validate({from: email}, constraints);
-    if (isInvalid) {
-      window.alert('Invalid email!');
-      return false;
-    }
-    grecaptcha.execute();
-
-
-    return false;
-  });
 
 
   $.getJSON('/api/user/'+userID+'/settings',function(data){
@@ -55,6 +32,7 @@ $(function() {
     (new postHandler(userID, userSettings)).load();
     (new sideBar(userID, userSettings)).load();
     (new frontPage(userID, userSettings)).load();
+    (new createPost(userID, userSettings)).load();
 
   })
 

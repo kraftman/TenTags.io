@@ -1,4 +1,7 @@
 
+// Vendor
+@import 'vendor/all';
+
 // Modules
 // no css output just variables and functions
 @import 'modules/all';
@@ -6,8 +9,6 @@
 // Partials
 @import 'partials/base';
 
-// Vendor
-@import 'vendor/all';;
 
 
 .hidden-search-input {

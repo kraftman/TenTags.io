@@ -1,16 +1,11 @@
 
 
 
-<script src="/static/js/dropzone.js" defer></script>
-<script src="/static/js/createpost.js" defer></script>
-
-
-
-<link rel="stylesheet" type="text/css" href="/static/selectize/css/selectize.css">
-
 
 <div id='template-preview' class = 'hidden-template'>
-<div class="dz-preview dz-file-preview">
+
+
+<div class="dz-preview dz-file-preview ">
   <div class="dz-image"><img data-dz-thumbnail /></div>
   <form class='dropzone-description'>
     <textarea class='form-input' placeholder="File description...">
@@ -19,7 +14,6 @@
   <div class="dz-details">
     <div class="dz-size"><span data-dz-size></span></div>
     <div class="dz-filename"><span data-dz-name></span></div>
-
   </div>
   <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
   <div class="dz-error-message"><span data-dz-errormessage></span></div>
@@ -46,22 +40,32 @@
 </div>
 </div>
 
-<div id="image-dropzone" class="dropzone square"></div>
 
 
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>CreatePost</h2>
+</div>
 <form class="panel panel-default" id='createpost' action='/p/new' method="POST" enctype="multipart/form-data" accept-charset='UTF-8'>
-  <h3>Create Post</h3>
+
+
+
 
   <div id="submitError"></div>
+  <div class = 'panel-default'>
+    <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-  <input type='hidden' name='submitted' id='submitted' value='1'/>
+    <input class='form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" ></br>
 
-  <input class='form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" >
+    <input  class='form-input' type="text" name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
 
-  <input type="text" class='form-input' name='postlink' id='postlink' maxlength="300" placeholder="Link" value='<%= params.postLink or ""%>'>
+    <input type="file" id = 'upload_file' name="upload_file" /></td></tr>
+    <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea" placeholder="Post Text" cols = '120' rows="10" ></textarea>
+  </div>
 
-  <input type="file" name="upload_file" /></td></tr>
-  <textarea  class='form-input textbox-large' name='posttext' id='posttext' id="txtArea" placeholder="Post Text"rows="10" ></textarea>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Add Files</h2>
+  </div>
+  <div id="image-dropzone" class="dropzone square"></div>
 
   </br>
     <p>Add Filters</p>

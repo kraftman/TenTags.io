@@ -225,9 +225,10 @@ function api:CreateImage(userID, fileData)
 
   file.rawID = rawID
 
-  assert_error(self.redisWrite:CreateImage(file))
+  self.redisWrite:CreateImage(file)
 
-  return assert_error(self.redisWrite:QueueJob('ConvertImage', file))
+  self.redisWrite:QueueJob('ConvertImage', file)
+  return file
 
 end
 

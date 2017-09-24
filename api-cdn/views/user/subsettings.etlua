@@ -1,10 +1,13 @@
 
 <% render("views.user.createsub") %>
 
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Admin Settings</h2>
+</div>
 <div class = 'panel panel-default'>
 
 <% if account.role == 'Admin' then %>
-  <h2>Admin Settings</h2>
+
   <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
     <div class="checkbox">
       <label><input type="checkbox" name='fakeNames' <%= fakeNames -%>>Use fake usernames</label>
@@ -20,16 +23,19 @@
 
 <% end %>
 </div>
+
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>User Settings</h2>
+</div>
 <div class = 'panel panel-default'>
 
   <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
 
-    <h2>User Settings</h2>
 
 
     <label for='userbio' >Bio:</label>
       </br>
-    <textarea  class='form-input textbox-large' name='userbio' id='userbio' id="txtArea" rows="10" ><%= userBio or '' %></textarea>
+    <textarea  class='form-input textbox-large' name='userbio' id='userbio' id="txtArea" rows="10" cols ='120' ><%= userBio or '' %></textarea>
 
       </br>
       <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
@@ -63,9 +69,11 @@
 </div>
 
 
-
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Logged in locations:</h2>
+</div>
 <div class = 'panel panel-default'>
-  <h2>Logged in locations:</h2>
+
 
   <% for k,accountSession in pairs(account.sessions) do %>
     <% if accountSession.os then %>

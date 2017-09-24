@@ -91,10 +91,12 @@
 
   .post-body {
     height: 200px;
+    text-align: center;
   }
   a {
     display: inline-block;
     height: 100%;
+    margin: 0 auto;
   }
 }
 
@@ -143,6 +145,7 @@
   max-width: 100%;
   max-height: 100%;
   box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .post-line-1 {

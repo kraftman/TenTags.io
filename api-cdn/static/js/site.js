@@ -5,6 +5,8 @@
 
 var $ = require('jquery');
 
+var validate = require('validate.js');
+
 var TagVoteListener = function(userID, userSettings) {
   this.userID = userID;
   this.userSettings = userSettings;
@@ -25,6 +27,30 @@ TagVoteListener.prototype = function() {
     })
   },
   randomCrap = function() {
+    $('.form-login').submit(function(e){
+      e.preventDefault()
+      var email = $('.register-box').val().replace(' ', '')
+      if (!email) {
+        window.location.replace('/login');
+      };
+      var constraints = {
+        from: {
+          email: true
+        }
+      };
+
+
+      var isInvalid = validate({from: email}, constraints);
+      if (isInvalid) {
+        window.alert('Invalid email!');
+        return false;
+      }
+      grecaptcha.execute();
+
+
+      return false;
+    });
+
     $('.post-full-topbar').click(function(e){
       console.log(e.currentTarget)
       $(e.currentTarget).parent().find('.linkImg').toggle()

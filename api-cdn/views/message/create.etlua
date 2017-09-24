@@ -1,10 +1,12 @@
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Send Message</h2>
+</div>
 <form method="POST" class='panel panel-default' action="<%= url_for('message.create') %>">
-  <h3>Send Message</h3>
     <input class='form-input' type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
     </br>
     <input class='form-input' type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
     </br>
-    <textarea class='form-input textbox-large' name="body" id="messagebody" rows="10"  placeholder="Message"></textarea>
+    <textarea class='form-input textbox-large' name="body" id="messagebody" rows="10"  cols = '120' placeholder="Message"></textarea>
     </br>
     <button class='btn btn-default' type="submit" >Send</button>
 </form>

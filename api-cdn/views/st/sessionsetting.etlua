@@ -1,6 +1,6 @@
 <div class = 'panel panel-default'>
   <span><%= accountSession.os or '' %> | </span><span><%= accountSession.browser or '' %></span>
-  | <span><%= TimeAgo(ngx.time() - accountSession.lastSeen) %></span>
+  | <span><%= TimeAgo(ngx.time() - (accountSession.lastSeen or 0)) %></span>
 
   <br>
   IP: <%= accountSession.ip -%> City: <%= accountSession.city or 'unknown' %>

@@ -171,7 +171,7 @@ app:post('api-uploadfile', '/api/i/', capture_errors(function(request)
 
     local ok = imageAPI:CreateImage(request.session.userID, fileData)
 
-    return {json = {status = 'success', data = ok.id or {}}}
+    return {json = {status = 'success', data = ok and ok.id or {}}}
 
 end))
 
