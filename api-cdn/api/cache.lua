@@ -107,11 +107,11 @@ function cache:GetUser(userID)
   if ENABLE_CACHE then
      ok, err = userDict:get(userID)
     if ok then
-      --print((ok))
       return from_json(ok)
     end
     if err then
       ngx.log(ngx.ERR, 'unable to get user info : ',err)
+      return nil, 'couldnt get user ', err
     end
   end
 

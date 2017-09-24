@@ -18,7 +18,8 @@ a {
   color: $link-color;
   text-decoration: none;
   &:hover {
-    background-color: #fff;
+    background-color: $topbar-background;
+    color: black;
   }
 }
 

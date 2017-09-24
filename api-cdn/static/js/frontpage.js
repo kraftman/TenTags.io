@@ -168,14 +168,15 @@ frontPage.prototype = function(){
       $('.upvoteButton, .downvoteButton').hide();
       votePost.call(context, $(this).parents('.post'),'down');
     });
-
-    interact('.post').draggable({
-      inertia: true,
-      onmove: function(e) { dragMoveListener.call(context, e) },
-      onend: function(e) { onEndListener.call(context, e) },
-      onstart: function(e) { onStartListener.call(context, e) },
-      axis: 'x'
-    })
+    if ($(window).width() < 769){
+      interact('.post').draggable({
+        inertia: true,
+        onmove: function(e) { dragMoveListener.call(context, e) },
+        onend: function(e) { onEndListener.call(context, e) },
+        onstart: function(e) { onStartListener.call(context, e) },
+        axis: 'x'
+      })
+    }
 
   },
   onStartListener = function(event){

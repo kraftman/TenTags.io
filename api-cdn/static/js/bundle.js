@@ -10355,13 +10355,6 @@ function SubmitLogin(e){
   document.getElementById("register").submit();
 }
 
-function OnLoginClick(e){
-  // disabled
-  //   class="g-recaptcha btn"
-  //   data-badge="inline"
-  //   data-sitekey="6LdRGCEUAAAAAJK6vy8JIln5hUWAoWldsDPXPxUe"
-  //   data-callback="SubmitLogin"
-}
 
 window.SubmitLogin = SubmitLogin;
 
@@ -15051,6 +15044,12 @@ TagVoteListener.prototype = function() {
     addInfoBar.call(this);
     //hideRecapchta.call(this);
     randomCrap.call(this);
+    togglePosts.call(this);
+  },
+  togglePosts = function() {
+    $('.filter-topbar').click(function(e){
+      $(e.currentTarget).parent().find('.filter-body').toggle()
+    })
   },
   randomCrap = function() {
     $('.post-full-topbar').click(function(e){
@@ -15524,14 +15523,15 @@ frontPage.prototype = function(){
       $('.upvoteButton, .downvoteButton').hide();
       votePost.call(context, $(this).parents('.post'),'down');
     });
-
-    interact('.post').draggable({
-      inertia: true,
-      onmove: function(e) { dragMoveListener.call(context, e) },
-      onend: function(e) { onEndListener.call(context, e) },
-      onstart: function(e) { onStartListener.call(context, e) },
-      axis: 'x'
-    })
+    if ($(window).width() < 769){
+      interact('.post').draggable({
+        inertia: true,
+        onmove: function(e) { dragMoveListener.call(context, e) },
+        onend: function(e) { onEndListener.call(context, e) },
+        onstart: function(e) { onStartListener.call(context, e) },
+        axis: 'x'
+      })
+    }
 
   },
   onStartListener = function(event){
