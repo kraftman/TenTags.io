@@ -63,7 +63,7 @@ function util.RateLimit(request)
   if request.userID then
     currentRole = roles.User
   end
-  print(to_json(route))
+
   if currentRole == roles.Public and route.access > roles.Public then
     return request:write({status = 401, render = 'pleaselogin'})
   end

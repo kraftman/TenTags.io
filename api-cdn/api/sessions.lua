@@ -77,6 +77,9 @@ function api:ValidateSession(accountID, sessionID)
 	end
 
 	local account = self.userRead:GetAccount(accountID)
+  if not account then
+    return nil, 'account not found'
+  end
 
 	local session = account.sessions[sessionID]
 	if not session then
