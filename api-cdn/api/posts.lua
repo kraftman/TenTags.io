@@ -1,20 +1,23 @@
 
+local app_helpers = require("lapis.application")
+local yield_error, assert_error = app_helpers.yield_error, app_helpers.assert_error
+
 local cache = require 'api.cache'
-local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
-local userAPI = require 'api.users'
+
 local tagAPI = require 'api.tags'
 
 local trim = (require 'lapis.util').trim
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 local tinsert = table.insert
 local POST_TITLE_LENGTH = 300
 local COMMENT_LENGTH_LIMIT = 2000
-
-local TAG_START_DOWNVOTES = 0
-local TAG_START_UPVOTES = 1
+local userlib = require 'lib.userlib'
+local TAG_START_DOWNVOTES = 10
+local TAG_START_UPVOTES = 11
 local MAX_ALLOWED_TAG_COUNT = 30
+local userAPI = require 'api.users'
 
 local function UserCanAddSource(tags, userID)
   for _,tag in pairs(tags) do
@@ -25,58 +28,19 @@ local function UserCanAddSource(tags, userID)
   return true
 end
 
-local function CheckPostParent(post)
-	local sourceTags = {}
-	for _, tag in pairs(post.tags) do
-		if tag.name:find('^meta:sourcePost:') then
-			tinsert(sourceTags, tag)
-		end
-	end
-
-	-- set a new parentID for the post if the source is over the threshold
-	table.sort(sourceTags, function(a,b) return a.score > b.score end)
-
-	if sourceTags[1] and sourceTags[1].score > SOURCE_POST_THRESHOLD then
-		local parentID = sourceTags[1].name:match('meta:sourcePost:(%w+)')
-
-		if parentID and post.parentID ~= parentID then
-			post.parentID = parentID
-			worker:UpdatePostParentID(post)
-		end
-	end
-end
-
-
 function api:ConvertShortURL(postID)
   return cache:ConvertShortURL(postID)
 end
 
-
-
-function api:AddPostTag(userID, postID, tagName)
-
-	local ok, err = util.RateLimit('AddPostTag:', userID, 1, 60)
-	if not ok then
-		return ok, err
-	end
-
-	if tagName:find('^meta:') then
-		return nil, 'users cannot add meta tags'
-	end
-
-	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
-
-	local newTag = tagAPI:CreateTag(userID, tagName)
+function api:UserCanAddTag(userID, newTag, tags)
 
 	local count = 0
-	for _,postTag in pairs(post.tags) do	print('a')
+	for _,postTag in pairs(tags) do
 
 		if postTag.name == newTag.name then
 			return nil, 'tag already exists'
 		end
+
 		if postTag.createdBy == userID then
 			count = count +1
 			if count > MAX_ALLOWED_TAG_COUNT then
@@ -85,122 +49,133 @@ function api:AddPostTag(userID, postID, tagName)
 		end
 	end
 
+  return true
+end
+
+function api:ReloadImage(userID, postID)
+  local user = cache:GetUser(userID)
+  if not user then
+    return nil, 'couldnt find user'
+  end
+  if user.role ~= 'Admin' then
+    return nil, 'admins only!'
+  end
+
+  local post = cache:GetPost(postID)
+
+  if (not post.link) or post.link == "" then
+    return nil, 'post has no link'
+  end
+
+  assert_error(self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id}))
+
+  return true
+end
+
+
+
+function api:ReportPost(userID, postID, reportText)
+
+  local post = cache:GetPost(postID)
+  if post.reports[userID] then
+    return nil, 'youve already reported this post'
+  end
+
+  post.reports = post.reports or {}
+  post.reports[userID] = self:SanitiseUserInput(reportText, 300)
+
+  self.redisWrite:CreatePost(post)
+  if not ok then
+    return nil, err
+  end
+  self.redisWrite:AddReport(userID, postID)
+  self:InvalidateKey('post',postID)
+
+  return ok,err
+
+  --check they havent already reported it
+  -- add it to the list of reports attached to the postID
+  -- add it to the admin list of reports
+end
+
+function api:AddPostTag(userID, postID, tagName)
+
+	if tagName:find('^meta:') then
+		return nil, 'users cannot add meta tags'
+	end
+
+	local post = cache:GetPost(postID)
+
+  local newTag = tagAPI:CreateTag(userID, tagName)
+
+  ok, err = self:UserCanAddTag(userID, newTag, post.tags)
+  if not ok then
+    return nil, err
+  end
+
+  self.userWrite:IncrementUserStat(userID, 'TagsAdded', 1)
+
 	newTag.up = TAG_START_UPVOTES
 	newTag.down = TAG_START_DOWNVOTES
-	newTag.score = util:GetScore(newTag.up, newTag.down)
+	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
-	if not ok then
-		return ok, err
-	end
+	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
-	ok, err = worker:UpdatePostTags(post)
-	return ok, err
+	return self.redisWrite:UpdatePostTags(post)
 
 end
-
-
-
-
-
 
 function api:VotePost(userID, postID, direction)
 
-	local ok, err = util.RateLimit('VotePost:', userID, 10, 60)
-	if not ok then
-		return ok, err
-	end
+  local postVote = {
+    userID = userID,
+    postID = postID,
+    id = userID..':'..postID,
+    direction = direction
+  }
 
-	--[[
-		when we vote down a post as a whole we are saying
-		'this post is not good enough to be under these filters'
-		or 'the tags this post has that match the filters i care about are
-		not good'
-
-	]]
-	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
-
-  -- ARE THEY ALLOWED?
-
-	local user = cache:GetUser(userID)
-	if userAPI:UserHasVotedPost(userID, postID) then
-		if user.role ~= 'Admin' then
-			return nil, 'already voted'
-		end
-	end
-
-  -- HIDE THE POST
-	if tonumber(user.hideVotedPosts) == 1 then
-		print('hiding voted post')
+  local user = cache:GetUser(userID)
+	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
 	end
+  self:QueueUpdate('post:vote', postVote)
 
-	-- get interesction of user tags and post tags
-	-- do we want matching tags, or matching filters??
-	local matchingTags = self:GetMatchingTags(cache:GetUserFilterIDs(userID),post.filters)
-
-	-- filter out the tags they already voted on
-	-- matchingTags = self:GetUnvotedTags(user,postID, matchingTags)
-	for _,tagName in pairs(matchingTags) do
-		for _,tag in pairs(post.tags) do
-			if tag.name == tagName then
-				self:AddVoteToTag(tag, direction)
-			end
-		end
-	end
-
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
-	if not ok then
-		return ok, err
-	end
-	worker:UpdatePostTags(post)
-
-	worker:AddUserTagVotes(userID, postID, matchingTags)
-	worker:AddUserPostVotes(userID, postID)
-
-	return true
-
+  --return self.redisWrite:QueueJob('votepost',postVote)
+  return postVote
 end
 
 function api:SubscribePost(userID, postID)
-	local ok, err = util.RateLimit('SubscribeComment:', userID, 3, 30)
-	if not ok then
-		return ok, err
-	end
 
 	local post = cache:GetPost(postID)
-	for _,viewerID in pairs(post.viewers) do
+  local found
+	for i,viewerID in ipairs(post.viewers) do
 		if viewerID == userID then
-			return nil, 'already subscribed'
+			table.remove(post.viewers, i)
+      found = true
 		end
 	end
-	tinsert(post.viewers, userID)
-
-	ok, err = worker:CreatePost(post)
-	return ok, err
+  if not found then
+	   tinsert(post.viewers, userID)
+  end
+	self.redisWrite:CreatePost(post)
+  return self:InvalidateKey('post', post.id)
 
 end
 
-
-
 function api:CreatePostTags(userID, postInfo)
 	for k,tagName in pairs(postInfo.tags) do
-		--print(tagName)
 
 		tagName = trim(tagName:lower())
-		postInfo.tags[k] = tagAPI:CreateTag(postInfo.createdBy, tagName)
+		postInfo.tags[k] = {name = tagName}
 
 		if postInfo.tags[k] then
 			postInfo.tags[k].up = TAG_START_UPVOTES
 			postInfo.tags[k].down = TAG_START_DOWNVOTES
-			postInfo.tags[k].score = util:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
+			postInfo.tags[k].score = self:GetScore(TAG_START_UPVOTES,TAG_START_DOWNVOTES)
 			postInfo.tags[k].active = true
 			postInfo.tags[k].createdBy = userID
 		end
@@ -209,35 +184,16 @@ end
 
 
 
-
-function api:FindPostTag(post, tagName)
-	for _, tag in pairs(post.tags) do
-		if tag.name== tagName then
-			return tag
-		end
-	end
-end
-
-
 function api:AddSource(userID, postID, sourceURL)
-	-- rate limit them
-	-- check existing sources by this user
 
-
-	local ok, err = util.RateLimit('AddSource:', userID, 1, 600)
-	if not ok then
-		return ok, err
-	end
-
-	local sourcePostID = sourceURL:match('/post/(%w+)')
+	local sourcePostID = sourceURL:match('/p/(%w+)')
 	if not sourcePostID then
 		return nil, 'source must be a post from this site!'
 	end
 
 	local post = cache:GetPost(postID)
 
-
-	if UserCanAddSource(post.tags, userID) == false then
+	if not UserCanAddSource(post.tags, userID) then
 		return nil,  'you cannot add more than one source to a post'
 	end
 
@@ -250,15 +206,10 @@ function api:AddSource(userID, postID, sourceURL)
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:UpdatePostTags(post)
-	if not ok then
-		return ok,err
-	end
+	self.redisWrite:UpdatePostTags(post)
+  self.userWrite:IncrementUserStat(userID, 'SourcesAdded', 1)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
-	if not ok then
-		return ok, err
-	end
+	self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
 
 	return true
 end
@@ -274,31 +225,25 @@ function api:DeletePost(userID, postID)
 		end
 	end
 
-	return worker:DeletePost(postID)
+  cache:UpdateKey('post', nil)
+  self:QueueUpdate('post:delete', post)
+  return post
 
 end
 
 
 function api:GetPost(userID, postID)
-
-	if not postID then
-		return nil, 'no postID!'
-	end
+  if not postID then
+    return nil, 'no post id'
+  end
 
 	local post = cache:GetPost(postID)
-	--print(postID, to_json(post))
-	if not post then
-		return nil, 'post not found'
-	end
-
 	local userVotedTags = cache:GetUserTagVotes(userID)
+	local user = cache:GetUser(userID)
 
-	if userID then
-		local user = cache:GetUser(userID)
 
-		if user.hideClickedPosts == '1' then
-			cache:AddSeenPost(userID, postID)
-		end
+	if user and user.hideClickedPosts then
+		cache:AddSeenPost(userID, postID)
 	end
 
 	for _,tag in pairs(post.tags) do
@@ -312,13 +257,10 @@ end
 
 
 function api:EditPost(userID, userPost)
-	local ok, err = util.RateLimit('EditPost:', userID, 4, 300)
-	if not ok then
-		return ok, err
-	end
 
 	local post = cache:GetPost(userPost.id)
 
+  -- check permissions
 	if post.createdBy ~= userID then
 		local user = cache:GetUser(userID)
 		if not user or user.role ~= 'Admin' then
@@ -326,54 +268,94 @@ function api:EditPost(userID, userPost)
 		end
 	end
 
-
-	if not post then
-		return nil, 'could not find post'
-	end
-
+  -- only allow changing the title for newly made posts
 	if ngx.time() - post.createdAt < 600 then
-		post.title = util:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
+		post.title = self:SanitiseUserInput(userPost.title, POST_TITLE_LENGTH)
 	end
 
-	post.text = util:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+  -- update the post edits
+  local newText = self:SanitiseUserInput(userPost.text, COMMENT_LENGTH_LIMIT)
+  if post.text ~= newText then
+    -- save the edit history
+    post.edits = post.edits or {}
+    post.edits[ngx.time()] = {time = ngx.time(), editedBy = userID, original = post.text}
+  end
+
+	post.text = newText
 	post.editedAt = ngx.time()
 
-	ok, err = worker:CreatePost(post)
-	return ok, err
-
+	--self.redisWrite:CreatePost(post)
+  cache:UpdateKey('post', post)
+  self:QueueUpdate('post:edit', post)
+  return post
+  --return self:InvalidateKey('post', post.id)
 end
 
 
-function api:GeneratePostTags(post)
-	if not post.link or trim(post.link) == '' then
-		post.postType = 'self'
-    tinsert(post.tags,'meta:self')
+
+function api:GetUserPosts(userID, targetUserID, startAt, range)
+  startAt = startAt or 0 -- 0 index for redis
+  range = range or 20
+
+  -- check if they allow it
+  local targetUser = cache:GetUser(targetUserID)
+  if not targetUser then
+    return nil, 'could not find user by ID '..targetUserID
   end
-	tinsert(post.tags, 'meta:all')
 
-  tinsert(post.tags,'meta:createdBy:'..post.createdBy)
+  if targetUser.hidePosts then
+    local user = cache:GetUser(userID)
+    if not user.role == 'Admin' then
+      return nil, 'user has disabled comment viewing'
+    end
+  end
+
+  return cache:GetUserPosts(targetUserID, startAt, range)
+
 end
 
 
+function api:AddImage(postID, bbID)
+  return self.redisWrite:AddImage(postID, bbID)
+end
 
+function api:CreatePost(userID, post)
 
--- sanitise user input
+	local newPost = self:ConvertUserPostToPost(userID, post)
+
+  self:CreatePostTags(userID, newPost)
+
+  --self.redisWrite:CreatePost(newPost)
+  -- add the post to our local cache
+
+  cache:UpdateKey('post', newPost)
+  self:QueueUpdate('post:create', newPost)
+  -- queue the post up for processing and adding to redis
+  --self.redisWrite:QueueJob('CreatePost', info)
+  return newPost
+
+end
+
+function api:DodgyAdminHack(user, post)
+  if user.role == 'Admin' and user.fakeNames then
+
+    local account = cache:GetAccount(user.parentID)
+    local newUserName = userlib:GetRandom()
+
+    user = userAPI:CreateSubUser(account.id, newUserName) or cache:GetUser(cache:GetUserID(newUserName))
+    if user then
+      post.createdBy = user.id
+    end
+  end
+end
+
 function api:ConvertUserPostToPost(userID, post)
-
-	if not userID then
-		return nil, 'no userID'
-	end
-	if not post then
-		return nil, 'no post info'
-	end
-
 	post.createdBy = post.createdBy or userID
-	if userID ~= post.createdBy then
-		local user = cache:GetUser(userID)
-		if user.role ~= 'Admin' then
-			post.createdBy = userID
-		end
-	end
+
+  local user = cache:GetUser(userID)
+
+  -- add fake user if needed
+  self:DodgyAdminHack(user, post)
 
 	local newID = uuid.generate_random()
 
@@ -382,81 +364,75 @@ function api:ConvertUserPostToPost(userID, post)
 		parentID = newID,
 		createdBy = post.createdBy,
 		commentCount = 0,
-		title = util:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
-		link = util:SanitiseUserInput(post.link, 400),
-		text = util:SanitiseUserInput(post.text, 2000),
+		title = self:SanitiseUserInput(post.title, POST_TITLE_LENGTH),
+		link = self:SanitiseUserInput(post.link, 2083),
+		text = self:SanitiseUserInput(post.text, 2000),
 		createdAt = ngx.time(),
-		filters = {}
+		filters = {},
+    bbID = post.bbID,
+    images = post.images,
 	}
 	if newPost.link:gsub(' ','') == '' then
 		newPost.link = nil
 	end
 
 	newPost.tags = {}
-	if post.tags == ngx.null then
-		return nil, 'post needs tags!'
-	end
-
-	if not post.tags then
-		return nil, 'post has no tags!'
+	if post.tags == ngx.null  or not post.tags then
+		yield_error('post needs tags!')
 	end
 
 	for _,v in pairs(post.tags) do
-		tinsert(newPost.tags, util:SanitiseUserInput(v, 100))
+		tinsert(newPost.tags, self:SanitiseUserInput(v, 100))
 	end
 
-
-	return newPost
-
-end
-
-
-function api:CreatePost(userID, postInfo)
-	local newPost, ok, err
-
-	ok, err = util.RateLimit('CreatePost:',userID, 1, 300)
-	if not ok then
-		return ok, err
-	end
-
-	newPost, err = self:ConvertUserPostToPost(userID, postInfo)
-	if not newPost then
-		return newPost, err
-	end
-
-	-- clear out any tags that shouldnt be allowed
-	for k,tagName in pairs(newPost.tags) do
+  -- remove any fake meta tags they may have added
+  for k,tagName in pairs(newPost.tags) do
 		if tagName:find('^meta:') then
 			newPost.tags[k] = ''
 		end
 	end
 
+  if (not post.link) or trim(post.link) == '' then
+    if post.images then
+      if #post.images > 1 then
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image')
+      else
+        newPost.postType = 'self-image'
+        tinsert(newPost.tags,'meta:self-image-album')
+      end
+    else
+      newPost.postType = 'self'
+      tinsert(newPost.tags,'meta:self')
+    end
+  end
+	tinsert(newPost.tags, 'meta:all')
+  tinsert(newPost.tags,'meta:createdBy:'..post.createdBy)
+  if user.role == 'Admin' then
+    tinsert(newPost.tags, 'meta:admin')
+  end
 
-	self:GeneratePostTags(newPost)
+  if newPost.bbID then
+    newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
+  end
 
   if newPost.link then
 
-    local domain  = util:GetDomain(newPost.link)
+    local domain  = self:GetDomain(newPost.link)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
     end
-
-		ok, err = worker:QueueJob('GeneratePostIcon', newPost.id)
-		if not ok then
-			return ok, err
-		end
 
     newPost.domain = domain
     tinsert(newPost.tags,'meta:link:'..newPost.link)
     tinsert(newPost.tags,'meta:domain:'..domain)
   end
 
-	self:CreatePostTags(userID, newPost)
+  newPost.viewers = {userID}
 
-	newPost.viewers = {userID}
-	print('creating new post')
-	return worker:CreatePost(newPost)
+	return newPost
+
 end
 
 

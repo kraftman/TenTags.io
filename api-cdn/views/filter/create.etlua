@@ -1,49 +1,37 @@
 
 
-<link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
-<script src="/static/js/jquery-2.1.4.js"></script>
-<script src="/static/chosen/chosen.jquery.js"></script>
-<script src="/static/js/jquery.form.js"></script>
-<script src="/static/js/createfilter.js"></script>
+<div class = 'panel panel-default'>
+  <h3>Create Filter</h3>
+  <form id='createfilter' action='' method='post' accept-charset='UTF-8'>
 
 
-
-<div class = 'contents'>
-<form id='createfilter' action='' method='post' accept-charset='UTF-8'>
-  <fieldset >
-    <legend>Create Filter</legend>
     <div class='warningText'></div>
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-    <label for='filterName' >Filter Name</label>
+
+    <input type='text' class='form-input' name='filterName' id='filterName' maxlength="50" placeholder="Filter Name (url)" value="<%= params.filterlabel or '' -%>"/>
+
       </br>
-    <input type='text' name='filterName' id='filterName' maxlength="50" value="<%= params.filterlabel or '' -%>"/>
+    <input type='text' class='form-input' name='filtertitle' id='filtertitle' maxlength="50" placeholder='Filter Title'/>
 
     </br>
-    <label for='filtertitle' >Filter Title:</label>
-      </br>
-    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" />
 
-    </br>
-    <label for='filterdescription' >Filter Description</label>
-      </br>
-
-    <textarea name='filterdescription' id='filterdescription' id="txtArea" rows="10" cols="70"></textarea>
+    <textarea name='filterdescription' class='form-input textbox-large' id='filterdescription' placeholder="Filter Description" id="txtArea" rows="10" cols="70"></textarea>
 
     </br>
 
     <label for='requiredTagNames'>Required Tags</label>
-    <input type='text' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
+    <input type='text' class='form-input' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
 
     </select>
     </br>
     <label for='bannedTagNames'>Excluded Tags</label>
-    <input type='text' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
+    <input type='text' class='form-input' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
 
     </select>
     </br>
-    <input class="btn btn-primary" id='submitButton' type='submit' name='Submit' value='Submit' />
+    <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Submit' />
 
-  </fieldset>
-</form>
+
+  </form>
 </div>

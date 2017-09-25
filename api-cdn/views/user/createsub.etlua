@@ -1,15 +1,19 @@
-<div class='contents'>
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Create New User</h2>
+</div>
+<div class='panel panel-default'>
+
+  <p>You can have up to three usernames per account, for example to seperate home and work filters</p>
   <form id='register' action='<%= url_for('newsubuser') %>' method='post'
       accept-charset='UTF-8'>
-    <fieldset >
-      <legend>New User</legend>
+
+
       <input type='hidden' name='submitted' id='submitted' value='1'/>
 
-      <label for='username' >UserName:</label>
-      <input type='text' name='username' id='username' maxlength="50" />
-      
-      <input type='submit' name='Submit' value='Submit' />
+      <input class='form-input' type='text' name='username' id='username' maxlength="50" placeholder='Username'/>
 
-    </fieldset>
+      <input class = 'btn' type='submit' name='Submit' value='Create' />
+
+
   </form>
-<div>
+</div>

@@ -1,27 +1,55 @@
 
+<% render("views.user.userbar",{username = params.username}) %>
 
-<% if userInfo.bio then %>
-  <h1> User Bio: </h1>
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Stats</h2>
+</div>
+<div class = 'panel panel-default' >
+
+  Posts created: <%= userInfo.PostsCreated or 0%></br>
+  Comments created: <%= userInfo.CommentsCreated or 0%></br>
+  Posts voted: <%= userInfo.PostsVoted or 0%></br>
+  Tags added: <%= userInfo.TagsAdded or 0%></br>
+
+  Tag votes: <%= (userInfo['stat:tagvoteup'] or 0) - (userInfo['stat:tagvotedown'] or 0) %></br>
+
+  Comment votes: <%= (userInfo['stat:commentvoteup'] or 0) - (userInfo['stat:commentvotedown'] or 0) %>
+
+
+</div>
+
+<% if userInfo.bio and userInfo.bio ~= '' then %>
+
   <div class = "panel panel-default">
+    <h3> User Bio: </h3 >
     <%= userInfo.bio %>
   </div>
-
-
 <% end %>
 
-<% if session.userID and (userInfo.enablePM == '1') then %>
-  <div>
-    <a href="<%= url_for("newmessage",{username = params.username}) %>">Send Message</a>
+<% if session.userID and (userInfo.enablePM) and (not viewerIsBlocked) then %>
+
+  <% render("views.message.create",{recipient = params.username}) %>
+
+<% end %>
+</br>
+<% if session.userID then %>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Interact</h2>
   </div>
-
-  <form id="tagform" method="post" action="<%= url_for("taguser",{userID = userID}) %>" >
-    <textarea name='tagUser' id='tagUser' rows="4" cols="50"></textarea>
-    </br>
-    <input type='submit' value="Tag User"></input>
-  </form>
-<% end %>
+  <div class = 'panel panel-default' >
 
 
-<% for i, comment in pairs(comments) do %>
-  <% render("views.st.comment",{commentInfo = comment}) %>
+    <h3>Tag User</h3>
+    <form id="tagform" method="post" action="<%= url_for("api-taguser",{userID = userID}) %>" >
+      <input type='text' class='form-input' name='tagUser' id='tagUser' ></input>
+      </br>
+      <input class = 'btn' type='submit' value="Add Tag"></input>
+    </form>
+
+    <h3>Block User</h3>
+    <form id="tagform" method="post" action="<%= url_for("blockuser",{username = params.username}) %>" >
+
+      <input class = 'btn' type='submit' value="<%= userIsBlocked and 'Unblock' or 'Block' %>"></input>
+    </form>
+  </div>
 <% end %>

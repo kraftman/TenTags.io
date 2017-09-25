@@ -1,0 +1,130 @@
+
+@media only screen and (max-width: 360px) {
+  .login-button {
+    display: none;
+  }
+
+}
+
+@media only screen and (max-width: 1026px) {
+  body {
+    width: 100%;
+  }
+  .filter-bar {
+    @include card1();
+    border-radius: 0px;
+    float: none;
+    display: none;
+    flex-direction: column-reverse;
+    width: 250px;
+    position: fixed;
+    margin-left: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    z-index: 10;
+    .hamburger {
+      display:inline-block;
+    }
+  }
+
+  .post-full-bottombar {
+    display: block;
+  }
+  .main {
+    margin-bottom: 55px;
+  }
+
+  .site-search {
+    width: 100px;
+    input {
+      width: 100px;
+    }
+  }
+  .form-login {
+    input {
+      width: 100px;
+      display: inline-block;
+    }
+    button {
+      display: inline-block;
+    }
+  }
+  .settings-micro {
+    display: inline-block;
+  }
+
+  .settings-link p {
+    display: none;
+  }
+
+  .settings-menu {
+    @include card1();
+    margin-right: 5px;
+    float: none;
+    position: fixed;
+    top: auto;
+    bottom: 60px;
+    right: 0;
+    z-index: 10;
+  }
+
+  .filter-hamburger {
+    display:inline;
+  }
+
+  .filter-nav-bar .hamburger {
+    display: inline;
+  }
+
+  .filter-nav-bar {
+    margin-bottom: 5px;
+  }
+
+
+  .contents {
+    display: table-cell;
+    margin-bottom: 30px;
+  }
+  .top-nav {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    z-index: 9;
+
+    margin: 0px;
+    div {
+      padding-right: 0;
+    }
+
+    .gin {
+      vertical-align:top;
+      padding-top: 3px;
+      float:none;
+      margin: 5px;
+      margin-left: 0px;
+    }
+
+
+
+    .form-login > div {
+      display: none;
+      position: absolute;
+      right: 10px;
+      top: auto;
+      bottom: 50px;
+
+      z-index: 5;
+    }
+  }
+
+
+  .siteSearch {
+    display: block;
+    vertical-align: top;
+    padding-top: 6px;
+  }
+}

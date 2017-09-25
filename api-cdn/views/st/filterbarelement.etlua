@@ -1,6 +1,13 @@
 
-<ul>
-  <a href ='<%=url_for('filter',{filterlabel = filter.name})%>' class='filterbarelement'>
+<li class = 'filterbarelement'>
+  <a href ='<%=url_for('subscribefilter',{filterID = filter.id})%>' class = 'filterbar-subscribe' data-filterid="<%= filter.id %>">
+    <% if UserHasFilter(filter.id) then %>
+      <span class="ti-close"></span>
+    <% else %>
+      <span class="ti-star"></span>
+    <% end %>
+  </a>
+  <a href ='<%=url_for('filter.view',{filterlabel = filter.name})%>' class='filterbar-link'>
     <span><%= filter.name %></span>
   </a>
-</ul>
+</li>

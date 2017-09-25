@@ -1,10 +1,14 @@
 
 local m = {}
 
-
 local respond_to = (require 'lapis.application').respond_to
-local api = require 'api.api'
 local tinsert = table.insert
+local postAPI = require 'api.posts'
+local filterAPI = require 'api.filters'
+
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
 local filters = {
   {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
@@ -84,7 +88,7 @@ function m.CreatePosts(self)
       tags = {'456'}
     }
 
-    local ok, err = api:CreatePost(userID, info)
+    local ok, err = postAPI:CreatePost(userID, info)
 
     if not ok then
       ngx.log(ngx.ERR, 'error from api: ',err or 'none')
@@ -94,9 +98,36 @@ function m.CreatePosts(self)
 
 end
 
+function m.CreateFilters(self)
+  local userID = self.session.userID
+  math.randomseed(ngx.time())
+  local a = math.random(0,100)
+  for i = 1, 100 do
+    i = i..a..math.floor(ngx.time())
+    print(i)
+    local info = {
+      name = 'filter:'..i,
+      descriptions = 'filterdescription:'..i,
+      title = 'fitlertitle:'..i,
+      requiredTagNames = {'456'},
+      bannedTagNames = {},
+      createdBy = self.session.userID,
+      createdAt = ngx.time(),
+    }
+
+    local ok, err = filterAPI:CreateFilter(userID, info)
+
+    if not ok then
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      return {json = err}
+    end
+  end
+end
+
 function m:Register(app)
-  app:get('/auto/all', self.AutoContent)
-  app:get('/auto/posts', self.CreatePosts)
+    app:get('/auto/all', self.AutoContent)
+    app:get('/auto/posts', self.CreatePosts)
+    app:get('/auto/filters', self.CreateFilters)
 end
 
 return m

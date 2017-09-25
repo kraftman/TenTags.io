@@ -1,12 +1,8 @@
-<% if post['specialTag:nsfw'] then %>
-  <% if userInfo.showNSFW == '1' and post.postType ~= 'self' then %>
-    <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
-  <% else %>
-    <img class = 'post-icon' src="/static/icons/nsfw.jpg" height="40" width="40">
-  <% end %>
-<% elseif post.postType == 'self' then %>
-  <img class = 'post-icon' src="/static/icons/self.svg" height="40" width="40">
-<% else %>
-  <img class = 'post-icon' src="/icons/<%= post.id %>.png" height="40" width="40">
+<a class='post-icon-link' href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
 
-<% end %>
+  <img class = 'post-icon'
+        src="<%= url_for('postIcon',{postID = post.shortURL or post.id}) -%>"
+        height="50"
+        width="50"
+  >
+</a>

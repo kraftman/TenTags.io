@@ -1,147 +1,227 @@
-var knownFilters = [];
 
-$(function() {
-
-  $("#tagselect").chosen();
-  $('#filterselect').chosen();
-  AddPostFilterSearch()
-  ConvertTagsToSelect();
-  OverrideSubmit();
-
-});
+require('selectize');
+var Dropzone = require('dropzone');
 
 
-//<option name='option["<%= i -%>"]' value = "<%= tag.name -%>"><%= tag.name -%></option>
-function ConvertTagsToSelect(){
-  console.log('this')
-  $('#selectedtags').replaceWith(`<select name='tagselect' id='selectedtags' style="width:350px;" multiple='true' class="chosen-select" data-placeholder='Add tags'>
-      </select>`)
-  $('#selectedtags').chosen()
-  var tagSelectChosen = $('#selectedtags_chosen')
-  tagSelectChosen.bind('keyup',function(e) {
-    console.log(e)
-    if(e.which === 13 || e.which === 32) {
-      var newItem = $(e.target).val();
-      var mySelect = $(".chosen-select option[value='"+newItem+"']");
-      if (mySelect.length == 0) {
-        $('#selectedtags').append('<option selected="selected" value="'+newItem+'">'+newItem+'</option>');
-        $('#selectedtags').trigger("chosen:updated");
+Dropzone.autoDiscover = false;
+
+var createpost = function(userID, userSettings){
+  this.userID = userID;
+  this.userSettings = userSettings;
+  this.knownFilters = [];
+}
+
+createpost.prototype = function(){
+  var load = function(){
+    $('#upload_file').hide();
+    addDropzone.call(this);
+    addSelectize.call(this);
+    addNewPostFilterSearch.call(this);
+    overrideSubmit.call(this);
+  },
+  addOptions = function(query){
+    var context = this;
+    var select = $('#selectedfilters')[0].selectize
+
+    $.get('/api/filter/search/'+query, {
+        search: query
+    }, function(filters){
+
+      if (filters.error == false){
+        $.each(filters.data,function(k,v) {
+
+          context.knownFilters.push(v)
+          console.log('adding: ',v.name)
+          select.addOption({text: v.name,value: v.name})
+        })
+        select.refreshOptions()
+        console.log(filters)
       }
-    }
-  });
-
-}
-
-function OverrideSubmit(){
-  $('input#submitButton').click( function(e) {
-    e.preventDefault();
-    var selectedtags =  $("#selectedtags").val()
-    var form = {
-      selectedtags: JSON.stringify(selectedtags),
-      posttitle: $('#posttitle').val(),
-      postlink: $('#postlink').val(),
-      posttext: $('#posttext').val(),
-    }
-    $.ajax({
-      type: "POST",
-      url: '/post/new',
-      data: form,
-      success: function(data) {
-        console.log('this '+data)
-        console.log(data)
-        if (data.id) {
-          window.location.assign('/post/'+data.id);
-        }
-        $('#submitError').html(data);
-      },
-      error: function(data) {
-        console.log('that');
-        console.log(data.responseText);
-      },
-      dataType: 'json'
     });
-  });
-}
+  },
+  updateFilterStyles = function(){
+    var filterSelect = $('#selectedfilters')[0].selectize
+    var tagSelect = $('#selectedtags')[0].selectize
+    var chosenFilters = filterSelect.getValue().split(' ')
+    var chosenTags = tagSelect.getValue().split(' ')
+    var context = this;
 
-function UpdateFilterSelect(filters){
-  var filterContainer  = $('#filterselect')
-  $.each(filters.data, function(index,filter){
-    knownFilters.push(filter)
-    filterContainer.append('<option value="'+filter.name+'">'+filter.name+'</option>');
-    filterContainer.trigger("chosen:updated");
-  })
-}
+    $.each(chosenFilters,function(k,filterName){
+      let selectedFilter = $.grep(context.knownFilters, function(n,i){
+        return n.name == filterName
+      })[0]
+      var filterItem = filterSelect.getItem(filterName)
+      filterItem.removeClass('banned')
+      if (selectedFilter === undefined) {
+        console.log('couldnt find filter: ', filterName)
+      }
+      $.each(selectedFilter.bannedTagNames,function(k,bannedTag){
 
-function AddFilterToTags(e,p){
+        $.each(chosenTags,function(k,tagName){
+          if (bannedTag == tagName ){
+            SetBanned(filterName, tagName)
+          }
+        })
+      })
+    })
+  },
+  getPostFilters = function(input, callback){
+    console.log('this')
+    $.get('/api/filter/search/'+input, {
+            search: input
+         }, function(filters){
+           console.log(filters);
+           callback({})
+         });
+  },
+  setBanned = function(filterName, tagName){
+    console.log('this ', filterName, tagName)
+    var filterSelect = $('#selectedfilters')[0].selectize
+    var tagSelect = $('#selectedtags')[0].selectize
 
-  var selectedFilter = $.grep(knownFilters, function(n,i){
-    console.log(n,i)
-    return n.name == p.selected
-  })[0]
+    var filterItem = filterSelect.getItem(filterName)
+    var tagItem = tagSelect.getItem(tagName)
 
-  if (p.selected){
-    var tagSelectChosen = $('#tagselect')
-    $.each(selectedFilter.requiredTagNames,function(k,v){
-      console.log(k,v)
-      tagSelectChosen.append('<option selected="selected" value="'+v+'">'+v+'</option>');
-      tagSelectChosen.trigger("chosen:updated");
+    $(tagItem).addClass('banned');
+    $(filterItem).addClass('banned');
+  },
+  updateFilterSelect = function(filters){
+    var filterContainer  = $('#filterselect')
+      var context = this;
+    $.each(filters.data, function(index,filter){
+      context.knownFilters.push(filter)
+      filterContainer.append('<option value="'+filter.name+'">'+filter.name+'</option>');
+      filterContainer.trigger("chosen:updated");
     })
   }
+  overrideSubmit = function(){
+    $('.post-submitbutton').click( function(e) {
+      e.preventDefault();
+      // get the selected tags from chosen
+      var selectedtags =  $("#selectedtags").val()
+      // get the selected images with descriptions from dropzone
 
-  //update all the other filters
-  $.each($('#filterselect_chosen').find('li.search-choice'), function(k,filterElement){
-    var filterName = $(filterElement).find('span').text()
-    var filter = $.grep(knownFilters, function(n,i){
+
+      var uploadedImages = []
+      $('.dz-complete').each( function(){
+        var imageID = $(this).data('fileID')
+        var imageDescription = $(this).find('.form-input').first().val()
+        console.log(imageID)
+        console.log( imageDescription)
+        uploadedImages.push({id: imageID, text: imageDescription})
+      })
+
+
+      var form = {
+        selectedtags: JSON.stringify(selectedtags),
+        posttitle: $('#posttitle').val(),
+        postlink: $('#postlink').val(),
+        posttext: $('#posttext').val(),
+        postimages: JSON.stringify(uploadedImages)
+      }
+      $.ajax({
+        type: "POST",
+        url: '/p/new',
+        data: form,
+        success: function(data) {
+          //console.log('this '+data)
+          //console.log(data)
+          console.log('worked')
+          console.log(data)
+          if (data.data.id) {
+            window.location.assign('/p/'+data.data.id);
+          }
+          $('#submitError').html(data.data);
+          return false;
+        },
+        error: function(data) {
+          console.log('that');
+          console.log(data.responseText);
+        },
+        dataType: 'json'
+      });
+    });
+    return false;
+  },
+  filterSelected = function(value,item){
+    console.log(value)
+    console.log(item)
+    var context = this;
+
+    var selectedFilter = $.grep(context.knownFilters, function(n,i){
       console.log(n,i)
-      return n.name == filterName
+      return n.name == value
     })[0]
 
-    var foundBannedTag;
+    var tagSelect = $('#selectedtags')[0].selectize
 
-    $.each($('#tagselect_chosen').find('li.search-choice'), function(k,tagElement) {
-      var tagName = $(tagElement).find('span').text()
-      var found;
-      $.each(filter.bannedTagNames, function(k,v){
-        if (v == tagName){
-          found = true;
-        }
-      })
-      if (found == true) {
-        foundBannedTag = true
-        console.log('test')
-        $(tagElement).addClass('banned');
-      } else {
-        $(tagElement).removeClass('banned');
-      }
+    $.each(selectedFilter.requiredTagNames,function(k,v){
+      tagSelect.addOption({text: v,value: v})
+      tagSelect.refreshOptions()
+      tagSelect.addItem(v)
+      console.log('adding ',v,' to tagSelect')
     })
+    tagSelect.refreshOptions()
 
-    if (foundBannedTag == true){
-      console.log('marking filter as banned')
-      $(filterElement).addClass('banned');
-    } else {
-      $(filterElement).removeClass('banned');
-    }
+    updateFilterStyles.call(context)
 
-  })
+    overrideSubmit.call(context);
 
-}
+  },
+  addNewPostFilterSearch = function(){
 
-function AddPostFilterSearch(){
+    var context = this;
+    var filterSelect = $('#selectedfilters').selectize({
+      plugins: ['remove_button'],
+      delimiter: ' ',
+      persist: false,
+      create: false,
+      onType: function(query) {addOptions.call(context, query)},
+      onItemAdd: function(value,item) {filterSelected.call(context,value,item)}
 
-  $('#filterselect').change(AddFilterToTags);
+    })
+  },
+  addSelectize = function(){
+    $('#selectedtags').selectize({
+      plugins: ['remove_button'],
+      delimiter: ' ',
+      persist: false,
+        create: function(input) {
+          return {
+              value: input,
+              text: input
+          }
+      }});
+  },
 
-  $('#filterselect_chosen').find('input').on('input', function() {
+  addDropzone = function(){
+    $("#image-dropzone").dropzone({
+        maxFiles: 20,
+        url: "/api/i/",
+        thumbnailWidth: 300,
+        thumbnailHeight: 200,
+        previewTemplate: $('#template-preview').html(),
+        success: function (file, response) {
+            console.log(response);
+            console.log(file.previewElement);
+            $(file.previewElement).data('fileID', response.data)
+        }
+    });
 
-    clearTimeout($(this).data('timeout'));
-    var _self = this;
-    $(this).data('timeout', setTimeout(function () {
-      console.log('searching')
+    $("#image-dropzone").sortable({
+        items:'.dz-preview',
+        cursor: 'move',
+        opacity: 0.5,
+        containment: '#image-dropzone',
+        distance: 20,
+        tolerance: 'pointer',
+        dictDefaultMessage: 'test test'
+    });
+  };
 
-      if (_self.value.trim()){
-        $.get('/api/filter/search/'+_self.value+'?withTags=true', {
-            search: _self.value
-        }, UpdateFilterSelect);
-      }
-    }, 200));
-  })
-}
+  return {
+    load: load,
+  };
+}();
+
+module.exports = createpost;

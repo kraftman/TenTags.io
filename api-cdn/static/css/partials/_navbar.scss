@@ -1,0 +1,107 @@
+
+.top-nav {
+  @include card1;
+  height: 40px;
+  background-color: $topbar-background;
+
+  width: 100%;
+
+  z-index: 11;
+  margin: 0 px;
+  border-radius: 0 px;
+  position: relative;
+}
+
+
+.home-link {
+  color: $topbar-fontcolor;
+  display: inline-block;
+  vertical-align: top;
+  padding-right: 5px;
+  padding-left: 10px;
+  padding-top: 12px;
+  height: 100%;
+  box-sizing: border-box;
+
+  font-weight: bold;
+  font-size: 16px;
+}
+
+
+.settings-cont {
+  display: inline-block;
+  float: right;
+  clear: both;
+  height: 100%;
+}
+
+
+.settings-link {
+  color: $topbar-fontcolor;
+  display: inline-block;
+  height: 100%;
+  box-sizing: border-box;
+  vertical-align: top;
+  margin-right: 5px;
+  padding-right: 8px;
+  padding-left: 8px;
+  padding-top: 10px;
+
+  p {
+    height: 100%;
+    margin: 0 px;
+  }
+}
+
+.grecaptcha-logo {
+  margin: 0 px;
+}
+
+.settings-alert {
+  color: $alert-green;
+}
+
+
+.nav-icon {
+  width: 25px;
+  height: 25px;
+  stroke-width: 5px;
+  padding-top: 10px;
+}
+
+
+.site-search {
+  padding-left: 5px;
+  display: inline-block;
+  vertical-align: top;
+  padding-top: 6px;
+
+}
+
+.hamburger {
+  font-size: 30px;
+  vertical-align: top;
+  color: $topbar-fontcolor;
+  display: inline-block;
+  padding-top: 6px;
+  padding-left: 8px;
+}
+
+
+
+.form-login {
+  float: right;
+  margin-right: 10px;
+  vertical-align: top;
+  padding-top: 6px;
+}
+
+
+.form-login > div {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 45px;
+
+  z-index: 5;
+}

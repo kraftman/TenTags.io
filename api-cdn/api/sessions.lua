@@ -1,10 +1,14 @@
 
-local cache = require 'api.cache'
-local util = require 'api.util'
-local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
 
-local api = {}
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
+local cache = require 'api.cache'
+
+local base = require 'api.base'
+local api = setmetatable({}, base)
+local sessionLastSeenDict = ngx.shared.sessionLastSeen
 
 
 function api:GetHash(values)
@@ -13,6 +17,10 @@ function api:GetHash(values)
   local sha1 = resty_sha1:new()
 
   local ok, err = sha1:update(values)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to sha1: ',err)
+    return nil
+  end
 
   local digest = sha1:final()
 
@@ -41,13 +49,18 @@ end
 
 function api:SanitiseSession(session)
 
+  local id = self:GetHash(ngx.time()..session.email..session.ip)
+
 	local newSession = {
 		ip = session.ip,
-		userAgent = session.userAgent,
-		id = self:GetHash(ngx.time()..session.email..session.ip),
-		email = session.email:lower(),
+    category = session.category,
+    os = session.os,
+    browser = session.browser,
+		id = id,
+		email = session.email:lower():gsub(' ', ''),
 		createdAt = ngx.time(),
 		activated = false,
+    city = session.city,
 		validUntil = ngx.time()+5184000,
 		activationTime = ngx.time() + 1800,
 	}
@@ -63,10 +76,11 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'no sessionID!'
 	end
 
-	local account = cache:GetAccount(accountID)
-	if not account then
-		return nil, 'account not found'
-	end
+	local account = self.userRead:GetAccount(accountID)
+  if not account then
+    return nil, 'account not found'
+  end
+
 	local session = account.sessions[sessionID]
 	if not session then
 		return nil, 'session not found'
@@ -75,6 +89,7 @@ function api:ValidateSession(accountID, sessionID)
 	if not session.activated then
 		return nil, 'session not validated yet'
 	end
+
 	if session.validUntil < ngx.time() then
 		return nil, 'session has expired'
 	end
@@ -82,29 +97,35 @@ function api:ValidateSession(accountID, sessionID)
 		return nil, 'session has been killed'
 	end
 
-	session.lastSeen = ngx.time()
+  sessionLastSeenDict:set(accountID..':'..sessionID, ngx.time())
 
 	return account
 
 end
 
 
+function api:GetHash(values)
+  --TODO: merge all of these duplicates
+  local str = require 'resty.string'
+  local resty_sha1 = require 'resty.sha1'
+  local sha1 = resty_sha1:new()
+
+  local ok, err = sha1:update(values)
+
+  local digest = sha1:final()
+
+  return str.to_hex(digest)
+end
+
 
 function api:RegisterAccount(session, confirmURL)
-	-- TODO rate limit
+
 	session = self:SanitiseSession(session)
 	session.confirmURL = confirmURL
 	local emailLib = require 'email'
-	local ok, err = emailLib:IsValidEmail(session.email)
-	if not ok then
-		ngx.log(ngx.ERR, 'invalid email: ',session.email, ' ',err)
-		return false, 'Email provided is invalid'
-	end
+	assert_error(emailLib:IsValidEmail(session.email))
 
-	session = to_json(session)
-	print(session)
-	ok, err = worker:RegisterAccount(session)
-	return ok, err
+	return self.redisWrite:QueueJob('registeraccount',session)
 end
 
 
@@ -116,23 +137,25 @@ function api:ConfirmLogin(userSession, key)
 	if not key then
 		return nil, 'bad key'
 	end
-	local account = cache:GetAccount(accountID)
-	if not account then
-		return nil, 'no account'
-	end
+	local account = self.userRead:GetAccount(accountID)
 
 	local accountSession = account.sessions[sessionID]
 	if not accountSession then
-		return nil, 'bad session'
+    for k,v in pairs(account.sessions) do
+      if not v.killed then
+        print(k, to_json(v))
+      end
+    end
+		return nil, 'bad session: '..sessionID
 	end
 
 
 	if accountSession.activated then
-		--return nil, 'invalid session'
+		return nil, 'invalid session'
 	end
 	if accountSession.validUntil < ngx.time() then
 		print('expired session')
-		--return nil, 'expired'
+		return nil, 'expired'
 	end
 
 	if accountSession.activationTime < ngx.time() then
@@ -145,7 +168,10 @@ function api:ConfirmLogin(userSession, key)
 	accountSession.activated = true
 	account.lastSeen = ngx.time()
 	account.active = true
-	worker:UpdateAccount(account)
+	self.userWrite:CreateAccount(account)
+	self:InvalidateKey('account', account.id)
+
+  self.userWrite:IncrementAccountStat(account.id, 'logins', 1)
 
 	return account, accountSession.id
 
@@ -164,8 +190,12 @@ function api:KillSession(accountID, sessionID)
 	end
 
 	session.killed = true
-	local ok, err = worker:KillSession(account)
-	return ok, err
+  -- purge from cache
+  self:InvalidateKey('account', account.id)
+
+  self.userWrite:CreateAccount(account)
+
+	return self:InvalidateKey('account', account.id)
 
 end
 

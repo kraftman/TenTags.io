@@ -1,6 +1,9 @@
-<div class = 'contents panel panel-default'>
-  <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
 
-  <p> <%= commentInfo.text -%></p>
+<div class = 'panel panel-default'>
+  <a href="<%= url_for('post.view', {postID = comment.post.id}) %>"><%=  comment.post.title -%></a> </p>
+  <span class = 'usercomment-info'>
+    <%= comment.up - comment.down %> points <%= TimeAgo(ngx.time() - comment.createdAt) %>
+  </span>
+  <p> <%= comment.text -%></p>
 
 </div>

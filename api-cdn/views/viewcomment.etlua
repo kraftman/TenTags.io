@@ -1,12 +1,12 @@
-<div class = 'contents'>
-  <p><a href="<%= url_for('viewuser', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
+<div class = 'panel panel-default'>
+  <p><a href="<%= url_for('user.viewsub', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
   <% if commentInfo.createdBy == session.userID then %>
     Edit:
     </br>
     <form id="commentform" method="post" action="" >
-      <textarea name='commentText' id='commentText' rows="4" cols="50"><%= commentInfo.text%></textarea>
+      <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="4" ><%= commentInfo.text%></textarea>
       </br>
-      <input type='submit'></input>
+      <input class = 'btn' type='submit' value='Edit'></input>
     </form>
   <% else %>
     <p> <%= commentInfo.text -%></p>
@@ -19,8 +19,11 @@
     <input id="parentID" name='parentID' type="hidden" value="<%= commentInfo.id%>" name="name">
     <input id="postID" name='postID' type="hidden" value="<%= commentInfo.postID%>" name="name">
 
-    <textarea name='commentText' id='commentText' rows="4" cols="50"></textarea>
+    <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="4" ></textarea>
     </br>
-    <input type='submit'></input>
+    <input class = 'btn' type='submit' value='Reply'></input>
   </form>
+  <a href="<%= url_for('post.view', {postID = commentInfo.postID}) %>">
+    View Full Post
+  </a>
 </div>

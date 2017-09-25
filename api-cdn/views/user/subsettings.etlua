@@ -1,39 +1,83 @@
 
-<div class = 'contents panel panel-default'>
-  <h2>User Settings</h2>
-  <a href="<%= url_for('newsubuser') %>">Add User</a>
-  <form action="<%= url_for('usersettings') %>" method = 'POST'>
-    <label for='userbio' >Bio:</label>
-      </br>
-    <textarea  name='userbio' id='userbio' id="txtArea" rows="10" cols="50"><%= userBio %></textarea>
+<% render("views.user.createsub") %>
 
-    <div class="checkbox">
-      <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
-    </div>
-    <div class="checkbox">
-      <label><input type="checkbox" name='hideSeenPosts' <%= hideSeenPosts -%>>Hide Seen Posts</label>
-    </div>
-    <div class="checkbox">
-      <label><input type="checkbox" name='hideVotedPosts' <%= hideVotedPosts -%>>Hide Voted Posts</label>
-    </div>
-    <div class="checkbox">
-      <label><input type="checkbox" name='hideClickedPosts' <%= hideClickedPosts -%>>Hide Clicked Posts</label>
-    </div>
-    <div class="checkbox">
-      <label><input type="checkbox" name='showNSFW' <%= showNSFW -%>>Show NSFW</label>
-    </div>
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Admin Settings</h2>
+</div>
+<div class = 'panel panel-default'>
 
-    <button class='btn btn-default' type="submit" value="Submit">submit</button>
+<% if account.role == 'Admin' then %>
 
+  <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+    <div class="checkbox">
+      <label><input type="checkbox" name='fakeNames' <%= fakeNames -%>>Use fake usernames</label>
+    </div>
+    <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+
+    <button class='btn btn-default' type="submit" value="Submit">Save</button>
+  </form>
+  </br>
+  <form action="<%= url_for('user.subsettings')..('?resetdefaultview=1') %>" method = 'POST'>
+    <button class='btn btn-default' type="submit" value="Submit">Reset Default View</button>
   </form>
 
+<% end %>
+</div>
+
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>User Settings</h2>
+</div>
+<div class = 'panel panel-default'>
+
+  <form action="<%= url_for('user.subsettings')..(params.stage and '?stage=1' or '') %>" method = 'POST'>
+
+
+
+    <label for='userbio' >Bio:</label>
+      </br>
+    <textarea  class='form-input textbox-large' name='userbio' id='userbio' id="txtArea" rows="10" cols ='120' ><%= userBio or '' %></textarea>
+
+      </br>
+      <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
+
+      </br>
+      <label><input type="checkbox" name='hideUnsubbedComments' <%= hideUnsubbedComments -%>>Hide non-subbed user comments</label>
+
+      </br>
+      <label><input type="checkbox" name='hideSeenPosts' <%= hideSeenPosts -%>>Hide Seen Posts</label>
+      </br>
+      <label><input type="checkbox" name='hideVotedPosts' <%= hideVotedPosts -%>>Hide Voted Posts</label>
+      </br>
+      <label><input type="checkbox" name='hideClickedPosts' <%= hideClickedPosts -%>>Hide Clicked Posts</label>
+      </br>
+      <label><input type="checkbox" name='showNSFL' <%= showNSFL -%>>Show NSFL</label>
+      </br>
+
+      NSFW Level:
+      <select name = 'nsfwLevel'>
+        <option value="0" <%= nsfwLevel == 0 and 'selected' or '' %>>Safe for work</option>
+        <option value="1" <%= nsfwLevel == 1 and 'selected' or '' %> >Underwear/Bikinis/Etc</option>
+        <option value="2" <%= nsfwLevel == 2 and 'selected' or '' %> >Nudity</option>
+        <option value="3" <%= nsfwLevel == 3 and 'selected' or '' %> >Porn</option>
+      </select>
+    </br>
+  </br>
+
+    <button class='btn btn-default' type="submit" value="Submit">Save</button>
+
+  </form>
 </div>
 
 
-<div class = 'contents panel panel-default'>
-  <h2>Account Settings</h2>
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Logged in locations:</h2>
+</div>
+<div class = 'panel panel-default'>
+
 
   <% for k,accountSession in pairs(account.sessions) do %>
-    <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+    <% if accountSession.os then %>
+      <% render("views.st.sessionsetting",{accountSession = accountSession}) %>
+    <% end %>
   <% end %>
 </div>

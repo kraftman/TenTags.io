@@ -1,120 +1,213 @@
 
-<link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
-<script src="/static/js/jquery-2.1.4.js"></script>
-<script src="/static/chosen/chosen.jquery.js"></script>
-<script src="/static/js/jquery.form.js"></script>
-<script src="/static/js/mousetrap.min.js"  ></script>
-<script src="/static/js/post.js"  ></script>
 
-<div class = 'contents'>
-  <input type="hidden" id='postID' value="<%= post.id -%>">
 
-  <div>
-    <% if not post.userHasVoted then %>
-      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">up</a>
-      </br>
-      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">down</a>
-    <% end %>
 
-    <a href="<%= url_for('subscribepost',{ postID = post.id}) %> ">subscribe</a>
+<!-- <% render("views.st.postelement",{post = post}) %> -->
+<div class = 'post-full-topbar'>
+  <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+</div>
 
-  <a href="<%= post.link -%>"> <%= post.title -%></a>
-  <% if post.createdBy == session.userID then %>
 
-    <a href="<%= url_for('deletepost',{postID = post.id }) %>">delete post</a>
-    <form id='createpost' action='' method='post'accept-charset='UTF-8'>
-      <fieldset >
-      <legend>Edit Post</legend>
+<% if post.link then %>
+  <div class = 'panel panel-default'>
+    <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) %>">
+      <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.id}) -%>" >
+    </a>
+  </div>
+<% end %>
 
-      <label for='posttitle' >Post Title:</label>
-      <input type='text' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
-      </br>
-      <label for='posttext' >Post text</label>
-      <input type='text' name='posttext' id='posttext' maxlength="50" value="<%= post.text -%>"/>
-      </br>
 
-      <input id='submitButton' type='submit' name='Submit' value='Edit' />
+<% if post.images and next(post.images) then %>
+  <% for _,image in pairs(post.images) do %>
+    <div class = 'imagepreview'>
+      <div class='image-title'>
+        <% if not image.banned then %>
+          <span>
+            <%- image.text  or '' -%>
+          </span>
 
-      </fieldset>
-    </form>
+          <div class = 'image-controls'>
+            <% if account and account.role == 'Admin' then %>
+              <a href="<%= url_for('imagereload',{imageID = image.id}) %>">
+                <img class = 'svg-icon-med' alt='reload image' src="/static/svg/refresh-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+              </a>
+            <% end %>
+
+            <a href="<%= url_for('dmca',{imageID = image.id}) %>">
+              <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/exclamation.svg" onerror="this.src='/static/icons/hamburger.png'">
+            </a>
+          </div>
+        <% end %>
+      </div>
+
+    <% render("views.st.image",{image = image}) %>
+
+    </div>
+  <% end %>
+<% end %>
+</br>
+
+<div class = 'panel panel-default post-text'>
+  <% if post.deleted then %>
+    <p> [deleted] </p>
   <% else %>
-    <% if post.deleted then %>
-      <p> [deleted] </p>
-    <% else %>
-      <p><%= post.text -%></p>
-    <% end %>
+    <p><%- post.text -%></p>
   <% end %>
+</div>
+</br>
 
-  <% if post.containsSources then %>
-    <% for _,tag in pairs(post.tags) do %>
-      <% if tag.name:find('^meta:sourcePost') then %>
-        <% render("views.st.tag",{tag = tag}) %>
+
+</br>
+<div class = 'panel'>
+  <div class= 'post-edit-links'>
+    <% if session.userID and (post.createdBy == session.userID or account.role == 'Admin') then %>
+      <a class='post-link' href="<%= url_for('deletepost',{postID = post.id }) %>">Delete</a>
+    <% end %>
+    <a class='post-link' href="<%= url_for('subscribepost',{postID = post.id }) %>"><%= userSubbed and 'Unsubscribe' or 'Subscribe'%></a>
+    <a class='post-link' href='<%= url_for("post.report",{postID = post.id})%>'>Report</a>
+    <% if post.link and account and account.role == 'Admin' then %>
+      <a class='post-link' href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
+    <% end %>
+  </div>
+</div>
+</br>
+
+<% if userCanEdit then %>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Edit Post</h2>
+  </div>
+<% end %>
+<div class = 'panel panel-default'>
+  <input type="hidden" id='postID' value="<%= post.id -%>" />
+
+  <% if userCanEdit then %>
+
+    <form id='createpost' action='' method='post'accept-charset='UTF-8'>
+
+      <% if ((ngx.time() - post.createdAt) < 600) then %>
+      <label for='posttitle' >Post Title:</label>
+      <input type='text' class='form-input' name='posttitle' id='posttitle' maxlength="300" value="<%= post.title -%>"/>
+      </br>
       <% end %>
-    <% end %>
+
+
+      <textarea  class='form-input textbox-large' name='posttext' id='posttext' cols='100' rows="15" ><%= post.text -%></textarea>
+
+
+
+      <input class = 'btn post-edit-button' id='submitButton' type='submit' name='Submit' value='Edit' />
+
+
+    </form>
+
   <% end %>
 
-  <form id='addsource' action='' method='post'accept-charset='UTF-8'>
-    <fieldset >
-    <legend>Add Repost Source</legend>
+  </div>
+  </br>
+
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Sources</h2>
+  </div>
+  <div class = 'panel panel-default'>
+
+    <div class = 'post-sources' >
+      <% for _,tag in pairs(post.tags or {}) do %>
+        <% if tag.name:find('^meta:sourcePost') then %>
+          <% render("views.st.tag",{tag = tag}) %>
+        <% end %>
+      <% end %>
+
+      <h3>Add Repost Source (URL):</h3>
+      <form id='addsource' action='' method='post'accept-charset='UTF-8'>
+        <input type='text' class='form-input' name='sourceurl' id='sourceurl' value=""/>
+        <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+      </form>
+    </div>
 
 
-    <label for='sourceurl' >Source URL:</label>
-    <input type='text' name='sourceurl' id='sourceurl' value=""/>
+  </div>
 
-    <input id='submitButton' type='submit' name='Submit' value='Submit' />
 
-    </fieldset>
-  </form>
 
-  <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
-    <fieldset >
-      <label for='addtag' >Add Tag:</label>
-      <input type='text' name='addtag' id='addtag' value=""/>
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
-    </fieldset>
-  </form>
+  <div class = 'panel panel-default'>
+  <% if session.userID then %>
 
-  Filters:</br>
-  <% for _,filter in pairs(filters) do %>
-    <% render("views.st.postfilterelement",{filter = filter}) %>
   <% end %>
-  </br></br>
-  Tags:</br>
-  <% for _,tag in pairs(post.tags) do %>
-    <% if not tag.name:find('^meta:') then %>
-      <% render("views.st.tag",{tag = tag}) %>
-    <% end %>
-  <% end %>
-
+  </div>
 
   </br>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Filters</h2>
+  </div>
+  <div class = 'panel panel-default'>
+
+    <div class = 'post-filterlist'>
+      <% for _,filter in pairs(filters or {}) do %>
+        <% render("views.st.postfilterelement",{filter = filter}) %>
+      <% end %>
+    </div>
+  </div>
+  </br>
+  <div class = 'panel panel-default'>
+    <div class = 'post-full-topbar'>
+      <h2 class= 'post-header'>Tags</h2>
+    </div>
+    <div class = 'post-filterlist'>
+      <% for _,tag in pairs(post.tags or {}) do %>
+        <% if not tag.name:find('^meta:') then %>
+          <% render("views.st.tag",{tag = tag}) %>
+        <% end %>
+      <% end %>
+      <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
+
+        <label for='addtag' >Add Tag:</label>
+        <input type='text' class='form-input' name='addtag' id='addtag' value=""/>
+        <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+
+      </form>
+    </div>
+
+  </div>
+
+  </br>
+
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Comments</h2>
+  </div>
+  <div class = 'panel panel-default post-comments'>
+
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >
-    <option value="<%= url_for('viewpost',{postID = post.id})%>?sort=best"
+    <option value="<%= url_for('post.view',{postID = post.id})%>?sort=best"
       <% if not params or params.sort == 'best' then %>
         selected = 'selected'
       <% end %>
     >Best</option>
-    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=new"
+    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=new"
       <% if params.sort == 'new' then %>
         selected = 'selected'
       <% end %>
     >New</option>
-    <option value="<%= url_for('viewpost',{postID = post.id}) %>?sort=top"
+    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=top"
       <% if not params or params.sort == 'top' then %>
         selected = 'selected'
       <% end %>
   >Top</option>
   </select>
-  <div>
-    <% for _,filter in pairs(filters) do print(filter.title)%>
+  </br>Show comments by filter:
+
+    <% for _,filter in pairs(filters or {}) do %>
       <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
     <% end %>
+
+
+  <% render("views.st.newcomment") %>
+  <div class = 'comment-body'>
+    <div class = 'commentInfo post-comments'>
+      <% for _,child in pairs(comments[post.id].children or {}) do local depth = depth and depth+1 or 1  %>
+        <% render("views.st.postcomment", {child = child, key = child.id, depth = depth }) %>
+      <% end %>
+    </div>
   </div>
 
-  <div id = "comments">
-    <% render("views.st.postcomment", { key = post.id }) %>
-  </div>
-  <% render("views.st.newcomment") %>
-  </div>
 </div>

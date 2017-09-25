@@ -1,26 +1,19 @@
 
-<div class='panel panel-default filter-bar'>
-    <!--
-    
-  -->
-  <div class='filter-nav-bar'>
-    <input class = 'hamburger' type="image" src="/static/icons/hamburger.png" />
+<div tabindex="-1" class=' filter-bar'>
+  <img class = 'svg-icon-med hamburger' src="/static/svg/menu.svg" onerror="this.src='/static/icons/hamburger.png'">
+
+  <span class="ti-menu hamburger" ></span>
 
       <form class='filter-search-form' action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
-        <input class='form-control' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="Search Filters"/>
-        <input class='hidden-search-input' type="submit" style="visibility: hidden;" />
+        <input class='form-control form-search' type='text' name='searchString' id='filterSearch' maxlength="50" placeholder="🔍 Search Filters"/>
+        <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
-  </div>
-  <ul>
-    <a href="<%= url_for('allfilters') %>" class='filterbarelement' >View All</a>
-  </ul>
-  <div class='filterContainer'>
-    <% for i, filter in pairs(userFilters) do %>
-      <% render("views.st.filterbarelement",{filter = filter}) %>
-    <% end %>
-  </div>
-
-
+    <a class = 'viewall-link' href="<%= url_for('filter.all') %>" class='filterbar-all' >View All</a>
+    <ul class = 'filterbar-results'>
+      <% for i, filter in pairs(userFilters or {}) do %>
+        <% render("views.st.filterbarelement",{filter = filter}) %>
+      <% end %>
+    </ul>
 
 </div>

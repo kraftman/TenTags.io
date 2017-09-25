@@ -1,9 +1,7 @@
-FROM ubuntu:16.04
-
-RUN apt-get update #redo
+FROM jrottenberg/ffmpeg
 
 #lua and stuff to build imagemagick/lua-imagemagick
-RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN  DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
     git \
     lua5.1 \
     luajit \
@@ -15,17 +13,20 @@ RUN  DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 
 
-RUN apt-get install -y libmagickwand-dev curl libssl-dev
-
+RUN apt-get update && apt-get install -y libmagickwand-dev curl libssl-dev uuid-dev
+RUN luarocks install luasec
 RUN luarocks install --server=http://luarocks.org/dev giflib && \
     luarocks install redis-lua && \
     luarocks install luasocket && \
     luarocks install magick && \
     luarocks install lua-cjson && \
     luarocks install luasec && \
-    luarocks install magick
+    luarocks install magick && \
+    luarocks install lua-cjson && \
+    luarocks install sha1
 
-RUN apt-get build-dep -y giflib-dbg
+
+#RUN apt-get update && apt-get build-dep -y giflib-dbg
 
 ENV GIFLIB_VERSION 5.1.4
 WORKDIR /tmp
@@ -42,9 +43,12 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py && \
     pip install imgurpython
 
+RUN apt-get update && apt-get install -y ca-certificates stunnel4
 
 
 RUN mkdir -p /var/www && mkdir /lua
 WORKDIR /lua
 VOLUME /var/www
-CMD [ "luajit", "imgconverter.lua" ]
+#CMD [ "luajit", "imgconverter.lua" ]
+
+ENTRYPOINT ["/lua/start.sh"]

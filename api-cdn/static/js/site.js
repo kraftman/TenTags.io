@@ -1,382 +1,111 @@
-var userSettings = {};
-var newPosts = {};
-var maxPosts = 10;
-var seenPosts = [];
-var userID;
-var postIndex = 0;
-
-$(function() {
-  userID = $('#userID').val()
-  AddTagVoteListener();
-  AddPostVoteListener();
-  AddMenuHandler();
-  AddFilterSearch();
-  GetUserSettings();
-  LoadKeybinds();
-  LoadNewPosts();
-  AddToSeenPosts();
-  AddFilterHandler();
-  DraggablePosts();
-  FilterToggle()
-})
-
-function FilterToggle(){
-  var $hamburger = $(".hamburger");
-  $hamburger.on("click", function(e) {
-    $hamburger.toggleClass("is-active");
-    console.log('that')
-    // Do something else, like open/close menu
-    var filterBar = $('.filter-bar')
-    filterBar.toggle('slide','left',200)
-  });
-
-}
-
-function DraggablePosts(){
-  $('.post').draggable({
-    axis: "x",
-    stop: function( event, ui ) {
-
-      if(ui.position.left > 100) {
-        VotePost(this,'up')
-      } else if (ui.position.left < -100){
-        VotePost(this,'down')
-      }
-      $(ui.helper).animate({ left: '0px'}, 200)
-    }
-  })
-}
 
 
-function Upvote(e) {
-  var post = $(':focus')
-
-  if (post.length) {
-    VotePost(post, 'up');
-  }
-}
-
-function Downvote(e) {
-  var post = $(':focus')
-  console.log(post)
-  if (post.length) {
-    console.log(2)
-    VotePost(post, 'down');
-  }
-}
+// all the base site js for the sidebar, topbar, etc
 
 
-function AddPostVoteListener(){
-  $(".postUpvote").click(function(e) {
-    e.preventDefault()
-    VotePost($(this).parent().parent(), 'up')
-  })
-  $(".postDownvote").click(function(e){
-    e.preventDefault()
-    VotePost($(this).parent().parent(),'down')
-  })
-}
+var $ = require('jquery');
 
+var validate = require('validate.js');
 
-function VotePost(post, direction){
+var TagVoteListener = function(userID, userSettings) {
+  this.userID = userID;
+  this.userSettings = userSettings;
+};
 
-  //get the post
-  var postID = $(post).children('.postID').val()
-  var postHash = $(post).children('.postHash').val()
+TagVoteListener.prototype = function() {
 
-  if (userSettings.hideVotedPosts == '1') {
-    if ($.inArray(postID, seenPosts) == -1){
-      seenPosts.push(postID)
-    }
-
-
-    LoadMorePosts($(post).parents('.post'));
-
-    $(post).hide("slide", { direction: direction == 'up' && 'right' || 'left'}, 200, function() {
-      var nextPost = $(post).next()
-      console.log(nextPost)
-      if (nextPost.length) {
-        nextPost.focus()
-      }
-      $(post).remove();});
-    //$(post).show("slide", { direction: "right" }, 100);
-    // $(post).parents('.post').slideUp('fast',function() {
-    //   $(post).remove();
-    // })
-  }
-
-  var uri;
-  if (direction == 'up'){
-    $(post).css('border', 'solid 1px green');
-    uri = '/api/post/'+postID+'/upvote?hash='+postHash
-  } else {
-    $(post).css('border', 'solid 1px red');
-    uri = '/api/post/'+postID+'/downvote?hash='+postHash
-  }
-
-  $.get(uri,function(data){
-    //console.log(data);
-  })
-}
-
-function AddFilterHandler(){
-  // take over the loading of new filters
-  /*
-  $('.filterbarelement').click(function(e){
-    e.preventDefault();
-    var filterName = $(e.target).text())
-    $.getJSON('/api/f/'+filterName+'/posts?startat=1&endat=100',function(data){
-      console.log(data)
-      if (data.status == 'success'){
-        newPosts = data.data
-        console.log(newPosts.length+ ' new posts got from server')
-      }
+  var load = function(userID){
+    addMenuListener.call(this);
+    addInfoBar.call(this);
+    //hideRecapchta.call(this);
+    randomCrap.call(this);
+    togglePosts.call(this);
+  },
+  togglePosts = function() {
+    $('.filter-topbar').click(function(e){
+      $(e.currentTarget).parent().find('.filter-body').toggle()
     })
-  })
-  */
-}
-
-function AddToSeenPosts(){
-  $.each($('#posts').children(), function(k,v) {
-    var postID = $(v).find('.postID').val()
-    seenPosts.push(postID)
-  })
-  console.log(seenPosts)
-}
-
-function LoadNewPosts(startAt = 0, endAt = 100){
-  var uri = '/api/frontpage?startat=1&endat=100'
-
-  $.getJSON(uri,function(data){
-    console.log(data)
-    if (data.status == 'success'){
-      newPosts = data.data
-      console.log(newPosts.length+ ' new posts got from server')
-    }
-  })
-}
+  },
+  randomCrap = function() {
+    $('.form-login').submit(function(e){
+      e.preventDefault()
+      var email = $('.register-box').val().replace(' ', '')
+      if (!email) {
+        window.location.replace('/login');
+      };
+      var constraints = {
+        from: {
+          email: true
+        }
+      };
 
 
-function OpenLink(e) {
-  if ($(':focus').find(".post-link").length) {
-    var url = $(':focus').find(".post-link").attr('href')
-    console.log(url)
-    window.open(url, '_blank');
-    e.preventDefault();
-  }
-}
-
-
-function OpenComments(e) {
-  if ($(':focus').find(".comment-link").length) {
-    var url = document.location.origin+$(':focus').find(".comment-link").attr('href')
-    console.log(url)
-    window.open(url, '_blank');
-    e.preventDefault();
-  }
-
-}
-
-
-function MoveFocus(e) {
-  e.preventDefault();
-  var thisPost = $(':focus')
-  if (!thisPost.hasClass('post')) {
-    return
-  }
-  var nextPost
-  if (e.key == 'ArrowUp') {
-    nextPost = thisPost.prev()
-  } else if (e.key == 'ArrowDown') {
-    nextPost = thisPost.next()
-  } else {
-    console.log(e.key)
-  }
-
-  if (nextPost.length) {
-    nextPost.focus()
-  }
-}
-
-function LoadKeybinds(){
-
-
-  Mousetrap.bind('up', MoveFocus);
-  Mousetrap.bind('down', MoveFocus);
-  Mousetrap.bind("enter", OpenLink)
-  Mousetrap.bind('space', OpenComments);
-  Mousetrap.bind("right", Upvote)
-  Mousetrap.bind("left", Downvote)
-
-  $('#posts').children().first().focus();
-
-}
-
-var userFilters = {};
-
-function GetUserSettings(){
-  var userID = $('#userID').val()
-  if (!userID) {
-    return;
-  }
-  $.getJSON('/api/user/'+userID+'/settings',function(data){
-    console.log(data)
-    if (data.status == 'success'){
-      userSettings = data.data
-    }
-  })
-}
-
-
-function ChangeFocus(value) {
-
-  index = index + value;
-  var numChildren = $('#posts').children().length -1
-  index = Math.max(index, 0)
-  index = Math.min(index, numChildren)
-  $('#posts').children().eq(index).focus();
-}
-
-function UpdateSidebar(filters){
-  var filterContainer  = $('.filterContainer')
-  filterContainer.empty()
-  $.each(filters.data, function(index,value){
-    console.log(index,value)
-
-    filterContainer.append(" \
-    <ul> \
-      <a href ='/f/"+value.name+"' class='filterbarelement'> \
-        <span > "+value.name+"</span> \
-      </a> \
-    </ul> \
-    ")
-  })
-}
-
-function AddFilterSearch(){
-  console.log('adding this')
-  $('.filter-search-form').submit(function(e){
-    e.preventDefault()
-  })
-  $('#filterSearch').on('input', function(e) {
-    e.preventDefault();
-    clearTimeout($(this).data('timeout'));
-    var _self = this;
-    $(this).data('timeout', setTimeout(function () {
-      console.log('searching')
-
-      if (_self.value.trim()){
-        $.get('/api/filter/search/'+_self.value, {
-            search: _self.value
-        }, UpdateSidebar);
-      } else {
-        $.get('/api/user/filters', {
-            search: _self.value
-        }, UpdateSidebar);
+      var isInvalid = validate({from: email}, constraints);
+      if (isInvalid) {
+        window.alert('Invalid email!');
+        return false;
       }
-    }, 200));
-  })
-}
-
-function AddMenuHandler(){
-  $('#box-two').hide();
-  $('#infoBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').show();
-    $('#box-two').hide();
-  })
-  $('#filterBoxLink').click(function(e){
-    e.preventDefault();
-    $('#box-one').hide();
-    $('#box-two').show();
-  })
-}
-
-function GetFreshPost(){
-  var newPost = newPosts.shift()
-
-  while ($.inArray(newPost.id, seenPosts) != -1){
-
-    //console.log(newPost)
-
-    newPost = newPosts.shift()
-
-    if (newPost == undefined) {
-      postIndex = postIndex + 100
-      LoadNewPosts(postIndex,postIndex+100)
-      newPost = newPosts.shift()
-      if (newPost == undefined) {
-        return
-      }
-    }
-
-  }
-  return newPost
-}
-
-function LoadMorePosts(template){
-  var newPost = template.clone()
-
-  $(newPost).slideDown('fast')
-
-  var postInfo = GetFreshPost()
-  if (postInfo == null) {
-    return
-  }
-  var postID
-  newPost.find('.postID').val(postInfo.id)
-  newPost.find('.post-link').text(postInfo.title)
-
-  var postLink;
-  if (postInfo.link == null){
-    postLink = '/post/'+postInfo.shortURL || postInfo.id
-  } else {
-    postLink = postInfo.link
-  }
-
-  newPost.find('.comment-link').attr('href',postLink);
-  newPost.find('.comment-link').text(postInfo.commentCount+' comments')
-
-  if (postInfo.userHasVoted == null) {
-    newPost.find('.postUpvote').show()
-    newPost.find('.postDownvote').show()
-  } else {
-    newPost.find('.postUpvote').hide()
-    newPost.find('.postDownvote').hide()
-  }
-  var filterIcons = newPost.find('.filter-icon')
-  $.each(filterIcons, function(k,v){
-    $(v).hide()
-  })
-  $.each(postInfo.filters,function(k,v){
-    var filterIcon = $(filterIcons[k])
-    filterIcon.text(v.name)
-    filterIcon.attr('href','/f/'+v.name);
-    filterIcon.show()
-  })
-
-  $('#posts').append(newPost)
-}
+      grecaptcha.execute();
 
 
+      return false;
+    });
 
-function AddTagVoteListener(){
-  $(".upvote").click(function(){
-    var tagCount = $(this).parent().find('.tagcount')
-    tagCount.text(Number(tagCount.text())+1)
-    var tagID = $(this).parent().data('id')
-    var postID = $('#postID').val()
-    $.get('/post/upvotetag/'+tagID+'/'+postID,function(data){
-      console.log(data);
+    $('.post-full-topbar').click(function(e){
+      console.log(e.currentTarget)
+      $(e.currentTarget).parent().find('.linkImg').toggle()
     })
-  })
-  $(".downvote").click(function(){
-    var tagCount = $(this).parent().find('.tagcount')
-    tagCount.text(Number(tagCount.text())-1)
-    var tagID = $(this).parent().data('id')
-    var postID = $('#postID').val()
-    $.get('/post/downvotetag/'+tagID+'/'+postID,function(data){
-      console.log(data);
+
+    $('.post').hover(function(e){
+      $(e.target).children('.post-full-bottombar').show();
+      //$(e.target).find('.post-filters').show();
     })
-  })
-}
+
+    $('.post').focusout(function(e){
+      $(e.target).children('.post-full-bottombar').hide();
+      //$(e.target).find('.post-filters').hide();
+    })
+  },
+
+  addInfoBar = function(){
+    $('.infobar-title').click(function(e){
+      $('.infobar-body').toggle()
+      e.preventDefault()
+    })
+  },
+  // hideRecapchta = function() {
+  //   $('.form-login').focusin(function(){
+  //     $('.form-login > div').show()
+  //   })
+  //
+  //   $('.form-login').focusout(function(){
+  //     $('.form-login > div').hide();
+  //   })
+  //
+  //   $('.g-recaptcha').prop('disabled',true)
+  // },
+
+  addMenuListener = function() {
+    $('.settings-link').click(function(e){
+      var settingsMenu = $('.settings-menu')
+      settingsMenu.toggle()
+      // settingsMenu.focus()
+      // settingsMenu.focusout(function(e){
+      //   if ($(e.relatedTarget).parents('.settings-menu').length){
+      //
+      //   } else {
+      //     settingsMenu.hide()
+      //   }
+      // })
+
+      e.preventDefault();
+    })
+  };
+
+
+  return {
+    load: load,
+  };
+}();
+
+module.exports = TagVoteListener;

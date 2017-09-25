@@ -1,21 +1,26 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+
+
 local cache = require 'api.cache'
-local util = require 'api.util'
 local uuid = require 'lib.uuid'
-local worker = require 'api.worker'
 
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 
-function api:GetThread(threadID)
+function api:GetThread(userID, threadID)
   return cache:GetThread(threadID)
 end
 
 
-function api:GetThreads(userID)
-  return cache:GetThreads(userID)
+function api:GetThreads(userID, startAt, range)
+  startAt = startAt or 0
+  range = range or 10
+
+  return cache:GetThreads(userID, startAt, range)
 end
-
-
 
 
 -- just checks the sender is correct
@@ -34,9 +39,6 @@ function api:VerifyMessageSender(userID, messageInfo)
 	return true
 end
 
-
-
-
 function api:CreateMessageReply(userID, userMessage)
 	local newMessage, ok, err
 
@@ -46,15 +48,16 @@ function api:CreateMessageReply(userID, userMessage)
 		return newMessage, err
 	end
 
-  ok, err = worker:CreateMessage(userMessage)
-	if not ok then
-		return ok, err
-	end
+  self.redisWrite:CreateMessage(newMessage)
 
+  self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
+
+  print('adding message to ', newMessage.threadID)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
-      worker:AddUserAlert(viewerID, 'thread:'..thread.id..':'..newMessage.id)
+      ok, err = self:InvalidateKey('useralert', viewerID)
+      self.userWrite:AddUserAlert(ngx.time(), viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
 
@@ -71,17 +74,14 @@ function api:ConvertUserMessageToMessage(userID, userMessage)
 	end
 
 	local newInfo = {
-		threadID = util:SanitiseUserInput(userMessage.threadID, 200),
-		body = util:SanitiseUserInput(userMessage.body, 2000),
+		threadID = self:SanitiseUserInput(userMessage.threadID, 200),
+		body = self:SanitiseUserInput(userMessage.body, 2000),
 		id = uuid.generate_random(),
 		createdAt = ngx.time(),
-		createdBy = util:SanitiseUserInput(userMessage.createdBy)
+		createdBy = self:SanitiseUserInput(userMessage.createdBy)
 	}
 
 	local ok, err = self:VerifyMessageSender(userID, newInfo)
-	if not ok then
-		return ok, err
-	end
 
 	return newInfo
 end
@@ -90,17 +90,7 @@ end
 
 function api:CreateThread(userID, messageInfo)
 
-
-	local ok, err = util.RateLimit('CreateThread:', userID, 2, 60)
-	if not ok then
-		return ok, err
-	end
-
-	local ok, err = self:VerifyMessageSender(userID, messageInfo)
-	if not ok then
-		return nil, err
-	end
-
+	self:VerifyMessageSender(userID, messageInfo)
 
 	messageInfo.title = messageInfo.title or ''
 	messageInfo.body = messageInfo.body or ''
@@ -116,11 +106,21 @@ function api:CreateThread(userID, messageInfo)
 		return nil, 'couldnt find recipient user'
 	end
 
+
+  local recipient = cache:GetUser(recipientID)
+
+  for _,v in pairs(recipient.blockedUsers) do
+    if userID == v then
+      return nil, 'this user has blocked you'
+    end
+  end
+
+
   local thread = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
     createdAt = ngx.time(),
-    title = util:SanitiseHTML(messageInfo.title),
+    title = self:SanitiseHTML(messageInfo.title),
     viewers = {messageInfo.createdBy,recipientID},
     lastUpdated = ngx.time()
   }
@@ -128,23 +128,19 @@ function api:CreateThread(userID, messageInfo)
   local msg = {
     id = uuid.generate_random(),
     createdBy = messageInfo.createdBy,
-    body = util:SanitiseHTML(messageInfo.body),
+    body = self:SanitiseHTML(messageInfo.body),
     createdAt = ngx.time(),
     threadID = thread.id
   }
 
-  ok, err = worker:CreateThread(thread)
-	if not ok then
-		return ok, err
-	end
+  self.redisWrite:CreateThread(thread)
 
-  ok, err = worker:CreateMessage(msg)
-	if not ok then
-		return ok, err
-	end
+  self.redisWrite:CreateMessage(msg)
 
-  ok, err = worker:AddUserAlert(recipientID, 'thread:'..thread.id..':'..msg.id)
-	return ok, err
+  self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
+  self:InvalidateKey('useralert', recipientID)
+  return self.userWrite:AddUserAlert(ngx.time(), recipientID, 'thread:'..thread.id..':'..msg.id)
+
 end
 
 return api

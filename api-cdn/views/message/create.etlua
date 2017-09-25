@@ -1,13 +1,12 @@
-<form method="POST" class='panel panel-default'>
-  <div class="input-group">
-    <input type="text" class="form-control" name='recipient' placeholder="Recipient" aria-describedby="basic-addon1">
-  </div>
-  <div class="input-group">
-    <input type="text" class="form-control" name='subject' placeholder="Subject" aria-describedby="basic-addon1">
-  </div>
-  <div class="input-group">
-    <input type="text" class="form-control" name='body' placeholder="Message" aria-describedby="basic-addon1">
-  </div>
-
-  <button class='btn btn-default' type="submit" >Send</button>
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Send Message</h2>
+</div>
+<form method="POST" class='panel panel-default' action="<%= url_for('message.create') %>">
+    <input class='form-input' type="text"  name='recipient' placeholder="Recipient" value="<%= recipient or '' %>" aria-describedby="basic-addon1">
+    </br>
+    <input class='form-input' type="text"  name='subject' placeholder="Subject" aria-describedby="basic-addon1">
+    </br>
+    <textarea class='form-input textbox-large' name="body" id="messagebody" rows="10"  cols = '120' placeholder="Message"></textarea>
+    </br>
+    <button class='btn btn-default' type="submit" >Send</button>
 </form>

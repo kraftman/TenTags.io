@@ -4,3 +4,7 @@ src/nginx.conf.compiled
 redis/comment/dump.rdb
 redis/general/dump.rdb
 redis/user/dump.rdb
+filtta.env
+filtta-prod.env
+stunnel.pem
+api-cdn/nginx.conf.compiled

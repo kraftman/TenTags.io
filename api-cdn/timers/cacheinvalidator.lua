@@ -1,16 +1,14 @@
 
-local CONFIG_CHECK_INTERVAL = 10
+local CONFIG_CHECK_INTERVAL = 1
 
 local config = {}
 config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
+local redisRead = (require 'redis.db').redisRead
+local redisWrite = (require 'redis.db').redisWrite
 local cache = require 'api.cache'
-local tinsert = table.insert
-local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 
 
@@ -37,7 +35,7 @@ function config.Run(_,self)
 end
 
 function config:MilliSecondTime()
-	return ngx.now()*1000 --milliseconds
+	return ngx.now()
 end
 
 function config:TrimInvalidations()
@@ -55,7 +53,6 @@ end
 
 function config:InvalidateCache()
   -- we want this to run on all workers so dont use locks
-
   local timeNow = self:MilliSecondTime()
 
   local ok, err = redisRead:GetInvalidationRequests(self.lastUpdate, timeNow)
@@ -63,6 +60,7 @@ function config:InvalidateCache()
     return
   end
   for k,v in pairs(ok) do
+
     v = from_json(v)
     cache:PurgeKey(v)
   end

@@ -1,10 +1,16 @@
 
 <div class = 'contents'>
+
   <% for i, thread in pairs(threads) do %>
-
     <% render("views.st.threadelement",{thread = thread}) %>
-    <a href="<%= url_for('replymessage',{threadID = thread.id}) %>">reply</a>
+  <% end %>
 
 
+  <% if params.startAt and tonumber(params.startAt) >= 10 then %>
+    <a href="<%= url_for("message.view") %>?startAt=<%= params.startAt and params.startAt-10 or 0 %>">Prev</a>
+  <% end %>
+
+  <% if #threads > 9 then %>
+    <a href="<%= url_for("message.view") %>?startAt=<%= params.startAt and params.startAt+10 or 10 %>">Next</a>
   <% end %>
 </div>

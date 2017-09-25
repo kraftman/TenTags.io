@@ -1,0 +1,315 @@
+
+
+.posts {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.post {
+  @include card1();
+  background-color: $post-background;
+  width: 100%;
+  padding: 0px;
+  margin-bottom: 10px;
+  color: $font-light;
+}
+
+.post-sources {
+  padding: 5px;
+}
+
+.post-full-topbar {
+  background-color: $post-bars;
+  min-height: 20px;
+  word-wrap: break-word;
+}
+
+
+.togglefiltercomment {
+  color: black;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.post-HN {
+  display: table;
+  width: 100%;
+  .vote-container {
+    display: table-cell;
+  }
+  .post-body {
+    display: table-cell;
+  }
+}
+
+.post-filters {
+  float: right;
+  padding: 5px;
+}
+
+
+.post-full-bottombar {
+
+  width: 100%;
+  max-height: 100px;
+
+  a {
+    display: inline-block;
+    min-width: 10px;
+    padding: 8px;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: $font-light;
+    vertical-align: middle;
+  }
+  object path{
+    fill: $font-light !important;
+  }
+  .comment-link {
+    font-size: 14px;
+  }
+}
+
+
+
+.postelement-text {
+  display: inline-block;
+  padding: 7px;
+}
+
+
+
+.post-grid {
+  //@include card1();
+  flex-grow: 1;
+  margin: 5px;
+  padding: 0px;
+  background-color: $postelement-color;
+  display: inline-block;
+  width: 250px;
+  height: 300px;
+
+  .post-body {
+    height: 200px;
+    text-align: center;
+  }
+  a {
+    display: inline-block;
+    height: 100%;
+    margin: 0 auto;
+  }
+}
+
+.post-filterlist {
+  padding: 5px;
+}
+
+.filter-icon {
+  display: inline-block;
+  background-color: $background-color;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-radius: 3px;
+  font-size:  10px;
+  text-decoration: none;
+}
+
+
+
+.filter-label > a:hover {
+  background-color: $hight-font-color;
+}
+
+
+.comment-link, .user-link, .comment-views  {
+  font-size: 10px;
+  display: inline-block;
+}
+
+
+.upvote {
+  color: #001100;
+  text-decoration: none;
+}
+
+.downvote {
+  color: #110000;
+  text-decoration:none;
+}
+
+
+.linkImg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.post-line-1 {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+
+.post-default {
+  min-height: 50px;
+  display: table;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 100%;
+  box-sizing: border-box;
+
+  .vote-container {
+    display: table-cell;
+    vertical-align: top;
+    .disable-vote {
+      background-color: #666666;
+
+      color: grey;
+      .post-downvote-default-img {
+        color: grey;
+      }
+
+      .post-upvote-default-img {
+        color: grey;
+      }
+
+    }
+    .post-downvote {
+      height: 50px;
+    }
+    .post-upvote {
+      height: 50px;
+    }
+  }
+  .post-icon-link{
+    display: table-cell;
+    width: 50px;
+    height: 50px;
+    padding-top: 0px;
+    padding-left: 0px;
+  }
+  .post-body {
+    display: table-cell;
+    display: inline-block;
+    //vertical-align: top;
+    width: 100%;
+    padding-left: 5px;
+    padding-right: 5px;
+    box-sizing: border-box;
+    .post-text {
+      word-wrap: break-word;
+      margin: 0px;
+    }
+  }
+
+
+  .post-link {
+    display: inline-block;
+    width: 100%;
+
+  }
+}
+
+
+.post-body {
+  background-color: $post-background;
+}
+
+
+.post-HN {
+  padding-left: 8px;
+  .vote-container {
+    width: 20px;
+    min-width: 20px;
+  }
+}
+
+.post-details {
+  padding: 5px;
+}
+
+.post-controls {
+
+}
+
+.post-link {
+  font-weight: bold;
+  padding: 7px;
+  display: inline-block;
+
+}
+
+
+
+.postTopComment {
+  font-size: 10px;
+  margin: 0px;
+  padding: 0px;
+  background: lightblue;
+  border-radius: 2px;
+  box-shadow: 0 -1px -3px rgba(0, 0, 0,.12), 0 -1px -2px rgba(0, 0, 0, 0.24);
+  display: inline-block;;
+  min-height: 15px;
+  width: auto;
+  max-width: 400px;
+  margin-left: 15px;
+}
+
+
+
+
+.post-upvote-default-img, .post-downvote-default-img {
+  display: block;
+  width: 100%;
+  margin-top: 15px;
+  vertical-align: middle;
+  text-align:left;
+  line-height: 100%;
+  font-size: 20px;
+  margin-left: 2px;
+}
+
+.post-upvote-default-img {
+  color: lighten($upvote, 10%);
+
+}
+
+.post-downvote-default-img {
+  color: lighten($downvote, 10%);
+}
+
+
+
+
+.vote-container {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  width: 50px;
+  height:100%;
+  min-width: 50px;
+
+  .post-upvote {
+  }
+
+  .post-upvote-default {
+    display: inline-block;
+    background-color: $upvote;
+    width: 50%;
+    height: 100%;
+    text-align: center;
+    a {
+    }
+  }
+
+  .post-downvote-default {
+    display: inline-block;
+    background-color: $downvote;
+    width: 50%;
+    height: 100%;
+  }
+}

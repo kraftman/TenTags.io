@@ -1,0 +1,20 @@
+
+
+<div class = 'imagepreview'>
+  <% render("views.st.image",{image = image}) %>
+</div>
+
+<div class = 'panel panel-default'>
+  <h1>DMCA/Copywrite</h1>
+  <span> Please send any DMCA requests to admin@tantags.io</span>
+</div>
+
+<form class = 'panel panel-default' method='post'accept-charset='UTF-8'>
+  <h1>Other Request</h1>
+  <div> Why should this file be removed?</div>
+  </br>
+    <textarea class='form-input textbox-large' name='takedowntext' id='takedowntext'  rows="7" >
+    </textarea>
+  </br>
+  <input class='btn' id='submitButton' type='submit' name='Submit' value='Request Removal' />
+</form>

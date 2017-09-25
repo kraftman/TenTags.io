@@ -1,2 +1,6 @@
 
+
+<a href="<%= url_for('user.viewsub', {username = message.username})%>" title = "<%= '('..TimeAgo(ngx.time() - message.createdAt)..')' %>" >
+  <%=message.username %>:
+</a>
 <%= message.body %>

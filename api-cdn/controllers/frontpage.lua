@@ -1,30 +1,27 @@
-
-local api = require 'api.api'
 local userAPI = require 'api.users'
+local commentAPI = require 'api.comments'
 
-local m = {}
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error, yield_error = app_helpers.capture_errors, app_helpers.assert_error, app_helpers.yield_error
 
+local app = require 'app'
 
-
-
-
-function m.FrontPage(request)
+local captured = capture_errors(function(request)
   request.pageNum = request.params.page or 1
-  local range = 10*(request.pageNum-1)
-  local filter = request.req.parsed_url.path:match('/(%w+)$')
-
-  request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default',filter,range, range+10)
+  local startAt = 20*(request.pageNum-1)
+  local sortBy = request.req.parsed_url.path:match('/(%w+)$') or 'fresh'
+  request.posts = userAPI:GetUserFrontPage(request.session.userID or 'default', nil, sortBy, startAt, startAt+20)
 
   --print(to_json(request.posts))
 
   --defer until we need it
+
   if request:GetFilterTemplate():find('filtta') then
     for _,post in pairs(request.posts) do
-      local comments =api:GetPostComments(request.session.userID, post.id, 'best')
+      local comments = commentAPI:GetPostComments(request.session.userID, post.id, 'best')
       _, post.topComment = next(comments[post.id].children)
 
       if post.topComment then
-        print(post.topComment.text)
       end
     end
   end
@@ -35,26 +32,20 @@ function m.FrontPage(request)
         v.hash = ngx.md5(v.id..request.session.userID)
       end
     end
-    request.userInfo = userAPI:GetUser(request.session.userID)
   end
 
   -- if empty and logged in then redirect to seen posts
   if not request.posts or #request.posts == 0 then
-    if filter ~= 'seen' then -- prevent loop
+    if sortBy ~= 'seen' then -- prevent loop
       --return { redirect_to = request:url_for("seen") }
     end
   end
 
-
-
   return {render = 'frontpage'}
-end
+end)
 
-function m:Register(app)
-  app:get('home','/',self.FrontPage)
-  app:get('new','/new',self.FrontPage)
-  app:get('best','/best',self.FrontPage)
-  app:get('seen','/seen',self.FrontPage)
-end
-
-return m
+app:get('home','/',captured)
+app:post('home', '/',function() return 'stopit' end)
+app:get('new','/new',captured)
+app:get('best','/best',captured)
+app:get('seen','/seen',captured)

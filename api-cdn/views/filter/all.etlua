@@ -1,13 +1,16 @@
-
-<form action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
-  <input class='filter-searchbox-main' class='form-control' type='text' name='searchString' maxlength="50" placeholder="<%= searchString or 'Search' -%>"/>
-  <input type="submit" style="visibility: hidden;" />
-</form>
-
-<div class = 'contents'>
-  <div id='filters'>
-    <% for i, filter in pairs(filters) do %>
-        <% render("views.st.filter",{filter = filter}) %>
-    <% end %>
-  </div>
+<div class = 'panel filter-allsearch'>
+  <form action='<%= url_for("searchfilters") %>' method='post' accept-charset='UTF-8'>
+    <input class='filter-searchbox-main form-search'
+          type='text'
+          name='searchString'
+          maxlength="50"
+          placeholder="<%= searchString or '🔍 Search filters' -%>"/>
+    <input type="submit" style="visibility: hidden;" />
+  </form>
 </div>
+
+
+
+<% for i, filter in pairs(filters) do %>
+    <% render("views.st.filter",{filter = filter}) %>
+<% end %>

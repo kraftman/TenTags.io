@@ -6,24 +6,40 @@ config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
 
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
+local userAPI = require 'api.users'
+local tagAPI = require 'api.tags'
 local cache = require 'api.cache'
+
+local updateDict = ngx.shared.updateQueue
 local tinsert = table.insert
-local TAG_BOUNDARY = 0.15
+local TAG_BOUNDARY = 0.25
 local to_json = (require 'lapis.util').to_json
-local SEED = 1879873
+local from_json = (require 'lapis.util').from_json
+local elastic = require 'lib.elasticsearch'
 
 local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
+	nsfw = 'nsfw',
+	nsfl = 'nsfl',
+
 }
+
+local NSFW_LEVELS = {
+	nsfw = 1,
+	nsfw1 = 1,
+	nsfw2 = 2,
+	nsfw3 = 3
+}
+
+local common = require 'timers.common'
+setmetatable(config, common)
+
 
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
+	c.common = common
 	math.randomseed(ngx.now()+ngx.worker.pid())
-	math.random()
+	math.random() math.random() math.random()
 
   return c
 end
@@ -37,12 +53,115 @@ function config.Run(_,self)
   end
 
   -- no need to lock since we should be grabbing a different one each time anyway
-  self:UpdatePostShortURL()
-  self:AddCommentShortURL()
-  self:UpdatePostFilters()
-  self:CheckReposts()
+	self.startTime = ngx.now()
+  self:ProcessJob('CheckReposts', 'CheckReposts')
+	self:ProcessJob('votepost', 'VotePost')
+	self:ProcessJob('UpdatePostFilters', 'UpdatePostFilters')
+	self:ProcessJob('AddPostShortURL', 'AddPostShortURL')
+	self:ProcessJob('ReIndexPost', 'ReIndexPost')
+	self:EmptyOldFilters()
+	self:ProcessJob('AddCommentShortURL', 'AddCommentShortURL')
+
+	self:GetNewPosts()
+	self:GetPostEdits()
+	self:GetPostDeletions()
+	self:GetPostVotes()
 
 end
+
+function config:EmptyOldFilters()
+	local ok, err = self.redisWrite:EmptyFilter()
+	if not ok then
+		ngx.log(ngx.ERR,'error emptying filters: ',err)
+	end
+end
+
+function config:ReIndexPost(data)
+	local post = self.redisRead:GetPost(data.id)
+	if not post then
+		return true
+	end
+
+	local indexable = {
+		title = post.title,
+		text = post.text,
+		createdBy = post.createdBy,
+		id = post.id,
+		shortURL = post.shortURL or nil,
+		url = post.link or nil
+	}
+	local ok, err = elastic:Index('post',indexable)
+	if not ok then
+		ngx.log(ngx.ERR, 'failed to index doc: ', err)
+		return nil, err
+	end
+
+	return true
+end
+
+
+function config:VotePost(postVote)
+
+	--[[
+		when we vote down a post as a whole we are saying
+		'this post is not good enough to be under these filters'
+		or 'the tags this post has that match the filters i care about are
+		not good'
+
+	]]
+
+	local user = cache:GetUser(postVote.userID)
+	if userAPI:UserHasVotedPost(postVote.userID, postVote.postID) then
+		if user.role ~= 'Admin' then
+			return true
+		end
+	end
+
+	local post = cache:GetPost(postVote.postID)
+	if not post then
+		return true
+	end
+
+	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(user.currentView),post.filters)
+
+	-- filter out the tags they already voted on
+	matchingTags = tagAPI:GetUnvotedTags(user,postVote.postID, matchingTags)
+	if (next(matchingTags)~= nil) then
+		self.userWrite:IncrementUserStat(postVote.userID, 'PostsVoted', 1)
+		self.userWrite:IncrementUserStat(postVote.userID, 'PostsVoted:'..postVote.direction, 1)
+	end
+	for _,tagName in pairs(matchingTags) do
+		for _,tag in pairs(post.tags) do
+			if tag.name == tagName then
+				tagAPI:AddVoteToTag(tag, postVote.direction)
+				self.userWrite:IncrementUserStat(postVote.userID, 'TagVoted', 1)
+				self.userWrite:IncrementUserStat(postVote.userID, 'TagVoted:'..postVote.direction, 1)
+			end
+		end
+	end
+
+	self.redisWrite:UpdatePostTags(post)
+
+
+	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+
+	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
+	ok, err = self.userWrite:AddUserPostVotes(postVote.userID, post.createdAt, postVote.postID, postVote.direction)
+	if not ok then
+		print('couldnt add voted post: ', err)
+	end
+	cache:PurgeKey({keyType = 'postvote', id = postVote.userID})
+	ok, err = self.redisWrite:InvalidateKey('postvote', postVote.userID)
+	if not ok then
+		print('couldnt invalidate key post: ', err)
+	end
+
+	return true
+
+end
+
+
+
 
 local function AverageTagScore(filterrequiredTagNames,postTags)
 
@@ -69,6 +188,135 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 	return score / count
 end
 
+function config:GetNewPosts()
+	local ok, err = updateDict:rpop('post:create')
+	if not ok then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	print('creating post ', ok)
+	ok = from_json(ok)
+
+	self:CreatePost(ok)
+end
+
+function config:GetPostEdits()
+	local post, err = updateDict:rpop('post:edit')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+
+	print('creating post ', post)
+	post = from_json(post)
+	local ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	ok, err = self.redisWrite:InvalidateKey('post', post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error updating the post: ')
+	end
+	--self:CreatePost(ok)
+end
+
+function config:GetPostDeletions()
+	local post, err = updateDict:rpop('post:delete')
+	if not post then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	post = from_json(post)
+	local ok, err = self.redisWrite:DeletePost(post.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'error deleting the post: ')
+	end
+end
+
+function config:GetPostVotes()
+	local postVote, err = updateDict:rpop('post:vote')
+	if not postVote then
+		if err then
+			ngx.log(ngx.ERR, err)
+		end
+		return
+	end
+	postVote = from_json(postVote)
+	self:VotePost(postVote)
+end
+
+function config:CreatePost(post)
+
+	local ok, err
+	ok, err = self.redisWrite:CreatePost(post)
+	if not ok then
+		ngx.log(ngx.ERR, 'couldnt create new post:', err)
+	end
+
+	-- add stats, but dont return if they fail
+	ok, err = self.userWrite:IncrementUserStat(post.createdBy, 'PostsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat: ', err)
+	end
+
+	local user = self.userRead:GetUser(post.createdBy)
+	for _,subscriberID in pairs(user.postSubscribers) do
+		self.userWrite:AddUserAlert(post.createdAt, subscriberID, 'post:'..post.id)
+    cache:PurgeKey({keyType = 'useralert', id = subscriberID})
+    ok, err = self.redisWrite:InvalidateKey('useralert', subscriberID)
+	end
+
+
+  ok, err = self.userWrite:AddPost(post)
+  if not ok then
+    return ok, err
+  end
+
+	self.redisWrite:IncrementSiteStat('PostsCreated', 1)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to add stat')
+	end
+
+	if post.link and post.link ~= '' then
+		ok, err = self.redisWrite:QueueJob('GeneratePostIcon', {id = post.id})
+	  if not ok then
+	    return ok, err
+	  end
+	end
+
+  ok, err = self.redisWrite:QueueJob('UpdatePostFilters',{id = post.id})
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self.redisWrite:QueueJob('AddPostShortURL',{id = post.id})
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self.redisWrite:QueueJob('CheckReposts', {id = post.id})
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self.redisWrite:QueueJob('ReIndexPost', {id = post.id})
+  if not ok then
+    return ok, err
+  end
+
+
+	return true
+
+end
+
+
 function config:GetValidFilters(filter, post)
 
 
@@ -89,7 +337,7 @@ function config:GetValidFilters(filter, post)
 end
 
 function config:TagsMatch(filter, post)
-  -- the post needs to have all of the tags that the filter has in order to be valid
+  -- the post needs to have all of the tags that the filter wants in order to be valid
   local found
   for _,filterTagName in pairs(filter.requiredTagNames) do
     found = false
@@ -117,56 +365,33 @@ function config:CalculatePostFilters(post)
 
   -- get the required tags that we actually care about
 	for _, tag in pairs(post.tags) do
-		print(to_json(tag))
 		if tag.score > TAG_BOUNDARY then
 			tinsert(validTags, tag)
 		end
 	end
 
   --get all filters that match any of these tags
-	local filterIDs = cache:GetFilterIDsByTags(validTags)
-  -- cant flatten this table yet as it would remove duplicates
-
-  local chosenFilterIDs = {}
-
-  -- add all the filters that actually want these tags
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'required' then
-        chosenFilterIDs[filterID] = filterID
-      end
-    end
-  end
+	local chosenFilterIDs, err = cache:GetRelevantFilters(validTags)
+	if not chosenFilterIDs then
+		print(err)
+	end
+	-- we need a list of filters, and the tags they are interested in,
+	-- and why they are interested in them
 
   local chosenFilters = {}
-  -- if a filter doesnt want any of the tags, remove it
+  -- if there are any tags the filter doesnt want, remove it
   -- else load it
-	--print('this')
-  for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType ~= 'banned' then
-        chosenFilters[filterID] = cache:GetFilterByID(filterID)
-        if not chosenFilters[filterID] then
-          ngx.log(ngx.ERR,'filter not found: ',filterID)
-        end
-      end
+	for _,filterID in pairs(chosenFilterIDs) do
+    chosenFilters[filterID] = cache:GetFilterByID(filterID)
+    if not chosenFilters[filterID] then
+      ngx.log(ngx.ERR,'filter not found: ',filterID)
     end
   end
-
-	--remove banned
-	for _,v in pairs(filterIDs) do
-    for filterID,filterType in pairs(v) do
-      if filterType == 'banned' then
-        chosenFilters[filterID] = nil
-      end
-    end
-  end
-  --print('potential filters: ',to_json(chosenFilters))
 
   --at this point we know that the filters want at least one tag
   --that the post has
 
-  for filterID,filter in pairs(chosenFilters) do
+  for filterID, filter in pairs(chosenFilters) do
     if self:TagsMatch(filter, post) then
 		  chosenFilters[filterID] = self:GetValidFilters(filter, post)
     else
@@ -179,31 +404,9 @@ function config:CalculatePostFilters(post)
   return chosenFilters
 end
 
-function config:GetJob(jobName)
-  local postID = redisRead:GetOldestJob(jobName)
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:DeleteJob(jobName,postID)
-
-  if ok ~= 1 then
-    if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
-    end
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-  if not post then
-    return
-  end
-  return post
-end
 
 function config:CreateShortURL(postID)
   local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
-  SEED = SEED + 1
 
   local newURL = ''
   for _ = 1, 7 do
@@ -215,110 +418,101 @@ function config:CreateShortURL(postID)
   return newURL
 end
 
-function config:UpdatePostShortURL()
+function config:AddPostShortURL(data)
+	local post = self.redisRead:GetPost(data.id)
+	if not post then
+		return true
+	end
 
-  local postID = redisRead:GetOldestJob('AddPostShortURL')
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:GetLock('UpdatePostShortURL:'..postID,10)
-  if ok == ngx.null then
-    return
-  end
+	local ok, err
 
   local shortURL
-  for i = 1, 5 do
-    shortURL = self:CreateShortURL(postID)
-    ok, err = redisWrite:SetNX('shortURL:'..shortURL, postID)
+  for i = 1, 6 do
+    shortURL = self:CreateShortURL(post.id)
+    ok, err = self.redisWrite:SetShortURL(shortURL, post.id)
     if err then
-      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', postID)
-      return
+      ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' postID: ', post.id)
+      return nil
     end
 
     if ok ~= ngx.null then
       break
     end
 
-    if (i == 5) then
-      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', postID)
+    if (i == 6) then
+      ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', post.id)
       return
     end
   end
 
   -- add short url to hash
   -- deleted job
-  ok, err = redisWrite:UpdatePostField(postID, 'shortURL', shortURL)
+  ok, err = self.redisWrite:UpdatePostField(post.id, 'shortURL', shortURL)
+	cache:PurgeKey({keyType = 'post', id = post.id})
+	self.redisWrite:InvalidateKey('post', post.id)
   if not ok then
     print('error updating post field: ',err)
-    return
+    return nil
   end
 
-  ok, err = redisWrite:DeleteJob('AddPostShortURL',postID)
+	return true
 
   --ngx.log(ngx.ERR, 'successfully added shortURL for postID ', postID,' shortURL: ',shortURL)
 
 end
 
-function config:AddCommentShortURL()
+function config:AddCommentShortURL(data)
 
-  local commentPostPair = redisRead:GetOldestJob('AddCommentShortURL')
-  if not commentPostPair then
-    return
-  end
+	local commentPostPair = data.id
 
-  local ok, err = redisWrite:GetLock('AddCommentShortURL:'..commentPostPair,10)
-  if ok == ngx.null then
-    return
-  end
-
-  local shortURL
-  for i = 1, 5 do
+  local shortURL, ok, err
+  for i = 1, 6 do
     shortURL = self:CreateShortURL()
-    ok, err = redisWrite:SetNX('shortURL:'..shortURL, commentPostPair)
+    ok, err = self.redisWrite:SetShortURL(shortURL, commentPostPair)
     if err then
       ngx.log(ngx.ERR, 'unable to set shorturl: ',shortURL, ' commentPostPair: ', commentPostPair)
-      return
+      return nil
     end
 
     if ok ~= ngx.null then
       break
     end
 
-    if (i == 5) then
+    if (i == 6) then
       ngx.log(ngx.ERR, 'unable to generate short url for post ID: ', commentPostPair)
-      return
+      return nil
     end
   end
 
   local postID, commentID = commentPostPair:match('(%w+):(%w+)')
 
-  ok, err = commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
+  ok, err = self.commentWrite:UpdateCommentField(postID, commentID, 'shortURL', shortURL)
   if not ok then
     print('error updating post field: ',err)
     return
   end
+	cache:PurgeKey {keyType = 'comment', id = postID}
 
-  ok, err = redisWrite:DeleteJob('AddCommentShortURL',commentPostPair)
+	ok , err = self.redisWrite:InvalidateKey('comment', postID)
+	if not ok then
+		print('error invalidating key: ', err)
+	end
 
   ngx.log(ngx.ERR, 'successfully added shortURL for commentID ', commentPostPair,' shortURL: ',shortURL)
-
+	return true
 end
 
 
-function config:UpdatePostFilters()
-	--[[
-		since addfilters and updatefilters are the same, we can just add
-		all of the newfilters, even if they already exist
-	]]
 
-  local post = self:GetJob('UpdatePostFilters')
-  if not post then
-    return
-  end
+
+function config:UpdatePostFilters(data)
+	local post = self.redisRead:GetPost(data.id)
+	if not post then
+		ngx.log(ngx.ERR 'post not found: ', to_json(data))
+		return true
+	end
 
 	local newFilters = self:CalculatePostFilters(post)
-	--print(to_json(newFilters))
 	local purgeFilterIDs = {}
 
 	for _,filterID in pairs(post.filters) do
@@ -327,35 +521,35 @@ function config:UpdatePostFilters()
 		end
 	end
 
-  local specialTagFound = {}
-
+	local nsfwLevel = 0
   for _,tag in pairs(post.tags) do
 		--print(tag.name)
-    if SPECIAL_TAGS[tag.name] then
-      specialTagFound[SPECIAL_TAGS[tag.name]] = true
-    end
+    if tag.name:find('nsfl') then
+			post.nsfl = 'true'
+		end
+		if NSFW_LEVELS[tag.name] then
+			nsfwLevel = math.max(nsfwLevel, NSFW_LEVELS[tag.name])
+		end
   end
+	print('nsfw level: ',nsfwLevel)
+	if nsfwLevel > 0 then
+		post.nsfwLevel = nsfwLevel
+	else
+		post.nsfwLevel = nil
+	end
 
-  for k,v in pairs(SPECIAL_TAGS) do
-    if specialTagFound[k] then
-			print('found special tag: ',v)
-      post['specialTag:'..v] = 'true'
-    else
-      post['specialTag:'..v] = 'false'
-    end
-  end
 
   --print('removing from: '..to_json(purgeFilterIDs))
   --print('adding to: '..to_json(newFilters))
 
-	local ok, err = redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
+	local ok, err = self.redisWrite:RemovePostFromFilters(post.id, purgeFilterIDs)
 	if not ok then
 		print('couldnt remove post from filters: ',err)
 		return ok, err
 	end
 --	print(to_json(post))
 	--print(to_json(newFilters))
-	ok, err = redisWrite:AddPostToFilters(post, newFilters)
+	ok, err = self.redisWrite:AddPostToFilters(post, newFilters)
 	if not ok then
 		print('couldnt add post to filters',ok, '|',err)
 		return ok, err
@@ -367,58 +561,53 @@ function config:UpdatePostFilters()
     tinsert(post.filters,filter.id)
   end
 
-  ok, err = redisWrite:CreatePost(post)
+  ok, err = self.redisWrite:CreatePost(post)
 	if not ok then
-		print(err)
+		ngx.log(ngx.ERR, err)
 	end
-	return
+	cache:PurgeKey({keyType = 'post', id = post.id})
+	ok,err = self.redisWrite:InvalidateKey('post', post.id)
+	if not ok then
+		ngx.log(ngx.ERR, err)
+	end
+	return true
 end
 
-function config:CheckReposts()
+function config:CheckReposts(postData)
 
-  --[[]]
+  local post = self.redisRead:GetPost(postData.id)
+	if not post then
+		return true
+	end
 
-  local postID = redisRead:GetOldestJob('CheckReposts')
-  if not postID then
-    return
-  end
-
-  local ok, err = redisWrite:GetLock('CheckReposts:'..postID,10)
-  if ok == ngx.null then
-    return
-  end
-
-  local post = redisRead:GetPost(postID)
-
-  local postLink = post.link
-  if not postLink then
-    return
+  if not post.link then
+    return true
   end
 
   local linkTag
   for _,tag in pairs(post.tags) do
-    if tag.name == 'meta:link:'..postLink:lower() then
+    if tag.name == 'meta:link:'..post.link:lower() then
       linkTag = tag
       break
     end
   end
   if not linkTag then
     print('cant find link tag')
-    return
+    return true
   end
 
-  local posts, err = redisRead:GetTagPosts(linkTag.name)
+  local posts, err = self.redisRead:GetTagPosts(linkTag.name)
   if not posts then
     print(err)
   end
   if not next(posts) then
     print('no posts found')
-    return
+    return true
   end
 
 
-  for k,postID in pairs(posts) do
-    posts[k] = redisRead:GetPost(postID)
+  for k,id in pairs(posts) do
+    posts[k] = self.redisRead:GetPost(id)
   end
 
 
@@ -427,9 +616,9 @@ function config:CheckReposts()
   local parentPost = posts[1]
   post.parentID = parentPost.id
   --updating parent ID
-  redisWrite:UpdatePostParentID(post)
+  self.redisWrite:UpdatePostParentID(post)
 
-  ok, err = redisWrite:DeleteJob('CheckReposts',postID)
+	return true
 
 end
 

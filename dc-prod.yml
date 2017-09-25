@@ -1,0 +1,20 @@
+version: '2'
+services:
+  filtta:
+    ports:
+      - "80:8081"
+      - "8012:80"
+
+    #entrypoint: ""
+    #command: bash -c "lapis server production"
+    volumes:
+      - ./stunnel.conf:/etc/stunnel/stunnel.conf
+      - ./stunnel.pem:/etc/stunnel/stunnel.pem
+    env_file:
+      - filtta-prod.env
+  imgprocess:
+    volumes:
+      - ./stunnel.conf:/etc/stunnel/stunnel.conf
+      - ./stunnel.pem:/etc/stunnel/stunnel.pem
+    env_file:
+      - filtta-prod.env

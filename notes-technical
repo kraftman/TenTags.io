@@ -1,0 +1,16 @@
+caching
+
+data stored long term in redis
+cache pulls from redis, stores in shared dict (ram but no limits)
+per-worker LRU stores most frequently accessed in memory (max 4GB)
+
+cache invalidation
+ - background workers mark cache objects as SetKeepalive
+ - cache invalidator periodically purges caceh of stale objects
+ - should means that someone that gets updated multiple times by a worker will only be purged once,
+
+bloom filters
+ - per user bloom filter of seen posts
+ - efficient
+ - check both the postID and post parentID to check if user has seen
+ - users dont see reposts! (or not many do)

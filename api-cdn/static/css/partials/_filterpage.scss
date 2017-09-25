@@ -1,0 +1,74 @@
+
+
+
+
+.filter-sort li {
+  display: inline-block;
+}
+
+.filter-item {
+  background-color: $sidebar-background;
+  min-height: 35px;
+  margin-top: 5px;
+  line-height: 30px;
+  clear: both;
+}
+
+.post-link {
+  display: inline-block;
+  padding: 3px;
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.filter-body {
+  display: none;
+  background-color: $post-background;
+  color: $body-fontcolor;
+  padding: 5px;
+}
+
+.filter-description {
+}
+
+.filter-stats {
+  font-size: 10px;
+}
+
+.filter-buttons {
+  display: inline-block;
+  float: right;
+
+  a {
+    display: inline-block;
+    text-align: center;
+    min-width: 100px;
+    padding: 3px;
+  }
+}
+
+
+.filter-allsearch {
+  padding: 3px;
+  background-color: $post-bars;
+}
+
+.filter-searchbox-main {
+  width: 150px;
+  height: 25px;
+}
+
+.filter-item form {
+  display: inline-block;
+}
+
+.filter-description {
+  display: inline-block;
+}
+
+.filter-sort {
+  margin-top: 5px;
+  background-color: #333;
+  white-space: nowrap;
+  overflow-y: scroll;
+}

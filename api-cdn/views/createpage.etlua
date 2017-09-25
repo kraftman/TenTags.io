@@ -1,12 +1,12 @@
 
-<a  href="<%= url_for('newmessage') %>">
-  <button type="newmessage" class="btn btn-primary">New Message</button>
+<a  href="<%= url_for('message.view') %>">
+  <button type="newmessage" class="btn btn-default">New Message</button>
 </a>
 </br>
-<a  href="<%= url_for('newpost') %>">
-  <button type="button" class="btn btn-primary">New Post</button>
+<a  href="<%= url_for('post.new') %>">
+  <button type="button" class="btn btn-default">New Post</button>
 </a>
 </br>
-<a  href="<%= url_for('newfilter') %>">
-  <button type="button" class="btn btn-primary">New Filter</button>
+<a  href="<%= url_for('message.view') %>">
+  <button type="button" class="btn btn-default">New Filter</button>
 </a>

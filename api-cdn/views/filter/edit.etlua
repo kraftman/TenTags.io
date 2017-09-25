@@ -1,18 +1,29 @@
 
 
-<link rel="stylesheet" type="text/css" href="/static/chosen/chosen.css">
-<script src="/static/js/jquery-2.1.4.js"></script>
-<script src="/static/chosen/chosen.jquery.js"></script>
-<script src="/static/js/jquery.form.js"></script>
-<script src="/static/js/updatefilter.js"></script>
+<script src="/static/js/updatefilter.js" defer></script>
 
-<div class = 'contents'>
+  <div class = 'panel panel-default'>
+    <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
 
+      <label for='filtertitle' >Filter Title:</label></br>
+      <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
+      </br>
+      <label for='filterdescription' >Filter Description</label></br>
+      <textarea rows="10" cols="40" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  >
+      </textarea></br>
+      <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+
+    </form>
+  </div>
+
+<div class = 'panel panel-default'>
+
+  <h2>Tags:</h2>
   <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
     <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
     <label for='plustagselect'>Required Tags</label>
-    <select name='plustagselect' id='requiredSelect' style="width:350px;" multiple='true' class="chosen-select">
-      <% for i, tag in pairs(tags) do print(tag.name, tag.name, requiredTagKeys[tag.name]) %>
+    <select name='plustagselect' id='plustagselect' style="width:350px;" multiple='multiple' >
+      <% for i, tag in pairs(tags) do  %>
        <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
         <% if requiredTagKeys[tag.name] then  %>
           selected = 'selected'
@@ -22,7 +33,8 @@
     </select>
     </br>
     <label for='minustagselect'>Excluded Tags</label>
-    <select name='minustagselect' id='bannedSelect' style="width:350px;" multiple='true' class="chosen-select">
+
+    <select name='minustagselect' id='minustagselect' style="width:350px;" multiple='multiple' >
       <% for i, tag in pairs(tags) do %>
        <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
         <% if bannedTagKeys[tag.name] then %>
@@ -31,9 +43,13 @@
       ><%= tag.name -%></option>
       <% end %>
     </select>
-    <input id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
+    </br>
+    <input class='btn' id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
 
   </form>
+</div>
+
+<div class = 'panel panel-default'>
   <h2>Mods:</h2>
   <% for _,mod in pairs(selectedFilter.mods) do %>
     <%= mod.username or 'test' -%>
@@ -46,7 +62,7 @@
 
     <label for='addmod' >Username</label>
     <input type='text' name='addmod' id='addmod' maxlength="50" />
-    <input id='addModsButton' type='submit' name='Submit' value='Add Mod' />
+    <input class='btn' id='addModsButton' type='submit' name='Submit' value='Add Mod' />
   </form>
 
 
@@ -64,7 +80,7 @@
       <label for='banUserReason'> Reason: </label>
       <input type='text' name='banUserReason' id='banUserReason' maxlength="50" />
 
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
 
@@ -81,19 +97,8 @@
       <label for='banDomainReason'> Reason: </label>
       <input type='text' name='banDomainReason' id='banDomainReason' maxlength="50" />
 
-      <input id='submitButton' type='submit' name='Submit' value='Submit' />
+      <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
   </form>
 
-  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
-
-    <label for='filtertitle' >Filter Title:</label>
-    <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
-
-    <label for='filterdescription' >Filter Description</label>
-    <input type='text' name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>" maxlength="50" />
-    </br>
-    <input id='submitButton' type='submit' name='Submit' value='Submit' />
-
-  </form>
 </div>

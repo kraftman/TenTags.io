@@ -1,29 +1,18 @@
 
-local CONFIG_CHECK_INTERVAL = 5
+local CONFIG_CHECK_INTERVAL = 1
 
 local config = {}
 config.__index = config
 config.http = require 'lib.http'
 config.cjson = require 'cjson'
+local sessionLastSeenDict = ngx.shared.sessionLastSeen
 
-local userRead = require 'api.userread'
-local userWrite = require 'api.userwrite'
-local redisRead = require 'api.redisread'
-local redisWrite = require 'api.rediswrite'
-local commentWrite = require 'api.commentwrite'
-local cache = require 'api.cache'
-local tinsert = table.insert
-local TAG_BOUNDARY = 0.15
 local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
-local SEED = 1
 local emailDict = ngx.shared.emailQueue
-local str = require "resty.string"
-local uuid = require 'lib.uuid'
 
-local SPECIAL_TAGS = {
-	nsfw = 'nsfw'
-}
+
+local common = require 'timers.common'
+setmetatable(config, common)
 
 function config:New(util)
   local c = setmetatable({},self)
@@ -40,27 +29,44 @@ function config.Run(_,self)
     end
   end
 
-  -- no need to lock since we should be grabbing a different one each time anyway
-  self:RegisterAccount()
+  self.startTime = ngx.now()
+  self:ProcessJob('registeraccount', 'ProcessAccount')
+  self:FlushSessionLastSeen()
 
 end
 
-function config:GetJob(jobName)
-  local session = redisRead:GetOldestJob(jobName)
-  if not session then
-    return nil
+function config:FlushSessionLastSeen()
+  --dump from shdict to redis
+  local ok, err = self.util:GetLock('FlushSessionLastSeen', 10)
+  if err then
+    print(err)
   end
-  -- TODO fix this, its not a good solution
-  local ok, err = redisWrite:DeleteJob(jobName,session)
+  if not ok then
+    return
+  end
 
-  if ok ~= 1 then
-    if err then
-      ngx.log(ngx.ERR, 'error deleting job: ',err)
+  local sessionData = sessionLastSeenDict:get_keys()
+  local sessionID, accountID,lastSeen, account,session
+  for _,key in pairs(sessionData) do
+    sessionLastSeenDict:get(key)
+    sessionID, accountID = key:match('(%w+):(%w+)')
+    lastSeen = sessionLastSeenDict:get(key)
+    account = self.userRead:GetAccount(accountID)
+
+    if account and session then
+      session = account.sessions[sessionID]
+      session.lastSeen = lastSeen
+
+      ok, err = self.redisWrite:InvalidateKey('account', account.id)
+      ok, err = self.userWrite:CreateAccount(account)
+      if not ok then
+        print('error updating lastseen:',err)
+      end
     end
-    return nil
+    sessionLastSeenDict:delete(key)
+
   end
 
-  return session
 end
 
 function config:CreateAccount(accountID, session)
@@ -89,21 +95,28 @@ function config:GetHash(values)
 end
 
 
-function config:RegisterAccount()
+function config:ProcessAccount(session)
 
-  local session = self:GetJob('RegisterAccount')
-  if not session then
-    return
-  end
-  session = from_json(session)
 	local emailAddr = session.email
 	session.email = nil
 
   local accountID = self:GetHash(emailAddr)
-  local account = userRead:GetAccount(accountID)
+  local account = self.userRead:GetAccount(accountID)
+
+  if account then
+    print('account already exists')
+    print(to_json(account))
+  end
+
   if not account then
     account = self:CreateAccount(accountID, session)
+    print('adding to newusers')
+    local ok, err = self.userWrite:AddNewUser(ngx.time(), account.id, emailAddr)
+    if not ok then
+      ngx.log(ngx.ERR, 'unable to write new user: ', err)
+    end
   end
+  
 	account.id = accountID
 
   if not session.id then
@@ -111,29 +124,33 @@ function config:RegisterAccount()
   end
 	account.sessions[session.id] = session
 
-  local ok, err = userWrite:CreateAccount(account)
+
+  local ok, err = self.userWrite:CreateAccount(account)
 	if not ok then
 		ngx.log(ngx.ERR, err)
 		return
 	end
+  print('adding user session: ', session.id)
+  ok, err = self.redisWrite:InvalidateKey('account', account.id)
 
   -- TODO: move to other function
 
   local url = session.confirmURL..'?key='..session.id..'-'..accountID
 
   local email = {}
-  email.body = [[ Please click this link to login: ]]
+  email.body = [[ Please click this link to login (remember to open in browser on mobile):  ]]
   email.body = email.body..url
   email.subject = 'Login email'
+  email.recipient = emailAddr
 
-  local ok, err, forced = emailDict:set(emailAddr, to_json(email))
-  session.email = nil
+  local ok, err = emailDict:lpush('registrationEmails', to_json(email))
+
   if (not ok) and err then
     ngx.log(ngx.ERR, 'unable to set emaildict: ', err)
     return nil, 'unable to send email'
   end
-  if forced then
-    ngx.log(ngx.ERR, 'WARNING! forced email dict! needs to be bigger!')
+  if err == 'no memory' then
+    ngx.log(ngx.ERR, 'WARNING: emailDict is full!')
   end
 
   -- Create the Account

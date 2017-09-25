@@ -1,0 +1,85 @@
+
+
+body {
+  min-height: 100%;
+}
+
+html,body {
+
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+
+  height: 100%;
+  margin: 0 auto;
+  background-color: $background-color;
+  max-width: 95%;
+}
+
+a {
+  color: $link-color;
+  text-decoration: none;
+  &:hover {
+    background-color: $topbar-background;
+    color: black;
+  }
+}
+
+ul {
+  list-style-type: none;
+}
+
+
+.form-search {
+  border: none;
+  margin-left: 5px;
+  background-color: $form-search-bg;
+  color: #222222;
+  border-radius: 3px;
+  padding-left: 5px;
+}
+
+.main {
+  display: table;
+  min-height: 100%;
+  width: 100%;
+}
+
+.contents {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel {
+  border: none;
+  border-radius: 0px;
+  @include card1();
+  background-color: $post-background;
+
+  overflow: visible;
+  color: $font-light;
+
+}
+
+.panel-default {
+  padding: 5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.subuser-link {
+  padding-left: 10px;
+  display: block;
+  padding: 5px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.form-input {
+  @include textInput;
+  margin: 2px;
+  box-sizing: border-box;
+  padding-left: 3px;
+  &:focus {
+    border: 1px solid $hight-font-color;
+  }
+}

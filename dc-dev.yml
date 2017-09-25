@@ -1,0 +1,41 @@
+version: '2'
+services:
+  filtta:
+    build: api-cdn/.
+    ports:
+      - "80:80"
+      - "81:8081"
+    entrypoint: ""
+    command:  bash -c "lapis server"
+    links:
+      - redis-general
+      - redis-comment
+      - redis-user
+
+  imgprocess:
+    tty: true
+    links:
+      - redis-general
+    entrypoint: ""
+    command: luajit imgconverter.lua
+  redis-general:
+    expose:
+      - '6379'
+  redis-user:
+    expose:
+      - '6379'
+  redis-comment:
+    expose:
+      - '6379'
+  redis-general:
+    build: redis
+    volumes:
+      - ./redis/general:/data
+  redis-comment:
+    build: redis
+    volumes:
+      - ./redis/comment:/data
+  redis-user:
+    build: redis
+    volumes:
+      - ./redis/user:/data

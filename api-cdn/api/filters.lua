@@ -1,20 +1,27 @@
 
+
+local app_helpers = require("lapis.application")
+local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local yield_error = app_helpers.yield_error
+
+
 local cache = require 'api.cache'
-local util = require 'api.util'
-local worker = require 'api.worker'
 local uuid = require 'lib.uuid'
 local tinsert = table.insert
 local tagAPI = require 'api.tags'
+local userAPI = require 'api.users'
+local POST_TITLE_LENGTH = 100
 
 
-local api = {}
+local base = require 'api.base'
+local api = setmetatable({}, base)
 
 local MAX_MOD_COUNT = 10
 
 
 function api:GetFilters(filterIDs)
 	local filters = {}
-	for k,v in pairs(filterIDs) do
+	for _,v in pairs(filterIDs) do
 		table.insert(filters, cache:GetFilterByID(v))
 	end
 	return filters
@@ -25,51 +32,47 @@ function api:GetFilterInfo(filterIDs)
 	return cache:GetFilterInfo(filterIDs)
 end
 
-
-
-
 function api:CreateFilter(userID, filterInfo)
 
 	local newFilter, err, ok
 
-	ok, err = util.RateLimit('CreateFilter:', userID, 1, 600)
-	if not ok then
-		return ok, err
-	end
 
 	local user = cache:GetUser(userID)
 	local account = cache:GetAccount(user.parentID)
 
-	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'admin') then
-		--return nil, 'you cant mod any more subs!'
+	if (account.modCount >= MAX_MOD_COUNT) and (account.role ~= 'Admin') then
+		return nil, 'you cant mod any more subs!'
 	end
 
 	account.modCount = account.modCount + 1
-	worker:UpdateAccount(account)
+	self:InvalidateKey('account', account.id)
+
+	self.userWrite:CreateAccount(account)
 
 
-	newFilter, err = self:ConvertUserFilterToFilter(userID, filterInfo)
-	print(to_json(newFilter))
-	if not newFilter then
-		return newFilter, err
-	end
+	newFilter = self:ConvertUserFilterToFilter(userID, filterInfo)
+
 
 	if type(filterInfo.requiredTagNames) ~= 'table' then
 		return nil, 'required tags not provided'
 	end
 
+
   for _,tagName in pairs(filterInfo.requiredTagNames) do
-		tagName = util:SanitiseUserInput(tagName, 100)
+		tagName = self:SanitiseUserInput(tagName, 100)
     local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
 			tinsert(newFilter.requiredTagNames, tag.name)
 		end
   end
+	if #newFilter.requiredTagNames < 1 then
+		print('not enough tags')
+		return nil, 'not enough tags'
+	end
 
 	if type(filterInfo.bannedTagNames) ~= 'table' then
 		filterInfo.bannedTagNames = {}
 	end
-
 	table.insert(filterInfo.bannedTagNames, 'meta:filterban:'..newFilter.id)
 
   for _,tagName in pairs(filterInfo.bannedTagNames) do
@@ -78,16 +81,30 @@ function api:CreateFilter(userID, filterInfo)
     	tinsert(newFilter.bannedTagNames, tag.name)
 		end
   end
-	print(to_json(newFilter))
-  local ok,err = worker:CreateFilter(newFilter)
+
+	ok, err = self.redisWrite:CreateFilter(newFilter)
+
 	if not ok then
 		return ok, err
 	end
+
+	-- auto add the owner to filter subscribers
+	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
+  self.userWrite:ToggleFilterSubscription(userID, newFilter.id,true)
+
+	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
+	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
+	self:InvalidateKey('userfilter', userID)
+
 	-- cant combine, due to other uses of function
-	ok, err = worker:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
-	if not ok then
-		return ok,err
-	end
+	 self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
+
+
+  -- filter HAS to be updated first
+  -- or the job wont use the new tags
+
+  self.redisWrite:QueueJob('UpdateFilterPosts',{id = newFilter.id})
+
   return newFilter
 end
 
@@ -108,26 +125,31 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 		return nil, 'filter name cannot be blank or special characters'
 	end
 
-		userFilter.name = userFilter.name:lower()
-
+	userFilter.name = userFilter.name:lower()
+	if(#userFilter.name < 2 ) then
+		return nil, 'filter name is too short'
+	end
+	if(#userFilter.name > 30 ) then
+		return nil, 'filter name is too long'
+	end
 
 	local newFilter = {
 		id = uuid.generate_random(),
-		name = util:SanitiseUserInput(userFilter.name, 30),
-		description = util:SanitiseUserInput(userFilter.name, 2000),
-		title = util:SanitiseUserInput(userFilter.name, 200),
+		name = self:SanitiseUserInput(userFilter.name, 30),
+		description = self:SanitiseUserInput(userFilter.name, 2000),
+		title = self:SanitiseUserInput(userFilter.name, 200),
 		subs = 0,
 		mods = {},
 		requiredTagNames = {},
 		bannedTagNames = {},
-		ownerID = util:SanitiseUserInput(userFilter.ownerID,50),
-		createdBy = util:SanitiseUserInput(userFilter.createdBy, 50),
+		ownerID = self:SanitiseUserInput(userFilter.ownerID or userFilter.createdBy,50),
+		createdBy = self:SanitiseUserInput(userFilter.createdBy, 50),
 		createdAt = ngx.time()
 	}
 
 	local existingFilter = cache:GetFilterByName(newFilter.name)
 	if existingFilter then
-		return nil, 'filter name is taken'
+		yield_error('filter already exists')
 	end
 
 	return newFilter
@@ -146,21 +168,21 @@ function api:AddMod(userID, filterID, newModName)
 
 
 	local newModID = cache:GetUserID(newModName)
-	if not newModID then
-		return nil, 'could not find user with that name'
-	end
 
 	-- check they arent there already
 	-- check they can be made mod of this sub
 	local newMod = cache:GetUser(newModID)
 	local account = cache:GetAccount(newMod.parentID)
-	print (account.modCount, account.role)
+
 	if account.modCount >= MAX_MOD_COUNT and account.role ~= 'admin' then
 		return nil, 'mod of too many filters'
 	end
 
 	account.modCount = account.modCount + 1
-	worker:UpdateAccount(account)
+
+	assert_error(self:InvalidateKey('account', account.id))
+	assert_error(self:InvalidateKey('filter', filter.id))
+	assert_error(self.userWrite:CreateAccount(account))
 
 	local modInfo = {
 		id = newModID,
@@ -169,7 +191,7 @@ function api:AddMod(userID, filterID, newModName)
 		up = 10,
 		down = 0,
 	}
-	return worker:AddMod(filterID, modInfo)
+	return assert_error(self.redisWrite:AddMod(filterID, modInfo))
 
 end
 
@@ -197,43 +219,34 @@ function api:DelMod(userID, filterID, modID)
 	local user = cache:GetUser(modID)
 	local account = cache:GetAccount(user.parentID)
 	account.modCount = account.modCount - 1
-	worker:UpdateAccount(account)
-	return worker:DelMod(filterID, modID)
+
+	self:InvalidateKey('account', account.id)
+	self:InvalidateKey('filter', filter.id)
+	assert_error(self.userWrite:CreateAccount(account))
+	return assert_error(self.redisWrite:DelMod(filterID, modID))
 
 end
 
 
 function api:UpdateFilterTitle(userID, filterID, newTitle)
-	local ok, err = util.RateLimit('EditFilterTitle:', userID, 4, 120)
-	if not ok then
-		return ok, err
-	end
-
 	local filter = cache:GetFilterByID(filterID)
-	if not filter then
-		return nil, 'could not find filter'
-	end
-
 	if userID ~= filter.ownerID then
 		local user = cache:GetUser(userID)
 		if user.role ~= 'Admin' then
-			return nil, 'you must be admin or filter owner to add mods'
+			return nil, 'you must be admin or filter owner to do that'
 		end
 	end
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	return worker:UpdateFilterTitle(filter)
+	self.redisWrite:UpdateFilterTitle(filter)
+	return self:InvalidateKey('filter', filter.id)
 
 end
 
 
 
 function api:UpdateFilterDescription(userID, filterID, newDescription)
-	local ok, err = util.RateLimit('EditFilter:', userID, 4, 120)
-	if not ok then
-		return ok, err
-	end
 
 	local filter = cache:GetFilterByID(filterID)
 	if not filter then
@@ -249,35 +262,71 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	return worker:UpdateFilterDescription(filter)
-
+	ok, err =  self.redisWrite:UpdateFilterDescription(filter)
+	if not ok then
+		return ok, err
+	end
+	ok,err = self:InvalidateKey('filter', filter.id)
+	return ok, err
 end
 
 
 function api:SearchFilters(userID, searchString)
-	local ok, err = util.RateLimit('SearchFilters:',userID, 20, 10)
-	if not ok then
-		return ok, err
-	end
+
 	searchString = self:SanitiseUserInput(searchString, 100)
 	searchString = searchString:lower()
 	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
-	local ok, err = cache:SearchFilters(searchString)
-	return ok,err
+	ok, err = cache:SearchFilters(searchString)
+	if not ok then
+		ngx.log(ngx.ERR, 'error loading filters: ', err)
+		return nil, 'search failed'
+	end
+	return ok
 end
 
+function api:UserCanEditFilter(userID, filterID)
+	local user = cache:GetUser(userID)
+
+	if not user then
+		return nil, 'userID not found'
+	end
+
+	local filter = cache:GetFilterByID(filterID)
+	if user.role == 'Admin' then
+		return filter
+	end
+
+	if filter.ownerID == userID then
+		return filter
+	end
+
+	for _,mod in pairs(filter.mods) do
+		if mod.id == userID then
+			return filter
+		end
+	end
+
+	return nil, 'you must be admin or mod to edit filters'
+end
 
 function api:FilterBanUser(userID, filterID, banInfo)
+	local ok, err, filter
 
-	local filter, err = self:UserCanEditFilter(userID, filterID)
+
+	filter, err = self:UserCanEditFilter(userID, filterID)
 	if not filter then
 		return filter, err
 	end
 
 	banInfo.bannedAt = ngx.time()
-	return worker:FilterBanUser(filterID, banInfo)
+	ok, err = self.redisWrite:FilterBanUser(filterID, banInfo)
+	if not ok then
+		return ok, err
+	end
+	ok, err = self:InvalidateKey('filter', filter.id)
+	return ok, err
 end
 
 function api:FilterUnbanPost(userID, filterID, postID)
@@ -311,28 +360,18 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.name)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self.redisWrite:QueueJob('UpdatePostFilters', {id = postID}))
 
-	ok, err = worker:UpdatePostTags(post)
-	return ok, err
+	return assert_error(self.redisWrite:UpdatePostTags(post))
 
 end
 
 function api:FilterBanPost(userID, filterID, postID)
 
 	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
-	end
 
 	local tagName = 'meta:filterban:'..filterID
 	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post not found'
-	end
 
 	local newTag = tagAPI:CreateTag(userID, tagName)
 
@@ -342,48 +381,42 @@ function api:FilterBanPost(userID, filterID, postID)
 		end
 	end
 
-	newTag.up = 100
+	newTag.up = 1000
 	newTag.down = 0
-	newTag.score = util:GetScore(newTag.up, newTag.down)
+	newTag.score = self:GetScore(newTag.up, newTag.down)
 	newTag.active = true
 	newTag.createdBy = userID
 
 	tinsert(post.tags, newTag)
 
-	ok, err = worker:QueueJob('UpdatePostFilters', post.id)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id}))
+	return assert_error(self.redisWrite:UpdatePostTags(post))
 
-	ok, err = worker:UpdatePostTags(post)
-	return ok, err
 end
 
 
 
 function api:FilterUnbanUser(filterID, userID)
-	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
-	end
-
-	return worker:FilterUnbanUser(filterID, userID)
+	assert_error(self:UserCanEditFilter(userID, filterID))
+	assert_error(self.redisWrite:FilterUnbanUser(filterID, userID))
+	assert_error(self:InvalidateKey('filter', filterID))
 end
 
 function api:FilterBanDomain(userID, filterID, banInfo)
-	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self:UserCanEditFilter(userID, filterID))
+
 
 	banInfo.bannedAt = ngx.time()
-	banInfo.domainName = util:GetDomain(banInfo.domainName) or banInfo.domainName
-	return worker:FilterBanDomain(filterID, banInfo)
+	banInfo.domainName = self:GetDomain(banInfo.domainName) or banInfo.domainName
+	assert_error(self:InvalidateKey('filter', filterID))
+	return assert_error(self.redisWrite:FilterBanDomain(filterID, banInfo))
 end
 
 
-function api:GetFilterPosts(userID, filter, sortBy)
-  return cache:GetFilterPosts(userID, filter, sortBy)
+function api:GetFilterPosts(userID, filter, sortBy, startAt, range)
+	startAt = startAt or 0
+	range = range or 10
+  return cache:GetFilterPosts(userID, filter, sortBy, startAt, range)
 end
 
 function api:GetFilterByName(filterName)
@@ -393,61 +426,53 @@ end
 function api:GetFiltersBySubs(offset,count)
   offset = offset or 0
   count = count or 10
-  local filters = cache:GetFiltersBySubs(offset,count)
+  local filters = assert_error(cache:GetFiltersBySubs(offset,count))
   return filters
 end
 
 
 function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames)
-	--print('updating filter tags')
-	--print(to_json(requiredTagNames))
 
 	if not filterID then
 		return nil, 'no filter id!'
 	end
-	local filter, err = self:UserCanEditFilter(userID,filterID)
-	if not filter then
-		return filter, err
-	end
-
+	local filter, ok, err
+	filter, err = assert_error(self:UserCanEditFilter(userID,filterID))
 
 	--generate actual tags
 	local newrequiredTagNames, newbannedTagNames = {}, {}
-	for k,v in pairs(requiredTagNames) do
-		if v:gsub(' ', '') ~= '' then
-			newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+	if type(requiredTagNames) == 'table' then
+		for k,v in pairs(requiredTagNames) do
+			if v:gsub(' ', '') ~= '' then
+				newrequiredTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
 		end
+	else
+		table.insert(newrequiredTagNames, tagAPI:CreateTag(userID, requiredTagNames).name)
 	end
-	for k,v in pairs(bannedTagNames) do
-		if v ~= '' then
-			newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
+
+	if type(bannedTagNames) == 'table' then
+		for k,v in pairs(bannedTagNames) do
+			if v ~= '' then
+				newbannedTagNames[k] = tagAPI:CreateTag(userID, v).name
+			end
 		end
+	else
+		table.insert(newbannedTagNames, tagAPI:CreateTag(userID, bannedTagNames).name)
 	end
 
+	assert_error(self.redisWrite:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames))
+	assert_error(self.redisWrite:QueueJob('UpdateFilterPosts',{id = filter.id}))
+	assert_error(self:InvalidateKey('filter', filterID))
 
-	print(to_json(newrequiredTagNames))
-	local ok, err = worker:UpdateFilterTags(filter, newrequiredTagNames, newbannedTagNames)
-	if not ok then
-		return ok, err
-	end
-
-	ok, err = worker:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'})
-	if not ok then
-		return ok,err
-	end
-
-	return true
-
+	return assert_error(self.redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'}))
 end
 
 function api:FilterUnbanDomain(userID, filterID, domainName)
-	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
-	end
+	assert_error(self:UserCanEditFilter(userID, filterID))
 
-	domainName = util:GetDomain(domainName) or domainName
-	return worker:FilterUnbanDomain(filterID, domainName)
+	domainName = self:GetDomain(domainName) or domainName
+	return assert_error(self.redisWrite:FilterUnbanDomain(filterID, domainName))
 end
 
 

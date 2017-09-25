@@ -1,38 +1,25 @@
-<div class='info-bar panel panel-default'>
+<div class='info-bar'>
   <% if thisfilter then %>
-    Subs:
-    <%= thisfilter.subs-%>
-    Description:
-    </br>
-    <%= thisfilter.description -%>
-    </br>
-    Owner:
-    <%= thisfilter.ownerName -%>
-    </br>
-    Mods:
-    </br>
-    <% for _,mod in pairs(thisfilter.mods) do %>
-      <%= mod.username -%>
-    <% end %>
-    Related Filters:
-      </br>
-      <% for _,filter in pairs(thisfilter.relatedFilters) do %>
-      <a class='post-link' href="<%= url_for('filter',{filterlabel = filter.name}) %>">
-        <%= filter.name -%>
-      </a>
+    <a class = 'infobar-title' href='#'>
+      <span class='ti-arrow-circle-down'></span>
+      <%= thisfilter.name-%>
+    </a>
+
+    <div class='infobar-body'>
+
+      <%- thisfilter.description -%>
+      <% if next(thisfilter.relatedFilters) then %>
+        Related Filters:
+          </br>
+          <% for _,filter in pairs(thisfilter.relatedFilters) do %>
+          <a class='post-link' href="<%= url_for('filter.view',{filterlabel = filter.name}) %>">
+            <%= filter.name -%>
+          </a>
+          <% end %>
       <% end %>
+    </div>
   <% else %>
-    Welcome to filter!
+    <p class='welcome-message'>Welcome to TenTags, if you're new please check out our <a href="<%= url_for('about') %>">FAQ</a>!</p>
   <% end %>
-  <% if enableAds then %>
-  <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-<!-- sidebarnew1 -->
-<ins class="adsbygoogle"
-     style="display:inline-block;width:300px;height:250px"
-     data-ad-client="ca-pub-5666598062804330"
-     data-ad-slot="5515082005"></ins>
-<script>
-(adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-  <% end %>
+  <% if enableAds then %><% end %>
 </div>

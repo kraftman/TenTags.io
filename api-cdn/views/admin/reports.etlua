@@ -1,0 +1,12 @@
+
+
+<% render('views.admin.adminbar') %>
+
+<div class = 'panel panel-default'>
+  <h3> Reports: </h3>
+    <% for k,v in pairs(reports) do %>
+      <a href = "<%= url_for('post.view',{postID = v.post.id}) %>"><%=v.post.title %></a>
+      reporter: <%= v.user.username %> reason: <%= v.post.reports[v.user.id] %></br>
+    <% end %>
+
+</div>

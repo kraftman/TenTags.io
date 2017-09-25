@@ -1,4 +1,10 @@
+<div class = 'post-full-topbar'>
+  <h2 class= 'post-header'>Switch User:</h2>
+</div>
+<div class= 'panel panel-default'>
 
-<% for _,user in pairs(otherUsers) do %>
-  <li><a href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a></li>
-<% end %>
+  <% for _,user in pairs(otherUsers) do %>
+    <a class = 'subuser-link' href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a>
+  <% end %>
+  </ul>
+</div>
