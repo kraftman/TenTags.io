@@ -10,7 +10,7 @@
 <% render('views.st.filterstyles') %>
 
 <div class='posts' >
-  <% for i, post in pairs(posts) do %>
+  <% for i, post in pairs(posts or {}) do %>
     <% render(GetFilterTemplate(),{post = post}) %>
   <% end %>
 </div>
