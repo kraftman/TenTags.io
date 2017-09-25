@@ -35,9 +35,7 @@ local httpc = http.new()
 
 
 app:get('admin.view','/admin',capture_errors(function(request)
-  if not request.account then
-    return 'you must be logged in to access this'
-  end
+
 
   if request.account.role ~= 'Admin' then
     return 'you suck go away'
@@ -83,12 +81,6 @@ end))
 
 app:get('admin.stats', '/admin/stats', capture_errors(function(request)
 
-    if not request.account then
-      return 'you must be logged in to access this'
-    end
-    if request.account.role ~= 'Admin' then
-      return 'you suck go away'
-    end
   local ok = assert_error(adminAPI:GetSiteUniqueStats())
 
   local totalViews = adminAPI:GetSiteStats()

@@ -10,6 +10,7 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 
 local rateDict = ngx.shared.ratelimit
 local routes = (require 'routes').routes
+local roles = (require 'routes').roles
 local userAPI = require 'api.users'
 
 
@@ -49,12 +50,28 @@ function util.RateLimit(request)
 	  yield_error('unkown user')
 	end
 
+
   local route = routes[request.route_name]
 
   if not route then
     ngx.log(ngx.ERR, 'no ratelimiting for route: ', request.route_name)
     return true
   end
+
+  -- we have a user and a routes
+  local currentRole = roles.Public;
+  if request.userID then
+    currentRole = roles.User
+  end
+  print(to_json(route))
+  if currentRole == roles.Public and route.access > roles.Public then
+    return request:write({status = 401, render = 'pleaselogin'})
+  end
+
+  if currentRole == roles.User and route.access > roles.User then
+    return request:write({status = 401, render = 'adminonly'})
+  end
+
 
 	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 
