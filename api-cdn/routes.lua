@@ -101,7 +101,7 @@ m.routes['savepost'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['reloadimage'] = {maxCalls = 10, duration = 60, access = Admin}
 
 --search
-m.routes['search.results'] = {maxCalls = 10, duration = 60, access = Admin}
+m.routes['search.results'] = {maxCalls = 10, duration = 60, access = Public}
 
 --settings
 

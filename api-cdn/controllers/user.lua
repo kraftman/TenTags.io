@@ -40,7 +40,7 @@ app:match('newsubuser','/sub/new', respond_to({
       return 'no username!'
     end
 
-    local succ = assert_error(userAPI:CreateSubUser(request.session.accountID,request.params.username))
+    local succ = userAPI:CreateSubUser(request.session.accountID,request.params.username)
 
     request.session.username = succ.username
     request.session.userID = succ.id
@@ -90,9 +90,6 @@ app:get('user.viewsub','/u/:username', capture_errors(function(request)
   -- deny public by default
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
-  if not request.userInfo then
-    return 'user not found'
-  end
 
   if request.session.userID then
 
@@ -113,16 +110,11 @@ app:get('user.viewsub','/u/:username', capture_errors(function(request)
   return {render = 'user.viewsub'}
 end))
 
-app:get('deleteuser', '/user/:username/delete', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+app:get('deleteuser', '/u/delete/:username', capture_errors(function(request)
 
   local userID = request.session.userID
   local username = request.params.username
-  if not userID then
-    return {render = 'pleaselogin'}
-  end
+
 
   assert_error(userAPI:DeleteUser(userID, username))
 
@@ -130,8 +122,13 @@ app:get('deleteuser', '/user/:username/delete', capture_errors(function(request)
 
 end))
 
-app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
+app:get('confirmLogin', '/u/confirmlogin', capture_errors(function(request)
   local session = GetSession(request)
+  local key = request.params.key
+  if not key then
+    return 'No key provided'
+  end
+
   local account, sessionID = sessionAPI:ConfirmLogin(session, request.params.key)
 
   if not account then
@@ -158,10 +155,8 @@ app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
 end))
 
 
-app:get('user.viewsubcomments','/user/:username/comments', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+app:get('user.viewsubcomments','/u/:username/comments', capture_errors(function(request)
+
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
   if not request.userInfo then
@@ -178,10 +173,7 @@ app:get('user.viewsubcomments','/user/:username/comments', capture_errors(functi
   return {render = true}
 end))
 
-app:get('user.viewsubposts','/user/:username/posts', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+app:get('user.viewsubposts','/u/:username/posts', capture_errors(function(request)
 
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
@@ -195,7 +187,7 @@ app:get('user.viewsubposts','/user/:username/posts', capture_errors(function(req
   return {render = true}
 end))
 
-app:get('user.viewsubupvotes','/user/:username/posts/upvoted', capture_errors(function(request)
+app:get('user.viewsubupvotes','/u/:username/posts/upvoted', capture_errors(function(request)
   local userID = userAPI:GetUserID(request.params.username)
   if not userID then
     return 'user not found'
@@ -211,7 +203,7 @@ app:get('user.viewsubupvotes','/user/:username/posts/upvoted', capture_errors(fu
 end))
 
 
-app:get('logout','/logout', capture_errors(function(request)
+app:get('logout','/u/logout', capture_errors(function(request)
   request.session.accountID = nil
   request.session.userID = nil
   request.session.sessionID = nil
@@ -220,7 +212,7 @@ app:get('logout','/logout', capture_errors(function(request)
   return { redirect_to = request:url_for("home") }
 end))
 
-app:get('switchuser','/user/switch/:userID', capture_errors(function(request)
+app:get('switchuser','/u/switch/:userID', capture_errors(function(request)
   local newUser = userAPI:SwitchUser(request.session.accountID, request.params.userID)
   if not newUser then
     return 'error switching user:'
@@ -231,7 +223,7 @@ app:get('switchuser','/user/switch/:userID', capture_errors(function(request)
   return { redirect_to = request:url_for("home") }
 end))
 
-app:get('listusers','/user/list',capture_errors(function(request)
+app:get('listusers','/u/list',capture_errors(function(request)
   if not request.session.accountID then
     return {render = 'pleaselogin'}
   end
@@ -239,7 +231,7 @@ app:get('listusers','/user/list',capture_errors(function(request)
   return {render = true}
 end))
 
-app:get('subscribeusercomment','/user/:username/comments/sub',capture_errors(function(request)
+app:get('subscribeusercomment','/u/:username/comments/sub',capture_errors(function(request)
   local userID = request.session.userID
   local username = request.params.username
   if not userID then
@@ -257,7 +249,7 @@ app:get('subscribeusercomment','/user/:username/comments/sub',capture_errors(fun
 
 end))
 
-app:get('subscribeuserpost','/user/:username/posts/sub',capture_errors(function(request)
+app:get('subscribeuserpost','/u/:username/posts/sub',capture_errors(function(request)
   local userID = request.session.userID
   local username = request.params.username
   if not userID then
@@ -274,7 +266,7 @@ app:get('subscribeuserpost','/user/:username/posts/sub',capture_errors(function(
   return { redirect_to = request:url_for("viewuserposts", {username = request.params.username}) }
 end))
 
-app:post('blockuser','/user/:username/block',capture_errors(function(request)
+app:post('blockuser','/u/:username/block',capture_errors(function(request)
   if not request.session.userID then
     return {render = 'pleaselogin'}
   end

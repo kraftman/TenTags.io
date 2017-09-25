@@ -33,8 +33,50 @@ local routes = {
 	['/comment/subscribe/'..postID..'/'..commentID] = {public = 401, user = 200, admin = 200},
 	['/comment/upvote/'..postID..'/'..commentID..'/arst'] = {public = 401, user = 200, admin = 200},
 	['/comment/downvote/'..postID..'/'..commentID..'/rstien'] = {public = 401, user = 200, admin = 200},
-	
 	['/c/comment/'..postID..'/'..commentID] = {public = 200, user = 200, admin = 200},
+
+	['/f/test/sub'] = {public = 401, user = 200, admin = 200},
+	['/f/test'] = {public = 200, user = 200, admin = 200},
+	['/filters/create'] = {public = 401, user = 200, admin = 200},
+	['/filters/test'] = {public = 401, user = 200, admin = 200},
+	['/filters/test/unbanuser/test'] = {public = 401, user = 200, admin = 200},
+	['/filters/test/unbandomain/test'] = {public = 401, user = 200, admin = 200},
+	['/filters/test/banpost/test'] = {public = 401, user = 200, admin = 200},
+	['/filters/search/'] = {public = 200, user = 200, admin = 200},
+
+
+	['/'] = {public = 200, user = 200, admin = 200},
+
+
+	['/p/new/'] = {public = 401, user = 200, admin = 200},
+	['/p/'..postID] = {public = 200, user = 200, admin = 200},
+	['/p/delete/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/report/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/upvotetag/tagName/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/downvotetag/tagName/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/upvote/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/downvote/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/subscribe/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/save/'..postID] = {public = 401, user = 401, admin = 200},
+	['/p/reloadimage/'..postID] = {public = 401, user = 401, admin = 200},
+
+	['/search/post?searchquery=test'] = {public = 200, user = 200, admin = 200},
+
+
+	['/sub/new'] = {public = 200, user = 200, admin = 200},
+	['/login'] = {public = 200, user = 200, admin = 200},
+	['/u/kraftman'] = {public = 401, user = 200, admin = 200},
+	['/u/delete/kraftman'] = {public = 401, user = 200, admin = 200},
+	['/u/confirmlogin'] = {public = 200, user = 200, admin = 200},
+	['/u/kraftman/comments'] = {public = 401, user = 200, admin = 200},
+	['/u/kraftman/posts'] = {public = 401, user = 200, admin = 200},
+	['/u/kraftman/posts/upvoted'] = {public = 401, user = 200, admin = 200},
+	['/u/login'] = {public = 401, user = 200, admin = 200},
+	['/u/switch/userID'] = {public = 401, user = 200, admin = 200},
+	['/u/kraftman/comments/sub'] = {public = 401, user = 200, admin = 200},
+	['/u/kraftman/posts/sub'] = {public = 401, user = 200, admin = 200},
+	['/u/kraftman/block'] = {public = 401, user = 200, admin = 200},
+
 
 
 }
