@@ -105,7 +105,7 @@ m.routes['search.results'] = {maxCalls = 10, duration = 60, access = Public}
 
 --settings
 
-m.routes['user.subsettings'] = {maxCalls = 10, duration = 60, access = Self}
+m.routes['user.subsettings'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['killsession'] = {maxCalls = 10, duration = 60, access = Self}
 
 --user
