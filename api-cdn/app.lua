@@ -55,7 +55,7 @@ app:before_filter(function(self)
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com data:;
     frame-src 'self' www.google.com;
-    script-src 'self' 'unsafe-inline' www.gstatic.com www.google.com www.google-analytics.com;
+    script-src 'self' 'unsafe-inline' www.gstatic.com https://www.google.com www.google.com www.google-analytics.com;
     img-src 'self' data: www.google-analytics.com;
   ]]
   self.res.headers['X-Frame-Options'] = 'x-frame-options: SAMEORIGIN'
