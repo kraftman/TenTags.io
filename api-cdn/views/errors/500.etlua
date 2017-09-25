@@ -1,7 +1,7 @@
 
 <div class = 'panel panel-default error-500' >
   <h1>Something broke</h1>
-  <% for k, v in pairs(errors) do %>
+  <% for k, v in pairs(errors or {}) do %>
     <%= v %>
   <% end %>
 </div>

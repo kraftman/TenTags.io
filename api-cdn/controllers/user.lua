@@ -122,7 +122,7 @@ app:get('deleteuser', '/u/delete/:username', capture_errors(function(request)
 
 end))
 
-app:get('confirmLogin', '/u/confirmlogin', capture_errors(function(request)
+app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
   local session = GetSession(request)
   local key = request.params.key
   if not key then
