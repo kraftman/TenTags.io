@@ -3,6 +3,7 @@ local addKey = require 'redisscripts.addkey'
 local base = require 'redis.base'
 local userwrite = setmetatable({}, base)
 
+
 function userwrite:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -219,17 +220,17 @@ function userwrite:CreateSubUser(user)
     if k == 'filters' then
       --do nothing for now, might add the hash later
     elseif k == 'commentSubscriptions' then
-      hashedUser['commentSubscriptions:'] = to_json(v)
+      hashedUser['commentSubscriptions:'] = self:to_json(v)
     elseif k == 'commentSubscribers' then
-      hashedUser['commentSubscribers:'] = to_json(v)
+      hashedUser['commentSubscribers:'] = self:to_json(v)
     elseif k == 'postSubscriptions' then
-      hashedUser['postSubscriptions:'] = to_json(v)
+      hashedUser['postSubscriptions:'] = self:to_json(v)
     elseif k == 'postSubscribers' then
-      hashedUser['postSubscribers:'] = to_json(v)
+      hashedUser['postSubscribers:'] = self:to_json(v)
     elseif k == 'blockedUsers' then
-      hashedUser['blockedUsers:'] = to_json(v)
+      hashedUser['blockedUsers:'] = self:to_json(v)
     elseif k == 'views' then
-      hashedUser['views:'] = to_json(v)
+      hashedUser['views:'] = self:to_json(v)
     else
       hashedUser[k] = v
     end
@@ -258,7 +259,7 @@ end
 function userwrite:UpdateBlockedUsers(user)
   local red = self:GetUserWriteConnection()
 
-  local ok, err = red:hset('user:'..user.id, 'blockedUsers:', to_json(user.blockedUsers))
+  local ok, err = red:hset('user:'..user.id, 'blockedUsers:', self:to_json(user.blockedUsers))
   self:SetKeepalive(red)
   return ok, err
 
