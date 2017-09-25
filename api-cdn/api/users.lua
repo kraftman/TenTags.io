@@ -443,7 +443,9 @@ function api:CreateSubUser(accountID, username)
 
 	self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
 
-	return self.userWrite:CreateSubUser(subUser)
+	self.userWrite:CreateSubUser(subUser)
+	
+	return subUser
 
 end
 

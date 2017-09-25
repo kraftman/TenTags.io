@@ -60,10 +60,10 @@ function util.RateLimit(request)
 
   -- we have a user and a routes
   local currentRole = roles.Public;
-  if request.userID then
+  if request.session.userID then
     currentRole = roles.User
   end
-
+  
   if currentRole == roles.Public and route.access > roles.Public then
     return request:write({status = 401, render = 'pleaselogin'})
   end
