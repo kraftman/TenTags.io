@@ -10,7 +10,7 @@ local trim = (require 'lapis.util').trim
 app:match('search.results','/search/post',capture_errors(function(request)
   local search = trim(request.params.searchquery or '')
   if search == '' then
-    return {redirect_to = request:url_for("newpost")}
+    return {redirect_to = request:url_for("post.create")}
   end
 
   local ok = assert_error(searchAPI:SearchPost(search))

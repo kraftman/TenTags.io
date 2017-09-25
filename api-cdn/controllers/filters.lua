@@ -26,10 +26,6 @@ local sanitize_html = Sanitizer({whitelist = my_whitelist})
 
 local function BanUser(request,filter)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local userID = userAPI:GetUserID(request.params.banuser)
   if not userID then
     ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',request.params.banuser)
@@ -50,10 +46,6 @@ end
 
 local function BanDomain(request,filter)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local banInfo = {
     domainName = request.params.banDomain,
     banReason = request.params.banDomainReason or '',
@@ -68,10 +60,6 @@ local function BanDomain(request,filter)
 end
 
 local function UpdateTitle(request, filter)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local title = request.params.filtertitle
 
@@ -95,10 +83,6 @@ end
 
 local function AddMod(request, filter)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local modName = request.params.addmod
   local ok, err = filterAPI:AddMod(request.session.userID, filter.id, modName)
   if ok then
@@ -111,10 +95,6 @@ end
 
 
 local function ToggleDefault(request)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local userID = request.session.userID
 
@@ -136,10 +116,6 @@ end
 
 local function DelMod(request, filter)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local modID = request.params.delmod
   local ok, err = filterAPI:DelMod(request.session.userID, filter.id, modID)
   if ok then
@@ -150,10 +126,6 @@ local function DelMod(request, filter)
 end
 
 local function UpdateFilterTags(request,filter)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local requiredTagNames = {}
   local bannedTagNames = {}
@@ -244,18 +216,11 @@ app:match('filter.view','/f/:filterlabel',respond_to({
 
 app:match('filter.create','/filters/create',respond_to({
   GET = function(request)
-    if not request.session.userID then
-      return { render = 'pleaselogin' }
-    end
     request.page_title = 'Create Filter'
     request.tags = tagAPI:GetAllTags()
     return {render = true}
   end,
   POST = capture_errors(function(request)
-
-      if not request.session.userID then
-        return {render = 'pleaselogin'}
-      end
 
       if request.params.setdefault or request.params.subscribe then
         return ToggleDefault(request)
@@ -298,9 +263,7 @@ app:match('filter.edit','/filters/:filterlabel',respond_to({
         ngx.log(ngx.ERR, 'no filter label found!')
         return 'error!'
       end
-      if not request.session.userID then
-        return {render = 'pleaselogin'}
-      end
+
       local user = userAPI:GetUser(request.session.userID)
 
       --maybe move to api
@@ -356,10 +319,6 @@ app:match('filter.edit','/filters/:filterlabel',respond_to({
   end),
 
   POST = capture_errors(function(request)
-
-      if not request.session.userID then
-        return {render = 'pleaselogin'}
-      end
 
       --print(request.params.filterlabel)
       local filter =filterAPI:GetFilterByName(request.params.filterlabel)
@@ -431,10 +390,6 @@ end))
 
 app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',capture_errors(function(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
   filterAPI:FilterUnbanUser(filter.id, request.params.userID)
@@ -443,10 +398,6 @@ app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',capture_erro
 end))
 
 app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName', capture_errors(function(request)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 
@@ -457,9 +408,6 @@ app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName', cap
 end))
 
 app:get('banpost', '/filters/:filterlabel/banpost/:postID', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local filter = filterAPI:GetFilterByName(request.params.filterlabel)
 

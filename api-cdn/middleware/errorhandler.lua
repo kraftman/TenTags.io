@@ -4,7 +4,7 @@ local emailDict = ngx.shared.emailQueue
 local uuid = require ('lib.uuid')
 local lapis = require 'lapis'
 
-local function HandleError(self,err, trace)
+local function HandleError(self, err, trace)
   print('handling err ', err)
   if config.hide_errors then
     ngx.log(ngx.ERR, 'BIG ERROR!!', err)

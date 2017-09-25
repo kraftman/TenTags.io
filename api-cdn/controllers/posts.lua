@@ -103,9 +103,6 @@ end
 
 local function AddTag(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local tagName = request.params.addtag
   local userID = request.session.userID
@@ -140,9 +137,7 @@ end
 
 app:match('post.create','/p/new', respond_to({
   GET = function(request)
-    if not request.session.userID then
-      return { render = 'pleaselogin' }
-    end
+
 
     local tags = tagAPI:GetAllTags()
 
@@ -153,9 +148,6 @@ app:match('post.create','/p/new', respond_to({
 
   POST = function(request)
 
-      if not request.session.userID then
-        return {render = 'pleaselogin'}
-      end
 
       if trim(request.params.link) == '' then
         request.params.link = nil
@@ -307,9 +299,6 @@ app:match('post.view','/p/:postID', respond_to({
 
   POST = function(request)
 
-    if not request.session.userID then
-      return {render = 'pleaselogin'}
-    end
 
     if request.params.sourceurl then
       return AddSource(request)
@@ -337,10 +326,6 @@ app:match('post.view','/p/:postID', respond_to({
 
 app:match('deletepost','/p/delete/:postID', function(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
-
   local confirmed = request.params.confirmdelete
 
   if not confirmed then
@@ -360,20 +345,15 @@ app:match('deletepost','/p/delete/:postID', function(request)
 
 end)
 
-app:match('post.report', '/p/:postID/report', respond_to({
+app:match('post.report', '/p/report/:postID', respond_to({
   GET = function(request)
-    if not request.session.userID then
-      return {render = 'pleaselogin'}
-    end
 
     local ok = postAPI:GetPost(request.session.userID, request.params.postID)
     request.post = ok
     return {render = 'post.report'}
   end,
   POST = function(request)
-    if not request.session.userID then
-      return {render = 'pleaselogin'}
-    end
+
     local ok, err = postAPI:ReportPost(request.session.userID, request.params.postID, request.params.reportreason)
     if ok then
       return 'reported!'
@@ -384,27 +364,22 @@ app:match('post.report', '/p/:postID/report', respond_to({
 }))
 
 
-app:get('upvotetag','/post/upvotetag/:tagName/:postID',function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+app:get('upvotetag','/p/upvotetag/:tagName/:postID',function(request)
+
 
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
   return 'meep'
 
 end)
 
-app:get('downvotetag','/post/downvotetag/:tagName/:postID',function(request)
+app:get('downvotetag','/p/downvotetag/:tagName/:postID',function(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
   tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
   return 'meep'
 
 end)
 
-app:get('upvotepost','/post/:postID/upvote', function(request)
+app:get('upvotepost','/p/upvote/:postID', function(request)
   if not request.session.userID then
     return 'You must be logged in to vote'
   end
@@ -419,7 +394,7 @@ app:get('upvotepost','/post/:postID/upvote', function(request)
   end
 end)
 
-app:get('downvotepost','/post/:postID/downvote', function(request)
+app:get('downvotepost','/p/downvote/:postID', function(request)
   if not request.session.userID then
     return 'You must be logged in to vote'
   end
@@ -434,11 +409,8 @@ app:get('downvotepost','/post/:postID/downvote', function(request)
   end
 end)
 
-app:get('subscribepost', '/post/:postID/subscribe', function(request)
+app:get('subscribepost', '/p/subscribe/:postID', function(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
   local ok, err = postAPI:SubscribePost(request.session.userID,request.params.postID)
   if ok then
     return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
@@ -447,11 +419,9 @@ app:get('subscribepost', '/post/:postID/subscribe', function(request)
   end
 end)
 
-app:get('savepost','/post/:postID/save',function(request)
+app:get('savepost','/p/save/:postID',function(request)
   local userID = request.session.userID
-  if not userID then
-    return {render = 'pleaselogin'}
-  end
+
   local postID =  request.params.postID
   local ok, err = userAPI:ToggleSavePost(userID, postID)
   if not ok then
@@ -461,17 +431,11 @@ app:get('savepost','/post/:postID/save',function(request)
   return 'succes'
 end)
 
-app:get('reloadimage','/post/:postID/reloadimage', function(request)
-
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+app:get('reloadimage','/p/reloadimage/:postID', function(request)
 
   local userID = request.session.userID
   local postID = request.params.postID
-  if not userID then
-    return {render = 'pleaselogin'}
-  end
+
   local ok, err = postAPI:ReloadImage(userID, postID)
   if ok then
     return 'success'

@@ -60,26 +60,25 @@ end)
 
 app:match('viewcommentshort','/c/:commentShortURL', respond_to({
   GET = capture_errors(function(request)
-  request.commentInfo = commentAPI:GetComment(request.params.commentShortURL)
-  request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
-  return {render = 'viewcomment'}
+    request.commentInfo = commentAPI:GetComment(request.params.commentShortURL)
+    if not request.commentInfo then
+      return request.app.handle_404(request)
+    end
+    request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
+    return {render = 'viewcomment'}
   end),
   POST = EditComment
 }))
 
 app:get('subscribecomment','/comment/subscribe/:postID/:commentID', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+
   commentAPI:SubscribeComment(request.session.userID,request.params.postID, request.params.commentID)
 
   return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
 end))
 
 app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+
   if not HashIsValid(request) then
     return 'hashes dont match'
   end
@@ -88,9 +87,7 @@ app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', captu
 end))
 
 app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', capture_errors(function(request)
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
+
   if not HashIsValid(request) then
     return 'hashes dont match'
   end
@@ -101,9 +98,6 @@ end))
 
 app:post('newcomment','/comment/', capture_errors(function(request)
 
-  if not request.session.userID then
-    return {render = 'pleaselogin'}
-  end
 
   local commentInfo = {
     parentID = request.params.parentID,

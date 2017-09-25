@@ -13,6 +13,7 @@ local userAPI = require 'api.users'
 
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
+local yield_error = app_helpers.yield_error
 
 function api:VoteComment(userID, postID, commentID,direction)
 
@@ -169,6 +170,9 @@ function api:GetComment(postID, commentID)
 
 	if not commentID then
 	 	local postIDCommentID = cache:ConvertShortURL(postID)
+		if not postIDCommentID then
+			return nil, 'not found'
+		end
 		postID, commentID = postIDCommentID:match('(%w+):(%w+)')
 		if (not postID) or (not commentID) then
 			return nil, 'error getting url'
