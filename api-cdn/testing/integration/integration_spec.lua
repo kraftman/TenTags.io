@@ -77,8 +77,6 @@ local routes = {
 	['/u/kraftman/posts/sub'] = {public = 401, user = 200, admin = 200},
 	['/u/kraftman/block'] = {public = 401, user = 200, admin = 200},
 
-
-
 }
 
 
