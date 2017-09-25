@@ -1,70 +1,46 @@
 
-function ConvertTagsToSelect(){
-  $('#requiredTagNames').selectize({
-    plugins: ['remove_button'],
-    delimiter: ' ',
-    persist: false,
-      create: function(input) {
-        return {
-            value: input,
-            text: input
-        }
-    }});
 
-  $('#bannedTagNames').selectize({
-    plugins: ['remove_button'],
-    delimiter: ' ',
-    persist: false,
-      create: function(input) {
-        return {
-            value: input,
-            text: input
-        }
-    }});
+var selectize = require('selectize');
 
-
+var createfilter = function(userID, userSettings){
+  this.userID = userID;
+  this.userSettings = userSettings;
 }
 
-$(function() {
+createfilter.prototype = function(){
+  var load = function(){
+    addSelectize.call(this);
+  },
+  addSelectize = function(){
+    $('#requiredTagNames').selectize({
+      plugins: ['remove_button'],
+      delimiter: ' ',
+      persist: false,
+        create: function(input) {
+          return {
+              value: input,
+              text: input
+          }
+      }});
 
-  ConvertTagsToSelect()
+    $('#bannedTagNames').selectize({
+      plugins: ['remove_button'],
+      delimiter: ' ',
+      persist: false,
+        create: function(input) {
+          return {
+              value: input,
+              text: input
+          }
+      }});
+  };
 
 
 
+  return {
+    load: load,
+  };
+}();
 
 
-  /*
-  $('input#submitButton').click( function(e) {
-    e.preventDefault();
-    console.log($('form#createfilter').serialize());
-    var requiredTagNames =  $("#requiredTagNames").val()
-    var bannedTagNames =  $("#bannedTagNames").val()
-    var form = {
-      requiredTagNames: JSON.stringify(requiredTagNames),
-      bannedTagNames: JSON.stringify(bannedTagNames),
-      title: $('#filtertitle').val(),
-      description: $('#filterdescription').val(),
-      name: $('#filterName').val(),
-    }
-    $.ajax({
-      type: "POST",
-      url: '/api/filters/create',
-      data: form,
-      success: function(data) {
-        if (data.status == 'success'){
-          console.log('redirecting')
-          window.location.replace('/');
-        } else {
-          $('.warningText').text(data.error)
-          console.log('failed: '+data.error)
-        }
-      },
-      error: function(data) {
-        console.log('failed');
-        console.log(data);
-      },
-      dataType: 'json'
-    });
-  });
-  */
-});
+module.exports = createfilter;

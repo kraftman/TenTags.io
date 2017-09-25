@@ -103,9 +103,9 @@ end
 
 app:get('smallimage', '/i/s/:imageID', capture_errors(function(request) return GetImage(request, 'iconID') end))
 app:get('medimage', '/i/m/:imageID', capture_errors(function(request) return GetImage(request, 'bigID') end))
-app:get('bigimage', '/i/b/:imageID', capture_errors(function(request) return self.GetImage(request, 'imgID') end))
-app:get('previewVid', '/i/v/:imageID', capture_errors(function(request) return self.GetImage(request, 'previewID') end))
-app:get('gifVid', '/i/gv/:imageID', capture_errors(function(request) return self.GetImage(request, 'gifID') end))
+app:get('bigimage', '/i/b/:imageID', capture_errors(function(request) return GetImage(request, 'imgID') end))
+app:get('previewVid', '/i/v/:imageID', capture_errors(function(request) return GetImage(request, 'previewID') end))
+app:get('gifVid', '/i/gv/:imageID', capture_errors(function(request) return GetImage(request, 'gifID') end))
 
 app:match('dmca','/i/dmca/:imageID', respond_to({
   GET = capture_errors(function(request)

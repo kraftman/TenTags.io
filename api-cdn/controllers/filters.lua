@@ -283,7 +283,7 @@ app:match('filter.create','/filters/create',respond_to({
 
       local newFilter, err = filterAPI:CreateFilter(request.session.userID, info)
       if newFilter then
-        return {redirect_to = request:url_for("updatefilter",{filterlabel = newFilter.name}) }
+        return {redirect_to = request:url_for("filter.edit",{filterlabel = newFilter.name}) }
       else
         return 'Error creating filter: '..(err or '')
       end

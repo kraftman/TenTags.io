@@ -23,18 +23,18 @@
       <div class='image-title'>
         <% if not image.banned then %>
           <span>
-            <%- markdown(image.text or '') -%>
+            <%- image.text  or '' -%>
           </span>
 
           <div class = 'image-controls'>
             <% if account and account.role == 'Admin' then %>
               <a href="<%= url_for('imagereload',{imageID = image.id}) %>">
-                <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/133-spinner11.svg" onerror="this.src='/static/icons/hamburger.png'">
+                <img class = 'svg-icon-med' alt='reload image' src="/static/svg/refresh-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
               </a>
             <% end %>
 
             <a href="<%= url_for('dmca',{imageID = image.id}) %>">
-              <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/264-warning.svg" onerror="this.src='/static/icons/hamburger.png'">
+              <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/exclamation.svg" onerror="this.src='/static/icons/hamburger.png'">
             </a>
           </div>
         <% end %>

@@ -10,6 +10,7 @@ var postHandler = require('./posthandler');
 var sideBar = require('./sidebar');
 var frontPage = require ('./frontpage');
 var createPost = require('./createpost');
+var createFilter = require('./createfilter');
 
 function SubmitLogin(e){
   console.log('done')
@@ -33,6 +34,7 @@ $(function() {
     (new sideBar(userID, userSettings)).load();
     (new frontPage(userID, userSettings)).load();
     (new createPost(userID, userSettings)).load();
+    (new createFilter(userID, userSettings)).load();
 
   })
 

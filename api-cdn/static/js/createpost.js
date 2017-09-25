@@ -95,7 +95,7 @@ createpost.prototype = function(){
     })
   }
   overrideSubmit = function(){
-    $('#submitButton').click( function(e) {
+    $('.post-submitbutton').click( function(e) {
       e.preventDefault();
       // get the selected tags from chosen
       var selectedtags =  $("#selectedtags").val()

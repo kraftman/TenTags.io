@@ -262,6 +262,7 @@ app:match('post.view','/p/:postID', respond_to({
     -- get images
     for k,v in pairs(post.images) do
       post.images[k] = imageAPI:GetImage( v)
+      post.images[k].text = request.markdown(post.images[k].text)
     end
 
 

@@ -180,12 +180,6 @@ postHandler.prototype = function() {
       })
     })
   };
-
-
-
-
-
-
   return {
     load: load,
   };

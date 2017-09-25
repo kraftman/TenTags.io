@@ -78,6 +78,6 @@
 
     </br>
     </br>
-  <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Create!'/>
+  <input class="btn btn-default post-submitbutton" id='submitButton' type='submit' name='Submit' value='Create!'/>
 
 </form>

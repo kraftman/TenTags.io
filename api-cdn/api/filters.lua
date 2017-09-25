@@ -2,6 +2,7 @@
 
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local yield_error = app_helpers.yield_error
 
 
 local cache = require 'api.cache'
@@ -44,13 +45,12 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	account.modCount = account.modCount + 1
-	assert_error(self:InvalidateKey('account', account.id))
+	self:InvalidateKey('account', account.id)
 
-	assert_error(self.userWrite:CreateAccount(account))
+	self.userWrite:CreateAccount(account)
 
 
-	newFilter = assert_error(self:ConvertUserFilterToFilter(userID, filterInfo))
-
+	newFilter = self:ConvertUserFilterToFilter(userID, filterInfo)
 
 
 	if type(filterInfo.requiredTagNames) ~= 'table' then
@@ -60,7 +60,7 @@ function api:CreateFilter(userID, filterInfo)
 
   for _,tagName in pairs(filterInfo.requiredTagNames) do
 		tagName = self:SanitiseUserInput(tagName, 100)
-    local tag = assert(tagAPI:CreateTag(newFilter.createdBy,tagName))
+    local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
 			tinsert(newFilter.requiredTagNames, tag.name)
 		end
@@ -76,34 +76,34 @@ function api:CreateFilter(userID, filterInfo)
 	table.insert(filterInfo.bannedTagNames, 'meta:filterban:'..newFilter.id)
 
   for _,tagName in pairs(filterInfo.bannedTagNames) do
-    local tag = assert_error(tagAPI:CreateTag(newFilter.createdBy,tagName))
+    local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
     	tinsert(newFilter.bannedTagNames, tag.name)
 		end
   end
 
-	ok, err = assert_error(self.redisWrite:CreateFilter(newFilter))
+	ok, err = self.redisWrite:CreateFilter(newFilter)
 
 	if not ok then
 		return ok, err
 	end
 
 	-- auto add the owner to filter subscribers
-	assert_error(self.redisWrite:IncrementFilterSubs(newFilter.id, 1))
-  assert_error(self.userWrite:ToggleFilterSubscription(userID, newFilter.id,true))
+	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
+  self.userWrite:ToggleFilterSubscription(userID, newFilter.id,true)
 
-	assert_error(self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1))
-	assert_error(self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1))
-	assert_error(self:InvalidateKey('userfilter', userID))
+	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
+	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
+	self:InvalidateKey('userfilter', userID)
 
 	-- cant combine, due to other uses of function
-	 assert_error(self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames))
+	 self.redisWrite:UpdateFilterTags(newFilter, newFilter.requiredTagNames, newFilter.bannedTagNames)
 
 
   -- filter HAS to be updated first
   -- or the job wont use the new tags
 
-  assert_error(self.redisWrite:QueueJob('UpdateFilterPosts',{id = newFilter.id}))
+  self.redisWrite:QueueJob('UpdateFilterPosts',{id = newFilter.id})
 
   return newFilter
 end
@@ -149,7 +149,7 @@ function api:ConvertUserFilterToFilter(userID, userFilter)
 
 	local existingFilter = cache:GetFilterByName(newFilter.name)
 	if existingFilter then
-		return nil, 'filter name is taken'
+		yield_error('filter already exists')
 	end
 
 	return newFilter
