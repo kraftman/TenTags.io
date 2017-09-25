@@ -216,6 +216,9 @@ app:match('post.view','/p/:postID', respond_to({
     local postID = request.params.postID
 
     local post = postAPI:GetPost(userID, postID)
+    if not post then
+      return request.app.handle_404(request)
+    end
 
     request.page_title = post.title
 
