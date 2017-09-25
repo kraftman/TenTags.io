@@ -72,9 +72,11 @@
 </div>
 </br>
 
-<div class = 'post-full-topbar'>
-  <h2 class= 'post-header'>Edit Post</h2>
-</div>
+<% if userCanEdit then %>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Edit Post</h2>
+  </div>
+<% end %>
 <div class = 'panel panel-default'>
   <input type="hidden" id='postID' value="<%= post.id -%>" />
 

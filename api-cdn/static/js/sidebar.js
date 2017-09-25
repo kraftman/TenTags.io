@@ -58,8 +58,7 @@ postHandler.prototype = function() {
 
     loadUserFilters = function(){
       var context = this
-      if (!this.userID) {
-        console.log('couldnt get userID')
+      if (this.userID == 'nil') {
         return;
       }
 

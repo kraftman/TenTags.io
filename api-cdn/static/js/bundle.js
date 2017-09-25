@@ -14640,22 +14640,29 @@ window.SubmitLogin = SubmitLogin;
 
 $(function() {
   var userID = $('#userID').val()
+  var userSettings;
+
+  function loadModules(){
 
 
-
-
-  $.getJSON('/api/user/'+userID+'/settings',function(data){
-
-    var userSettings = data.data;
     (new site(userID, userSettings)).load();
     (new postHandler(userID, userSettings)).load();
     (new sideBar(userID, userSettings)).load();
     (new frontPage(userID, userSettings)).load();
     (new createPost(userID, userSettings)).load();
     (new createFilter(userID, userSettings)).load();
+  }
 
-  })
+  if (userID != 'nil') {
 
+    $.getJSON('/api/user/'+userID+'/settings',function(data){
+      userSettings = data.data;
+      loadModules();
+
+    })
+  } else {
+    loadModules();
+  }
 
 });
 
@@ -16927,12 +16934,6 @@ postHandler.prototype = function() {
       })
     })
   };
-
-
-
-
-
-
   return {
     load: load,
   };
@@ -17005,8 +17006,7 @@ postHandler.prototype = function() {
 
     loadUserFilters = function(){
       var context = this
-      if (!this.userID) {
-        console.log('couldnt get userID')
+      if (this.userID == 'nil') {
         return;
       }
 
