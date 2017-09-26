@@ -48,7 +48,7 @@ sh startdev.sh
 
 ## Technical
 
-Tentags.io uses [Lapis](http://leafo.net/lapis/), a web framework built on [Openresty](https://openresty.org/en/), with Redis as a backend database, and Backblaze B2 for file storage.
+Tentags.io uses [Lapis](http://leafo.net/lapis/), a web framework built on [Openresty](https://openresty.org/en/), with Redis as a backend database and queue, Backblaze B2 for file storage, and ffmpeg for video processing.
 
 Each post has a set of tags that can be voted up and down by users, and each filter contains a list of post that contain tags required by the filter, and not those unwanted by the filter.
 In this way every post has its own seperate score per-filter.
@@ -70,5 +70,10 @@ Directly uploaded images are converted to JPG and optimised, then stored as a th
 ### Caching
 Tentags.io uses Nginx to cache all logged out requests and images from Backblaze.
 
+Users/Posts/Filters are cached in Openresty [shdict](https://github.com/openresty/lua-nginx-module#ngxshareddict) shared memory zones
+
+Valid writes are written directly to the cache and queued to shdict for deferred processing by the background workers, and cache invalidation on other servers.
+
 ### Other
 Tentags.io Uses the excellent [Scaling Bloom Filter](https://github.com/erikdubbelboer/redis-lua-scaling-bloom-filter) library by erikdubbelboer to store per-user seen posts, post/comment/tag votes efficiently.
+Passwordless logins use a salted hash of the email to identify users without storing their email addresses.
