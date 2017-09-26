@@ -1,9 +1,9 @@
 
 # TenTags.io
 
-* [About](#About)
-* [Installation](#Installation)
-* [Technical](#Technical)
+* [About](#about)
+* [Installation](#installation)
+* [Technical](#technical)
 
 ## About
 
