@@ -6,11 +6,11 @@
 
     <div class = 'filter-buttons' >
       <% if isAdmin then %>
-        <a class='post-link' href="<%= url_for('subscribefilter',{filterID = filter.id}) %>?setdefault=true"><%= filter.default and 'Remove Default' or 'Set Default' -%></a>
-        <a class='post-link' href="<%= url_for('filter.edit',{filterlabel = filter.name}) %>">Settings</a>
+        <a class='post-link filterelement-button' href="<%= url_for('subscribefilter',{filterID = filter.id}) %>?setdefault=true"><%= filter.default and 'Remove Default' or 'Set Default' -%></a>
+        <a class='post-link filterelement-button' href="<%= url_for('filter.edit',{filterlabel = filter.name}) %>">Settings</a>
       <% end %>
 
-      <a class='post-link' href="<%= url_for('subscribefilter',{filterID = filter.id}) %>"><%= userFilterIDs[filter.id] and 'Unsubscribe' or 'Subscribe' -%></a>
+      <a class='post-link filterelement-button' href="<%= url_for('subscribefilter',{filterID = filter.id}) %>"><%= userFilterIDs[filter.id] and 'Unsubscribe' or 'Subscribe' -%></a>
 
     </div>
   </div>

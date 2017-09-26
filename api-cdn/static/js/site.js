@@ -22,8 +22,10 @@ TagVoteListener.prototype = function() {
     togglePosts.call(this);
   },
   togglePosts = function() {
+    
     $('.filter-topbar').click(function(e){
-      if ($(e.currentTarget).hasClass('.filter-topbar')) {
+      console.log(e.target, this)
+      if ($(e.target).hasClass('filter-topbar')) {
         $(e.currentTarget).parent().find('.filter-body').toggle()
       }
     })
