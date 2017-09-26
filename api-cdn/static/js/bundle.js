@@ -15479,7 +15479,9 @@ TagVoteListener.prototype = function() {
   },
   togglePosts = function() {
     $('.filter-topbar').click(function(e){
-      $(e.currentTarget).parent().find('.filter-body').toggle()
+      if ($(e.currentTarget).hasClass('.filter-topbar')) {
+        $(e.currentTarget).parent().find('.filter-body').toggle()
+      }
     })
   },
   randomCrap = function() {
