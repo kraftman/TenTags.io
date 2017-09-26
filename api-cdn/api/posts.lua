@@ -238,6 +238,9 @@ function api:GetPost(userID, postID)
   end
 
 	local post = cache:GetPost(postID)
+  if not post then
+    return nil
+  end
 	local userVotedTags = cache:GetUserTagVotes(userID)
 	local user = cache:GetUser(userID)
 

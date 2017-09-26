@@ -10,6 +10,9 @@
   body {
     width: 100%;
   }
+  .posts {
+    display: table !important;
+  }
   .filter-bar {
     @include card1();
     border-radius: 0px;
