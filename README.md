@@ -1,5 +1,5 @@
 
-# TenTags.io
+# [TenTags.io](http://tentags.io)
 
 * [About](#about)
 * [Installation](#installation)
@@ -69,15 +69,16 @@ Directly uploaded images are converted to JPG and optimised, then stored as a th
 * MP4's more than 15 seconds are converted to a 'preview clip' with 10 1 second segments of the video.
 * MP4's (or their preview) are converted to fallback gifs.
 
-
-
 ### Caching
 Tentags.io uses Nginx to cache all logged out requests and images from Backblaze.
 
-Users/Posts/Filters are cached in Openresty [shdict](https://github.com/openresty/lua-nginx-module#ngxshareddict) shared memory zones
+Users/Posts/Filters are cached in Openresty [shared dict](https://github.com/openresty/lua-nginx-module#ngxshareddict) shared memory zones
 
 Valid writes are written directly to the cache and queued to shdict for deferred processing by the background workers, and cache invalidation on other servers.
 
 ### Other
-Tentags.io Uses the excellent [Scaling Bloom Filter](https://github.com/erikdubbelboer/redis-lua-scaling-bloom-filter) library by erikdubbelboer to store per-user seen posts, post/comment/tag votes efficiently.
+Tentags.io Uses the [Scaling Bloom Filter](https://github.com/erikdubbelboer/redis-lua-scaling-bloom-filter) library by erikdubbelboer to store per-user seen posts, post/comment/tag votes efficiently.
+
 Passwordless logins use a salted hash of the email to identify users without storing their email addresses.
+
+Elasticsearch used for searching URLs, post titles, and post bodies.
