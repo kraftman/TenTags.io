@@ -151,7 +151,7 @@ redis test
   - binary: 28.94
   - int: 27.42
 
-so 10% diff, not entirely worth it for the sake of having to constantly ask the reddit master for new ints, or for having ugly binary keys
+so 10% diff, not entirely worth it for the sake of having to constantly ask the master for new ints, or for having ugly binary keys
 
 
 
@@ -253,34 +253,9 @@ Staggered voting
 
 TODO:
 - clean up the css/layout (again)
-- split api.lua up into user/post/EditComment - done
-- format pm's
 - check / change how the default subs work (is having a 'default' user a good idea?)
 - move settings out to global settings file
-- add basic cookie check, serve static of no cookie or LOGGED_OUT cookie set
-- add some basic per-user stats (comments made, post viewed, subs viewed, per sub view count, etc) efficiently
-  - per post/filter stats (hyperloglogs?)
-- split out etlua components to be more reusable
 
-
-converting to classes?
-how would we load a user?
-ask user factory for one
-user factory checks cache
-cache generates user
-or ask redis
-redis generates user
-
-
-Images:
-Save original as png
-generate jpeg thumbnails
-
-albums:
-allow uploading multiple files
-allow creator to delete them
-allow admin to delete them
-allow flagging for dmca
 
 images:
 upload the image
@@ -323,7 +298,6 @@ small still
 big still
 
 nginx mp4 caching?
-
 
 extras:
 sorted set for images views/bandwidth
