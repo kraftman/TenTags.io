@@ -161,7 +161,8 @@ app:match('post.create','/p/new', respond_to({
         tags = {},
         images = {}
       }
-
+      
+      request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
       for word in request.params.selectedtags:gmatch('%S+') do
         table.insert(info.tags, word)
       end

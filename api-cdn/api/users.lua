@@ -279,7 +279,7 @@ function api:GetUser(userID)
 	if not userID or userID == '' then
 		return nil
 	end
-	print(userID)
+	
 	return cache:GetUser(userID)
 
 end
@@ -444,7 +444,7 @@ function api:CreateSubUser(accountID, username)
 	self.redisWrite:IncrementSiteStat('SubUsersCreated', 1)
 
 	self.userWrite:CreateSubUser(subUser)
-	
+
 	return subUser
 
 end

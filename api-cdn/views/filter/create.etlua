@@ -19,16 +19,16 @@
     <textarea name='filterdescription' class='form-input textbox-large' id='filterdescription' placeholder="Filter Description" id="txtArea" rows="10" cols="70"></textarea>
 
     </br>
+    <div class= 'filter-tags'>
+      <label for='requiredTagNames'>Required Tags</label>
+      <input type='text' class='form-input' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
 
-    <label for='requiredTagNames'>Required Tags</label>
-    <input type='text' class='form-input' name='requiredTagNames' id='requiredTagNames' placeholder="Space seperated tags" />
 
-    </select>
-    </br>
-    <label for='bannedTagNames'>Excluded Tags</label>
-    <input type='text' class='form-input' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
+      </br>
+      <label for='bannedTagNames'>Excluded Tags</label>
+      <input type='text' class='form-input' name='bannedTagNames' id='bannedTagNames' placeholder="Space seperated tags" />
+    </div>
 
-    </select>
     </br>
     <input class="btn btn-default" id='submitButton' type='submit' name='Submit' value='Submit' />
 

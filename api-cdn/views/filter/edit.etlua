@@ -6,10 +6,10 @@
     <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
 
       <label for='filtertitle' >Filter Title:</label></br>
-      <input type='text' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
+      <input type='text' class = 'form-input' name='filtertitle' id='filtertitle' maxlength="50" value="<%= selectedFilter.title or '' -%>" />
       </br>
       <label for='filterdescription' >Filter Description</label></br>
-      <textarea rows="10" cols="40" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  >
+      <textarea class='form-input' rows="10" cols="40" maxlength="1000" name='filterdescription' id='filterdescription' value="<%= selectedFilter.description or '' -%>"  >
       </textarea></br>
       <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
 
@@ -17,36 +17,37 @@
   </div>
 
 <div class = 'panel panel-default'>
-
-  <h2>Tags:</h2>
-  <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
-    <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
-    <label for='plustagselect'>Required Tags</label>
-    <select name='plustagselect' id='plustagselect' style="width:350px;" multiple='multiple' >
-      <% for i, tag in pairs(tags) do  %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
-        <% if requiredTagKeys[tag.name] then  %>
-          selected = 'selected'
-        <% end  %>
-        ><%= tag.name -%></option>
-      <% end %>
-    </select>
-    </br>
-    <label for='minustagselect'>Excluded Tags</label>
-
-    <select name='minustagselect' id='minustagselect' style="width:350px;" multiple='multiple' >
-      <% for i, tag in pairs(tags) do %>
-       <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
-        <% if bannedTagKeys[tag.name] then %>
-          selected = 'selected'
+  <div class= 'filter-tags'>
+    <h2>Tags:</h2>
+    <form id='editfilter' action='' method='post' accept-charset='UTF-8'>
+      <input type=hidden id="hiddenFilterName" value="<%= selectedFilter.name -%>"/>
+      <label for='plustagselect'>Required Tags</label>
+      <select name='plustagselect' id='plustagselect' style="width:350px;" multiple='multiple' >
+        <% for i, tag in pairs(tags) do  %>
+         <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
+          <% if requiredTagKeys[tag.name] then  %>
+            selected = 'selected'
+          <% end  %>
+          ><%= tag.name -%></option>
         <% end %>
-      ><%= tag.name -%></option>
-      <% end %>
-    </select>
-    </br>
-    <input class='btn' id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
+      </select>
+      </br>
+      <label for='minustagselect'>Excluded Tags</label>
 
-  </form>
+      <select name='minustagselect' id='minustagselect' style="width:350px;" multiple='multiple' >
+        <% for i, tag in pairs(tags) do %>
+         <option name='option["<%= i -%>"]' value = "<%= tag.name -%>"
+          <% if bannedTagKeys[tag.name] then %>
+            selected = 'selected'
+          <% end %>
+        ><%= tag.name -%></option>
+        <% end %>
+      </select>
+      </br>
+      <input class='btn' id='updateTagsButton' type='submit' name='Submit' value='Update Tags' />
+
+    </form>
+  </div>
 </div>
 
 <div class = 'panel panel-default'>

@@ -38,6 +38,14 @@ ul {
   padding-left: 5px;
 }
 
+.form-input, .selectize-input {
+  background-color: $form-bg;
+  color: $form-fg;
+  @include placeholder {
+    color: $form-placeholder;
+  }
+}
+
 .main {
   display: table;
   min-height: 100%;
