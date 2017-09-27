@@ -1,0 +1,36 @@
+<div class = 'post-full-topbar album-title'>
+
+   <h2 class= 'post-header'>
+     <a class='album-collapse' href="#">
+       <img class = 'svg-icon-vsmall' alt='vote up' src="/static/svg/collapse.svg" >
+     </a>
+     Images</h2>
+</div>
+<div class = 'album'>
+  <% for _,image in pairs(post.images) do %>
+    <div class = 'imagepreview'>
+      <div class='image-title'>
+        <% if not image.banned then %>
+          <span>
+            <%- image.text  or '' -%>
+          </span>
+
+          <div class = 'image-controls'>
+            <% if account and account.role == 'Admin' then %>
+              <a href="<%= url_for('imagereload',{imageID = image.id}) %>">
+                <img class = 'svg-icon-small' alt='reload image' src="/static/svg/refresh-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+              </a>
+            <% end %>
+
+            <a href="<%= url_for('dmca',{imageID = image.id}) %>">
+              <img class = 'svg-icon-small' alt='report or remove image' src="/static/svg/exclamation.svg" onerror="this.src='/static/icons/hamburger.png'">
+            </a>
+          </div>
+        <% end %>
+      </div>
+
+    <% render("views.st.image",{image = image}) %>
+
+    </div>
+  <% end %>
+</div>
