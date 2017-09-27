@@ -16798,10 +16798,10 @@ postHandler.prototype = function() {
     $('.post-comments').click(function(e){
       console.log('clicked')
       console.log(this)
-      console.log(e.currentTarget)
-      if ($(e.currentTarget).hasClass('post-comments')) {
+      console.log(e.target)
+      if ($(e.target).hasClass('post-comments')) {
           console.log('moving')
-         $('#commentform').prependTo($(e.currentTarget))
+         $('#commentform').prependTo($(e.target))
          $('#commentform').children('#parentID').val($('#postID').val())
        } else {
          console.log('nooope')

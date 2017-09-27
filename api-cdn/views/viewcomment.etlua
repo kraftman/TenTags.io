@@ -1,3 +1,4 @@
+
 <div class = 'panel panel-default'>
   <p><a href="<%= url_for('user.viewsub', {username = commentInfo.username}) %>"><%=  commentInfo.username -%></a> </p>
   <% if commentInfo.createdBy == session.userID then %>

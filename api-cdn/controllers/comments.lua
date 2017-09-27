@@ -114,8 +114,13 @@ end))
 
 app:match('viewcomment','/comment/:postID/:commentID', respond_to({
   GET = capture_errors(function(request)
+    print('thisstrst')
     request.commentInfo = commentAPI:GetComment(request.params.postID,request.params.commentID)
-
+    if not request.commentInfo then
+      print('this')
+      return request.app.handle_404(request)
+    end
+    print('this')
     request.commentInfo.username = userAPI:GetUser(request.commentInfo.createdBy).username
     if request.commentInfo.shortURL then
       return { redirect_to = request:url_for("viewcommentshort",{commentShortURL = request.commentInfo.shortURL}) }

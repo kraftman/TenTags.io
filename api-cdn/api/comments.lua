@@ -90,6 +90,9 @@ function api:EditComment(userID, userComment)
 	end
 
 	local comment = cache:GetComment(userComment.postID, userComment.id)
+	if not comment then
+		return nil
+	end
 
 	if comment.createdBy ~= userID then
 		local user = cache:GetUser(userID)
@@ -179,7 +182,7 @@ function api:GetComment(postID, commentID)
 		end
 	end
 
-  return assert_error(cache:GetComment(postID, commentID))
+  return cache:GetComment(postID, commentID)
 end
 
 

@@ -48,33 +48,33 @@
         </div>
         <% if not child.userHasVoted then %>
           <a class='downvotecomment-button' href="<%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
-            <span class="ti-angle-down"></span>
+            <img class = 'svg-icon-small' alt='vote up' src="/static/svg/down-arrow.svg" >
           </a>
           <a class='upvotecomment-button' href="<%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
-            <span class="ti-angle-up"></span>
+            <img class = 'svg-icon-small' alt='vote up' src="/static/svg/up-arrow.svg" >
           </a>
         <% end %>
         <% if child.shortURL then %>
           <a class='comment-reply-button' href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
-            <span class="ti-comments"></span>
+            <img class = 'svg-icon-small' alt='reply' src="/static/svg/reply.svg" >
           </a>
         <% else %>
           <a class='comment-reply-button' href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %>" >
-            <span class="ti-comments"></span>
+            <img class = 'svg-icon-small' alt='vote up' src="/static/svg/reply.svg" >
           </a>
         <% end %>
 
         <% if session.userID and (child.createdBy == session.userID or account.role == 'Admin') then %>
           <a href="<%= url_for('deletecomment',{postID = post.id, commentID = child.id }) %>" >
-            <span class="ti-trash"></span>
+            <img class = 'svg-icon-small' alt='delete' src="/static/svg/trash.svg" >
           </a>
         <% end %>
 
         <a href="<%= url_for('subscribecomment',{ postID = post.id, commentID = child.id}) %> ">
-          <span class="ti-plus"></span>
+          <img class = 'svg-icon-small' alt='share/link' src="/static/svg/plus.svg" >
         </a>
         <a href="<%= url_for('viewcomment',{ postID = post.id, commentID = child.id}) %> ">
-          <span class="ti-sharethis"></span>
+          <img class = 'svg-icon-small' alt='share/link' src="/static/svg/link-symbol.svg" >
         </a>
 
       </div>
