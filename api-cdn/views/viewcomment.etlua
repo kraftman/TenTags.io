@@ -5,7 +5,7 @@
     Edit:
     </br>
     <form id="commentform" method="post" action="" >
-      <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="4" ><%= commentInfo.text%></textarea>
+      <textarea class='form-input textbox-large' name='commentText' cols = '100' id='commentText' rows="6" ><%= commentInfo.text%></textarea>
       </br>
       <input class = 'btn' type='submit' value='Edit'></input>
     </form>
@@ -20,7 +20,7 @@
     <input id="parentID" name='parentID' type="hidden" value="<%= commentInfo.id%>" name="name">
     <input id="postID" name='postID' type="hidden" value="<%= commentInfo.postID%>" name="name">
 
-    <textarea class='form-input textbox-large' name='commentText' id='commentText' rows="4" ></textarea>
+    <textarea class='form-input textbox-large' name='commentText' cols = '100' id='commentText' rows="6" ></textarea>
     </br>
     <input class = 'btn' type='submit' value='Reply'></input>
   </form>
