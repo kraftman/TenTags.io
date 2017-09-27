@@ -216,9 +216,10 @@ function api:ToggleFilterSubscription(userID, userToUpdateID, filterID)
 		if user.role ~= 'Admin' then
 			return nil, 'no auth'
 		end
+
 		local view = cache:GetView('default')
 		if not view then
-			self:CreateDefaultView(request.session.userID)
+			self:CreateDefaultView(userID)
 			view = cache:GetView('default')
 		end
 
@@ -279,7 +280,7 @@ function api:GetUser(userID)
 	if not userID or userID == '' then
 		return nil
 	end
-	
+
 	return cache:GetUser(userID)
 
 end

@@ -89,8 +89,8 @@ function api:CreateFilter(userID, filterInfo)
 	end
 
 	-- auto add the owner to filter subscribers
-	self.redisWrite:IncrementFilterSubs(newFilter.id, 1)
-  self.userWrite:ToggleFilterSubscription(userID, newFilter.id,true)
+
+	userAPI:ToggleFilterSubscription(userID, userID, newFilter.id)
 
 	self.userWrite:IncrementUserStat(userID, 'FiltersCreated', 1)
 	self.redisWrite:IncrementSiteStat(userID, 'FiltersCreated', 1)
