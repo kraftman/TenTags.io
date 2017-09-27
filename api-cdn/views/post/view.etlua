@@ -16,36 +16,9 @@
   </div>
 <% end %>
 
-
-<% if post.images and next(post.images) then %>
-  <% for _,image in pairs(post.images) do %>
-    <div class = 'imagepreview'>
-      <div class='image-title'>
-        <% if not image.banned then %>
-          <span>
-            <%- image.text  or '' -%>
-          </span>
-
-          <div class = 'image-controls'>
-            <% if account and account.role == 'Admin' then %>
-              <a href="<%= url_for('imagereload',{imageID = image.id}) %>">
-                <img class = 'svg-icon-med' alt='reload image' src="/static/svg/refresh-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
-              </a>
-            <% end %>
-
-            <a href="<%= url_for('dmca',{imageID = image.id}) %>">
-              <img class = 'svg-icon-med' alt='report or remove image' src="/static/svg/exclamation.svg" onerror="this.src='/static/icons/hamburger.png'">
-            </a>
-          </div>
-        <% end %>
-      </div>
-
-    <% render("views.st.image",{image = image}) %>
-
-    </div>
-  <% end %>
+<% if post.images and next(post.images) and not post.deleted then %>
+  <% render("views.post.album",{post = post}) %>
 <% end %>
-</br>
 
 <div class = 'panel panel-default post-text'>
   <% if post.deleted then %>
@@ -68,6 +41,7 @@
     <% if post.link and account and account.role == 'Admin' then %>
       <a class='post-link' href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
+    
   </div>
 </div>
 </br>
@@ -77,10 +51,10 @@
     <h2 class= 'post-header'>Edit Post</h2>
   </div>
 <% end %>
-<div class = 'panel panel-default'>
-  <input type="hidden" id='postID' value="<%= post.id -%>" />
 
-  <% if userCanEdit then %>
+<% if userCanEdit then %>
+  <div class = 'panel panel-default'>
+    <input type="hidden" id='postID' value="<%= post.id -%>" />
 
     <form id='createpost' action='' method='post'accept-charset='UTF-8'>
 
@@ -90,20 +64,15 @@
       </br>
       <% end %>
 
-
-      <textarea  class='form-input textbox-large' name='posttext' id='posttext' cols='100' rows="15" ><%= post.text -%></textarea>
-
-
+      <textarea  class='form-input textbox-large' name='posttext' id='posttext' cols='100' rows="15" ><%= post.editText -%></textarea>
 
       <input class = 'btn post-edit-button' id='submitButton' type='submit' name='Submit' value='Edit' />
 
-
     </form>
 
-  <% end %>
-
   </div>
-  </br>
+
+  <% end %>
 
   <div class = 'post-full-topbar'>
     <h2 class= 'post-header'>Sources</h2>
@@ -129,11 +98,11 @@
 
 
 
-  <div class = 'panel panel-default'>
   <% if session.userID then %>
+    <div class = 'panel panel-default'>
 
+    </div>
   <% end %>
-  </div>
 
   </br>
   <div class = 'post-full-topbar'>
@@ -148,10 +117,12 @@
     </div>
   </div>
   </br>
+
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Tags</h2>
+  </div>
   <div class = 'panel panel-default'>
-    <div class = 'post-full-topbar'>
-      <h2 class= 'post-header'>Tags</h2>
-    </div>
+
     <div class = 'post-filterlist'>
       <% for _,tag in pairs(post.tags or {}) do %>
         <% if not tag.name:find('^meta:') then %>

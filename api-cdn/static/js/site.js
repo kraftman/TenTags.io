@@ -22,7 +22,7 @@ TagVoteListener.prototype = function() {
     togglePosts.call(this);
   },
   togglePosts = function() {
-    
+
     $('.filter-topbar').click(function(e){
       console.log(e.target, this)
       if ($(e.target).hasClass('filter-topbar')) {
@@ -55,9 +55,10 @@ TagVoteListener.prototype = function() {
       return false;
     });
 
-    $('.post-full-topbar').click(function(e){
+    $('.album-collapse').click(function(e){
       console.log(e.currentTarget)
-      $(e.currentTarget).parent().find('.linkImg').toggle()
+      $('.album').toggle()
+      e.preventDefault();
     })
 
     $('.post').hover(function(e){

@@ -79,8 +79,6 @@ local function UpdateTitle(request, filter)
 
 end
 
-
-
 local function AddMod(request, filter)
 
   local modName = request.params.addmod
@@ -91,8 +89,6 @@ local function AddMod(request, filter)
     return 'fail: ',err
   end
 end
-
-
 
 local function ToggleDefault(request)
 
@@ -200,6 +196,7 @@ app:match('filter.view','/f/:filterlabel',respond_to({
     if request.session.userID then
       for _,v in pairs(request.posts) do
         v.hash = ngx.md5(v.id..request.session.userID)
+        v.text = request.markdown(v.text:sub(1,300))
       end
     end
 

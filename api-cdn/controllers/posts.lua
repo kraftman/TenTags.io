@@ -161,7 +161,7 @@ app:match('post.create','/p/new', respond_to({
         tags = {},
         images = {}
       }
-      
+
       request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
       for word in request.params.selectedtags:gmatch('%S+') do
         table.insert(info.tags, word)
@@ -193,7 +193,6 @@ app:match('post.create','/p/new', respond_to({
       local newPost, err = postAPI:CreatePost(request.session.userID, info)
 
       if newPost then
-        print('returning new post')
         return {json = {error = false, data = newPost}}
         --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
       else
@@ -291,9 +290,10 @@ app:match('post.view','/p/:postID', respond_to({
 
     if userID == post.createdBy or (user and user.role == 'Admin') then
       request.userCanEdit = true
-    else
-      post.text = request.markdown(post.text)
+      post.editText = post.text
     end
+    post.text = request.markdown(post.text)
+
     request.post = post
     request.GetColorForDepth = GetColorForDepth
     request.GetColorForName = GetColorForName

@@ -15,6 +15,9 @@ local captured = capture_errors(function(request)
   --print(to_json(request.posts))
 
   --defer until we need it
+  for k,v in pairs(request.posts) do
+    v.text = request.markdown(v.text)
+  end
 
   if request:GetFilterTemplate():find('filtta') then
     for _,post in pairs(request.posts) do

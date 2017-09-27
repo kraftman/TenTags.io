@@ -4,7 +4,7 @@
   <h3>Report Reason:</h3>
 
 
-  <textarea  class='form-input textbox-large' name='reportreason' id='reportreason' id="txtArea" maxlength="300"  rows="7" >
+  <textarea  class='form-input textbox-large' name='reportreason' id='reportreason' cols = '120' id="txtArea" maxlength="300"  rows="7" >
   </textarea>
 
   </br>

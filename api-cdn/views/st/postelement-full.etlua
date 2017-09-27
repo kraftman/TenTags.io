@@ -20,7 +20,7 @@
 
     <% else %>
       <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-        <p ><%= post.text:sub(1,300) %></p>
+        <p ><%- post.text %></p>
       </a>
     <% end %>
   </div>

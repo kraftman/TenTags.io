@@ -27,11 +27,24 @@
   min-height: 20px;
 }
 
+.album {
+  position: relative;
+}
 .image-controls {
-  float: right;
-  display: inline-block;
-  img {
-    width: 20px;
-    height: 20px;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  a {
+    display: inline-block;
   }
+}
+
+.album-title {
+  h1 {
+    display: inline-block;
+  }
+}
+
+.album-collapse {
+  display: inline-block;
 }

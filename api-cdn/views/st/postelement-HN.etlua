@@ -1,16 +1,25 @@
 
-<div class='post post-HN' tabindex = "0" >
+<div class='post-HN' tabindex = "0" >
   <div class = 'vote-container'>
     <% if not post.userHasVoted then %>
-      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">▴</a>
+      <a class ='upvoteButton' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+        <img class = 'svg-icon-small' alt='reply' src="/static/svg/sort-up.svg" >
+      </a>
       </br>
-      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">▾</a>
+      <a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+        <img class = 'svg-icon-small' alt='reply' src="/static/svg/sort-down.svg" >
+      </a>
     <% end %>
   </div>
 
 
-  <div class = 'post-body'>
-    <a class ='post-link' href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
+  <div class = ''>
+    <a class =''
+       href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>"><%= post.title -%>
+    </a>
+    <% if post.domain then %>
+      <p class='domain-small'>(<%= post.domain %>)</p>
+    <% end %>
     </br>
     <a class='comment-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) %>">
       <%= post.commentCount -%> comments

@@ -419,9 +419,12 @@ function api:ConvertUserPostToPost(userID, post)
     newPost.link = ngx.var.scheme..'://'..ngx.var.host..'/image/'..newPost.id
   end
 
+  print('getting link')
   if newPost.link then
+    print('ilrsitunarsotiu')
 
     local domain  = self:GetDomain(newPost.link)
+    print('domain: ',domain)
     if not domain then
       ngx.log(ngx.ERR, 'invalid url: ',newPost.link)
       return nil, 'invalid url'
