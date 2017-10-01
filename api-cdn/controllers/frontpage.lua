@@ -25,6 +25,7 @@ local captured = capture_errors(function(request)
       _, post.topComment = next(comments[post.id].children)
 
       if post.topComment then
+        
       end
     end
   end

@@ -1,7 +1,9 @@
 <div class = 'vote-container'>
-    <a class = 'post-downvote post-downvote-default <%= post.userHasVoted and "disable-vote" or "" %>' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
-      <span class="ti-angle-left post-downvote-default-img"></span>
-    </a><a class ='post-upvote post-upvote-default <%= post.userHasVoted and "disable-vote" or "" %>' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
-      <span class="ti-angle-right post-upvote-default-img"></span>
-    </a>
+  <a class ='upvoteButton post-upvote-default' href=" <%= url_for('upvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+    <img class = 'svg-icon-small' src="/static/svg/up-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+  </a><!--
+
+--><a class = 'downvoteButton' href=" <%= url_for('downvotepost',{postID = post.id}) %>?hash=<%= post.hash -%> ">
+   <img class = 'svg-icon-small' src="/static/svg/down-arrow.svg" onerror="this.src='/static/icons/hamburger.png'">
+ </a>
 </div>

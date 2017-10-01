@@ -15,9 +15,28 @@ local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.ass
 local respond_to = (require 'lapis.application').respond_to
 
 
--- o = orig (optimised)
--- b = big (960)
--- i = icon (100)
+local function GetImage(request,imageSize)
+  if not request.params.imageID then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+  -- ratelimit based on session even if logged out
+  local userID = request.session.userID or ngx.ctx.userID
+  local imageData = imageAPI:GetImageData(userID, request.params.imageID, imageSize)
+  if not imageData then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  request.iconData = imageData.data
+  if not request.iconData then
+    return { redirect_to = '/static/icons/notfound.png' }
+  end
+
+  ngx.header['Content-Type'] = imageData.contentType
+  ngx.header['Cache-Control'] = 'max-age=86400'
+  ngx.say(request.iconData)
+
+  return ngx.exit(ngx.HTTP_OK)
+end
 
 app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
   local userID = request.session.userID or ngx.ctx.userID
@@ -48,7 +67,12 @@ app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
   if #post.images > 0 then
     request.params.imageID = post.images[1]
     print(post.images[1])
-    return m.GetImage(request, 'iconID')
+    if request.params.size == 'med' then
+      return GetImage(request, 'medID')
+    else
+      return GetImage(request, 'iconID')
+    end
+
   end
 
   -- need to handle icons now
@@ -80,26 +104,6 @@ app:get('imagereload', '/i/:imageID/reload', capture_errors(function(request)
 end))
 
 
-local function GetImage(request,imageSize)
-  if not request.params.imageID then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-  -- ratelimit based on session even if logged out
-  local userID = request.session.userID or ngx.ctx.userID
-  local imageData = assert_error(imageAPI:GetImageData(userID, request.params.imageID, imageSize))
-
-
-  request.iconData = imageData.data
-  if not request.iconData then
-    return { redirect_to = '/static/icons/notfound.png' }
-  end
-
-  ngx.header['Content-Type'] = imageData.contentType
-  ngx.header['Cache-Control'] = 'max-age=86400'
-  ngx.say(request.iconData)
-
-  return ngx.exit(ngx.HTTP_OK)
-end
 
 app:get('smallimage', '/i/s/:imageID', capture_errors(function(request) return GetImage(request, 'iconID') end))
 app:get('medimage', '/i/m/:imageID', capture_errors(function(request) return GetImage(request, 'bigID') end))

@@ -12,17 +12,14 @@
   </div>
 
   <div class = 'post-body' >
-    <% if post.bigIcon then %>
+    <% if #post.images > 0 then %>
       <a href="<%= post.link or url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-        <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.shortURL or post.id}) %>" >
-      </a>
-
-
-    <% else %>
-      <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
-        <p ><%- post.text %></p>
+        <img class = 'linkImg' src="<%= url_for('postIcon', {postID = post.shortURL or post.id}) %>?size=med" >
       </a>
     <% end %>
+    <a class = 'postelement-text' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>">
+      <p ><%- post.text %></p>
+    </a>
   </div>
   <div class='post-filters' >
     <% for i = 1, math.min(#post.filters, 8) do %>

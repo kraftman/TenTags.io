@@ -1,8 +1,5 @@
 
 
-
-
-<!-- <% render("views.st.postelement",{post = post}) %> -->
 <div class = 'post-full-topbar'>
   <a class ='post-link' href="<%= url_for('post.view',{postID = post.shortURL or post.id}) -%>"> <%= post.title -%></a>
 </div>
