@@ -16,7 +16,7 @@ local capture_errors, assert_error = app_helpers.capture_errors_json, app_helper
 
 
 
-local function HashIsValid(values)
+local function HashIsValid(request)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
   if realHash ~= request.params.commentHash then
     ngx.log(ngx.ERR, 'hashes dont match!')
@@ -84,8 +84,8 @@ app:match('api-downvotecomment', '/api/comment/downvote/:postID/:commentID/:comm
   if not request.session.userID then
     return {json = {error = 'you must be logged in!', data = {}}}
   end
-  if not HashIsValid(request) then
-    return 'hashes dont match'
+  if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
+    return 'invalid hash'
   end
 
   commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
@@ -97,7 +97,7 @@ app:match('api-downvotepost', '/api/post/:postID/downvote', capture_errors(funct
   if not request.session.userID then
     return {json = {status = 'error', data = {'you must be logged in to vote'}}}
   end
-  if not HashIsValid(request) then
+  if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
     return 'invalid hash'
   end
   postAPI:VotePost(request.session.userID, request.params.postID, 'down')

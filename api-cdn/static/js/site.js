@@ -61,15 +61,15 @@ TagVoteListener.prototype = function() {
       e.preventDefault();
     })
 
-    $('.post').hover(function(e){
-      $(e.target).children('.post-full-bottombar').show();
-      //$(e.target).find('.post-filters').show();
-    })
-
-    $('.post').focusout(function(e){
-      $(e.target).children('.post-full-bottombar').hide();
-      //$(e.target).find('.post-filters').hide();
-    })
+    // $('.post').hover(function(e){
+    //   $(e.target).children('.post-full-bottombar').show();
+    //   //$(e.target).find('.post-filters').show();
+    // })
+    //
+    // $('.post').focusout(function(e){
+    //   $(e.target).children('.post-full-bottombar').hide();
+    //   //$(e.target).find('.post-filters').hide();
+    // })
   },
 
   addInfoBar = function(){

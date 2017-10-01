@@ -15517,15 +15517,15 @@ TagVoteListener.prototype = function() {
       e.preventDefault();
     })
 
-    $('.post').hover(function(e){
-      $(e.target).children('.post-full-bottombar').show();
-      //$(e.target).find('.post-filters').show();
-    })
-
-    $('.post').focusout(function(e){
-      $(e.target).children('.post-full-bottombar').hide();
-      //$(e.target).find('.post-filters').hide();
-    })
+    // $('.post').hover(function(e){
+    //   $(e.target).children('.post-full-bottombar').show();
+    //   //$(e.target).find('.post-filters').show();
+    // })
+    //
+    // $('.post').focusout(function(e){
+    //   $(e.target).children('.post-full-bottombar').hide();
+    //   //$(e.target).find('.post-filters').hide();
+    // })
   },
 
   addInfoBar = function(){
@@ -17301,9 +17301,10 @@ frontPage.prototype = function(){
 
     $(".post-upvote, .upvoteButton").click(function(e) {
       e.preventDefault();
+      console.log('voted')
       //$('.upvoteButton, .downvoteButton').hide();
-      $('.upvoteButton, .downvoteButton').off('click');
-      $('.upvoteButton, .downvoteButton').removeAttr('href');
+      //$('.upvoteButton, .downvoteButton').off('click');
+      //$('.upvoteButton, .downvoteButton').removeAttr('href');
       votePost.call(context, $(this).parents('.post'), 'up');
     })
     $(".post-downvote, .downvoteButton").click(function(e){
@@ -17347,7 +17348,6 @@ frontPage.prototype = function(){
 
     }
 
-
     target.style.webkitTransform =
     target.style.transform =
     'translate(' + 0 + 'px, ' + y + 'px)';
@@ -17379,8 +17379,7 @@ frontPage.prototype = function(){
 
 
   votePost = function (post, direction){
-    console.log('post:');
-    console.log(post);
+
     //get the post
     var context = this;
     var postID = $(post).children('.postID').val()
@@ -17409,8 +17408,8 @@ frontPage.prototype = function(){
     } else {
       uri = '/api/post/'+postID+'/downvote?hash='+postHash
     }
-    $(post).find('.post-upvote').addClass('disable-vote');
-    $(post).find('.post-downvote').addClass('disable-vote');
+    //$(post).find('.post-upvote').addClass('disable-vote');
+    //$(post).find('.post-downvote').addClass('disable-vote');
 
     $.get(uri,function(data){
       //console.log(data);
