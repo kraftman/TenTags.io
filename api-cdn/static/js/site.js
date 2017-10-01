@@ -5,6 +5,8 @@
 
 var $ = require('jquery');
 
+var Favico = require('favico.js');
+
 var validate = require('validate.js');
 
 var TagVoteListener = function(userID, userSettings) {
@@ -20,6 +22,12 @@ TagVoteListener.prototype = function() {
     //hideRecapchta.call(this);
     randomCrap.call(this);
     togglePosts.call(this);
+
+
+    var favicon=new Favico({
+        animation:'slide'
+    });
+    //favicon.badge(1);
   },
   togglePosts = function() {
 
