@@ -279,7 +279,13 @@ app:match('post.view','/p/:postID', respond_to({
       end
     end
 
-    request.filters = filterAPI:GetFilterInfo(post.filters)
+    local filters = filterAPI:GetFilterInfo(post.filters)
+    request.filters = {}
+    for i = 0, math.min(10, #filters) do
+      if filters[i] then
+        request.filters[i] = filters[i]
+      end
+    end
 
     if request.session.userID then
       post.hash = ngx.md5(post.id..userID)
