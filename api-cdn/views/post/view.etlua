@@ -41,7 +41,7 @@
     <% if post.link and account and account.role == 'Admin' then %>
       <a class='post-link' href="<%= url_for('reloadimage', {postID = post.id}) -%>">Reload Image</a>
     <% end %>
-    
+
   </div>
 </div>
 </br>
@@ -93,30 +93,7 @@
       </form>
     </div>
 
-
   </div>
-
-
-
-  <% if session.userID then %>
-    <div class = 'panel panel-default'>
-
-    </div>
-  <% end %>
-
-  </br>
-  <div class = 'post-full-topbar'>
-    <h2 class= 'post-header'>Filters</h2>
-  </div>
-  <div class = 'panel panel-default'>
-
-    <div class = 'post-filterlist'>
-      <% for _,filter in pairs(filters or {}) do %>
-        <% render("views.st.postfilterelement",{filter = filter}) %>
-      <% end %>
-    </div>
-  </div>
-  </br>
 
   <div class = 'post-full-topbar'>
     <h2 class= 'post-header'>Tags</h2>
@@ -140,7 +117,22 @@
 
   </div>
 
-  </br>
+  <div class = 'post-full-topbar'>
+    <h2 class= 'post-header'>Filters</h2>
+  </div>
+  <div class = 'panel panel-default'>
+    <% for _,filter in pairs(filters or {}) do %>
+      <div class='tag-med' >
+        <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %>
+          data-filterID="<%= filter.id -%>" ><%= filter.title -%>
+        </a>
+
+        <a href ='<%=url_for("filter.view", {filterlabel = filter.name}) %>' class='filtername'>
+          <img class = 'svg-icon-small' alt='open filter' src="/static/svg/external-link.svg" >
+        </a>
+      </div>
+    <% end %>
+  </div>
 
   <div class = 'post-full-topbar'>
     <h2 class= 'post-header'>Comments</h2>
@@ -167,9 +159,7 @@
   </select>
   </br>Show comments by filter:
 
-    <% for _,filter in pairs(filters or {}) do %>
-      <a href="#" class="togglefiltercomment" <%- CalculateColor(filter.title) %> data-filterID="<%= filter.id -%>" ><%= filter.title -%></a>
-    <% end %>
+
 
 
   <% render("views.st.newcomment") %>
