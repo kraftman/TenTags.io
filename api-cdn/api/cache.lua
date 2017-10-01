@@ -580,7 +580,7 @@ function cache:GetPost(postID)
 
     post, err = redisRead:GetPost(postID)
 
-    if err then
+    if not post then
       return post, err
     end
 
