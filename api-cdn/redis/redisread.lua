@@ -534,7 +534,7 @@ function read:GetPost(postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post:',err)
   end
-  print(self:to_json(ok),type(ok))
+  
   if ok == ngx.null or not next(ok) then
     return nil
   end

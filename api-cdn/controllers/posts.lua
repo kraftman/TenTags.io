@@ -219,7 +219,6 @@ app:match('post.view','/p/:postID', respond_to({
     if not post then
       return request.app.handle_404(request)
     end
-    print(to_json(post))
 
     request.page_title = post.title
 
