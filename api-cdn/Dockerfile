@@ -12,7 +12,7 @@ RUN add-apt-repository ppa:maxmind/ppa && \
 ENV SRC_DIR /opt
 ENV OPENRESTY_VERSION 1.11.2.3
 ENV OPENRESTY_PREFIX /opt/openresty
-ENV LAPIS_VERSION 1.5.1
+ENV LAPIS_VERSION 1.7.0
 
 
 #RUN mkdir /geoip && cd /geoip && \
@@ -61,7 +61,7 @@ make install
 
 RUN apt-get update && apt-get install -y ca-certificates stunnel4
 
-RUN luarocks install https://raw.githubusercontent.com/toritori0318/lua-resty-woothee/master/lua-resty-woothee-dev-1.rockspec && \
+RUN luarocks install https://raw.githubusercontent.com/woothee/lua-resty-woothee/master/lua-resty-woothee-1.7.0-1.rockspec && \
     luarocks install web_sanitize
 
 ENTRYPOINT ["/opt/openresty/nginx/conf/start.sh"]

@@ -1,5 +1,6 @@
 local userAPI = require 'api.users'
 local commentAPI = require 'api.comments'
+local respond_to = require("lapis.application").respond_to
 
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error, yield_error = app_helpers.capture_errors, app_helpers.assert_error, app_helpers.yield_error
@@ -48,8 +49,16 @@ local captured = capture_errors(function(request)
   return {render = 'frontpage'}
 end)
 
-app:get('home','/',captured)
-app:post('home', '/',function() return 'stopit' end)
+app:match('home', '/', respond_to({
+  PROPFIND = function()
+    return {render = 'errors.404'} 
+  end,
+  GET = captured, 
+  POST = function()
+    return 'stoppit'
+  end
+}))
+
 app:get('new','/new',captured)
 app:get('best','/best',captured)
 app:get('seen','/seen',captured)

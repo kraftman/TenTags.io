@@ -24,8 +24,6 @@ app.cookie_attributes = function(self)
   return "Expires=" .. expires .. "; Path=/; HttpOnly"
 end
 
-
-
 -- DEV ONLY
 -- TODO move this to env
 to_json = (require 'lapis.util').to_json
