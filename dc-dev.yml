@@ -19,23 +19,20 @@ services:
     entrypoint: ""
     command: luajit imgconverter.lua
   redis-general:
-    expose:
-      - '6379'
-  redis-user:
-    expose:
-      - '6379'
-  redis-comment:
-    expose:
-      - '6379'
-  redis-general:
     build: redis
     volumes:
       - ./redis/general:/data
+    expose:
+      - '6379'
   redis-comment:
     build: redis
     volumes:
       - ./redis/comment:/data
+    expose:
+      - '6379'
   redis-user:
     build: redis
     volumes:
       - ./redis/user:/data
+    expose:
+      - '6379'
