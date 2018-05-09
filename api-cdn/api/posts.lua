@@ -324,7 +324,10 @@ end
 
 function api:CreatePost(userID, post)
 
-	local newPost = self:ConvertUserPostToPost(userID, post)
+  local newPost, err = self:ConvertUserPostToPost(userID, post)
+  if not newPost then
+    return newPost, err
+  end
 
   self:CreatePostTags(userID, newPost)
 

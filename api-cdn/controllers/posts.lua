@@ -197,7 +197,8 @@ app:match('post.create','/p/new', respond_to({
         --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
       else
         ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-        return 'error creating post: '.. err
+        request:write({"Error creating post:"..err, status = 400})
+        return
       end
 
   end
