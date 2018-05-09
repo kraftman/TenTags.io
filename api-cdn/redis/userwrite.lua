@@ -167,17 +167,17 @@ end
 
 function userwrite:AddSeenPosts(userID,seenPosts)
   local red = self:GetUserWriteConnection()
-  local addKeySHA1 = addKey:GetSHA1()
 
   red:init_pipeline()
-    for k,postID in pairs(seenPosts) do
-      red:evalsha(addKeySHA1,0,userID,10000,0.01,postID)
+    for _,postID in pairs(seenPosts) do
+      --red:evalsha(addKeySHA1,0,userID,10000,0.01,postID)
+      red['BF.ADD'](red, userID..':seenPosts', postID)
       red:zadd('userSeen:'..userID,ngx.time(),postID)
     end
-  local res,err = red:commit_pipeline()
+  local _, err = red:commit_pipeline()
   self:SetKeepalive(red)
   if err then
-    ngx.log(ngx.ERR, 'unable to add seen post: ',err)
+    ngx.log(ngx.ERR, 'unable to add seen post: ', err)
     return nil
   end
   return true

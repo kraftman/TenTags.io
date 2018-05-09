@@ -12,7 +12,6 @@ local base = require 'redis.base'
 local userread = setmetatable({}, base)
 
 
-
 function userread:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
@@ -287,13 +286,13 @@ function userread:GetUserPosts(userID,startAt, range)
   end
 end
 
-function userread:GetUnseenParentIDs(baseKey, elements)
+function userread:GetUnseenParentIDs(userID, elements)
+
   local red = self:GetUserReadConnection()
-  local sha1Key = checkKey:GetSHA1()
 
   red:init_pipeline()
     for _,v in pairs(elements) do
-      red:evalsha(sha1Key,0,baseKey,10000,0.01,v.parentID)
+      red['BF.EXISTS'](red, userID..':seenPosts', v.parentID)
     end
   local res, err = red:commit_pipeline()
 
@@ -303,13 +302,11 @@ function userread:GetUnseenParentIDs(baseKey, elements)
     ngx.log(ngx.ERR, 'unable to check for elements: ',err)
     return {}
   end
-
   local indexed = {}
-  for k,v in pairs(res) do
-    if v == ngx.null then
-      res[k] = nil
-    else
-      indexed[v] = true
+  for k,v in pairs(elements) do
+    print(res[k], v.parentID)
+    if res[k] == 0 then
+      indexed[v.parentID] = true
     end
   end
 

@@ -610,7 +610,7 @@ end
 
 function cache:GetFilterPosts(userID, filter, sortBy,startAt, range)
 
-  local unSeenPostIDs = {}
+  local unSeenPostIDs
   local postIDs = redisRead:GetFilterPosts(filter, sortBy,startAt, range)
 
   if userID == 'default' then

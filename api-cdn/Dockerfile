@@ -10,7 +10,7 @@ RUN add-apt-repository ppa:maxmind/ppa && \
 
 # build/install OpenResty
 ENV SRC_DIR /opt
-ENV OPENRESTY_VERSION 1.11.2.3
+ENV OPENRESTY_VERSION 1.13.6.1
 ENV OPENRESTY_PREFIX /opt/openresty
 ENV LAPIS_VERSION 1.7.0
 
