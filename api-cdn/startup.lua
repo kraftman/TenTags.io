@@ -2,7 +2,6 @@ local worker = {}
 worker.__index = worker
 
 local RECUR_INTERVAL = 10
-local elastic = require 'lib.elasticsearch'
 
 function worker:New()
   local w = setmetatable({}, self)
@@ -82,7 +81,6 @@ function worker.OnServerStart(_,self)
     return
   end
 
-  self:AddRedisScripts()
 end
 
 
@@ -104,28 +102,5 @@ function worker:FlushUserSeen()
     end
   end
 end
-
-function worker:AddRedisScripts()
-  -- add the script to redis
-  -- add the sha of the script to shdict
-  local addKey = require 'redisscripts.addkey'
-
-  local addSHA = self.rediswrite:LoadScript(addKey:GetScript())
-   addSHA = self.userwrite:LoadScript(addKey:GetScript())
-   addSHA = self.commentwrite:LoadScript(addKey:GetScript())
-
-  local checkKey = require 'redisscripts.checkkey'
-
-    local checkSHA = self.rediswrite:LoadScript(checkKey:GetScript())
-     checkSHA = self.userwrite:LoadScript(checkKey:GetScript())
-     checkSHA = self.commentwrite:LoadScript(checkKey:GetScript())
-
---  ngx.log(ngx.ERR, 'set script with sha1:',checkSHA)
-  ---[[
---  local res = self.redisread:CheckKey(checkSHA,addSHA)
-  --]]
-
-end
-
 
 return worker

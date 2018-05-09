@@ -8,8 +8,6 @@ recieved messages
 
 ]]
 
-local checkKey = require 'redisscripts.checkkey'
-
 local base = require 'redis.base'
 local userread = setmetatable({}, base)
 

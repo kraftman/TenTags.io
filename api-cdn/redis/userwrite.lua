@@ -1,5 +1,3 @@
-
-local addKey = require 'redisscripts.addkey'
 local base = require 'redis.base'
 local userwrite = setmetatable({}, base)
 

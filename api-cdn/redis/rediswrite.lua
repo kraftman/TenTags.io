@@ -4,14 +4,12 @@
 local tinsert = table.insert
 local SCORE_FACTOR = 43200
 
-
 local base = require 'redis.base'
 local write = setmetatable({}, base)
 
-
 function write:ConvertListToTable(list)
   local info = {}
-  for i = 1,#list, 2 do
+  for i = 1, #list, 2 do
     info[list[i]] = list[i+1]
   end
   return info
@@ -37,7 +35,7 @@ function write:DelKeys(keys, red)
   local found = red
   red = red or self:GetRedisWriteConnection()
   red:init_pipeline()
-  for k,v in pairs(keys) do
+  for _,v in pairs(keys) do
     red:del(v)
   end
   local ok, err = red:commit_pipeline()
