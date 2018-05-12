@@ -83,7 +83,7 @@ function loader:GetPostIcon(postURL, postID)
   end
 
   finalImage.image:resize_and_crop(1000,1000)
-  local ok, err = self:AddImage(postID, 'bigIcon', id)
+  local ok, err = utils:AddImage(postID, 'bigIcon', id)
   if not ok then
     print('couldnt add bigicon: ', err)
     return ok, err
@@ -190,7 +190,7 @@ while true do
     print(err)
   end
 
-  status, err = pcall(function() loader:GetNextPost('queue:ConvertImage', 'ConvertImage') end)
+  status, err = pcall(function() loader:GetNextJob('queue:ConvertImage', 'ConvertImage') end)
 
   if not status then
     print(err)

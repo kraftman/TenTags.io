@@ -8,9 +8,9 @@ function M:Process(postURL)
 
     -- cant use just the url because sometimes the urls are lowercase
     -- and gifycats cdn is case sensitive
-  
+
     local res, c, _ = https.request ( postURL )
-  
+
     if not res then
       print(res, err)
       return res, c
@@ -20,16 +20,16 @@ function M:Process(postURL)
     end
     --print(res)
     local gfyName = res:match('https://thumbs%.gfycat%.com/(%w-)%-mobile%.jpg')
-  
+
     print('gfyname:', gfyName)
     -- local gfyName = postURL:match('gfycat.com/detail/(%w+)') or postURL:match('gfycat.com/gifs/detail/(%w+)')
     --
     -- if not gfyName then
     --   gfyName = postURL:match('gfycat.com/(%w+)')
     -- end
-  
+
     local newURL = 'http://thumbs.gfycat.com/'..gfyName..'-poster.jpg'
-  
+
     print('icon URL:', newURL)
     local imageBlob, err = utils:LoadImage(newURL)
     if not imageBlob then
