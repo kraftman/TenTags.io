@@ -20,7 +20,6 @@ local elastic = require 'lib.elasticsearch'
 local SPECIAL_TAGS = {
 	nsfw = 'nsfw',
 	nsfl = 'nsfl',
-
 }
 
 local NSFW_LEVELS = {
@@ -144,6 +143,10 @@ function config:VotePost(postVote)
 
 
 	local ok, err = self.redisWrite:QueueJob('UpdatePostFilters', {id = post.id})
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to Q updatepostfilters:', err)
+		return nil, err
+	end
 
 	self.userWrite:AddUserTagVotes(postVote.userID, postVote.postID, matchingTags)
 	ok, err = self.userWrite:AddUserPostVotes(postVote.userID, post.createdAt, postVote.postID, postVote.direction)
@@ -174,8 +177,8 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
-	        	score = score + postTag.score
-						count = count + 1
+	        score = score + postTag.score
+					count = count + 1
 				end
       end
     end
@@ -204,7 +207,8 @@ function config:GetNewPosts()
 end
 
 function config:GetPostEdits()
-	local post, err = updateDict:rpop('post:edit')
+	local post, ok, err
+	post, err = updateDict:rpop('post:edit')
 	if not post then
 		if err then
 			ngx.log(ngx.ERR, err)
@@ -214,19 +218,19 @@ function config:GetPostEdits()
 
 	print('creating post ', post)
 	post = from_json(post)
-	local ok, err = self.redisWrite:CreatePost(post)
+	ok, err = self.redisWrite:CreatePost(post)
 	if not ok then
-		ngx.log(ngx.ERR, 'error updating the post: ')
+		ngx.log(ngx.ERR, 'error updating the post: ', err)
 	end
 	ok, err = self.redisWrite:InvalidateKey('post', post.id)
 	if not ok then
-		ngx.log(ngx.ERR, 'error updating the post: ')
+		ngx.log(ngx.ERR, 'error updating the post: ', err)
 	end
-	--self:CreatePost(ok)
 end
 
 function config:GetPostDeletions()
-	local post, err = updateDict:rpop('post:delete')
+	local post, ok, err
+	post, err = updateDict:rpop('post:delete')
 	if not post then
 		if err then
 			ngx.log(ngx.ERR, err)
@@ -234,9 +238,9 @@ function config:GetPostDeletions()
 		return
 	end
 	post = from_json(post)
-	local ok, err = self.redisWrite:DeletePost(post.id)
+	ok, err = self.redisWrite:DeletePost(post.id)
 	if not ok then
-		ngx.log(ngx.ERR, 'error deleting the post: ')
+		ngx.log(ngx.ERR, 'error deleting the post: ', err)
 	end
 end
 
@@ -270,7 +274,7 @@ function config:CreatePost(post)
 	for _,subscriberID in pairs(user.postSubscribers) do
 		self.userWrite:AddUserAlert(post.createdAt, subscriberID, 'post:'..post.id)
     cache:PurgeKey({keyType = 'useralert', id = subscriberID})
-    ok, err = self.redisWrite:InvalidateKey('useralert', subscriberID)
+		self.redisWrite:InvalidateKey('useralert', subscriberID)
 	end
 
 
@@ -405,7 +409,7 @@ function config:CalculatePostFilters(post)
 end
 
 
-function config:CreateShortURL(postID)
+function config:CreateShortURL()
   local urlChars = 'abcdefghjkmnopqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789'
 
   local newURL = ''

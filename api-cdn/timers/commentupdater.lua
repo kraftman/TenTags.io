@@ -6,10 +6,8 @@ config.__index = config
 config.http = require 'lib.http'
 
 local commentAPI = require 'api.comments'
-local userAPI = require 'api.users'
 local cache = require 'api.cache'
 local tinsert = table.insert
-local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
 local updateDict = ngx.shared.updateQueue
 
@@ -64,7 +62,8 @@ function config:GetNewComments()
 end
 
 function config:GetCommentEdits()
-	local comment, err = updateDict:rpop('comment:edit')
+  local comment, ok, err
+	comment, err = updateDict:rpop('comment:edit')
 	if not comment then
 		if err then
 			ngx.log(ngx.ERR, err)
@@ -74,7 +73,7 @@ function config:GetCommentEdits()
 
 	comment = from_json(comment)
 
-  local ok, err = self.commentWrite:CreateComment(comment)
+  ok, err = self.commentWrite:CreateComment(comment)
   if not ok then
     ngx.log(ngx.ERR, 'couldnt update comment: ', err)
   end
@@ -87,7 +86,8 @@ function config:GetCommentEdits()
 end
 
 function config:GetCommentDeletions()
-  local comment, err = updateDict:rpop('comment:delete')
+  local comment, ok, err
+  comment, err = updateDict:rpop('comment:delete')
 	if not comment then
 		if err then
 			ngx.log(ngx.ERR, err)
@@ -97,7 +97,7 @@ function config:GetCommentDeletions()
 
   comment = from_json(comment)
 
-  local ok, err = self.commentWrite:UpdateCommentField(comment.postID, comment.id, 'deleted', 'true')
+  ok, err = self.commentWrite:UpdateCommentField(comment.postID, comment.id, 'deleted', 'true')
   if not ok then
     ngx.log(ngx.ERR, 'unable to update comment: ', err)
   end
@@ -245,7 +245,7 @@ function config:AddAlerts(post, comment)
   end
 
   -- if they are subscribed to them lets assume they havent blocked them
-  for subscriberID,v in pairs(user.commentSubscribers) do
+  for subscriberID, _ in pairs(user.commentSubscribers) do
     print('alerting subscriber: ',subscriberID)
     self.userWrite:AddUserAlert(comment.createdAt, subscriberID, 'postComment:'..comment.postID..':'..comment.id)
     cache:PurgeKey({keyType = 'useralert', id = subscriberID})
@@ -270,6 +270,10 @@ function config:CreateComment(comment)
 
 
   ok, err = self.commentWrite:CreateComment(comment)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to create comment in commentupdater: ', err)
+    return ok, err
+  end
 
   -- add stats, but dont return if they fail
 	ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'CommentsCreated', 1)
@@ -321,7 +325,10 @@ function config:CreateComment(comment)
 
   cache:PurgeKey {keyType = 'post', id = post.id}
 
-  ok , err = self.redisWrite:InvalidateKey('post', post.id)
+  ok, err = self.redisWrite:InvalidateKey('post', post.id)
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to invalidatekey: ', err)
+  end
   return true
 
 end

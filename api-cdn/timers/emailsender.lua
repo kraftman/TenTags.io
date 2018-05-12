@@ -37,9 +37,9 @@ function config:SendRegistrationEmails()
     return
   end
 
-
+  local ok, err
   --print('sending email')
-  local ok = self.emailDict:rpop('registrationEmails')
+  ok = self.emailDict:rpop('registrationEmails')
   if not ok then
     return
   end
@@ -67,6 +67,7 @@ function config:SendErrorEmails()
 
     ok, err = self.emailDict:rpop('errorEmails')
     if not ok then
+      ngx.log(ngx.ERR, 'cant get emails from dict:', err)
       break
     end
     local error = from_json(ok)

@@ -51,7 +51,7 @@ function bb:GetAuthToken()
   local authUrl = 'https://api.backblaze.com/b2api/v1/b2_authorize_account'
   local authstring = 'Basic '..ngx.encode_base64(accountID..':'..authKey)
 
-  local res, err = httpc:request_uri(authUrl, {
+  local res = httpc:request_uri(authUrl, {
     method = 'GET',
     headers = {
       Authorization = authstring
@@ -91,7 +91,7 @@ function bb:GetUploadUrl()
 
   local httpc = http.new()
 
-  local res, err = httpc:request_uri(apiUrl..'/b2api/v1/b2_get_upload_url', {
+  local res = httpc:request_uri(apiUrl..'/b2api/v1/b2_get_upload_url', {
     method = 'POST',
     headers = {
       Authorization = authToken

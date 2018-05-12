@@ -1,7 +1,7 @@
 
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local assert_error = app_helpers.assert_error
 local yield_error = app_helpers.yield_error
 
 
@@ -78,7 +78,7 @@ function api:CreateFilter(userID, filterInfo)
   for _,tagName in pairs(filterInfo.bannedTagNames) do
     local tag = tagAPI:CreateTag(newFilter.createdBy,tagName)
 		if tag then
-    	tinsert(newFilter.bannedTagNames, tag.name)
+      tinsert(newFilter.bannedTagNames, tag.name)
 		end
   end
 
@@ -262,7 +262,7 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	ok, err =  self.redisWrite:UpdateFilterDescription(filter)
+	local ok, err =  self.redisWrite:UpdateFilterDescription(filter)
 	if not ok then
 		return ok, err
 	end
@@ -271,14 +271,14 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 end
 
 
-function api:SearchFilters(userID, searchString)
+function api:SearchFilters(_, searchString)
 
 	searchString = self:SanitiseUserInput(searchString, 100)
 	searchString = searchString:lower()
 	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
-	ok, err = cache:SearchFilters(searchString)
+	local ok, err = cache:SearchFilters(searchString)
 	if not ok then
 		ngx.log(ngx.ERR, 'error loading filters: ', err)
 		return nil, 'search failed'
@@ -368,7 +368,7 @@ end
 
 function api:FilterBanPost(userID, filterID, postID)
 
-	local ok, err = self:UserCanEditFilter(userID, filterID)
+  assert_error(self:UserCanEditFilter(userID, filterID))
 
 	local tagName = 'meta:filterban:'..filterID
 	local post = cache:GetPost(postID)
@@ -436,8 +436,7 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 	if not filterID then
 		return nil, 'no filter id!'
 	end
-	local filter, ok, err
-	filter, err = assert_error(self:UserCanEditFilter(userID,filterID))
+	local filter = assert_error(self:UserCanEditFilter(userID,filterID))
 
 	--generate actual tags
 	local newrequiredTagNames, newbannedTagNames = {}, {}
@@ -465,7 +464,13 @@ function api:UpdateFilterTags(userID, filterID, requiredTagNames, bannedTagNames
 	assert_error(self.redisWrite:QueueJob('UpdateFilterPosts',{id = filter.id}))
 	assert_error(self:InvalidateKey('filter', filterID))
 
-	return assert_error(self.redisWrite:LogChange(filter.id..'log', ngx.time(), {changedBy = userID, change= 'UpdateFilterTag'}))
+	return assert_error(self.redisWrite:LogChange(
+    filter.id..'log', ngx.time(),
+    {
+      changedBy = userID,
+      change= 'UpdateFilterTag'
+    }
+  ))
 end
 
 function api:FilterUnbanDomain(userID, filterID, domainName)

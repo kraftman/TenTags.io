@@ -9,7 +9,6 @@ local tagAPI = require 'api.tags'
 local imageAPI = require 'api.images'
 local util = require("lapis.util")
 local app_helpers = require("lapis.application")
-local to_json = (require 'lapis.util').to_json
 
 local capture_errors = app_helpers.capture_errors --app_helpers.assert_error
 

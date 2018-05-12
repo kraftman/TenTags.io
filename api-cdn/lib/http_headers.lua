@@ -16,7 +16,7 @@ local _M = {
 -- headers.content_length
 -- headers["content-length"]
 -- headers["Content-Length"]
-function _M.new(self)
+function _M.new()
     local mt = {
         normalised = {},
     }

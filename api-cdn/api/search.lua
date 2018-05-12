@@ -1,12 +1,10 @@
 
 
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
 
 local cache = require 'api.cache'
 local base = require 'api.base'
 local api = setmetatable({}, base)
+local from_json = (require 'lapis.util').from_json
 
 -- need to check redis for results,
 -- otherwise cache them (in redis)

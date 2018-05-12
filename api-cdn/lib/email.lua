@@ -1,6 +1,6 @@
 -- Michal Kottman, 2011, public domain
 local smtp = require 'resty.smtp'
-local ltn12 = require 'resty.smtp.ltn12'
+--local ltn12 = require 'resty.smtp.ltn12'
 
 local m = {}
 

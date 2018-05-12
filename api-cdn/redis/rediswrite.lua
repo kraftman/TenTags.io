@@ -134,7 +134,7 @@ function write:FlushSiteStats()
 
   local cat = { 'device', 'os', 'browser'}
   local currTime = ngx.time()
-  local maxTime,key,zkey,ok,err
+  local key,zkey,ok,err
   local toDelete = {}
   local red = self:GetRedisWriteConnection()
 
@@ -571,11 +571,11 @@ function write:EmptyFilter()
   ranges['month:'] = 2592000
   ranges['year:'] = 31622400
 
-
+  local filterID, ok, err
   local time = ngx.time()
   local red = self:GetRedisWriteConnection()
 
-  local filterID,err = self:GetRandomFilter(red)
+  filterID,err = self:GetRandomFilter(red)
   if err then
     return nil, err
   end
@@ -584,8 +584,8 @@ function write:EmptyFilter()
   end
 
   --print('got filter:', filterID)
-  local ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
-
+  ok, err = red:set('EmptyFilter:'..filterID, 'true','NX', 'EX',10)
+  ngx.log(ngx.ERR, 'unable to set empty filter: ', err)
   if not ok or ok == ngx.null then
     return true
   end
@@ -751,7 +751,7 @@ end
 
 
 function write:SetShortURL(shortURL, id)
-  local shortURL = 'su:'..shortURL
+  shortURL = 'su:'..shortURL
   local key, field = self:SplitShortURL(shortURL)
   local red = self:GetRedisWriteConnection()
   local ok, err = red:hset(key, field, id)
@@ -1039,7 +1039,7 @@ function write:UpdateFilterTitle(filter)
 end
 
 
-function write:LogBacklogStats(jobName, time, value, duration)
+function write:LogBacklogStats(jobName, time, value, _)
   jobName = 'backlog:'..jobName
 
   local red = self:GetRedisReadConnection()
@@ -1093,6 +1093,8 @@ function write:CreatePost(post)
   hashedPost.filters = {}
   hashedPost.reports = {}
 
+  local results, ok, err
+
   for k,v in pairs(post) do
     if k == 'viewers' then
       for _,viewerID in pairs(v) do
@@ -1120,7 +1122,7 @@ function write:CreatePost(post)
 
   local red = self:GetRedisWriteConnection()
 
-  local ok, err = red:multi()
+  ok, err = red:multi()
   if not ok then
     return ok, err
   end
@@ -1140,7 +1142,7 @@ function write:CreatePost(post)
 
     -- add post inf
     red:hmset('post:'..hashedPost.id,hashedPost)
-  local results, err = red:exec()
+  results, err = red:exec()
   if err then
     self:SetKeepalive(red)
     ngx.log(ngx.ERR, 'unable to create post:',err)

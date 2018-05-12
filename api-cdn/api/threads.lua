@@ -1,7 +1,7 @@
 
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local assert_error = app_helpers.assert_error
 
 
 local cache = require 'api.cache'
@@ -10,7 +10,7 @@ local uuid = require 'lib.uuid'
 local base = require 'api.base'
 local api = setmetatable({}, base)
 
-function api:GetThread(userID, threadID)
+function api:GetThread(_, threadID)
   return cache:GetThread(threadID)
 end
 
@@ -40,27 +40,21 @@ function api:VerifyMessageSender(userID, messageInfo)
 end
 
 function api:CreateMessageReply(userID, userMessage)
-	local newMessage, ok, err
+	local newMessage
 
-	newMessage, err = self:ConvertUserMessageToMessage(userID, userMessage)
+	newMessage = assert_error(self:ConvertUserMessageToMessage(userID, userMessage))
 
-	if not newMessage then
-		return newMessage, err
-	end
+  assert_error(self.redisWrite:CreateMessage(newMessage))
 
-  self.redisWrite:CreateMessage(newMessage)
+  assert_error(self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1))
 
-  self.userWrite:IncrementUserStat(userID, 'MessagesSent', 1)
-
-  print('adding message to ', newMessage.threadID)
   local thread = cache:GetThread(newMessage.threadID)
   for _,viewerID in pairs(thread.viewers) do
     if viewerID ~= newMessage.createdBy then
-      ok, err = self:InvalidateKey('useralert', viewerID)
+      assert_error(self:InvalidateKey('useralert', viewerID))
       self.userWrite:AddUserAlert(ngx.time(), viewerID, 'thread:'..thread.id..':'..newMessage.id)
     end
   end
-
 end
 
 
@@ -81,7 +75,7 @@ function api:ConvertUserMessageToMessage(userID, userMessage)
 		createdBy = self:SanitiseUserInput(userMessage.createdBy)
 	}
 
-	local ok, err = self:VerifyMessageSender(userID, newInfo)
+	assert_error(self:VerifyMessageSender(userID, newInfo))
 
 	return newInfo
 end

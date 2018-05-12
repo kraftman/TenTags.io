@@ -279,7 +279,9 @@ function userread:GetUserPosts(userID,startAt, range)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
-
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get userPosts: ', err)
+  end
   if ok == ngx.null then
     return nil
   else

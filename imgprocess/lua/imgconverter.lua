@@ -9,7 +9,6 @@ require("ssl")
 local https = require("ssl.https")
 
 local http = require("socket.http")
-local ltn12 = require("ltn12")
 local giflib = require("giflib")
 local cjson = require('cjson')
 local bb = require 'lib.backblaze'
