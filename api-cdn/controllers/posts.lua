@@ -10,7 +10,7 @@ local imageAPI = require 'api.images'
 local util = require("lapis.util")
 local app_helpers = require("lapis.application")
 
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local capture_errors = app_helpers.capture_errors --app_helpers.assert_error
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -67,7 +67,9 @@ local function GetColorForDepth(_,child, depth)
   end
 
   -- local username = child.username
-  -- local colors = { '#ffcccc', '#ccddff', '#ccffcc', '#ffccf2','lightpink','lightblue','lightyellow','lightgreen','lightred'};
+  -- local colors = { '#ffcccc',
+  -- '#ccddff', '#ccffcc', '#ffccf2',
+  -- 'lightpink','lightblue','lightyellow','lightgreen','lightred'};
   -- local sum = 0
   --
   -- for i = 1, #username do
@@ -172,7 +174,7 @@ app:match('post.create','/p/new', respond_to({
       local fileData = request.params.upload_file
 
       if request.params.upload_file and (fileData.content ~= '') then
-        ok, err = imageAPI:CreateImage(fileData)
+        ok = imageAPI:CreateImage(fileData)
         if ok then
           info.images = { ok.id}
         end
@@ -189,8 +191,8 @@ app:match('post.create','/p/new', respond_to({
           end
         end
       end
-
-      local newPost, err = postAPI:CreatePost(request.session.userID, info)
+      local newPost
+      newPost, err = postAPI:CreatePost(request.session.userID, info)
 
       if newPost then
         return {json = {error = false, data = newPost}}
@@ -227,6 +229,7 @@ app:match('post.view','/p/:postID', respond_to({
       return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
     end
     postID = post.id
+
     local comments = commentAPI:GetPostComments(userID, postID, sortBy)
 
     -- add comments to post

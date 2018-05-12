@@ -133,6 +133,9 @@ function read:GetSiteUniqueStats(key)
   local red = self:GetRedisReadConnection()
   --print('gettin stats for: ', key)
   local ok, err = red:zrange(key,0, 100)
+  if not ok then
+    return ok, err
+  end
   --print(to_json(ok))
   local results = {}
   for k, v in pairs(ok) do
@@ -534,7 +537,7 @@ function read:GetPost(postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post:',err)
   end
-  
+
   if ok == ngx.null or not next(ok) then
     return nil
   end
@@ -608,6 +611,9 @@ function read:GetPost(postID)
   post.filters = ok
   --]]
   post.nsfwLevel = post.nsfwLevel and tonumber(post.nsfwLevel)
+  if not post.id then
+    return nil
+  end
 
   return post
 end

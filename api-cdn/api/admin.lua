@@ -1,6 +1,6 @@
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local assert_error = app_helpers.assert_error
 
 
 local redisRead = (require 'redis.db').redisRead

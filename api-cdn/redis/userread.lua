@@ -220,6 +220,7 @@ function userread:GetUser(userID)
     user.postSubscriptions = {}
   end
 
+  user.allowSubs = user.allowSubs == '1' and true or false
   user.fakeNames = user.fakeNames == '1' and true or false
   user.enablePM = user.enablePM == '1' and true or false
   user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
@@ -278,7 +279,9 @@ function userread:GetUserPosts(userID,startAt, range)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
-
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to get userPosts: ', err)
+  end
   if ok == ngx.null then
     return nil
   else
@@ -304,7 +307,6 @@ function userread:GetUnseenParentIDs(userID, elements)
   end
   local indexed = {}
   for k,v in pairs(elements) do
-    print(res[k], v.parentID)
     if res[k] == 0 then
       indexed[v.parentID] = true
     end

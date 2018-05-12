@@ -316,3 +316,13 @@ oldest pending image is removed completely
 should users have a list of images they have uploaded? (their own 'gallery'?)
 
 test redis over vpn
+
+
+Features:
+
+Stats:
+IncrementSiteStat updates the stats
+statcollector aggregates and uses hyperloglogs for perf
+
+Comment Mentions:
+Checks post body for mentions and alerts the user if they are mentioned

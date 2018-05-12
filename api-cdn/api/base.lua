@@ -1,8 +1,4 @@
 
-local app_helpers = require("lapis.application")
-
-local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
-
 local trim = (require 'lapis.util').trim
 local updateDict = ngx.shared.updateQueue
 local cache = require 'api.cache'
@@ -104,8 +100,8 @@ function M.AverageTagScore(filterrequiredTagNames,postTags)
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
-	        	score = score + postTag.score
-						count = count + 1
+          score = score + postTag.score
+          count = count + 1
 				end
       end
     end

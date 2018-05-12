@@ -3,7 +3,7 @@ local commentAPI = require 'api.comments'
 local respond_to = require("lapis.application").respond_to
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error, yield_error = app_helpers.capture_errors, app_helpers.assert_error, app_helpers.yield_error
+local capture_errors = app_helpers.capture_errors
 
 local app = require 'app'
 
@@ -16,7 +16,7 @@ local captured = capture_errors(function(request)
   --print(to_json(request.posts))
 
   --defer until we need it
-  for k,v in pairs(request.posts) do
+  for _, v in pairs(request.posts) do
     v.text = request.markdown(v.text)
   end
 
@@ -25,9 +25,9 @@ local captured = capture_errors(function(request)
       local comments = commentAPI:GetPostComments(request.session.userID, post.id, 'best')
       _, post.topComment = next(comments[post.id].children)
 
-      if post.topComment then
-        
-      end
+      -- if post.topComment then
+
+      -- end
     end
   end
 
@@ -40,20 +40,20 @@ local captured = capture_errors(function(request)
   end
 
   -- if empty and logged in then redirect to seen posts
-  if not request.posts or #request.posts == 0 then
-    if sortBy ~= 'seen' then -- prevent loop
-      --return { redirect_to = request:url_for("seen") }
-    end
-  end
+  -- if not request.posts or #request.posts == 0 then
+  --   -- if sortBy ~= 'seen' then -- prevent loop
+  --   --   --return { redirect_to = request:url_for("seen") }
+  --   -- end
+  -- end
 
   return {render = 'frontpage'}
 end)
 
 app:match('home', '/', respond_to({
   PROPFIND = function()
-    return {render = 'errors.404'} 
+    return {render = 'errors.404'}
   end,
-  GET = captured, 
+  GET = captured,
   POST = function()
     return 'stoppit'
   end

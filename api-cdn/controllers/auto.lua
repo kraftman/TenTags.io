@@ -1,19 +1,16 @@
 
 local m = {}
 
-local respond_to = (require 'lapis.application').respond_to
-local tinsert = table.insert
 local postAPI = require 'api.posts'
 local filterAPI = require 'api.filters'
-
-
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
 local filters = {
   {title = 'gifs', name = 'gifs', description = 'gifs', requiredTagNames = {'gifs'}, bannedTagNames = {'meta:self'}},
   {title = 'funny', name = 'funny', description = 'funny', requiredTagNames = {'funny'}, bannedTagNames = {'nsfw'}},
-  {title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTagNames = {'funny','nsfw'}, bannedTagNames = {'sfw'}},
+  {
+    title = 'funnynsfw', name = 'funnynsfw', description = 'funnynsfw', requiredTagNames = {'funny','nsfw'},
+    bannedTagNames = {'sfw'}
+  },
   {title = 'pics', name = 'pics', description = 'pics', requiredTagNames = {'pics'}, bannedTagNames = {'nsfw'}},
 }
 
@@ -34,7 +31,7 @@ function m.AutoContent(request)
   end
 
   ---[[
-  for k,v in pairs(filters) do
+  for _,v in pairs(filters) do
     local info ={
       title = v.title,
       name= v.name ,
@@ -46,7 +43,7 @@ function m.AutoContent(request)
       requiredTagNames = v.requiredTagNames
     }
 
-    local ok, err = api:CreateFilter(userID, info)
+    local ok, err = filterAPI:CreateFilter(userID, info)
     if not ok then
       ngx.log(ngx.ERR, 'error creating filter: ',err)
       return {status = 500}
@@ -55,7 +52,7 @@ function m.AutoContent(request)
   --]]
 
   ---[[
-  for k,v in pairs(posts) do
+  for _, v in pairs(posts) do
 
     local info = {
       title = v.title,
@@ -65,7 +62,7 @@ function m.AutoContent(request)
       tags = v.tags
     }
 
-    local ok, err = api:CreatePost(userID, info)
+    local ok, err = postAPI:CreatePost(userID, info)
 
     if not ok then
       ngx.log(ngx.ERR, 'error from api: ',err or 'none')

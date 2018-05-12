@@ -1,7 +1,8 @@
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local assert_error = app_helpers.assert_error
 
+local to_json = (require 'lapis.util').to_json
 
 local cache = require 'api.cache'
 local uuid = require 'lib.uuid'
@@ -28,7 +29,7 @@ function api:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 		return cache:GetUserSeenPosts(userID, startAt, range)
 	end
 
-	local user = cache:GetUser(userID)
+	--local user = cache:GetUser(userID)
 
   return cache:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
@@ -39,16 +40,15 @@ function api:GetRecentPostVotes(userID, targetUserID, direction)
 
 	local user = cache:GetUser(userID)
 	local targetUser = cache:GetUser(targetUserID)
-	if not user or  not targetUser then
+	if not user or not targetUser then
 		return nil, 'user not found'
 	end
-	if  userID ~= targetUserID and user.role ~= 'Admin' then
+	if userID ~= targetUserID and user.role ~= 'Admin' then
 		return nil, 'you cant view other users voted posts'
 	end
 
-	cache:GetRecentPostVotes(targetUserID,direction)
-	cache:GetPosts(ok)
-	return ok, err
+	local ok = assert_error(cache:GetRecentPostVotes(targetUserID, direction))
+	return cache:GetPosts(ok)
 end
 
 function api:LabelUser(userID, targetUserID, label)
@@ -101,6 +101,11 @@ function api:ToggleCommentSubscription(userID, userToSubToID)
 	if not userToSubTo then
 		return nil, 'user not found'
 	end
+
+	if not userToSubTo.allowSubs then
+		return nil, 'user does not allow subscriptions'
+	end
+
 	if userToSubTo.commentSubscribers[userID] then
 		userToSubTo.commentSubscribers[userID] = nil
 	else
@@ -121,6 +126,10 @@ function api:TogglePostSubscription(userID, userToSubToID)
 	local userToSubTo = cache:GetUser(userToSubToID)
 	if not userToSubTo then
 		return nil, 'user not found'
+	end
+
+	if not userToSubTo.allowSubs then
+		return nil, 'user does not allow subscriptions'
 	end
 
 	if userToSubTo.postSubscribers[userID] then
@@ -185,7 +194,7 @@ end
 
 function api:ToggleSavePost(userID,postID)
 
-	local user = cache:GetUser(userID)
+	--local user = cache:GetUser(userID)
 
 	local post = cache:GetPost(postID)
 
@@ -403,9 +412,10 @@ function api:CreateSubUser(accountID, username)
     username = self:SanitiseHTML(username,20),
 		views = {'default'},
 		currentView = 'default',
-    parentID = accountID,
+	parentID = accountID,
+	allowSubs = 1,
     enablePM = 1,
-		nsfwLevel = 0
+	nsfwLevel = 0
   }
 	subUser.lowerUsername = subUser.username:lower()
 
@@ -529,10 +539,8 @@ function api:UpdateUser(userID, userToUpdate)
 
 	local user = cache:GetUser(userID)
 
-	if user.role == 'Admin' then
-
-	else
-		userToUpdate.fakeNames = nil
+	if user.role ~= 'Admin' then
+    userToUpdate.fakeNames = nil
 		if userID ~= userToUpdate.id then
 			return nil, 'you must be admin to edit a users details'
 		end
@@ -542,6 +550,7 @@ function api:UpdateUser(userID, userToUpdate)
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
+		allowSubs = userToUpdate.allowSubs and 1 or 0,
 		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
 		hideUnsubbedComments = userToUpdate.hideUnsubbedComments and 1 or 0,
 		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,

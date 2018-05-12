@@ -6,7 +6,6 @@ local userAPI = require 'api.users'
 local tagAPI = require 'api.tags'
 
 local util = require("lapis.util")
-local from_json = util.from_json
 local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 

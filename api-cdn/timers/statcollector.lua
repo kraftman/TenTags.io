@@ -46,13 +46,13 @@ function config:FlushStats()
     return
   end
 
-  local ok, err = redisWrite:FlushSiteStats()
+  ok, err = redisWrite:FlushSiteStats()
   if not ok then
     ngx.log(ngx.ERR, 'error flushing site stats: ', err)
   end
 
 
-  local ok, err = redisWrite:FlushFilterStats()
+  ok, err = redisWrite:FlushFilterStats()
 
   if not ok then
     ngx.log(ngx.ERR, 'error flushing filter stats: ', err)
@@ -62,24 +62,24 @@ function config:FlushStats()
 end
 
 function config:GetPageStats()
-  local ok, err = self.util:GetLock('UpdateStats', 5)
+  local ok, stat
+  ok = self.util:GetLock('UpdateStats', 5)
   if not ok then
     return
   end
 
-  local ok, err, stat
   local keys = pageStatLog:get_keys()
-  for id,key in pairs(keys) do
-    stat, err = pageStatLog:get(key)
+  for _,key in pairs(keys) do
+    stat = pageStatLog:get(key)
     if not stat then
       return
     end
     stat = from_json(stat)
     self:ProcessAllViews(stat)
     if stat.statType == 'PostView' then
-      ok, err = self:ProcessPostView(stat)
+      self:ProcessPostView(stat)
     elseif stat.statType == 'FilterView' then
-      ok, err = self:ProcessFilterView(stat)
+      self:ProcessFilterView(stat)
     end
     pageStatLog:delete(key)
   end

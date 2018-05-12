@@ -1,7 +1,6 @@
 
 local http = require 'lib.http'
 local to_json = (require 'lapis.util').to_json
-local from_json = (require 'lapis.util').from_json
 local M = {}
 
 local index = 'testindex'
@@ -13,7 +12,7 @@ function M:CreateIndex()
   local httpc = http.new()
 
   local path = basePath..index
-  local res, err = httpc:request_uri(path, {
+  local res = httpc:request_uri(path, {
         method = "DELETE",
         body = to_json(data),
         headers = {
@@ -26,7 +25,7 @@ function M:CreateIndex()
     return nil, res and res.body or res.status
   end
   path = basePath..index
-  res, err = httpc:request_uri(path, {
+  res = httpc:request_uri(path, {
         method = "PUT",
         body = to_json({
           mappings = {
