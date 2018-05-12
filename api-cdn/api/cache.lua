@@ -1,7 +1,4 @@
 
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
 local cjson = require("cjson")
 cjson.encode_sparse_array(true)
 
@@ -102,7 +99,7 @@ function cache:SavedPostExists(userID, postID)
 end
 
 function cache:GetUser(userID)
-  local ok, err
+  local user, ok, err
 
   if ENABLE_CACHE then
      ok, err = userDict:get(userID)
@@ -115,7 +112,7 @@ function cache:GetUser(userID)
     end
   end
 
-  local user, err = userRead:GetUser(userID)
+  user, err = userRead:GetUser(userID)
   if not user then
     return user, err
   end
@@ -218,8 +215,7 @@ function cache:PurgeKey(keyInfo)
     voteDict:delete('postVotes:'..keyInfo.id)
   elseif keyInfo.keyType == 'view' then
     viewFilterIDs:delete(keyInfo.id)
-  elseif keyInfo.keyType == 'frontpage' then
-
+  -- elseif keyInfo.keyType == 'frontpage' then
   elseif keyInfo.keyType == 'image' then
     imageDict:delete(keyInfo.id)
   end
@@ -407,7 +403,7 @@ end
 
 function cache:GetPostComments(postID)
 
-  local ok, err, flatComments
+  local ok, flatComments
 
   if ENABLE_CACHE then
     ok = commentDict:get(postID)
@@ -431,10 +427,6 @@ end
 
 function cache:GetNewUsers()
   local ok, err =  userRead:GetNewUsers()
-  print(to_json(ok))
-  for k,v in pairs(ok )do
-
-  end
 
   if ok == 0 then
     print('none')
@@ -949,11 +941,12 @@ function cache:GetUserFrontPage(userID, viewID, sortBy,startAt, range)
 
   local userVotedPosts = self:GetUserPostVotes(userID)
 
-  for _,post in pairs(newPosts) do
-      post.filters = self:GetFilterInfo(post.filters) or {}
-      table.sort(post.filters, function(a,b) return a.subs > b.subs end)
-    if userVotedPosts[post.id] then
-      post.userHasVoted = true
+  for _,newPost in pairs(newPosts) do
+    newPost.filters = self:GetFilterInfo(newPost.filters) or {}
+    table.sort(newPost.filters, function(a,b) return a.subs > b.subs end)
+
+    if userVotedPosts[newPost.id] then
+      newPost.userHasVoted = true
     end
   end
 
@@ -989,10 +982,7 @@ function cache:GetViewFilterIDs(viewID)
     end
   end
 
-  res, err = self:GetView(viewID).filters
-  if not res then
-    return res, err
-  end
+  res = self:GetView(viewID).filters
 
   ok, err = viewFilterIDs:set(viewID,to_json(res))
 
