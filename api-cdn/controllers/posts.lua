@@ -9,6 +9,7 @@ local tagAPI = require 'api.tags'
 local imageAPI = require 'api.images'
 local util = require("lapis.util")
 local app_helpers = require("lapis.application")
+local to_json = (require 'lapis.util').to_json
 
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
@@ -227,6 +228,10 @@ app:match('post.view','/p/:postID', respond_to({
       return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
     end
     postID = post.id
+    if not postID then
+      print('post has no ID:', to_json(post))
+      return request.app.handle_404(request)
+    end
     local comments = commentAPI:GetPostComments(userID, postID, sortBy)
 
     -- add comments to post
