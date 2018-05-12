@@ -534,7 +534,7 @@ function read:GetPost(postID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get post:',err)
   end
-  
+
   if ok == ngx.null or not next(ok) then
     return nil
   end
@@ -608,6 +608,9 @@ function read:GetPost(postID)
   post.filters = ok
   --]]
   post.nsfwLevel = post.nsfwLevel and tonumber(post.nsfwLevel)
+  if not post.id then
+    return nil
+  end
 
   return post
 end
