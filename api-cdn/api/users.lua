@@ -412,9 +412,10 @@ function api:CreateSubUser(accountID, username)
     username = self:SanitiseHTML(username,20),
 		views = {'default'},
 		currentView = 'default',
-    parentID = accountID,
+	parentID = accountID,
+	allowSubs = 1,
     enablePM = 1,
-		nsfwLevel = 0
+	nsfwLevel = 0
   }
 	subUser.lowerUsername = subUser.username:lower()
 
