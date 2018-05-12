@@ -101,6 +101,11 @@ function api:ToggleCommentSubscription(userID, userToSubToID)
 	if not userToSubTo then
 		return nil, 'user not found'
 	end
+
+	if not userToSubTo.allowSubs then
+		return nil, 'user does not allow subscriptions'
+	end
+
 	if userToSubTo.commentSubscribers[userID] then
 		userToSubTo.commentSubscribers[userID] = nil
 	else
@@ -121,6 +126,10 @@ function api:TogglePostSubscription(userID, userToSubToID)
 	local userToSubTo = cache:GetUser(userToSubToID)
 	if not userToSubTo then
 		return nil, 'user not found'
+	end
+
+	if not userToSubTo.allowSubs then
+		return nil, 'user does not allow subscriptions'
 	end
 
 	if userToSubTo.postSubscribers[userID] then
@@ -542,6 +551,7 @@ function api:UpdateUser(userID, userToUpdate)
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
+		allowSubs = userToUpdate.allowSubs and 1 or 0,
 		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
 		hideUnsubbedComments = userToUpdate.hideUnsubbedComments and 1 or 0,
 		hideVotedPosts = userToUpdate.hideVotedPosts and 1 or 0,

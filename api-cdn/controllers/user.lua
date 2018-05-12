@@ -242,16 +242,18 @@ app:get('subscribeusercomment','/u/:username/comments/sub',capture_errors(functi
   end
 
   local userToSubToID = userAPI:GetUserID(username)
-
+  print('here')
   assert_error(userAPI:ToggleCommentSubscription(userID, userToSubToID))
 
   return { redirect_to = request:url_for("user.viewsubcomments", {username = request.params.username}) }
 
 end))
 
-app:get('subscribeuserpost','/u/:username/posts/sub',capture_errors(function(request)
+app:get('subscribeuserpost','/u/:username/posts/sub',capture_errors(
+  function(request)
   local userID = request.session.userID
   local username = request.params.username
+
   if not userID then
     return {render = 'pleaselogin'}
   end
@@ -259,11 +261,17 @@ app:get('subscribeuserpost','/u/:username/posts/sub',capture_errors(function(req
     return 'user not found'
   end
 
-  local userToSubToID = assert_error(userAPI:GetUserID(username))
+  local userToSubToID= userAPI:GetUserID(username)
 
-  assert_error(userAPI:TogglePostSubscription(userID, userToSubToID))
 
-  return { redirect_to = request:url_for("viewuserposts", {username = request.params.username}) }
+  local ok, err = userAPI:TogglePostSubscription(userID, userToSubToID)
+  if err then
+    request.errorMessage = err
+    return { render = 'errors.general' }
+  end
+
+  print('4')
+  return { redirect_to = request:url_for("user.viewsubposts", {username = request.params.username}) }
 end))
 
 app:post('blockuser','/u/:username/block',capture_errors(function(request)

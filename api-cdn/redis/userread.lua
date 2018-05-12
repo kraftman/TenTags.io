@@ -220,6 +220,7 @@ function userread:GetUser(userID)
     user.postSubscriptions = {}
   end
 
+  user.allowSubs = user.allowSubs == '1' and true or false
   user.fakeNames = user.fakeNames == '1' and true or false
   user.enablePM = user.enablePM == '1' and true or false
   user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
@@ -304,7 +305,6 @@ function userread:GetUnseenParentIDs(userID, elements)
   end
   local indexed = {}
   for k,v in pairs(elements) do
-    print(res[k], v.parentID)
     if res[k] == 0 then
       indexed[v.parentID] = true
     end

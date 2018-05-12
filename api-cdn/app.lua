@@ -5,7 +5,6 @@ local app = lapis.Application()
 package.loaded.app = app
 local date = require("date")
 local util = require 'util'
-local lapisUtil = require("lapis.util")
 local errorHandler = require 'middleware.errorhandler'
 --https://github.com/bungle/lua-resty-scrypt/issues/1
 local checksession = require 'middleware.checksession'

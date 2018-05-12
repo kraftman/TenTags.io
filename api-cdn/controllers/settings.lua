@@ -35,6 +35,7 @@ app:match('user.subsettings','/settings', respond_to({
         end
       end
 
+      request.allowSubs = user.allowSubs and 'checked' or ''
       request.fakeNames = user.fakeNames and 'checked' or ''
       request.enablePM = user.enablePM and 'checked' or ''
       request.hideSeenPosts = user.hideSeenPosts and 'checked' or ''
@@ -69,6 +70,7 @@ app:match('user.subsettings','/settings', respond_to({
 
     user.enablePM = request.params.enablePM and true or false
     user.fakeNames = request.params.fakeNames and true or false
+    user.allowSubs = request.params.allowSubs and true or false
 
     user.hideSeenPosts = request.params.hideSeenPosts and true or false
     user.hideUnsubbedComments = request.params.hideUnsubbedComments and true or false
