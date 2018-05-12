@@ -8,9 +8,6 @@ config.cjson = require 'cjson'
 
 local cache = require 'api.cache'
 local TAG_BOUNDARY = 0.15
-local to_json = (require 'lapis.util').to_json
-
-
 
 local common = require 'timers.common'
 setmetatable(config, common)
@@ -50,8 +47,8 @@ local function AverageTagScore(filterrequiredTagNames,postTags)
 				if (not postTag.name:find('^meta:')) and
 					(not postTag.name:find('^source:')) and
 					postTag.score > TAG_BOUNDARY then
-	        	score = score + postTag.score
-						count = count + 1
+	        score = score + postTag.score
+					count = count + 1
 				end
       end
     end
@@ -187,7 +184,10 @@ function config:UpdateFilterPosts(data)
 		return ok, err
 	end
   cache:PurgeKey({keyType = 'filter', id = filter.id})
-  ok,err = self.redisWrite:InvalidateKey('filter', filter.id)
+	ok,err = self.redisWrite:InvalidateKey('filter', filter.id)
+	if not ok then
+		ngx.log(ngx.ERR, 'unable to invalidate key:', err)
+	end
 
 	local relatedFilters = self:GetRelatedFilters(filter)
 	ok, err = self.redisWrite:UpdateRelatedFilters(filter, relatedFilters)

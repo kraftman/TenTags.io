@@ -2,8 +2,6 @@
 
 local m = {}
 
-
-local respond_to = (require 'lapis.application').respond_to
 local userAPI = require 'api.users'
 local threadAPI = require 'api.threads'
 local commentAPI = require 'api.comments'
@@ -12,10 +10,9 @@ local tinsert = table.insert
 
 local app = require 'app'
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local capture_errors = app_helpers.capture_errors
 
 app:get('alerts','/alerts/view',capture_errors(function(request)
-
 
   local alerts = userAPI:GetUserAlerts(request.session.userID)
 

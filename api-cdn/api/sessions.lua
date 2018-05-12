@@ -1,14 +1,14 @@
 
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
+local assert_error = app_helpers.assert_error
 
 local cache = require 'api.cache'
 
 local base = require 'api.base'
 local api = setmetatable({}, base)
 local sessionLastSeenDict = ngx.shared.sessionLastSeen
+local to_json = (require 'lapis.util').to_json
 
 
 function api:GetHash(values)
@@ -103,21 +103,6 @@ function api:ValidateSession(accountID, sessionID)
 
 end
 
-
-function api:GetHash(values)
-  --TODO: merge all of these duplicates
-  local str = require 'resty.string'
-  local resty_sha1 = require 'resty.sha1'
-  local sha1 = resty_sha1:new()
-
-  local ok, err = sha1:update(values)
-
-  local digest = sha1:final()
-
-  return str.to_hex(digest)
-end
-
-
 function api:RegisterAccount(session, confirmURL)
 
 	session = self:SanitiseSession(session)
@@ -131,7 +116,7 @@ end
 
 
 
-function api:ConfirmLogin(userSession, key)
+function api:ConfirmLogin(_, key)
 
 	local sessionID, accountID = key:match('(.+)%-(%w+)')
 	if not key then

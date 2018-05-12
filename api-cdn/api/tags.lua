@@ -1,11 +1,5 @@
 
-
-local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
-
 local cache = require 'api.cache'
-local to_json = (require 'lapis.util').to_json
 local base = require 'api.base'
 local api = setmetatable({}, base)
 local tinsert = table.insert
@@ -32,7 +26,7 @@ function api:FindPostTag(post, tagName)
 end
 
 
-local function CheckPostParent(post)
+function api:CheckPostParent(post)
 	local sourceTags = {}
 	for _, tag in pairs(post.tags) do
 		if tag.name:find('^meta:sourcePost:') then
@@ -79,9 +73,6 @@ function api:CreateTag(userID, tagName)
   return tagInfo
 end
 
-
-
-
 function api:VoteTag(userID, postID, tagName, direction)
 
 	if not userAPI:UserCanVoteTag(userID, postID, tagName) then
@@ -98,7 +89,7 @@ function api:VoteTag(userID, postID, tagName, direction)
 	self:AddVoteToTag(thisTag, direction)
 
 	--needs renaming, finds the parent of the post from source tag
-	CheckPostParent(post)
+	self:CheckPostParent(post)
 
 	-- mark tag as voted on by user
 	self.userWrite:AddUserTagVotes(userID, postID, {tagName})

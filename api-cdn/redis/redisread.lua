@@ -133,6 +133,9 @@ function read:GetSiteUniqueStats(key)
   local red = self:GetRedisReadConnection()
   --print('gettin stats for: ', key)
   local ok, err = red:zrange(key,0, 100)
+  if not ok then
+    return ok, err
+  end
   --print(to_json(ok))
   local results = {}
   for k, v in pairs(ok) do

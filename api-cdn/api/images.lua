@@ -1,18 +1,13 @@
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
-
-
-
 local cache = require 'api.cache'
-
-
 local base = require 'api.base'
-local api = setmetatable({}, base)
-local bb = require('lib.backblaze')
-
+local bb = require 'lib.backblaze'
 local uuid = require 'lib.uuid'
 
+local api = setmetatable({}, base)
+
+local assert_error = app_helpers.assert_error
 
 local allowedExtensions = {
   ['.mp4'] = 'vid',
@@ -23,12 +18,10 @@ local allowedExtensions = {
   ['.jpeg'] = 'pic'
 }
 
-
 function api:GetImage(imageID)
   if not imageID or imageID:gsub(' ', '') == '' then
     return nil, 'image not found'
   end
-
 
   -- all our images are jpeg
 
@@ -54,7 +47,7 @@ function api:GetPendingTakedowns(userID, limit)
     return nil, 'access denied'
   end
   limit = limit or 10
-  assert_error(self.redisRead:GetPendingTakedowns(limit))
+  local ok = assert_error(self.redisRead:GetPendingTakedowns(limit))
 
   local takedowns = {}
   local request
@@ -117,7 +110,7 @@ function api:SubmitTakedown(userID, imageID, takedownText)
   return assert_error(self.redisWrite:CreateImage(image))
 end
 
-function api:GetImageDataByBBID(userID, bbID)
+function api:GetImageDataByBBID(_, bbID)
 
   --TODO move this all to cache?
   local imageData = cache:GetImageData(bbID)
@@ -134,7 +127,7 @@ function api:GetImageDataByBBID(userID, bbID)
 
 end
 
-function api:GetImageData(userID, imageID, imageSize)
+function api:GetImageData(_, imageID, imageSize)
 
 
   local image = self:GetImage(imageID)
@@ -150,6 +143,7 @@ function api:GetImageData(userID, imageID, imageSize)
 
 
   --TODO move this all to cache?
+  local err
   local imageData = cache:GetImageData(bbID)
   if imageData then
     return imageData

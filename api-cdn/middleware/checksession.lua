@@ -4,10 +4,7 @@ local M = {}
 
 local sessionAPI = require 'api.sessions'
 local userAPI = require 'api.users'
-local csrf = require("lapis.csrf")
-local uuid = require 'lib.uuid'
-
-
+local csrf = require 'lapis.csrf'
 
 function M:RemoveSession(request)
   request.session.accountID = nil
@@ -43,7 +40,7 @@ function M:GetHash(values)
   local resty_sha1 = require 'resty.sha1'
   local sha1 = resty_sha1:new()
 
-  local ok, err = sha1:update(values)
+  sha1:update(values)
 
   local digest = sha1:final()
 

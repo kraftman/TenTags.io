@@ -5,11 +5,9 @@
 local postAPI = require 'api.posts'
 local imageAPI = require 'api.images'
 local userAPI = require 'api.users'
-local uuid = require 'lib.uuid'
-
-
 local app = require 'app'
 local app_helpers = require("lapis.application")
+
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
 
 local respond_to = (require 'lapis.application').respond_to

@@ -42,7 +42,7 @@ function config:TrimInvalidations()
 	--delete invalidations older than time - 10 minutes
 	local ok, err = self.util:GetLock('TrimCacheInvalidations', 100)
 	if not ok then
-		return
+		return ok, err
 	end
 	local cutOff = self:MilliSecondTime() - 10*60*1000
 	ok, err = redisWrite:RemoveInvalidations(cutOff)
@@ -57,9 +57,9 @@ function config:InvalidateCache()
 
   local ok, err = redisRead:GetInvalidationRequests(self.lastUpdate, timeNow)
   if not ok then
-    return
+    return ok, err
   end
-  for k,v in pairs(ok) do
+  for _, v in pairs(ok) do
 
     v = from_json(v)
     cache:PurgeKey(v)

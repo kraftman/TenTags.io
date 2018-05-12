@@ -128,8 +128,19 @@ end
 
 function userwrite:AddComment(commentInfo)
   local red = self:GetUserWriteConnection()
-  local ok, err = red:zadd('userComments:date:'..commentInfo.createdBy, commentInfo.createdAt, commentInfo.postID..':'..commentInfo.id)
-  ok, err = red:zadd('userComments:score:'..commentInfo.createdBy, commentInfo.score, commentInfo.postID..':'..commentInfo.id)
+  local ok, err = red:zadd(
+    'userComments:date:'..commentInfo.createdBy,
+    commentInfo.createdAt,
+    commentInfo.postID..':'..commentInfo.id
+  )
+  if not ok then
+    ngx.log(ngx.ERR, 'unable to add comment:', err)
+  end
+  ok, err = red:zadd(
+    'userComments:score:'..commentInfo.createdBy,
+    commentInfo.score,
+    commentInfo.postID..':'..commentInfo.id
+  )
   return ok, err
 end
 
@@ -158,8 +169,8 @@ function userwrite:CreateAccount(account)
   if not ok then
     return ok, err
   end
-   ok, err = red:del('account:'..hashedAccount.id)
-   ok, err = red:hmset('account:'..hashedAccount.id,hashedAccount)
+   red:del('account:'..hashedAccount.id)
+   red:hmset('account:'..hashedAccount.id,hashedAccount)
    ok, err = red:exec()
   return ok, err
 

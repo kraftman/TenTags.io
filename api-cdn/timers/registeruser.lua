@@ -57,10 +57,10 @@ function config:FlushSessionLastSeen()
       session = account.sessions[sessionID]
       session.lastSeen = lastSeen
 
-      ok, err = self.redisWrite:InvalidateKey('account', account.id)
+      self.redisWrite:InvalidateKey('account', account.id)
       ok, err = self.userWrite:CreateAccount(account)
       if not ok then
-        print('error updating lastseen:',err)
+        ngx.log(ngx.ERR, 'error updating lastseen:',err)
       end
     end
     sessionLastSeenDict:delete(key)
@@ -87,7 +87,7 @@ function config:GetHash(values)
   local resty_sha1 = require 'resty.sha1'
   local sha1 = resty_sha1:new()
 
-  local ok, err = sha1:update(values)
+  sha1:update(values)
 
   local digest = sha1:final()
 
@@ -116,7 +116,7 @@ function config:ProcessAccount(session)
       ngx.log(ngx.ERR, 'unable to write new user: ', err)
     end
   end
-  
+
 	account.id = accountID
 
   if not session.id then
@@ -131,7 +131,7 @@ function config:ProcessAccount(session)
 		return
 	end
   print('adding user session: ', session.id)
-  ok, err = self.redisWrite:InvalidateKey('account', account.id)
+  self.redisWrite:InvalidateKey('account', account.id)
 
   -- TODO: move to other function
 
@@ -143,7 +143,7 @@ function config:ProcessAccount(session)
   email.subject = 'Login email'
   email.recipient = emailAddr
 
-  local ok, err = emailDict:lpush('registrationEmails', to_json(email))
+  ok, err = emailDict:lpush('registrationEmails', to_json(email))
 
   if (not ok) and err then
     ngx.log(ngx.ERR, 'unable to set emaildict: ', err)

@@ -3,7 +3,7 @@ local userAPI = require 'api.users'
 local respond_to = (require 'lapis.application').respond_to
 
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local capture_errors = app_helpers.capture_errors
 local yield_error = app_helpers.yield_error
 
 local to_json = (require 'lapis.util').to_json
@@ -24,8 +24,8 @@ app:match('message.view','/messages',capture_errors(function(request)
   end
 
   request.threads = threadAPI:GetThreads(request.session.userID, startAt, range)
-  for k,thread in pairs(request.threads) do
-    for k,message in pairs(thread.messages) do
+  for _,thread in pairs(request.threads) do
+    for _,message in pairs(thread.messages) do
       message.username = userAPI:GetUser(message.createdBy).username
     end
   end
@@ -72,12 +72,13 @@ app:match('message.reply','/messages/reply/:threadID',respond_to({
 
     local thread, err = threadAPI:GetThread(request.session.userID, request.params.threadID)
     if not thread then
+      ngx.log(ngx.ERR, 'error getting log: ', err)
       yield_error('thread not found')
     end
 
     local found
     print(to_json(thread.messages))
-    for k,v in pairs(thread.viewers) do
+    for _,v in pairs(thread.viewers) do
       if v == userID then
         found = true
         break
@@ -90,7 +91,7 @@ app:match('message.reply','/messages/reply/:threadID',respond_to({
 
     request.thread = thread
 
-    for k,message in pairs(request.thread.messages) do
+    for _,message in pairs(request.thread.messages) do
       message.username = userAPI:GetUser(message.createdBy).username
     end
 

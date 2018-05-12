@@ -37,9 +37,9 @@ function config:SendRegistrationEmails()
     return
   end
 
-
+  local ok, err
   --print('sending email')
-  local ok = self.emailDict:rpop('registrationEmails')
+  ok = self.emailDict:rpop('registrationEmails')
   if not ok then
     return
   end
@@ -65,7 +65,7 @@ function config:SendErrorEmails()
   local ok, err
   while count <=10 do
 
-    ok, err = self.emailDict:rpop('errorEmails')
+    ok = self.emailDict:rpop('errorEmails')
     if not ok then
       break
     end

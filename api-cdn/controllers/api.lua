@@ -1,20 +1,16 @@
 
-local respond_to = (require 'lapis.application').respond_to
 local filterAPI = require 'api.filters'
 local userAPI = require 'api.users'
 local imageAPI = require 'api.images'
-local tinsert = table.insert
 local postAPI = require 'api.posts'
+local tagAPI = require 'api.tags'
 local commentAPI = require 'api.comments'
+local from_json = (require 'lapis.util').from_json
 
 
 local app = require 'app'
 local app_helpers = require("lapis.application")
-local capture_errors, assert_error = app_helpers.capture_errors_json, app_helpers.assert_error
-
-
-
-
+local capture_errors = app_helpers.capture_errors_json
 
 local function HashIsValid(request)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
@@ -80,18 +76,22 @@ app:match('api-upvotecomment', '/api/comment/upvote/:postID/:commentID/:commentH
   return {json = {error = false, data = {true}} }
 end))
 
-app:match('api-downvotecomment', '/api/comment/downvote/:postID/:commentID/:commentHash', capture_errors(function(request)
-  if not request.session.userID then
-    return {json = {error = 'you must be logged in!', data = {}}}
-  end
-  if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
-    return 'invalid hash'
-  end
+app:match(
+  'api-downvotecomment',
+  '/api/comment/downvote/:postID/:commentID/:commentHash',
+  capture_errors(function(request)
+    if not request.session.userID then
+      return {json = {error = 'you must be logged in!', data = {}}}
+    end
+    if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
+      return 'invalid hash'
+    end
 
-  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
+    commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down')
 
-  return {json = {error = false, data = {true}} }
-end))
+    return {json = {error = false, data = {true}} }
+  end
+))
 
 app:match('api-downvotepost', '/api/post/:postID/downvote', capture_errors(function(request)
   if not request.session.userID then
@@ -182,7 +182,7 @@ app:post('api-taguser', '/user/tag/:userID', capture_errors(function(request)
 
   local userTag = request.params.tagUser
 
-  userAPI:LabelUser(request.session.userID, request.params.userID, userTag)
+  local _, err = userAPI:LabelUser(request.session.userID, request.params.userID, userTag)
 
   return {json = {error = {err}, data = {}}}
 end))

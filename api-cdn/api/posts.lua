@@ -84,14 +84,12 @@ function api:ReportPost(userID, postID, reportText)
   post.reports = post.reports or {}
   post.reports[userID] = self:SanitiseUserInput(reportText, 300)
 
-  self.redisWrite:CreatePost(post)
-  if not ok then
-    return nil, err
-  end
+  local ok = assert_error(self.redisWrite:CreatePost(post))
+
   self.redisWrite:AddReport(userID, postID)
   self:InvalidateKey('post',postID)
 
-  return ok,err
+  return ok
 
   --check they havent already reported it
   -- add it to the list of reports attached to the postID
@@ -108,10 +106,7 @@ function api:AddPostTag(userID, postID, tagName)
 
   local newTag = tagAPI:CreateTag(userID, tagName)
 
-  ok, err = self:UserCanAddTag(userID, newTag, post.tags)
-  if not ok then
-    return nil, err
-  end
+  assert_error(self:UserCanAddTag(userID, newTag, post.tags))
 
   self.userWrite:IncrementUserStat(userID, 'TagsAdded', 1)
 
