@@ -1,6 +1,8 @@
 local worker = {}
 worker.__index = worker
 
+local elastic = require 'lib.elasticsearch'
+
 local RECUR_INTERVAL = 10
 
 function worker:New()
@@ -53,16 +55,16 @@ end
 
 
 function worker.ProcessRecurring(_,self)
-  -- if not self.elasticDone then
-  --
-  --   print('creating elastic')
-  --   local ok, err = elastic:CreateIndex()
-  --   print(ok, err)
-  --   if ok then
-  --     self.elasticDone = true
-  --     print('done ============= ')
-  --   end
-  -- end
+  if not self.elasticDone then
+    print('creating elastic')
+    local ok, err = elastic:CreateIndex()
+    if ok or err.error.type == 'index_already_exists_exception' then
+      self.elasticDone = true
+      print('done ============= ')
+    else
+      ngx.log(ngx.ERR, 'error creating index: ', err.error.reason)
+    end
+  end
   self:ScheduleTimer()
   self:FlushUserSeen()
 end

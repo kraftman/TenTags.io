@@ -16,9 +16,8 @@ app:match('search.results','/search/post',capture_errors(function(request)
   local ok = assert_error(searchAPI:SearchPost(search))
 
   if search:find('^http') and ok.hits.total == 0 then
-
     request.postLink = search
-    return {redirect_to = request:url_for("newpost",{postLink = search })..'?postLink='..search}
+    return {redirect_to = request:url_for("post.create",{postLink = search })..'?postLink='..search}
   else
     request.results = ok.hits.hits
     return {render = 'search.results'}

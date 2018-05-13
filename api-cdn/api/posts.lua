@@ -330,6 +330,7 @@ function api:CreatePost(userID, post)
   -- add the post to our local cache
 
   cache:UpdateKey('post', newPost)
+
   self:QueueUpdate('post:create', newPost)
   -- queue the post up for processing and adding to redis
   --self.redisWrite:QueueJob('CreatePost', info)

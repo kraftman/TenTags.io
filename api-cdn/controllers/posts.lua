@@ -1,4 +1,4 @@
-
+-- 
 
 local app = require 'app'
 local commentAPI = require 'api.comments'
@@ -139,18 +139,13 @@ end
 
 app:match('post.create','/p/new', respond_to({
   GET = function(request)
-
-
     local tags = tagAPI:GetAllTags()
-
     request.tags = tags
 
     return { render = true }
   end,
 
   POST = function(request)
-
-
       if trim(request.params.link) == '' then
         request.params.link = nil
       end

@@ -1,6 +1,7 @@
 
 local http = require 'lib.http'
 local to_json = (require 'lapis.util').to_json
+local from_json = (require 'lapis.util').from_json
 local M = {}
 
 local index = 'testindex'
@@ -45,8 +46,7 @@ function M:CreateIndex()
       })
 
   if not res or res.status > 300 then
-    print(res.status)
-    return nil, res.body
+    return nil, from_json(res.body)
   end
 
   return true
@@ -136,6 +136,7 @@ end
 function M:SearchURL(searchString)
   local httpc = http.new()
   local path = basePath..'_search'
+  print('string:', searchString)
   local res, err = httpc:request_uri(path, {
         method = "GET",
         body = to_json({
