@@ -1,6 +1,7 @@
 
 local commentAPI = require 'api.comments'
 local userAPI = require 'api.users'
+local csrf = require("lapis.csrf")
 
 local respond_to = (require 'lapis.application').respond_to
 
@@ -95,6 +96,7 @@ end))
 
 app:post('newcomment','/comment/', capture_errors(function(request)
 
+  csrf.assert_token(request)
 
   local commentInfo = {
     parentID = request.params.parentID,

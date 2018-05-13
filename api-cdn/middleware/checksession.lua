@@ -66,9 +66,6 @@ function M:Run(request)
   self:ValidateSession(request)
   self:LoadUser(request)
 
-
-
-
   if request.session.userID then
     if userAPI:UserHasAlerts(request.session.userID) then
       request.userHasAlerts = true
@@ -78,4 +75,5 @@ function M:Run(request)
   request.csrf_token = csrf.generate_token(request,request.session.userID)
   request.userFilters = userAPI:GetUserFilters(request.session.userID or 'default') or {}
 end
+
 return M

@@ -52,6 +52,7 @@
 
   <div id="submitError"></div>
   <div class = 'panel-default'>
+    <input type="hidden" name="csrf_token" value = "<%= csrf_token %>" />
     <input type='hidden' name='submitted' id='submitted' value='1'/>
 
     <input class='form-input' type="text" name='posttitle' id='posttitle' maxlength="300" placeholder="Title" ></br>

@@ -4,5 +4,6 @@
 				<tr><td>File to upload:</td><td><input type="file" name="upload_file" /></td></tr>
 				<tr><td></td><td><input type="submit" value="Upload" /></td></tr>
 			</table>
+			<input type="hidden" name="csrf_token" value = "<%= csrf_token %>" />
 		</form>
 </dim>

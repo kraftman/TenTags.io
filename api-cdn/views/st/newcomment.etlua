@@ -3,6 +3,7 @@
 <form id="commentform" method="post" action="<%= url_for('newcomment') %>" >
   <input id="parentID" name='parentID' type="hidden" value="<%= post.id%>" name="name">
   <input name='postID' type="hidden" value="<%= post.id%>" name="name">
+  <input type="hidden" name="csrf_token" value = "<%= csrf_token %>" />
 
   <textarea class='form-input textbox-large' name='commentText' id='commentText' cols='100' rows="15"></textarea>
   </br>

@@ -9,6 +9,7 @@ local tagAPI = require 'api.tags'
 local imageAPI = require 'api.images'
 local util = require("lapis.util")
 local app_helpers = require("lapis.application")
+local csrf = require("lapis.csrf")
 
 local capture_errors = app_helpers.capture_errors --app_helpers.assert_error
 
@@ -146,57 +147,58 @@ app:match('post.create','/p/new', respond_to({
   end,
 
   POST = function(request)
-      if trim(request.params.link) == '' then
-        request.params.link = nil
+    csrf.assert_token(request)
+    if trim(request.params.link) == '' then
+      request.params.link = nil
+    end
+
+    local info ={
+      title = request.params.posttitle,
+      link = request.params.postlink,
+      text = request.params.posttext,
+      createdBy = request.session.userID,
+      tags = {},
+      images = {}
+    }
+
+    request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
+    for word in request.params.selectedtags:gmatch('%S+') do
+      table.insert(info.tags, word)
+    end
+    local ok, err
+
+    -- if they have no js let them form upload one image
+    local fileData = request.params.upload_file
+
+    if request.params.upload_file and (fileData.content ~= '') then
+      ok = imageAPI:CreateImage(fileData)
+      if ok then
+        info.images = { ok.id}
       end
-
-      local info ={
-        title = request.params.posttitle,
-        link = request.params.postlink,
-        text = request.params.posttext,
-        createdBy = request.session.userID,
-        tags = {},
-        images = {}
-      }
-
-      request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
-      for word in request.params.selectedtags:gmatch('%S+') do
-        table.insert(info.tags, word)
-      end
-      local ok, err
-
-      -- if they have no js let them form upload one image
-      local fileData = request.params.upload_file
-
-      if request.params.upload_file and (fileData.content ~= '') then
-        ok = imageAPI:CreateImage(fileData)
-        if ok then
-          info.images = { ok.id}
-        end
-      end
-      -- otherwise let them assign multiple preuploaded images
-      if request.params.postimages then
-        for _, v in pairs(from_json(request.params.postimages)) do
-          if v.text then
-            ok, err = imageAPI:AddText(request.session.userID, v.id, v.text)
-            if not ok then
-              return {json = {error = true, data = {err}}}
-            end
-            info.images[#info.images+1] =  v.id
+    end
+    -- otherwise let them assign multiple preuploaded images
+    if request.params.postimages then
+      for _, v in pairs(from_json(request.params.postimages)) do
+        if v.text then
+          ok, err = imageAPI:AddText(request.session.userID, v.id, v.text)
+          if not ok then
+            return {json = {error = true, data = {err}}}
           end
+          info.images[#info.images+1] =  v.id
         end
       end
-      local newPost
-      newPost, err = postAPI:CreatePost(request.session.userID, info)
+    end
+    local newPost
+    newPost, err = postAPI:CreatePost(request.session.userID, info)
 
-      if newPost then
-        return {json = {error = false, data = newPost}}
-        --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
-      else
-        ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-        request:write({"Error creating post:"..err, status = 400})
-        return
-      end
+    if newPost then
+      return {json = {error = false, data = newPost}}
+      --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
+    else
+      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+      request:write({"Error creating post:"..err, status = 400})
+      return
+    end
 
   end
 }))

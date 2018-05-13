@@ -5,6 +5,7 @@ local app = require 'app'
 
 local userAPI = require 'api.users'
 local sessionAPI = require 'api.sessions'
+local csrf = require("lapis.csrf")
 
 local respond_to = (require 'lapis.application').respond_to
 
@@ -52,6 +53,7 @@ app:match('user.subsettings','/settings', respond_to({
 
   POST = capture_errors(function(request)
 
+    csrf.assert_token(request)
     if not request.session.accountID then
       return {render = 'pleaselogin'}
     end
