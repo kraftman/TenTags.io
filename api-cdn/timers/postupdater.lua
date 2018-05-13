@@ -106,7 +106,6 @@ function config:VotePost(postVote)
 		'this post is not good enough to be under these filters'
 		or 'the tags this post has that match the filters i care about are
 		not good'
-
 	]]
 
 	local user = cache:GetUser(postVote.userID)
@@ -121,7 +120,7 @@ function config:VotePost(postVote)
 		return true
 	end
 
-	local matchingTags = tagAPI:GetMatchingTags(cache:GetUserFilterIDs(user.currentView),post.filters)
+	local matchingTags = tagAPI:GetMatchingTags(cache:GetViewFilterIDs(user.currentView),post.filters)
 
 	-- filter out the tags they already voted on
 	matchingTags = tagAPI:GetUnvotedTags(user,postVote.postID, matchingTags)

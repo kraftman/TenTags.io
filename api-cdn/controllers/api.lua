@@ -54,14 +54,14 @@ app:match('api-upvotepost', '/api/post/:postID/upvote', capture_errors(function(
 
   local hash = request.params.hash
   local postID = request.params.postID
-  local userID = request.params.userID
+  local userID = request.session.userID
   if not hash or not postID or not userID then
     return {json = {error = 'invalid data!', data = {}}}
   end
   if not hash == ngx.md5(postID..userID) then
     return {json = {error = 'invalid hash!', data = {}}}
   end
-  postAPI:VotePost(request.session.userID, request.params.postID, 'up')
+  postAPI:VotePost(userID, postID, 'up')
 
   return { json = {status = 'success', data = {}} }
 end))
@@ -69,10 +69,15 @@ end))
 app:match('api-upvotecomment', '/api/comment/upvote/:postID/:commentID/:commentHash', capture_errors(function(request)
 
   if not HashIsValid(request) then
-    return 'hashes dont match'
+    print('a')
+    return {status = 400, json = {error = 'invalid data!', data = {}}}
   end
-  commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
-
+  print('b')
+  local ok = commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'up')
+  if not ok then
+    return {status = 400, json = {error = 'invalid data!', data = {}}}
+  end
+  print('c')
   return {json = {error = false, data = {true}} }
 end))
 
@@ -83,7 +88,7 @@ app:match(
     if not request.session.userID then
       return {json = {error = 'you must be logged in!', data = {}}}
     end
-    if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
+    if request.params.hash ~= ngx.md5(request.params.postID..request.session.userID) then
       return 'invalid hash'
     end
 
@@ -94,13 +99,24 @@ app:match(
 ))
 
 app:match('api-downvotepost', '/api/post/:postID/downvote', capture_errors(function(request)
-  if not request.session.userID then
-    return {json = {status = 'error', data = {'you must be logged in to vote'}}}
+
+  local hash = request.params.hash
+  local postID = request.params.postID
+  local userID = request.session.userID
+
+  print(hash, postID, userID)
+
+  if not hash or not postID or not userID then
+    print('a')
+    return {status = 400, json = {error = 'invalid data!', data = {}}}
   end
-  if request.params.hash ~= ngx.md5(request.session.userID..request.params.postID) then
-    return 'invalid hash'
+
+  if hash ~= ngx.md5(postID..userID) then
+    print('b')
+    return {status = 400, json = {error = 'invalid hash!', data = {}}}
   end
-  postAPI:VotePost(request.session.userID, request.params.postID, 'down')
+
+  postAPI:VotePost(userID, postID, 'down')
 
   return { json = {status = 'success', data = {}} }
 end))

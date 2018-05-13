@@ -110,7 +110,7 @@ function config:GetCommentDeletions()
 end
 
 function config:GetCommentVotes()
-  local commentVote, err = updateDict:rpop('comment:delete')
+  local commentVote, err = updateDict:rpop('comment:vote')
 	if not commentVote then
 		if err then
 			ngx.log(ngx.ERR, err)

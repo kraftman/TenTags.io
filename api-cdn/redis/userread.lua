@@ -331,29 +331,30 @@ function userread:GetAllUserSeenPosts(userID,startAt,range)
   return ok ~= ngx.null and ok or {}
 end
 
-function userread:GetUserFilterIDs(userID)
+--replaced with views now?
+-- function userread:GetUserFilterIDs(userID)
 
-  local red = self:GetUserReadConnection()
+--   local red = self:GetUserReadConnection()
 
-  local ok, err
+--   local ok, err
 
-  ok, err = red:smembers('userfilters:'..userID)
+--   ok, err = red:smembers('userfilters:'..userID)
 
-  self:SetKeepalive(red)
-  --print(userID, self:to_json(ok))
+--   self:SetKeepalive(red)
+--   --print(userID, self:to_json(ok))
 
-  if not ok then
-    ngx.log(ngx.ERR, 'error getting filter list for user "',userID,'", error:',err)
-    return {}
-  end
+--   if not ok then
+--     ngx.log(ngx.ERR, 'error getting filter list for user "',userID,'", error:',err)
+--     return {}
+--   end
 
-  if ok == ngx.null then
-    return {}
-  else
-    return ok
-  end
+--   if ok == ngx.null then
+--     return {}
+--   else
+--     return ok
+--   end
 
-end
+-- end
 
 
 return userread

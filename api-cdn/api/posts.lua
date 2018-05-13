@@ -136,7 +136,8 @@ function api:VotePost(userID, postID, direction)
   local user = cache:GetUser(userID)
 	if user.hideVotedPosts then
 		cache:AddSeenPost(userID, postID)
-	end
+  end
+  print('queuing post vote')
   self:QueueUpdate('post:vote', postVote)
 
   --return self.redisWrite:QueueJob('votepost',postVote)
