@@ -156,9 +156,9 @@ function api:SubscribePost(userID, postID)
   if not found then
 	   tinsert(post.viewers, userID)
   end
-	self.redisWrite:CreatePost(post)
-  return self:InvalidateKey('post', post.id)
-
+	local ok, err = self.redisWrite:CreatePost(post)
+  self:InvalidateKey('post', post.id)
+  return ok, err
 end
 
 function api:CreatePostTags(userID, postInfo)

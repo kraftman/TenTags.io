@@ -424,7 +424,7 @@ app:get('subscribepost', '/p/subscribe/:postID', function(request)
   if ok then
     return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
   else
-    return 'error subscribing: '..err
+    return 'error subscribing: ', err
   end
 end)
 
