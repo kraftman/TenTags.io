@@ -10,8 +10,11 @@ module.exports = {
     //     "jquery": "jQuery"
     // },
     module: {
-        loaders: [
-            { test: /\.css$/, loader: "style!css" }
+        rules: [
+            { 
+              test: /\.scss$/,
+              loaders: ["style-loader", "css-loader?-minimize", "sass-loader"],
+            }
         ]
-    }
+    },
 };

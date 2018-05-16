@@ -8,3 +8,4 @@ filtta.env
 filtta-prod.env
 stunnel.pem
 api-cdn/nginx.conf.compiled
+api-cdn/node_modules/*

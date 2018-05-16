@@ -501,11 +501,11 @@ function api:GetUserAlerts(userID)
 
   alerts = cache:GetUserAlerts(userID)
 
-	if alerts then
-		self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
-		self:InvalidateKey('user', userID)
-	  self:InvalidateKey('useralert', userID)
-	end
+	-- if alerts then
+	-- 	self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
+	-- 	self:InvalidateKey('user', userID)
+	--   self:InvalidateKey('useralert', userID)
+	-- end
 
   return alerts
 end
