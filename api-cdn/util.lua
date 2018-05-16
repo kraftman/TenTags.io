@@ -63,10 +63,12 @@ function util.RateLimit(request)
   if request.session.userID then
     currentRole = roles.User
   end
-  
+
   if currentRole == roles.Public and route.access > roles.Public then
     return request:write({status = 401, render = 'pleaselogin'})
   end
+
+  print('test:', currentRole, route.access)
 
   if currentRole == roles.User and route.access > roles.User then
     return request:write({status = 401, render = 'adminonly'})

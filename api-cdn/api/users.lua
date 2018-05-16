@@ -523,8 +523,8 @@ function api:SwitchUser(accountID, userID)
 
 	self.userWrite:CreateAccount(account)
 
-	return self:InvalidateKey('account', account.id)
-
+	self:InvalidateKey('account', account.id)
+	return user
 end
 
 

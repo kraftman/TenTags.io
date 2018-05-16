@@ -26,15 +26,18 @@ local sanitize_html = Sanitizer({whitelist = my_whitelist})
 local function BanUser(request,filter)
 
   local userID = userAPI:GetUserID(request.params.banuser)
+  print('banning:', request.params.banuser)
   if not userID then
     ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',request.params.banuser)
     return 'user '..request.params.banuser..' does not exist'
   end
+  print('banning: ', userID)
   local banInfo = {
     userID = userID,
     banReason = request.params.banUserReason or '',
     bannedBy = request.session.userID
   }
+  print('banning:', to_json(banInfo))
   local ok, err = filterAPI:FilterBanUser(request.session.userID, filter.id, banInfo)
   if ok then
     return 'success'
@@ -298,8 +301,9 @@ app:match('filter.edit','/filters/:filterlabel',respond_to({
       -- add usernames to list of banned users
       request.bannedUsernames = {}
       local userInfo
+      print('banned users: ', to_json( filter.bannedUsers))
       for _,v in pairs(filter.bannedUsers) do
-        userInfo= userAPI:GetUser(v.userID)
+        userInfo = userAPI:GetUser(v.userID)
         request.bannedUsernames[v.userID] = userInfo.username
       end
 

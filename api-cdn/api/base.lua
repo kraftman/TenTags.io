@@ -28,7 +28,7 @@ end
 
 function M:InvalidateKey(key, id)
 	cache:PurgeKey({keyType = key, id = id})
-	self.redisWrite:InvalidateKey(key,id)
+	return self.redisWrite:InvalidateKey(key,id)
 end
 
 function M:QueueUpdate(key, object)

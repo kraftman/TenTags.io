@@ -214,9 +214,9 @@ app:get('logout','/u/logout', capture_errors(function(request)
 end))
 
 app:get('switchuser','/u/switch/:userID', capture_errors(function(request)
-  local newUser = userAPI:SwitchUser(request.session.accountID, request.params.userID)
+  local newUser, err = userAPI:SwitchUser(request.session.accountID, request.params.userID)
   if not newUser then
-    return 'error switching user:'
+    return 'error switching user:'..err
   end
   request.session.userID = newUser.id
   request.session.username = newUser.username

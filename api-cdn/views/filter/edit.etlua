@@ -67,8 +67,9 @@
   </form>
 
 
-  <% for i,userInfo in pairs(selectedFilter.bannedUsers) do %>
-    <% render("views.st.bannedUser",{userInfo = userInfo}) %>
+  <% for i,userBanInfo in pairs(selectedFilter.bannedUsers) do %>
+    <% print('looking up :', to_json(userBanInfo.userID)) %>
+    <% render("views.st.bannedUser",{userBanInfo = userBanInfo}) %>
   <% end %>
 
   <form id='editfilter' action='' method='post' accept-charset='UTF-8'>

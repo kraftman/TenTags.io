@@ -322,10 +322,12 @@ function api:FilterBanUser(userID, filterID, banInfo)
 
 	banInfo.bannedAt = ngx.time()
 	ok, err = self.redisWrite:FilterBanUser(filterID, banInfo)
+	print('filterbanuser:', ok, err)
 	if not ok then
 		return ok, err
 	end
 	ok, err = self:InvalidateKey('filter', filter.id)
+	print('invalidatekey? ', ok, err)
 	return ok, err
 end
 

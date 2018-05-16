@@ -241,8 +241,9 @@ function write:InvalidateKey(keyType, id)
   local red = self:GetRedisWriteConnection()
   local data = self:to_json({keyType = keyType, id = id})
   local ok, err = red:zadd('invalidationRequests', timeInvalidated, data)
+
   self:SetKeepalive(red)
-  return ok, err
+  return true
 end
 
 function write:CreateTakedown(request)
@@ -481,7 +482,6 @@ function write:FilterSetDefault(filterID, setDefault)
     red:hset('filter:'..filterID,'default',true)
   else
 
-    print('deleting')
     red:srem('defaultFilters',filterID)
     red:hdel('filter:'..filterID, 'default')
   end
