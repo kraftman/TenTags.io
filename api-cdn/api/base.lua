@@ -32,10 +32,10 @@ function M:InvalidateKey(key, id)
 end
 
 function M:QueueUpdate(key, object)
-	  cjson.encode_sparse_array(true)
+	cjson.encode_sparse_array(true)
 	local ok, err = updateDict:lpush(key, cjson.encode(object))
 	if not ok then
-		print(err)
+		ngx.log(ngx.ERR, 'unable to queue update:', err)
 	end
 end
 

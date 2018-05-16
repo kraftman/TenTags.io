@@ -276,7 +276,6 @@ function config:CreatePost(post)
 		self.redisWrite:InvalidateKey('useralert', subscriberID)
 	end
 
-
   ok, err = self.userWrite:AddPost(post)
   if not ok then
     return ok, err

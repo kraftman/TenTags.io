@@ -327,14 +327,11 @@ function api:CreatePost(userID, post)
 
   self:CreatePostTags(userID, newPost)
 
-  --self.redisWrite:CreatePost(newPost)
-  -- add the post to our local cache
-
   cache:UpdateKey('post', newPost)
 
+  ngx.log(ngx.ERR, 'queueing new post creation')
   self:QueueUpdate('post:create', newPost)
-  -- queue the post up for processing and adding to redis
-  --self.redisWrite:QueueJob('CreatePost', info)
+
   return newPost
 
 end

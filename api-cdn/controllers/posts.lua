@@ -192,6 +192,7 @@ app:match('post.create','/p/new', respond_to({
     newPost, err = postAPI:CreatePost(request.session.userID, info)
 
     if newPost then
+      print('created post:', to_json(newPost))
       return {json = {error = false, data = newPost}}
       --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
     else

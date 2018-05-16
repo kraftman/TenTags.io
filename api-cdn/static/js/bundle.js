@@ -24369,7 +24369,7 @@ createpost.prototype = function(){
     addDropzone.call(this);
     addSelectize.call(this);
     addNewPostFilterSearch.call(this);
-    overrideSubmit.call(this);
+    //overrideSubmit.call(this);
   },
   addOptions = function(query){
     var context = this;
@@ -24483,7 +24483,7 @@ createpost.prototype = function(){
           if (data.data.id) {
             window.location.assign('/p/'+data.data.id);
           }
-          $('#submitError').html(data.data);
+          //$('#submitError').html(data.data);
           return false;
         },
         error: function(data) {
