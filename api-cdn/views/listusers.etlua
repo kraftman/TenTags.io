@@ -5,6 +5,7 @@
 
   <% for _,user in pairs(otherUsers) do %>
     <a class = 'subuser-link' href="<%= url_for('switchuser',{userID = user.id}) %>"><%= user.username %></a>
+    <a href="<%= url_for('user.setdefault', {userID = user.id}) %>"> Set Default</a>
   <% end %>
   </ul>
 </div>

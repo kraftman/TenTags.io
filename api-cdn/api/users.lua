@@ -444,7 +444,8 @@ function api:CreateSubUser(accountID, username)
 	tinsert(account.users, subUser.id)
 	account.userCount = account.userCount + 1
 	account.currentUsername = subUser.username
-	account.currentUserID = subUser.id
+  account.currentUserID = subUser.id
+  account.defaultUserID = subUser.id
 	self.userWrite:CreateAccount(account)
 
 
@@ -511,6 +512,36 @@ function api:GetUserAlerts(userID)
   return alerts
 end
 
+function api:SetDefault(accountID, userID, defaultUserID)
+	local user = cache:GetUser(userID)
+	local account = cache:GetAccount(accountID)
+
+	if user.parentID ~= accountID and account.role ~= 'Admin' then
+		return nil, 'Cannot set default user to another user'
+  end
+
+  local accountUsers = self:GetAccountUsers(accountID, accountID)
+  local found = false
+  for _,v in pairs(accountUsers) do
+    if v.id == defaultUserID then
+      found = true
+      break
+    end
+  end
+  if not found then
+    return nil, 'user must be your own'
+  end
+
+	account.defaultUserID = defaultUserID
+
+	self.userWrite:CreateAccount(account)
+
+	self:InvalidateKey('account', account.id)
+	return user
+
+
+end
+
 function api:SwitchUser(accountID, userID)
 	local account = cache:GetAccount(accountID)
 	local user = cache:GetUser(userID)
@@ -563,7 +594,6 @@ function api:UpdateUser(userID, userToUpdate)
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
 		fakeNames = userToUpdate.fakeNames and 1 or 0
 	}
-	print(to_json(userInfo))
 
 	for k,v in pairs(userToUpdate) do
 		if k:find('^filterStyle:') then

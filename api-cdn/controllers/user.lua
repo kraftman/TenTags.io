@@ -92,6 +92,10 @@ app:get('user.viewsub','/u/:username', capture_errors(function(request)
   request.userID = userAPI:GetUserID(request.params.username)
   request.userInfo = userAPI:GetUser(request.userID)
 
+  if not request.userInfo then
+    request.errorMessage = 'User not found'
+    return { render = 'errors.general' }
+  end
   if request.session.userID then
 
     local viewingUser = userAPI:GetUser(request.session.userID)
@@ -137,11 +141,20 @@ app:get('confirmLogin', '/confirmlogin', capture_errors(function(request)
     print('couldnt login:', sessionID)
     return { redirect_to = request:url_for("home") }
   end
-  print('got account: ',account.id)
+
+  if account.defaultUserID then
+    local defaultUser = assert_error(userAPI:GetUserSettings(account.defaultUserID))
+    request.session.userID = defaultUser.id
+    request.session.username = defaultUser.username
+
+  else
+
+    request.session.userID = account.currentUserID
+    request.session.username = account.currentUsername
+  end
+
 
   request.session.accountID = account.id
-  request.session.userID = account.currentUserID
-  request.session.username = account.currentUsername
   request.session.sessionID = sessionID
 
   if not account.currentUsername then
@@ -222,6 +235,12 @@ app:get('switchuser','/u/switch/:userID', capture_errors(function(request)
   request.session.username = newUser.username
 
   return { redirect_to = request:url_for("home") }
+end))
+
+app:get('user.setdefault','/u/default/:userID', capture_errors(function(request)
+  assert_error(userAPI:SetDefault(request.session.accountID, request.session.userID, request.params.userID))
+
+  return { redirect_to = request:url_for("listusers") }
 end))
 
 app:get('listusers','/u/list',capture_errors(function(request)
