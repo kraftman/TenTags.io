@@ -297,7 +297,7 @@ function api:UserCanEditFilter(userID, filterID)
 	if user.role == 'Admin' then
 		return filter
 	end
-
+	print(userID, filter.ownerID)
 	if filter.ownerID == userID then
 		return filter
 	end
@@ -398,9 +398,9 @@ end
 
 
 
-function api:FilterUnbanUser(filterID, userID)
+function api:FilterUnbanUser(userID, filterID, userToUnbanID)
 	assert_error(self:UserCanEditFilter(userID, filterID))
-	assert_error(self.redisWrite:FilterUnbanUser(filterID, userID))
+	assert_error(self.redisWrite:FilterUnbanUser(filterID, userToUnbanID))
 	assert_error(self:InvalidateKey('filter', filterID))
 end
 

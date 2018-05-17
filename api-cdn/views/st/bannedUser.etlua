@@ -4,5 +4,5 @@
   <%= userBanInfo.banReason -%>
 
   <% print('ban info:', to_json(userBanInfo)) %>
-  <a href="<%= url_for("unbanfilteruser",{filterlabel = selectedFilter.title, userID = userBanInfo.userID}) %>">Unban</a>
+  <a href="<%= url_for('filter.unbanuser',{filterlabel = selectedFilter.title, userID = userBanInfo.userID}) %>">Unban</a>
 </div>

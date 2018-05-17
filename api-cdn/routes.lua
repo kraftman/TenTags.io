@@ -62,7 +62,7 @@ m.routes['filter.view'] = {maxCalls = 10, duration = 10, access = Public}
 m.routes['filter.create'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['filter.edit'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['filter.all'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['unbanfilteruser'] = {maxCalls = 10, duration = 60, access = User}
+m.routes['filter.unbanuser'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['unbanfilterdomain'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['banpost'] = {maxCalls = 10, duration = 60, access = Admin}
 m.routes['searchfilters'] = {maxCalls = 10, duration = 60, access = Public}

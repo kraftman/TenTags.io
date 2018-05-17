@@ -9,6 +9,9 @@ local util = require("lapis.util")
 local to_json = util.to_json
 local respond_to = (require 'lapis.application').respond_to
 
+local app_helpers = require("lapis.application")
+local assert_error = app_helpers.assert_error
+
 
 local capture_errors = (require("lapis.application")).capture_errors
 local app = require 'app'
@@ -26,21 +29,18 @@ local sanitize_html = Sanitizer({whitelist = my_whitelist})
 local function BanUser(request,filter)
 
   local userID = userAPI:GetUserID(request.params.banuser)
-  print('banning:', request.params.banuser)
   if not userID then
     ngx.log(ngx.ERR, 'attempt to ban a non-existant user: ',request.params.banuser)
     return 'user '..request.params.banuser..' does not exist'
   end
-  print('banning: ', userID)
   local banInfo = {
     userID = userID,
     banReason = request.params.banUserReason or '',
     bannedBy = request.session.userID
   }
-  print('banning:', to_json(banInfo))
   local ok, err = filterAPI:FilterBanUser(request.session.userID, filter.id, banInfo)
   if ok then
-    return 'success'
+    return {redirect_to = request:url_for("filter.edit",{filterlabel = request.params.filterlabel}) }
   else
     return 'fail: ',err
   end
@@ -388,14 +388,20 @@ app:get('filter.all','/f',capture_errors(function(request)
   return {render = true}
 end))
 
-app:get('unbanfilteruser','/filters/:filterlabel/unbanuser/:userID',capture_errors(function(request)
+app:get('filter.unbanuser','/filters/:filterlabel/unbanuser/:userID',capture_errors({
+  on_error = function(request)
+    ngx.log(ngx.ERR, to_json(request.errors))
+    return { render = 'errors.general', status = 401}
+  end,
+  function(request)
 
-  local filter = filterAPI:GetFilterByName(request.params.filterlabel)
+    local filter = assert_error(filterAPI:GetFilterByName(request.params.filterlabel))
 
-  filterAPI:FilterUnbanUser(filter.id, request.params.userID)
+    filterAPI:FilterUnbanUser(request.session.userID, filter.id, request.params.userID)
 
-  return 'success'
-end))
+    return {redirect_to = request:url_for("filter.edit",{filterlabel = request.params.filterlabel}) }
+  end
+}))
 
 app:get('unbanfilterdomain','/filters/:filterlabel/unbandomain/:domainName', capture_errors(function(request)
 
