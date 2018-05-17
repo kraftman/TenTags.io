@@ -64,16 +64,17 @@ function util.RateLimit(request)
     currentRole = roles.User
   end
 
+  if request.userInfo.role == 'Admin' then
+    currentRole = roles.Admin
+  end
+
   if currentRole == roles.Public and route.access > roles.Public then
     return request:write({status = 401, render = 'pleaselogin'})
   end
 
-  print('test:', currentRole, route.access)
-
   if currentRole == roles.User and route.access > roles.User then
     return request:write({status = 401, render = 'adminonly'})
   end
-
 
 	local DISABLE_RATELIMIT = os.getenv('DISABLE_RATELIMIT')
 

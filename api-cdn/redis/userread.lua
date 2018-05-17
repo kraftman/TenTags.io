@@ -219,7 +219,7 @@ function userread:GetUser(userID)
   if user.postSubscriptions == ngx.null or not user.postSubscriptions then
     user.postSubscriptions = {}
   end
-  print(to_json(user))
+
   user.allowSubs = user.allowSubs == '1' and true or false
   user.allowMentions = user.allowMentions == '1' and true or false
   user.fakeNames = user.fakeNames == '1' and true or false

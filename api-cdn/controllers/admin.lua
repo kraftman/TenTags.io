@@ -12,34 +12,7 @@ local from_json = (require 'lapis.util').from_json
 
 local httpc = http.new()
 
-
---
--- local function Stat(request)
---   if not request.account then
---     return 'you must be logged in to access this'
---   end
---   if request.account.role ~= 'Admin' then
---     return 'you suck go away'
---   end
---
---   local startAt = ngx.time() - 100000
---   local endAt = ngx.time()
---
---   local ok assert_error(adminAPI:GetBacklogStats('ReIndexPost:30', startAt, endAt))
---
---   request.stats = ok
---
---   return {render = 'stats.view'}
--- end
-
-
-
 app:get('admin.view','/admin',capture_errors(function(request)
-
-
-  if request.account.role ~= 'Admin' then
-    return 'you suck go away'
-  end
 
   local newUsers = adminAPI:GetNewUsers(request.session.userID) or {}
   request.newUsers = {}
@@ -83,7 +56,7 @@ app:get('admin.stats', '/admin/stats', capture_errors(function(request)
 
   local ok = assert_error(adminAPI:GetSiteUniqueStats())
 
-  local totalViews = adminAPI:GetSiteStats()
+  local totalViews = assert_error(adminAPI:GetSiteStats())
   request.totals = totalViews
   request.stats = ok
   return {render = 'admin.stats'}

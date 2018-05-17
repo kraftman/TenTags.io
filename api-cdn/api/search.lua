@@ -10,11 +10,7 @@ local from_json = (require 'lapis.util').from_json
 -- otherwise cache them (in redis)
 
 function api:SearchPost(queryString)
-  -- need to ratelimit on id or only allow logged in users to search
-	-- local ok, err = util.RateLimit('SearchPost:', userID, 5, 10)
-	-- if not ok then
-	-- 	return ok, err
-	-- end
+
   if #queryString < 2 then
     return nil, 'search is too short'
   elseif #queryString > 200 then
