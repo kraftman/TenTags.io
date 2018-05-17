@@ -137,7 +137,7 @@ function api:ProcessMentions(oldComment, newComment)
 	local newUsers = self:GetMentionedUsers(newComment.text)
 
 	for k,v in pairs(newUsers) do
-		if not oldUsers[k] then
+		if (not oldUsers[k]) and v.allowMentions then
 			self.userWrite:AddUserAlert(ngx.time(), v.id, 'commentMention:'..newComment.postID..':'..newComment.id)
 			print('adding alert for ', k)
 		end

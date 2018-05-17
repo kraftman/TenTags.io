@@ -414,6 +414,7 @@ function api:CreateSubUser(accountID, username)
 		currentView = 'default',
 	parentID = accountID,
 	allowSubs = 1,
+	allowMentions = 1,
     enablePM = 1,
 	nsfwLevel = 0
   }
@@ -501,11 +502,11 @@ function api:GetUserAlerts(userID)
 
   alerts = cache:GetUserAlerts(userID)
 
-	-- if alerts then
-	-- 	self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
-	-- 	self:InvalidateKey('user', userID)
-	--   self:InvalidateKey('useralert', userID)
-	-- end
+	if alerts then
+		self.userWrite:UpdateUserField(userID, 'alertCheck', ngx.time())
+		self:InvalidateKey('user', userID)
+	  self:InvalidateKey('useralert', userID)
+	end
 
   return alerts
 end
@@ -550,6 +551,7 @@ function api:UpdateUser(userID, userToUpdate)
 	local userInfo = {
 		id = userToUpdate.id,
 		enablePM = userToUpdate.enablePM and 1 or 0,
+		allowMentions = userToUpdate.allowMentions and 1 or 0,
 		allowSubs = userToUpdate.allowSubs and 1 or 0,
 		hideSeenPosts = userToUpdate.hideSeenPosts and 1 or 0,
 		hideUnsubbedComments = userToUpdate.hideUnsubbedComments and 1 or 0,
@@ -561,6 +563,7 @@ function api:UpdateUser(userID, userToUpdate)
 		bio = self:SanitiseUserInput(userToUpdate.bio, 1000),
 		fakeNames = userToUpdate.fakeNames and 1 or 0
 	}
+	print(to_json(userInfo))
 
 	for k,v in pairs(userToUpdate) do
 		if k:find('^filterStyle:') then

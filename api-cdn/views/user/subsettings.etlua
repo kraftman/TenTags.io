@@ -38,6 +38,8 @@
     <textarea  class='form-input textbox-large' name='userbio' id='userbio' id="txtArea" rows="10" cols ='120' ><%= userBio or '' %></textarea>
 
       </br>
+      <label><input type="checkbox" name='allowMentions' <%= allowMentions -%>>Allow comment mention alerts</label>
+      </br>
       <label><input type="checkbox" name='allowSubs' <%= allowSubs -%>>Allow subscribers</label>
       </br>
       <label><input type="checkbox" name='enablePM' <%= enablePM -%>>Enable PM's</label>
