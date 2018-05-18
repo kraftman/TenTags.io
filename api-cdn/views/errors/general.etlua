@@ -1,4 +1,6 @@
 <div>
     <h1>Oops!</h1>
-    <%= errorMessage %>
+    <% for k,v in pairs(errors) do%>
+        <%= v %>
+    <% end %>
 </div>

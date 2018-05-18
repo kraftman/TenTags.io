@@ -7,8 +7,10 @@ local imageAPI = require 'api.images'
 local app = require 'app'
 local app_helpers = require("lapis.application")
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local yield_error = app_helpers.yield_error
 local to_json = (require 'lapis.util').to_json
 local from_json = (require 'lapis.util').from_json
+local util = require 'util'
 
 local httpc = http.new()
 
@@ -52,15 +54,16 @@ app:get('ele', '/ele', capture_errors(function()
   end
 end))
 
-app:get('admin.stats', '/admin/stats', capture_errors(function(request)
+app:get('admin.stats', '/admin/stats', capture_errors({
+  on_error = util.HandleError,
+  function(request)
 
-  local ok = assert_error(adminAPI:GetSiteUniqueStats())
+    request.stats = assert_error(adminAPI:GetSiteUniqueStats())
+    request.totals = assert_error(adminAPI:GetSiteStats())
 
-  local totalViews = assert_error(adminAPI:GetSiteStats())
-  request.totals = totalViews
-  request.stats = ok
-  return {render = 'admin.stats'}
-end))
+    return {render = true}
+  end
+}))
 
 app:get('score', '/admin/score/:up/:down', capture_errors(function(request)
   --http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
@@ -77,90 +80,62 @@ app:get('score', '/admin/score/:up/:down', capture_errors(function(request)
   return ''..(phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
 end))
 
-app:get('admin.reports','/admin/reports',capture_errors(function(request)
-  if not request.account then
-    return 'you must be logged in to access this'
+app:get('admin.reports','/admin/reports',capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    request.reports = assert_error(adminAPI:GetReports(request.session.userID))
+    return {render = 'admin.reports'}
+
   end
-  if request.account.role ~= 'Admin' then
-    return 'you suck go away'
-  end
+}))
 
-  local ok = assert_error(adminAPI:GetReports(request.session.userID))
+app:get('admin.takedowns','/admin/takedowns',capture_errors({
+  on_error = util.HandleError,
+  function(request)
 
-  request.reports = ok
-  return {render = 'admin.reports'}
+    request.takedowns = assert_error(imageAPI:GetPendingTakedowns(request.session.userID))
+    for _,v in pairs(request.takedowns) do
 
-end))
-
-app:get('admin.takedowns','/admin/takedowns',capture_errors(function(request)
-  if not request.account then
-    return 'you must be logged in to access this'
-  end
-  if request.account.role ~= 'Admin' then
-    return 'you suck go away'
-  end
-
-  local pendingTakeDowns = assert_error(imageAPI:GetPendingTakedowns(request.session.userID))
-
-  for _,v in pairs(pendingTakeDowns) do
-
-    v.image = imageAPI:GetImage(v.imageID)
-    if not v.image then
-      print(to_json(v))
-      print('image not found: ', v.imageID)
+      v.image = imageAPI:GetImage(v.imageID)
+      if not v.image then
+        print(to_json(v))
+        print('image not found: ', v.imageID)
+      end
     end
+
+    return {render = true}
   end
+}))
 
-  request.takedowns = pendingTakeDowns
+app:get('confirmtakedown', '/admin/takedown/:takedownID/confirm', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+    -- remove image
+    -- remvoe takedown from pendingn
 
-  return {render = 'admin.takedowns'}
-end))
+    if not request.params.takedownID then
+      return 'not found'
+    end
 
-app:get('confirmtakedown', '/admin/takedown/:takedownID/confirm', capture_errors(function(request)
-  -- remove image
-  -- remvoe takedown from pendingn
+    assert_error(imageAPI:AcknowledgeTakedown(request.session.userID, request.params.takedownID))
+    assert_error(imageAPI:BanImage(request.session.userID, request.params.takedownID))
+    return {redirect_to = request.url_for( 'admin.takedowns')}
 
-  if not request.account then
-    return 'you must be logged in to access this'
   end
-  if request.account.role ~= 'Admin' then
-    return 'you suck go away'
-  end
-
-  if not request.params.takedownID then
-    return 'not found'
-  end
-
-  assert_error(imageAPI:AcknowledgeTakedown(request.session.userID, request.params.takedownID))
-  assert_error(imageAPI:BanImage(request.session.userID, request.params.takedownID))
-  return {redirect_to = request.url_for( 'admin.takedowns')}
-
-end))
+}))
 
 app:get('canceltakedown', '/admin/takedown/:takedownID/cancel', capture_errors(function(request)
 
-  if not request.account then
-    return 'you must be logged in to access this'
-  end
-  if request.account.role ~= 'Admin' then
-    return 'you suck go away'
-  end
-
   if not request.params.takedownID then
-    print(request.params.takedownID, 'takedown id')
-    return 'not found'
+    ngx.log(ngx.ERR, request.params.takedownID, 'takedown id')
+    yield_error('takedown not found')
   end
 
-  local ok, err = imageAPI:AcknowledgeTakedown(request.session.userID, request.params.takedownID)
-  if not ok then
-    return err
-  end
+  assert_error(imageAPI:AcknowledgeTakedown(request.session.userID, request.params.takedownID))
 
-  ok, err = imageAPI:BanImage(request.session.userID, request.session.takedownID)
-  if ok then
-    return {redirect_to = request.url_for( 'admin.takedowns')}
-  else
-    return 'failed:'..err
-  end
-  -- remove takedown from pending
+  assert_error(imageAPI:BanImage(request.session.userID, request.session.takedownID))
+
+  return {redirect_to = request.url_for( 'admin.takedowns')}
+
 end))

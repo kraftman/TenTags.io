@@ -7,7 +7,7 @@ local lapis = require 'lapis'
 local to_json = (require 'lapis.util').to_json
 
 local function HandleError(self, err, trace)
-  print('handling err ', err)
+
   if config.hide_errors then
     ngx.log(ngx.ERR, 'BIG ERROR!!', err)
     local error = {

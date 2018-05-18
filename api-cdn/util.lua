@@ -7,6 +7,7 @@ util.locks = ngx.shared.locks
 local app_helpers = require("lapis.application")
 local assert_error, yield_error = app_helpers.assert_error, app_helpers.yield_error
 local capture_errors, assert_error = app_helpers.capture_errors, app_helpers.assert_error
+local to_json = (require 'lapis.util').to_json
 
 local rateDict = ngx.shared.ratelimit
 local routes = (require 'routes').routes
@@ -40,7 +41,10 @@ function util:RemLock(key)
   self.locks:delete(key)
 end
 
-
+function util.HandleError(request)
+  ngx.log(ngx.ERR, to_json(request.errors))
+  return {render = 'errors.general'}
+end
 
 function util.RateLimit(request)
 
