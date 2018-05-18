@@ -6,9 +6,10 @@ local userAPI = require 'api.users'
 local postAPI = require 'api.posts'
 local tagAPI = require 'api.tags'
 local imageAPI = require 'api.images'
-local util = require("lapis.util")
+local lapisUtil = require("lapis.util")
 local app_helpers = require("lapis.application")
 local csrf = require("lapis.csrf")
+local util = require 'util'
 
 local capture_errors = app_helpers.capture_errors
 local yield_error = app_helpers.yield_error
@@ -23,10 +24,10 @@ my_whitelist.tags.img = false
 
 local sanitize_html = Sanitizer({whitelist = my_whitelist})
 
-local from_json = util.from_json
+local from_json = lapisUtil.from_json
 
 local respond_to = (require 'lapis.application').respond_to
-local trim = util.trim
+local trim = lapisUtil.trim
 
 --======== local utils
 

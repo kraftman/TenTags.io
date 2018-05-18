@@ -6,27 +6,23 @@ local app = require 'app'
 local userAPI = require 'api.users'
 local sessionAPI = require 'api.sessions'
 local csrf = require("lapis.csrf")
+local util = require 'util'
 
 local respond_to = (require 'lapis.application').respond_to
 
 
 local app_helpers = require("lapis.application")
 local capture_errors = app_helpers.capture_errors
+local assert_error = app_helpers.assert_error
+local yield_error = app_helpers.yield_error
 
 
 
 app:match('user.subsettings','/settings', respond_to({
-  GET = capture_errors(function(request)
-
-      if not request.session.accountID then
-        return {render = 'pleaselogin'}
-      end
-
+  GET = capture_errors({
+    on_error = util.HandleError,
+    function(request)
       local user = request.userInfo
-      if not user then
-        return 'unknown user'
-      end
-
       request.account = sessionAPI:GetAccount(request.session.accountID, request.session.accountID)
       if request.account then
         for k,v in pairs(request.account.sessions) do
@@ -50,88 +46,89 @@ app:match('user.subsettings','/settings', respond_to({
 
 
       return {render = true}
-  end),
-
-  POST = capture_errors(function(request)
-
-    csrf.assert_token(request)
-    if not request.session.accountID then
-      return {render = 'pleaselogin'}
     end
+  }),
 
-    local user = request.userInfo
-    if not user or not user.id then
-      return {render = 'pleaselogin'}
-    end
+  POST = capture_errors({
+    on_error = util.HandleError,
+    function(request)
 
-    if request.params.resetdefaultview then
-      if user.role == 'Admin' then
-        userAPI:CreateDefaultView(request.session.userID)
+      csrf.assert_token(request)
+      if not request.session.accountID then
+        return {render = 'pleaselogin'}
       end
-      return {redirect_to = request:url_for('user.subsettings')}
+
+      local user = request.userInfo
+      if not user or not user.id then
+        return {render = 'pleaselogin'}
+      end
+
+      if request.params.resetdefaultview then
+        if user.role == 'Admin' then
+          assert_error(userAPI:CreateDefaultView(request.session.userID))
+        end
+        return {redirect_to = request:url_for('user.subsettings')}
+      end
+
+      user.enablePM = request.params.enablePM and true or false
+      user.fakeNames = request.params.fakeNames and true or false
+      user.allowMentions = request.params.allowMentions and true or false
+      user.allowSubs = request.params.allowSubs and true or false
+
+      user.hideSeenPosts = request.params.hideSeenPosts and true or false
+      user.hideUnsubbedComments = request.params.hideUnsubbedComments and true or false
+      user.hideVotedPosts = request.params.hideVotedPosts and true or false
+      user.hideClickedPosts = request.params.hideClickedPosts and true or false
+      user.nsfwLevel = request.params.nsfwLevel
+      user.showNSFL = request.params.showNSFL and true or false
+      user.bio = request.params.userbio or ''
+
+      assert_error(userAPI:UpdateUser(user.id, user))
+
+      if request.params.stage == '1' then
+        return {redirect_to = request:url_for('home')}
+      else
+        return {redirect_to = request:url_for('user.subsettings')}
+      end
     end
-
-    user.enablePM = request.params.enablePM and true or false
-    user.fakeNames = request.params.fakeNames and true or false
-    user.allowMentions = request.params.allowMentions and true or false
-    user.allowSubs = request.params.allowSubs and true or false
-
-    user.hideSeenPosts = request.params.hideSeenPosts and true or false
-    user.hideUnsubbedComments = request.params.hideUnsubbedComments and true or false
-    user.hideVotedPosts = request.params.hideVotedPosts and true or false
-    user.hideClickedPosts = request.params.hideClickedPosts and true or false
-    user.nsfwLevel = request.params.nsfwLevel
-    user.showNSFL = request.params.showNSFL and true or false
-    user.bio = request.params.userbio or ''
-
-    userAPI:UpdateUser(user.id, user)
-
-    if request.params.stage=='1' then
-      return {redirect_to = request:url_for('home')}
-    else
-      return {redirect_to = request:url_for('user.subsettings')}
-    end
-  end)
+  })
 }))
 
 app:match('/settings/filterstyle',respond_to({
-  POST = capture_errors(function(request)
+  POST = capture_errors({
+    on_error = util.HandleError,
+    function(request)
 
-    local filterName = request.params.filterName
-    local filterStyle = request.params.styleselect
+      local filterName = request.params.filterName
+      local filterStyle = request.params.styleselect
 
-    if not filterName or not filterStyle then
-      return 'error, missing arguments'
-    end
-
-    local user = request.userInfo
-    if not user then
-      return 'you must be logged in to do that'
-    end
-    for k,v in pairs(user) do
-      if type(v) == 'string' then
-        print(k,v)
+      if not filterName or not filterStyle then
+        yield_error 'error, missing arguments'
       end
+
+      local user = request.userInfo
+      if not user then
+        return 'you must be logged in to do that'
+      end
+      for k,v in pairs(user) do
+        if type(v) == 'string' then
+          print(k,v)
+        end
+      end
+
+      user['filterStyle:'..filterName] = filterStyle
+
+      assert_error(userAPI:UpdateUser(request.session.userID, user))
+
+      return { redirect_to = ngx.var.http_referer }
     end
-
-    user['filterStyle:'..filterName] = filterStyle
-
-    userAPI:UpdateUser(request.session.userID, user)
-
-    return { redirect_to = ngx.var.http_referer }
-  end)
+  })
 }))
 
-app:get('killsession', '/sessions/:sessionID/kill', capture_errors(function(request)
-  if not request.session.accountID then
-    return {render = 'pleaselogin'}
-  end
-
-  local ok, err = sessionAPI:KillSession(request.session.accountID, request.params.sessionID)
-  if ok then
+app:get('killsession', '/sessions/:sessionID/kill', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+    assert_error(sessionAPI:KillSession(request.session.accountID, request.params.sessionID))
     return {redirect_to = request:url_for('user.subsettings')}
-  else
-    print(err)
-    return 'not killed!'
   end
-end))
+}))

@@ -47,7 +47,7 @@ function util.HandleError(request)
 end
 
 function util.RateLimit(request)
-
+  print('rate limiting')
   local userID = ngx.ctx.userID
 
   if not userID then
@@ -68,12 +68,12 @@ function util.RateLimit(request)
     currentRole = roles.User
   end
 
-  if request.userInfo.role == 'Admin' then
-    currentRole = roles.Admin
-  end
-
   if currentRole == roles.Public and route.access > roles.Public then
     return request:write({status = 401, render = 'pleaselogin'})
+  end
+
+  if request.userInfo.role == 'Admin' then
+    currentRole = roles.Admin
   end
 
   if currentRole == roles.User and route.access > roles.User then

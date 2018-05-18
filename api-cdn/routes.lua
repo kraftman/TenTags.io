@@ -113,13 +113,13 @@ m.routes['killsession'] = {maxCalls = 10, duration = 60, access = Self}
 m.routes['newsubuser'] = {maxCalls = 10, duration = 60, access = Public}
 m.routes['login'] = {maxCalls = 10, duration = 60, access = Public}
 m.routes['user.viewsub'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['deleteuser'] = {maxCalls = 10, duration = 60, access = Self}
+m.routes['user.delete'] = {maxCalls = 10, duration = 60, access = Self}
 m.routes['confirmLogin'] = {maxCalls = 10, duration = 60, access = Public}
 m.routes['user.viewsubcomments'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['user.viewsubposts'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['user.viewsubupvotes'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['logout'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['switchuser'] = {maxCalls = 10, duration = 60, access = User}
+m.routes['user.switch'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['listusers'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['subscribeusercomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['subscribeuserpost'] = {maxCalls = 10, duration = 60, access = User}
