@@ -222,13 +222,12 @@ local function parseSortBy(sortBy)
   return permittedSorts[sortBy] or 'best'
 end
 
-local function getPostComments(request)
+local function getPostComments(request, postID)
   -- add comments to post
 
   local sortBy = parseSortBy(request.params.sortBy)
   local userID = request.session.userID or 'default'
-  local postID = request.params.postID
-  local comments = commentAPI:GetPostComments(userID, postID, sortBy)
+  local comments = commentAPI:GetPostComments(userID, postID, sortBy) or {}
   for _,comment in pairs(comments) do
     -- one of the 'comments' is actually the postID
     -- may shift this to api later
@@ -241,6 +240,7 @@ local function getPostComments(request)
       comment.commentHash = ngx.md5(comment.id..userID)
     end
   end
+  return comments
 end
 
 local function isUserSubbed(userID, subscribers)
@@ -331,6 +331,7 @@ app:match('post.view','/p/:postID', respond_to({
       request.comments = getPostComments(request, postID)
       request.userSubbed = isUserSubbed(userID, post.viewers)
       request.filters = loadFilters(post.filters)
+
       post.text = request.markdown(post.text)
 
       -- get images

@@ -244,7 +244,7 @@ function api:DeleteComment(userID, postID, commentID)
 
 end
 
-function api:GetPostComments(userID, postID,sortBy)
-	return cache:GetSortedComments(userID, postID,sortBy)
+function api:GetPostComments(userID, postID, sortBy)
+	return cache:GetSortedComments(userID, postID, sortBy)
 end
 return api

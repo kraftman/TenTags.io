@@ -221,6 +221,7 @@ function config:AddAlerts(post, comment)
     parentComment = self.commentRead:GetComment(comment.postID, comment.parentID)
   end
 
+  -- alert anyone subscribed to the post
   for _,viewerID in pairs(post.viewers) do
     viewer = cache:GetUser(viewerID)
     local blocked
@@ -239,6 +240,7 @@ function config:AddAlerts(post, comment)
     end
   end
 
+  -- alert anyone subscribed to the user
   local user = cache:GetUser(post.createdBy)
   if not user then
     return true

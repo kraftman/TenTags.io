@@ -47,7 +47,7 @@ function util.HandleError(request)
 end
 
 function util.RateLimit(request)
-  print('rate limiting')
+
   local userID = ngx.ctx.userID
 
   if not userID then
