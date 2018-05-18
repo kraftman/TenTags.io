@@ -10,7 +10,9 @@ local util = require("lapis.util")
 local app_helpers = require("lapis.application")
 local csrf = require("lapis.csrf")
 
-local capture_errors = app_helpers.capture_errors --app_helpers.assert_error
+local capture_errors = app_helpers.capture_errors
+local yield_error = app_helpers.yield_error
+local assert_error = app_helpers.assert_error
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
@@ -22,7 +24,6 @@ my_whitelist.tags.img = false
 local sanitize_html = Sanitizer({whitelist = my_whitelist})
 
 local from_json = util.from_json
-
 
 local respond_to = (require 'lapis.application').respond_to
 local trim = util.trim
@@ -45,17 +46,13 @@ local function AddSource(request)
   local sourceURL = request.params.sourceurl
   local userID = request.session.userID
   if not sourceURL then
-    return 'no url given!'
+    return yield_error('no url given!')
   elseif not userID then
-    return 'you must be logged in to do that!'
+    return yield_error( 'you must be logged in to do that!')
   end
 
-  local ok, err = postAPI:AddSource(userID, request.params.postID, sourceURL)
-  if ok then
-    return 'success!'
-  else
-    return 'error: '..err
-  end
+  assert_error(postAPI:AddSource(userID, request.params.postID, sourceURL))
+
 
 end
 
@@ -110,17 +107,9 @@ local function AddTag(request)
   local userID = request.session.userID
   local postID = request.params.postID
 
-  local ok, err = postAPI:AddPostTag(userID, postID, tagName)
-  if ok then
-    return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
-  else
-    print('failed: ',err)
-    return 'failed: '..err
-  end
-
+  assert_error(postAPI:AddPostTag(userID, postID, tagName))
+ 
 end
-
-
 
 local function HashIsValid(request)
   --print(request.params.postID, request.session.userID)
@@ -133,73 +122,84 @@ local function HashIsValid(request)
   return true
 end
 
+local function processImageUpload(request, info)
+  -- if no js handle one image
+  local fileData = request.params.upload_file
+  local ok, err
 
+  if request.params.upload_file and (fileData.content ~= '') then
+    ok = imageAPI:CreateImage(fileData)
+    if ok then
+      info.images = { ok.id}
+    end
+  end
+  -- otherwise let them assign multiple preuploaded images
+  if request.params.postimages then
+    for _, v in pairs(from_json(request.params.postimages)) do
+      if v.text then
+        ok, err = imageAPI:AddText(request.session.userID, v.id, v.text)
+        if not ok then
+          return nil, err
+        end
+        info.images[#info.images+1] =  v.id
+      end
+    end
+  end
+end
 
 --========== requests
 
 app:match('post.create','/p/new', respond_to({
-  GET = function(request)
-    local tags = tagAPI:GetAllTags()
-    request.tags = tags
+  GET = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+      local tags = tagAPI:GetAllTags()
+      request.tags = tags
 
-    return { render = true }
-  end,
-
-  POST = function(request)
-    csrf.assert_token(request)
-    if trim(request.params.link) == '' then
-      request.params.link = nil
+      return { render = true }
     end
+  }),
 
-    local info ={
-      title = request.params.posttitle,
-      link = request.params.postlink,
-      text = request.params.posttext,
-      createdBy = request.session.userID,
-      tags = {},
-      images = {}
-    }
-
-    request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
-    for word in request.params.selectedtags:gmatch('%S+') do
-      table.insert(info.tags, word)
-    end
-    local ok, err
-
-    -- if they have no js let them form upload one image
-    local fileData = request.params.upload_file
-
-    if request.params.upload_file and (fileData.content ~= '') then
-      ok = imageAPI:CreateImage(fileData)
-      if ok then
-        info.images = { ok.id}
+  POST = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+      csrf.assert_token(request)
+      if trim(request.params.link) == '' then
+        request.params.link = nil
       end
-    end
-    -- otherwise let them assign multiple preuploaded images
-    if request.params.postimages then
-      for _, v in pairs(from_json(request.params.postimages)) do
-        if v.text then
-          ok, err = imageAPI:AddText(request.session.userID, v.id, v.text)
-          if not ok then
-            return {json = {error = true, data = {err}}}
-          end
-          info.images[#info.images+1] =  v.id
-        end
+
+      local info ={
+        title = request.params.posttitle,
+        link = request.params.postlink,
+        text = request.params.posttext,
+        createdBy = request.session.userID,
+        tags = {},
+        images = {}
+      }
+
+      request.params.selectedtags = request.params.selectedtags:match('"(.+)"')
+      for word in request.params.selectedtags:gmatch('%S+') do
+        table.insert(info.tags, word)
       end
-    end
-    local newPost
-    newPost, err = postAPI:CreatePost(request.session.userID, info)
 
-    if newPost then
-      return {json = {error = false, data = newPost}}
-      --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
-    else
-      ngx.log(ngx.ERR, 'error from api: ',err or 'none')
-      request:write({"Error creating post:"..err, status = 400})
-      return
-    end
+      -- if they have no js let them form upload one image
+      local ok, err = processImageUpload(request, info)
+      if not ok then
+        return {json = {error = true, data = {err}}}
+      end
 
-  end
+      local newPost, err = postAPI:CreatePost(request.session.userID, info)
+
+      if newPost then
+        return {json = {error = false, data = newPost}}
+        --return {redirect_to = request:url_for("post.view",{postID = newPost.id})}
+      else
+        ngx.log(ngx.ERR, 'error from api: ',err or 'none')
+        return {json = {error = true, data = {err}}}
+      end
+
+    end
+  })
 }))
 
 local function AddLinks(comment)
@@ -207,249 +207,281 @@ local function AddLinks(comment)
   comment.text = comment.text:gsub('/f/(%S%S%S+)', '<a href = "/f/%1">/f/%1</a>')
 end
 
-app:match('post.view','/p/:postID', respond_to({
-  GET = capture_errors(function(request)
-    local sortBy = request.params.sort or 'best'
-    sortBy = sortBy:lower()
-    local userID = request.session.userID or 'default'
-    local postID = request.params.postID
+local permittedSorts = {
+  best = 'best',
+  new = 'new',
+  top = 'top'
+}
 
-    local post = postAPI:GetPost(userID, postID)
-    if not post then
-      return request.app.handle_404(request)
+local function parseSortBy(sortBy)
+  if not sortBy then
+    return 'best'
+  end
+  sortBy = sortBy:lower();
+  return permittedSorts[sortBy] or 'best'
+end
+
+local function getPostComments(request)
+  -- add comments to post
+
+  local sortBy = parseSortBy(request.params.sortBy)
+  local userID = request.session.userID or 'default'
+  local postID = request.params.postID
+  local comments = commentAPI:GetPostComments(userID, postID, sortBy)
+  for _,comment in pairs(comments) do
+    -- one of the 'comments' is actually the postID
+    -- may shift this to api later
+    if comment.text then
+      comment.text = request.markdown(comment.text or '')
+      comment.text = sanitize_html(comment.text)
+      AddLinks(comment)
     end
-
-    request.page_title = post.title
-
-    if (#postID > 10) and post.shortURL then
-      return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
+    if comment.id and userID then
+      comment.commentHash = ngx.md5(comment.id..userID)
     end
-    postID = post.id
+  end
+end
 
-    local comments = commentAPI:GetPostComments(userID, postID, sortBy)
-
-    -- add comments to post
-    for _,v in pairs(comments) do
-      -- one of the 'comments' is actually the postID
-      -- may shift this to api later
-      if v.text then
-        v.text = request.markdown(v.text or '')
-        print('ran discount')
-        print(v.text)
-        v.text = sanitize_html(v.text)
-        AddLinks(v)
-      end
-      if v.id and userID then
-        v.commentHash = ngx.md5(v.id..userID)
-      end
+local function isUserSubbed(userID, subscribers)
+  for _,v in pairs(subscribers) do
+    if v == userID then
+      return true
     end
+  end
+end
 
-    request.comments = comments
+local function processPostImages(request, post)
+  for k,v in pairs(post.images) do
+    post.images[k] = imageAPI:GetImage(v)
+    post.images[k].text = request.markdown(post.images[k].text)
+  end
+end
 
-    -- get usernames
-    for _,v in pairs(post.viewers) do
-      if v == userID then
-        request.userSubbed = true
-        break
-      end
-    end
+local function addPostSource(post, userID)
+  for _,v in pairs(post.tags) do
+    if v.name:find('^meta:sourcePost:') then
 
-    -- get images
-    for k,v in pairs(post.images) do
-      post.images[k] = imageAPI:GetImage( v)
-      post.images[k].text = request.markdown(post.images[k].text)
-    end
+      post.containsSources = true
+      local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
 
+      if sourcePostID then
 
-    for _,v in pairs(post.tags) do
-      if v.name:find('^meta:sourcePost:') then
+        local parentPost = postAPI:GetPost(userID, sourcePostID)
 
-        post.containsSources = true
-        local sourcePostID = v.name:match('meta:sourcePost:(%w+)')
-
-        if sourcePostID then
-
-          local parentPost = postAPI:GetPost(userID, sourcePostID)
-
-          if v.name and parentPost and parentPost.title then
-            v.fakeName = parentPost.title
-            v.postID = sourcePostID
-          end
+        if v.name and parentPost and parentPost.title then
+          v.fakeName = parentPost.title
+          v.postID = sourcePostID
         end
       end
     end
+  end
+end
 
-    local filters = filterAPI:GetFilterInfo(post.filters)
-    request.filters = {}
-    for i = 0, math.min(10, #filters) do
-      if filters[i] then
-        request.filters[i] = filters[i]
-      end
-    end
-
-    if request.session.userID then
-      post.hash = ngx.md5(post.id..userID)
-      post.userHasVoted = userAPI:UserHasVotedPost(userID, post.id)
-      request.userLabels = userAPI:GetUser(userID).userLabels
-    end
-    local user = userAPI:GetUser(userID)
-
-    if userID == post.createdBy or (user and user.role == 'Admin') then
-      request.userCanEdit = true
-      post.editText = post.text
-    end
-    post.text = request.markdown(post.text)
-
-    request.post = post
-    request.GetColorForDepth = GetColorForDepth
-    request.GetColorForName = GetColorForName
-
-    return {render = true}
-  end),
-
-  POST = function(request)
-
-
-    if request.params.sourceurl then
-      return AddSource(request)
-    end
-
-    if request.params.addtag then
-      return AddTag(request)
-    end
-
-    local post = {
-      id = request.params.postID,
-      title = request.params.posttitle,
-      text = request.params.posttext
-    }
-
-    local ok,err = postAPI:EditPost(request.session.userID, post)
-    if ok then
-      return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
-    else
-      return 'fail: '..err
+local function loadFilters(filterIDs)
+  local filters = filterAPI:GetFilterInfo(filterIDs)
+  local loadedFilters = {}
+  for i = 0, math.min(10, #filters) do
+    if filters[i] then
+      loadedFilters[i] = filters[i]
     end
   end
+  return loadedFilters
+end
+
+local function addLoggedInDetails(request, post, userID)
+  if not request.session.userID then
+    return
+  end
+  post.hash = ngx.md5(post.id..userID)
+  post.userHasVoted = userAPI:UserHasVotedPost(userID, post.id)
+  request.userLabels = userAPI:GetUser(userID).userLabels
+end
+
+local function addEdittable(request, post, userID)
+  local user = request.userInfo
+
+  if userID == post.createdBy or (user and user.role == 'Admin') then
+    request.userCanEdit = true
+    post.editText = post.text
+  end
+end
+
+app:match('post.view','/p/:postID', respond_to({
+  GET = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+
+      local userID = request.session.userID or 'default'
+      local postID = request.params.postID
+
+      local post = postAPI:GetPost(userID, postID)
+      if not post then
+        return request.app.handle_404(request)
+      end
+
+      request.page_title = post.title
+
+      --redirect to shorturl
+      if (#postID > 10) and post.shortURL then
+        return { redirect_to = request:url_for("post.view",{postID = post.shortURL}) }
+      end
+      postID = post.id
+
+      request.comments = getPostComments(request, postID)
+      request.userSubbed = isUserSubbed(userID, post.viewers)
+      request.filters = loadFilters(post.filters)
+      post.text = request.markdown(post.text)
+
+      -- get images
+      processPostImages(request, post)
+      addPostSource(post, userID)
+      addLoggedInDetails(request, post, userID)
+      addEdittable(request, post, userID)
+
+      request.post = post
+      request.GetColorForDepth = GetColorForDepth
+      request.GetColorForName = GetColorForName
+
+      return {render = true}
+    end
+  }),
+
+  POST = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+
+      if request.params.sourceurl then
+        AddSource(request)
+      elseif request.params.addtag then
+        AddTag(request)
+      else
+        -- edit the post
+        local post = {
+          id = request.params.postID,
+          title = request.params.posttitle,
+          text = request.params.posttext
+        }
+        assert_error(postAPI:EditPost(request.session.userID, post))
+      end
+
+      return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
+    end
+  })
 }))
 
 
-app:match('deletepost','/p/delete/:postID', function(request)
+app:match('deletepost','/p/delete/:postID', capture_errors({
+  on_error = util.HandleError,
+  function(request)
 
-  local confirmed = request.params.confirmdelete
+    local confirmed = request.params.confirmdelete
 
-  if not confirmed then
-    return {render = 'post.confirmdelete'}
+    if not confirmed then
+      return {render = 'post.confirmdelete'}
+    end
+
+    local postID = request.params.postID
+    local userID = request.params.userID
+
+    assert_error(postAPI:DeletePost(userID, postID))
+
+    return { redirect_to = request:url_for("frontpage") }
+
   end
-
-  local postID = request.params.postID
-  local userID = request.params.userID
-
-  local ok, err = postAPI:DeletePost(userID, postID)
-
-  if ok then
-    return 'success'
-  else
-    return 'failed: '..err
-  end
-
-end)
+}))
 
 app:match('post.report', '/p/report/:postID', respond_to({
-  GET = function(request)
-
-    local ok = postAPI:GetPost(request.session.userID, request.params.postID)
-    request.post = ok
-    return {render = 'post.report'}
-  end,
-  POST = function(request)
-
-    local ok, err = postAPI:ReportPost(request.session.userID, request.params.postID, request.params.reportreason)
-    if ok then
-      return 'reported!'
-    else
-      return err
+  GET = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+      request.post = assert_error(postAPI:GetPost(request.session.userID, request.params.postID))
+      return {render = true}
     end
-  end
+  }),
+  POST = capture_errors({
+    on_error = util.HandleError,
+    function(request)
+      assert_error(postAPI:ReportPost(request.session.userID, request.params.postID, request.params.reportreason))
+      return 'thanks, this post has been reported'
+    end
+  })
 }))
 
 
-app:get('upvotetag','/p/upvotetag/:tagName/:postID',function(request)
+app:get('upvotetag','/p/upvotetag/:tagName/:postID',capture_errors({
+  on_error = util.HandleError,
+  function(request)
 
+    assert_error(tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up'))
+    return true
 
-  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'up')
-  return 'meep'
-
-end)
-
-app:get('downvotetag','/p/downvotetag/:tagName/:postID',function(request)
-
-  tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down')
-  return 'meep'
-
-end)
-
-app:get('upvotepost','/p/upvote/:postID', function(request)
-  if not request.session.userID then
-    return 'You must be logged in to vote'
   end
-  if not HashIsValid(request) then
-    return 'invalid hash'
+}))
+
+app:get('downvotetag','/p/downvotetag/:tagName/:postID',capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    assert_error(tagAPI:VoteTag(request.session.userID, request.params.postID, request.params.tagName, 'down'))
+    return 'meep'
+
   end
-  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID, 'up')
-  if ok then
+}))
+
+app:get('upvotepost','/p/upvote/:postID', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    if not HashIsValid(request) then
+      return yield_error('invalid hash')
+    end
+    assert_error(postAPI:VotePost(request.session.userID, request.params.postID, 'up'))
+
     return { redirect_to = request:url_for("home") }
-  else
-    return 'fail: ', err
-  end
-end)
 
-app:get('downvotepost','/p/downvote/:postID', function(request)
-  if not request.session.userID then
-    return 'You must be logged in to vote'
   end
-  if not HashIsValid(request) then
-    return 'invalid hash'
-  end
-  local ok, err = postAPI:VotePost(request.session.userID, request.params.postID,'down')
-  if ok then
+}))
+
+app:get('downvotepost','/p/downvote/:postID', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    if not HashIsValid(request) then
+      return yield_error('invalid hash')
+    end
+    assert_error(postAPI:VotePost(request.session.userID, request.params.postID, 'down'))
+
     return { redirect_to = request:url_for("home") }
-  else
-    return 'fail: ', err
+
   end
-end)
+}))
 
-app:get('subscribepost', '/p/subscribe/:postID', function(request)
-
-  local ok, err = postAPI:SubscribePost(request.session.userID,request.params.postID)
-  if ok then
+app:get('subscribepost', '/p/subscribe/:postID', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+    assert_error(postAPI:SubscribePost(request.session.userID,request.params.postID))
     return { redirect_to = request:url_for("post.view",{postID = request.params.postID}) }
-  else
-    return 'error subscribing: ', err
   end
-end)
+}))
 
-app:get('savepost','/p/save/:postID',function(request)
-  local userID = request.session.userID
-
-  local postID =  request.params.postID
-  local ok, err = userAPI:ToggleSavePost(userID, postID)
-  if not ok then
-    print('error saving post, ',err)
-    return 'error saving post'
+app:get('savepost','/p/save/:postID',capture_errors({
+  on_error = util.HandleError,
+  function(request)
+    local userID = request.session.userID
+    local postID = request.params.postID
+    assert_error(userAPI:ToggleSavePost(userID, postID))
+    return { redirect_to = request:url_for("post.view",{postID = postID}) }
   end
-  return 'succes'
-end)
+}))
 
-app:get('reloadimage','/p/reloadimage/:postID', function(request)
+app:get('reloadimage','/p/reloadimage/:postID', capture_errors({
+  on_error = util.HandleError,
+  function(request)
 
-  local userID = request.session.userID
-  local postID = request.params.postID
+    local userID = request.session.userID
+    local postID = request.params.postID
 
-  local ok, err = postAPI:ReloadImage(userID, postID)
-  if ok then
-    return 'success'
-  else
-    return err
+    assert_error(postAPI:ReloadImage(userID, postID))
+    return { redirect_to = request:url_for("post.view",{postID = postID}) }
   end
-end)
+}))
