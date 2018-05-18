@@ -202,7 +202,6 @@ function write:LogUniqueSiteView(baseKey, statTime, userID, value)
       red:zadd(zkey, newTime, statKey)
 
       -- add unique view
-      print('adding a unique view for:', statKey, ' user: ', userID)
       red:pfadd(statKey, userID)
 
     end
