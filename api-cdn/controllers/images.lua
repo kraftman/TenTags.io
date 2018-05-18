@@ -41,7 +41,7 @@ app:get('postIcon', '/p/i/:postID', capture_errors(function(request)
 
   local post = assert_error(postAPI:GetPost(userID, request.params.postID))
 
-  local user = userAPI:GetUser(userID)
+  local user = request.userInfo
   if not user then
     -- panic
     user = {
