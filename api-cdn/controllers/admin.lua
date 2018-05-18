@@ -58,8 +58,8 @@ app:get('admin.stats', '/admin/stats', capture_errors({
   on_error = util.HandleError,
   function(request)
 
-    request.stats = assert_error(adminAPI:GetSiteUniqueStats())
     request.totals = assert_error(adminAPI:GetSiteStats())
+    request.stats = assert_error(adminAPI:GetSiteUniqueStats())
 
     return {render = true}
   end

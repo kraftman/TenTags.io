@@ -13,7 +13,7 @@ function M:GetBacklogStats(jobName, startAt, endAt)
 end
 
 function M:GetSiteUniqueStats()
-  return assert_error(redisRead:GetSiteUniqueStats('sitestat:device:minutes'))
+  return redisRead:GetSiteUniqueStats('sitestat:device:minutes')
 end
 
 function M:GetSiteStats()

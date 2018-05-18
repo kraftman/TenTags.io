@@ -131,16 +131,17 @@ end
 
 function read:GetSiteUniqueStats(key)
   local red = self:GetRedisReadConnection()
-  --print('gettin stats for: ', key)
-  local ok, err = red:zrange(key,0, 100)
+  print('gettin stats for: ', key)
+  local ok, err = red:zrevrange(key,0, 10)
   if not ok then
     return ok, err
   end
-  --print(to_json(ok))
+  print(to_json(ok))
   local results = {}
-  for k, v in pairs(ok) do
+  for _, v in pairs(ok) do
     --print('getting stat for : ',v)
     results[v] = red:pfcount(v)
+    --print('got ', results[v])
   end
   return results
 end

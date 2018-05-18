@@ -190,21 +190,22 @@ function write:LogUniqueSiteView(baseKey, statTime, userID, value)
   times.months = '2592000'
 
   local zkey, statKey, newTime, ok, err
-  -- needs wrapping in pipeline
+
   red:init_pipeline()
-  for k,label in pairs(times) do
-    zkey = baseKey..':'..k
+    for k,label in pairs(times) do
+      zkey = baseKey..':'..k
 
-    newTime = statTime - (statTime % label)
-    statKey = baseKey..':'..statTime..':'..value
+      newTime = statTime - (statTime % label)
+      statKey = baseKey..':'..statTime..':'..value
 
-    -- maintain a list of logs
-    red:zadd(zkey, newTime, statKey)
+      -- maintain a list of logs
+      red:zadd(zkey, newTime, statKey)
 
-    -- add unique view
-    red:pfadd(statKey, userID)
+      -- add unique view
+      print('adding a unique view for:', statKey, ' user: ', userID)
+      red:pfadd(statKey, userID)
 
-  end
+    end
   ok, err = red:commit_pipeline()
   self:SetKeepalive(red)
 

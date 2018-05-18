@@ -11,8 +11,6 @@ local pageStatLog = ngx.shared.pageStatLog
 local redisRead = (require 'redis.db').redisRead
 local redisWrite = (require 'redis.db').redisWrite
 
-
-
 function config:New(util)
   local c = setmetatable({},self)
   c.util = util
@@ -21,7 +19,6 @@ function config:New(util)
 
   return c
 end
-
 
 function config.Run(_,self)
   local ok, err = ngx.timer.at(CONFIG_CHECK_INTERVAL, self.Run, self)
@@ -35,7 +32,6 @@ function config.Run(_,self)
   self:GetStats()
   self:GetPageStats()
   self:FlushStats()
-
 
 end
 
@@ -160,7 +156,6 @@ end
 function config:GetStats()
   -- check the backlog for each QueueJob
   -- add it to a sorted setmetatable
-
 
   local queues = {
     'CheckReposts',
