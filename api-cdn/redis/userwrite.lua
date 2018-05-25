@@ -125,7 +125,7 @@ function userwrite:AddUserAlert(createdAt,userID, alert)
   return ok, err
 end
 
-
+-- also used to update comments
 function userwrite:AddComment(commentInfo)
   local red = self:GetUserWriteConnection()
   local ok, err = red:zadd(
@@ -136,11 +136,13 @@ function userwrite:AddComment(commentInfo)
   if not ok then
     ngx.log(ngx.ERR, 'unable to add comment:', err)
   end
-  ok, err = red:zadd(
-    'userComments:score:'..commentInfo.createdBy,
-    commentInfo.score,
-    commentInfo.postID..':'..commentInfo.id
-  )
+  for tagName,tag in pairs(commentInfo.tags) do
+    ok, err = red:zadd(
+      'userComments:score:'..commentInfo.createdBy..':tag:'..tagName,
+      tag.score,
+      commentInfo.postID..':'..commentInfo.id
+    )
+  end
   return ok, err
 end
 

@@ -211,7 +211,8 @@ end
 local permittedSorts = {
   best = 'best',
   new = 'new',
-  top = 'top'
+  top = 'top',
+  funny = 'funny',
 }
 
 local function parseSortBy(sortBy)
@@ -225,7 +226,8 @@ end
 local function getPostComments(request, postID)
   -- add comments to post
 
-  local sortBy = parseSortBy(request.params.sortBy)
+  local sortBy = parseSortBy(request.params.sort)
+  print(request.params.sort, sortBy)
   local userID = request.session.userID or 'default'
   local comments = commentAPI:GetPostComments(userID, postID, sortBy) or {}
   for _,comment in pairs(comments) do

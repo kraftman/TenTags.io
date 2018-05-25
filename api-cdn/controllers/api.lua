@@ -84,6 +84,23 @@ app:match('api-upvotecomment', '/api/comment/upvote/:postID/:commentID/:commentH
   end
 ))
 
+app:match('api-votecomment', '/api/comment/votecomment/:postID/:commentID/:commentHash/:tag',
+  capture_errors_json(function(request)
+
+    if not HashIsValid(request) then
+      yield_error('invalid data!')
+    end
+    print('tag: ', request.params.tag)
+    local rs, rp = request.session, request.params
+    local ok = assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, rp.tag))
+    if not ok then
+      yield_error('invalid data!')
+    end
+    print('c')
+    return {json = {error = false, data = {true}} }
+  end
+))
+
 app:match(
   'api-downvotecomment',
   '/api/comment/downvote/:postID/:commentID/:commentHash',

@@ -109,6 +109,20 @@ app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', c
   end
 }))
 
+app:get('votecomment','/comment/votecomment/:postID/:commentID/:commentHash/:tag', capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    if not HashIsValid(request) then
+      return 'hashes dont match'
+    end
+
+    local rs, rp = request.session, request.params
+    assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, rp.tag))
+    return 'success'
+  end
+}))
+
 app:post('newcomment','/comment/', capture_errors({
   on_error = util.HandleError,
   function(request)

@@ -53,6 +53,7 @@ m.routes['viewcommentshort'] = {maxCalls = 10, duration = 10, access = Public}
 m.routes['subscribecomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['upvotecomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['downvotecomment'] = {maxCalls = 10, duration = 60, access = User}
+m.routes['votecomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['newcomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['viewcomment'] = {maxCalls = 10, duration = 10, access = Public}
 

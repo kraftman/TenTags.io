@@ -29,15 +29,11 @@
       <% if child.deleted then %>
         <p>[deleted]</p>
       <% else %>
-        <div style='<%= child.hidden and "display: none" or ""%>' class="comment-text  <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
+        <div style = '<%= child.hidden and "display: none" or ""%>' class="comment-text  <% for _,filter in pairs(child.filters or {}) do %><%= filter.id -%> <% end %> ">
 
           <%- child.text -%>
         </div>
       <% end %>
-
-
-
-
 
       <div class = 'comment-controls'>
         <div>
@@ -46,14 +42,12 @@
             <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
           <% end %>
         </div>
-        <% if not child.userHasVoted then %>
-          <a class='downvotecomment-button' href="<%= url_for('downvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
-            <img class = 'svg-icon-small' alt='vote up' src="/static/svg/down-arrow.svg" >
+          <a class='downvotecomment-button' href="<%= url_for('votecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funny'}) %> ">
+            <img class = 'svg-icon-small' alt='vote up' src="/static/icons/laughing.svg" >
           </a>
-          <a class='upvotecomment-button' href="<%= url_for('upvotecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash}) %> ">
-            <img class = 'svg-icon-small' alt='vote up' src="/static/svg/up-arrow.svg" >
+          <a class='upvotecomment-button' href="<%= url_for('votecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'sad'})  %> ">
+            <img class = 'svg-icon-small' alt='vote up' src="/static/icons/crying.svg" >
           </a>
-        <% end %>
         <% if child.shortURL then %>
           <a class='comment-reply-button' href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
             <img class = 'svg-icon-small' alt='reply' src="/static/svg/reply.svg" >

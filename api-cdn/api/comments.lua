@@ -14,7 +14,7 @@ local userAPI = require 'api.users'
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
 
-function api:VoteComment(userID, postID, commentID,direction)
+function api:VoteComment(userID, postID, commentID, tag)
 
 	if self:UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
@@ -24,7 +24,7 @@ function api:VoteComment(userID, postID, commentID,direction)
 		userID = userID,
 		postID = postID,
 		commentID = commentID,
-		direction = direction,
+		tag = tag,
 		id = userID..':'..commentID
 	}
 	self:QueueUpdate('comment:vote', commentVote)
@@ -59,7 +59,9 @@ function api:ConvertUserCommentToComment(userID, comment)
 		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
 		parentID = self:SanitiseUserInput(comment.parentID),
 		postID = self:SanitiseUserInput(comment.postID),
-		viewID = user.currentView
+		viewID = user.currentView,
+		tags = {},
+		votes = 0,
 	}
 
 	return newComment

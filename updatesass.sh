@@ -1,1 +1,1 @@
-sass static/css/sitestyle.scss static/css/sitestyle.min.css --style compressed
+sass api-cdn/static/css/sitestyle.scss api-cdn/static/css/sitestyle.min.css --style compressed

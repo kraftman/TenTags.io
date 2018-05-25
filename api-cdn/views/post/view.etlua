@@ -153,6 +153,11 @@
         selected = 'selected'
       <% end %>
   >Top</option>
+      <option value="<%= url_for('post.view',{postID = post.shortURL}) %>?sort=funny"
+        <% if not params or params.sort == 'funny' then %>
+          selected = 'selected'
+        <% end %>
+    >Funny</option>
   </select>
   </br>Show comments by filter:
 

@@ -9,6 +9,7 @@ local commentAPI = require 'api.comments'
 local cache = require 'api.cache'
 local tinsert = table.insert
 local from_json = (require 'lapis.util').from_json
+local to_json = (require 'lapis.util').to_json
 local updateDict = ngx.shared.updateQueue
 
 
@@ -123,31 +124,38 @@ function config:GetCommentVotes()
 
 end
 
-
 function config:ProcessCommentVote(commentVote)
   local comment = commentAPI:GetComment(commentVote.postID, commentVote.commentID)
 
   if commentAPI:UserHasVotedComment(commentVote.userID, commentVote.commentID) then
 		return true
-	end
-  if commentVote.direction == 'up' then
-		comment.up = comment.up + 1
-	elseif commentVote.direction == 'down' then
-		comment.down = comment.down + 1
-	end
+  end
+  -- need to count total votes so we have a baseline to score against
+  -- then need to score based on funny vs total votes, sad vs total votes etc
+  -- to get a guessed weighting
 
-  comment.score = self.util:GetScore(comment.up, comment.down)
+  -- TODO add this stuff to comment creation
+  comment.votes = comment.votes and comment.votes + 1 or 1
+  comment.tags = comment.tags or {}
+  comment.tags[commentVote.tag] = comment.tags[commentVote.tag] or {}
+  local commentTag = comment.tags[commentVote.tag]
+  commentTag.votes = commentTag.votes and commentTag.votes + 1 or 1
+  -- TODO: write a proper sorting algorithm
+  commentTag.score = commentTag.votes / comment.votes
+  print(to_json(comment))
 
   local ok, err = self.userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
   if not ok then
     return ok, err
   end
 
-  if commentVote.direction == 'up' then
-		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvoteup',1)
-	else
-		ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commentvotedown',1)
-	end
+  -- increment the authors stats
+  ok, err = self.userWrite:IncrementUserStat(comment.createdBy, 'stat:commenttag:'..commentVote.tag, 1)
+	if not ok then
+		return ok, err
+  end
+
+  ok, err = self.userWrite:IncrementUserStat(commentVote.userID, 'stat:commenttagvote:'..commentVote.tag, 1)
 	if not ok then
 		return ok, err
 	end

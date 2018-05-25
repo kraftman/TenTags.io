@@ -502,6 +502,28 @@ function cache:GetSortedComments(userID, postID,sortBy)
     table.sort(indexedComments, function(a,b) return a.up-a.down > b.up -b.down end)
   elseif sortBy == 'new' then
     table.sort(indexedComments, function(a,b) return a.createdAt > b.createdAt end)
+  elseif sortBy == 'funny' then
+    print('sorting by funny')
+
+    --print('===== CACHE_ENABLEND:', ENABLE_CACHE)
+    table.sort(indexedComments, function(a,b)
+      print('sorting')
+      if not a.tags or not b.tags then
+        return false
+      end
+      if not a.tags.funny or not b.tags.funny then
+        print('neither have funny')
+      end
+      if not a.tags.funny then
+        print('no tag a')
+        return false
+      elseif not b.tags.funny then
+        print('no tag b')
+        return false
+      end
+      print('both have tags')
+      return a.tags.funny.score > b.tags.funny.score
+    end)
   else
     table.sort(indexedComments, function(a,b) return a.score > b.score end)
   end

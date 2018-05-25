@@ -35,7 +35,7 @@ function M:QueueUpdate(key, object)
 	cjson.encode_sparse_array(true)
 	local ok, err = updateDict:lpush(key, cjson.encode(object))
 	if not ok then
-		ngx.log(ngx.ERR, 'unable to queue update:', err)
+		ngx.log(ngx.ERR, 'unable to queue update:', err, cjson.encode(object))
 	end
 end
 
