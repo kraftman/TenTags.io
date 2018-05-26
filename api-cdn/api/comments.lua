@@ -147,8 +147,6 @@ function api:ProcessMentions(oldComment, newComment)
 
 end
 
-
-
 function api:CreateComment(userID, userComment)
 
 	local newComment = api:ConvertUserCommentToComment(userID, userComment)
@@ -161,7 +159,7 @@ function api:CreateComment(userID, userComment)
 	-- add our new comment to the cache
 	local postComments = cache:GetPostComments(newComment.postID)
 	postComments[newComment.id] = newComment
-	cache:WritePostComments(newComment.postID, postComments)
+	--cache:WritePostComments(newComment.postID, postComments)
 	self:QueueUpdate('comment:create', newComment)
 
 	return newComment

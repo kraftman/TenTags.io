@@ -47,7 +47,7 @@ local PRECACHE_INVALID = true
 
 local DEFAULT_CACHE_TIME = 30
 
-local ENABLE_CACHE = os.getenv('ENABLE_CACHE')
+local ENABLE_CACHE = os.getenv('ENABLE_CACHE') == 'true'
 
 
 function cache:GetThread(threadID)
@@ -406,6 +406,7 @@ function cache:GetPostComments(postID)
   local ok, flatComments
 
   if ENABLE_CACHE then
+    print('getting comments from cache', ENABLE_CACHE, ENABLE_CACHE == 'false')
     ok = commentDict:get(postID)
 
     if ok then
@@ -503,26 +504,10 @@ function cache:GetSortedComments(userID, postID,sortBy)
   elseif sortBy == 'new' then
     table.sort(indexedComments, function(a,b) return a.createdAt > b.createdAt end)
   elseif sortBy == 'funny' then
-    print('sorting by funny')
-
-    --print('===== CACHE_ENABLEND:', ENABLE_CACHE)
     table.sort(indexedComments, function(a,b)
-      print('sorting')
-      if not a.tags or not b.tags then
-        return false
-      end
-      if not a.tags.funny or not b.tags.funny then
-        print('neither have funny')
-      end
-      if not a.tags.funny then
-        print('no tag a')
-        return false
-      elseif not b.tags.funny then
-        print('no tag b')
-        return false
-      end
-      print('both have tags')
-      return a.tags.funny.score > b.tags.funny.score
+      local scoreA = a.tags and a.tags.funny and a.tags.funny.score or 0
+      local scoreB = b.tags and b.tags.funny and b.tags.funny.score or 0
+      return scoreA > scoreB
     end)
   else
     table.sort(indexedComments, function(a,b) return a.score > b.score end)
