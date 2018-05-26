@@ -22,7 +22,6 @@ function api:VoteComment(userID, postID, commentID, tag)
 	end
 	tag = tag:lower()
 	if not reactions[tag] then
-		print('invalid tag')
 		return nil, 'invalid tag'
 	end
 
@@ -128,7 +127,6 @@ function api:GetMentionedUsers(text)
 	local mentionedUsers = {}
 	local user
 	for username in text:gmatch('@(%S%S%S%S+)') do
-		print(username)
 		user = cache:GetUserByName(username)
 		if user then
 			mentionedUsers[username] = user

@@ -41,7 +41,6 @@
             <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
           <% end %>
         </div>
-          <%- child.topScore -%> 
           <a class='downvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funnys'}) %> ">
             <img class = 'svg-icon-small' alt='vote up' src="/static/icons/laughing.svg" >
           </a>
