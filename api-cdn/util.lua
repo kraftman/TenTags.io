@@ -46,6 +46,11 @@ function util.HandleError(request)
   return {render = 'errors.general'}
 end
 
+function util.HandleJsonError(request)
+  ngx.log(ngx.ERR, to_json(request.errors))
+  return {json = {error = request.errors}, status = 400}
+end
+
 function util.RateLimit(request)
 
   local userID = ngx.ctx.userID
