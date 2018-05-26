@@ -58,7 +58,7 @@ postHandler.prototype = function() {
        $.get('/api'+$(e.currentTarget).attr('href'),function(data){
          console.log(data);
          if(data.error == false ){
-           $(e.currentTarget).parent().children('.upvotecomment-button, .downvotecomment-button').hide()
+           //$(e.currentTarget).parent().children('.upvotecomment-button, .downvotecomment-button').hide()
          }
        })
     })

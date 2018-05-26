@@ -35,8 +35,7 @@ m.routes['alerts'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['api-subscribefilter'] = {maxCalls = 20, duration = 60, access = User}
 m.routes['api-filtersearch'] = {maxCalls = 20, duration = 60, access = Public}
 m.routes['api-userfilters'] = {maxCalls = 30, duration = 60, access = User}
-m.routes['api-upvotecomment'] = {maxCalls = 30, duration = 60, access = User}
-m.routes['api-downvotecomment'] = {maxCalls = 30, duration = 60, access = User}
+m.routes['api-votecomment'] = {maxCalls = 30, duration = 60, access = User}
 m.routes['api-upvotepost'] = {maxCalls = 30, duration = 60, access = User}
 m.routes['api-downvotepost'] = {maxCalls = 30, duration = 60, access = User}
 m.routes['api-settings'] = {maxCalls = 30, duration = 60, access = User}
@@ -51,9 +50,7 @@ m.routes['api-taguser'] = {maxCalls = 40, duration = 120, access = User}
 m.routes['deletecomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['viewcommentshort'] = {maxCalls = 10, duration = 10, access = Public}
 m.routes['subscribecomment'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['upvotecomment'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['downvotecomment'] = {maxCalls = 10, duration = 60, access = User}
-m.routes['votecomment'] = {maxCalls = 10, duration = 60, access = User}
+m.routes['comment.vote'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['newcomment'] = {maxCalls = 10, duration = 60, access = User}
 m.routes['viewcomment'] = {maxCalls = 10, duration = 10, access = Public}
 

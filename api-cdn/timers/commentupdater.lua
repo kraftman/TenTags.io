@@ -142,6 +142,7 @@ function config:ProcessCommentVote(commentVote)
   commentTag.votes = commentTag.votes and commentTag.votes + 1 or 1
   -- TODO: write a proper sorting algorithm
   commentTag.score = commentTag.votes / comment.votes
+  print('new score:', commentTag.score)
   print(to_json(comment))
 
   local ok, err = self.userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)

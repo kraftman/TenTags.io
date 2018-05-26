@@ -68,21 +68,6 @@ app:match('api-upvotepost', '/api/post/:postID/upvote', capture_errors_json(func
   return { json = {status = 'success', data = {}} }
 end))
 
-app:match('api-upvotecomment', '/api/comment/upvote/:postID/:commentID/:commentHash',
-  capture_errors_json(function(request)
-
-    if not HashIsValid(request) then
-      yield_error('invalid data!')
-    end
-    local rs, rp = request.session, request.params
-    local ok = assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, 'up'))
-    if not ok then
-      yield_error('invalid data!')
-    end
-    print('c')
-    return {json = {error = false, data = {true}} }
-  end
-))
 
 app:match('api-votecomment', '/api/comment/votecomment/:postID/:commentID/:commentHash/:tag',
   capture_errors_json(function(request)
@@ -90,29 +75,12 @@ app:match('api-votecomment', '/api/comment/votecomment/:postID/:commentID/:comme
     if not HashIsValid(request) then
       yield_error('invalid data!')
     end
-    print('tag: ', request.params.tag)
+
     local rs, rp = request.session, request.params
     local ok = assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, rp.tag))
     if not ok then
       yield_error('invalid data!')
     end
-    print('c')
-    return {json = {error = false, data = {true}} }
-  end
-))
-
-app:match(
-  'api-downvotecomment',
-  '/api/comment/downvote/:postID/:commentID/:commentHash',
-  capture_errors_json(function(request)
-    if not request.session.userID then
-      yield_error('you must be logged in!')
-    end
-    if request.params.hash ~= ngx.md5(request.params.postID..request.session.userID) then
-      return 'invalid hash'
-    end
-
-    assert_error(commentAPI:VoteComment(request.session.userID, request.params.postID, request.params.commentID,'down'))
 
     return {json = {error = false, data = {true}} }
   end

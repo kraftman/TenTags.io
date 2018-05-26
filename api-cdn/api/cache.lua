@@ -454,9 +454,7 @@ function cache:FiltersOverlap(postFilters, commentFilters)
   return false
 end
 
-function cache:GetSortedComments(userID, postID,sortBy)
-
-  local flatComments = assert_error(self:GetPostComments(postID))
+function cache:AddUserSettingToComment(userID, postID, flatComments)
   local indexedComments = {}
   -- format flatcomments
 
@@ -494,24 +492,54 @@ function cache:GetSortedComments(userID, postID,sortBy)
       end
     end
 
-
     tinsert(indexedComments, v)
 
   end
+  return indexedComments
+end
+
+local function sortComments(comments, sortBy)
 
   if sortBy == 'top' then
-    table.sort(indexedComments, function(a,b) return a.up-a.down > b.up -b.down end)
+    table.sort(comments, function(a,b) return a.up-a.down > b.up -b.down end)
   elseif sortBy == 'new' then
-    table.sort(indexedComments, function(a,b) return a.createdAt > b.createdAt end)
+    table.sort(comments, function(a,b) return a.createdAt > b.createdAt end)
   elseif sortBy == 'funny' then
-    table.sort(indexedComments, function(a,b)
-      local scoreA = a.tags and a.tags.funny and a.tags.funny.score or 0
-      local scoreB = b.tags and b.tags.funny and b.tags.funny.score or 0
-      return scoreA > scoreB
-    end)
+    -- table.sort(comments, function(a,b)
+    --   local scoreA = a.tags and a.tags.funny and a.tags.funny.score or 0
+    --   local scoreB = b.tags and b.tags.funny and b.tags.funny.score or 0
+    --   return scoreA > scoreB
+    -- end)
   else
-    table.sort(indexedComments, function(a,b) return a.score > b.score end)
+    table.sort(comments, function(a,b) return a.score > b.score end)
   end
+end
+
+function cache:getScores(comment)
+  local childCount = 1;
+  local score = comment.tags and comment.tags.funny and comment.tags.funny.score or 0;
+  -- print('comment score: ', score)
+
+  for _,child in pairs(comment.children) do
+    local c, s = self:getScores(child)
+    childCount = childCount + c
+    score = score + s
+  end
+  -- print('childcount: ', childCount, ' score: ', score)
+  table.sort(comment.children, function(a,b) return a.totalScore > b.totalScore end)
+  comment.totalScore = score / childCount -- TODO add weighting
+  comment.childCount = childCount
+  comment.score = score
+  return childCount, score
+end
+
+function cache:GetSortedComments(userID, postID, sortBy)
+
+  local flatComments = assert_error(self:GetPostComments(postID))
+
+  local indexedComments = self:AddUserSettingToComment(userID, postID, flatComments)
+
+  sortComments(indexedComments, sortBy)
 
   local keyedComments = {}
 
@@ -525,6 +553,15 @@ function cache:GetSortedComments(userID, postID,sortBy)
   for _,comment in pairs(indexedComments) do
     tinsert(keyedComments[comment.parentID].children,comment)
   end
+
+  if sortBy == 'funny' then
+    for k,comment in pairs(keyedComments) do
+      self:getScores(comment)
+    end
+    table.sort(keyedComments[postID].children, function(a,b)
+    return a.totalScore > b.totalScore end)
+  end
+  
   return keyedComments
 
 end

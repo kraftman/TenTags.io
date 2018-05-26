@@ -42,10 +42,10 @@
             <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
           <% end %>
         </div>
-          <a class='downvotecomment-button' href="<%= url_for('votecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funny'}) %> ">
+          <a class='downvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funny'}) %> ">
             <img class = 'svg-icon-small' alt='vote up' src="/static/icons/laughing.svg" >
           </a>
-          <a class='upvotecomment-button' href="<%= url_for('votecomment',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'sad'})  %> ">
+          <a class='upvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'sad'})  %> ">
             <img class = 'svg-icon-small' alt='vote up' src="/static/icons/crying.svg" >
           </a>
         <% if child.shortURL then %>

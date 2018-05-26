@@ -82,34 +82,7 @@ app:get('subscribecomment','/comment/subscribe/:postID/:commentID', capture_erro
   end
 }))
 
-app:get('upvotecomment','/comment/upvote/:postID/:commentID/:commentHash', capture_errors({
-  on_error = util.HandleError,
-  function(request)
-
-    if not HashIsValid(request) then
-      return 'hashes dont match'
-    end
-    local rs, rp = request.session, request.params
-    assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, 'up'))
-    return 'success'
-  end
-}))
-
-app:get('downvotecomment','/comment/downvote/:postID/:commentID/:commentHash', capture_errors({
-  on_error = util.HandleError,
-  function(request)
-
-    if not HashIsValid(request) then
-      return 'hashes dont match'
-    end
-
-    local rs, rp = request.session, request.params
-    assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID,'down'))
-    return 'success'
-  end
-}))
-
-app:get('votecomment','/comment/votecomment/:postID/:commentID/:commentHash/:tag', capture_errors({
+app:get('comment.vote','/comment/votecomment/:postID/:commentID/:commentHash/:tag', capture_errors({
   on_error = util.HandleError,
   function(request)
 

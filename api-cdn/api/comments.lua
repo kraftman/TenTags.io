@@ -159,7 +159,7 @@ function api:CreateComment(userID, userComment)
 	-- add our new comment to the cache
 	local postComments = cache:GetPostComments(newComment.postID)
 	postComments[newComment.id] = newComment
-	--cache:WritePostComments(newComment.postID, postComments)
+	cache:WritePostComments(newComment.postID, postComments)
 	self:QueueUpdate('comment:create', newComment)
 
 	return newComment
@@ -187,6 +187,10 @@ end
 
 function api:UserHasVotedComment(userID, commentID)
 	-- can only see own
+	local user = cache:GetUser(userID);
+	if user.role == 'Admin' then
+		return false
+	end
 	local userCommentVotes = cache:GetUserCommentVotes(userID)
 	return userCommentVotes[commentID]
 end
