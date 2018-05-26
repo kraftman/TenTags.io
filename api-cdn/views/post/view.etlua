@@ -138,27 +138,14 @@
 
   Sort comments:
   <select onchange="location = this.options[this.selectedIndex].value;" >
-    <option value="<%= url_for('post.view',{postID = post.id})%>?sort=best"
-      <% if not params or params.sort == 'best' then %>
-        selected = 'selected'
-      <% end %>
-    >Best</option>
-    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=new"
-      <% if params.sort == 'new' then %>
-        selected = 'selected'
-      <% end %>
-    >New</option>
-    <option value="<%= url_for('post.view',{postID = post.id}) %>?sort=top"
-      <% if not params or params.sort == 'top' then %>
-        selected = 'selected'
-      <% end %>
-  >Top</option>
-      <option value="<%= url_for('post.view',{postID = post.shortURL}) %>?sort=funny"
-        <% if not params or params.sort == 'funny' then %>
-          selected = 'selected'
-        <% end %>
-    >Funny</option>
-  </select>
+    <% for sortKey,sortName in pairs(commentSorts) do %>
+      <option value="<%= url_for('post.view',{postID = post.shortURL})%>?sort=<%- sortKey %>"
+          <% if not params or params.sort == sortKey then %>
+            selected = 'selected'
+          <% end %>
+        ><%= sortName %></option>
+    <% end %>
+      
   </br>Show comments by filter:
 
   <% render("views.st.newcomment") %>

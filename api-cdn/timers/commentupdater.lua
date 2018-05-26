@@ -11,7 +11,7 @@ local tinsert = table.insert
 local from_json = (require 'lapis.util').from_json
 local to_json = (require 'lapis.util').to_json
 local updateDict = ngx.shared.updateQueue
-
+local reactionPositive = (require 'lib.constants').reactionPositive
 
 local common = require 'timers.common'
 setmetatable(config, common)
@@ -124,6 +124,33 @@ function config:GetCommentVotes()
 
 end
 
+local function GetScore(up,down)
+	--http://julesjacobs.github.io/2015/08/17/bayesian-scoring-of-ratings.html
+	--http://www.evanmiller.org/bayesian-average-ratings.html
+	if up == 0 then
+      return -down
+  end
+  local n = up + down
+  local z = 1.64485 --1.0 = 85%, 1.6 = 95%
+  local phat = up / n
+  return (phat+z*z/(2*n)-z*math.sqrt((phat*(1-phat)+z*z/(4*n))/n))/(1+z*z/n)
+
+end
+
+local function recalculateVirtualScores(comment)
+  local up = 0
+  local down = 0
+  for tagName,tag in pairs(comment.tags) do
+    if reactionPositive[tagName] then
+      up = up + 1
+    else
+      down = down + 1
+    end
+  end
+  comment.topScore = up - down
+  comment.bestScore = GetScore(up, down)
+end
+
 function config:ProcessCommentVote(commentVote)
   local comment = commentAPI:GetComment(commentVote.postID, commentVote.commentID)
 
@@ -142,8 +169,8 @@ function config:ProcessCommentVote(commentVote)
   commentTag.votes = commentTag.votes and commentTag.votes + 1 or 1
   -- TODO: write a proper sorting algorithm
   commentTag.score = commentTag.votes / comment.votes
-  print('new score:', commentTag.score)
-  print(to_json(comment))
+  
+  recalculateVirtualScores(comment)
 
   local ok, err = self.userWrite:AddUserCommentVotes(commentVote.userID, commentVote.commentID)
   if not ok then

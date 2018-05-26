@@ -10,6 +10,7 @@ local COMMENT_START_UPVOTES = 1
 local COMMENT_LENGTH_LIMIT = 2000
 local userlib = require 'lib.userlib'
 local userAPI = require 'api.users'
+local reactions = (require 'lib.constants').reactions
 
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
@@ -18,6 +19,11 @@ function api:VoteComment(userID, postID, commentID, tag)
 
 	if self:UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
+	end
+	tag = tag:lower()
+	if not reactions[tag] then
+		print('invalid tag')
+		return nil, 'invalid tag'
 	end
 
 	local commentVote = {
@@ -52,9 +58,8 @@ function api:ConvertUserCommentToComment(userID, comment)
 		id = uuid.generate_random(),
 		createdAt = ngx.time(),
 		createdBy = self:SanitiseUserInput(comment.createdBy),
-		up = COMMENT_START_UPVOTES,
-		down = COMMENT_START_DOWNVOTES,
-		score = self:GetScore(COMMENT_START_UPVOTES,COMMENT_START_DOWNVOTES),
+		totalScore = 0,
+		bestScore = 0,
 		viewers = {comment.createdBy},
 		text = self:SanitiseUserInput(comment.text, COMMENT_LENGTH_LIMIT),
 		parentID = self:SanitiseUserInput(comment.parentID),

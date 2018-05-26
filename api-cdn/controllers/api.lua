@@ -79,6 +79,7 @@ app:match('api-votecomment', '/api/comment/votecomment/:postID/:commentID/:comme
     local rs, rp = request.session, request.params
     local ok = assert_error(commentAPI:VoteComment(rs.userID, rp.postID, rp.commentID, rp.tag))
     if not ok then
+      print('failed')
       yield_error('invalid data!')
     end
 

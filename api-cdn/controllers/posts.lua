@@ -17,6 +17,7 @@ local assert_error = app_helpers.assert_error
 
 local Sanitizer = require("web_sanitize.html").Sanitizer
 local whitelist = require "web_sanitize.whitelist"
+local commentSorts = (require 'constants').commentSorts
 
 local my_whitelist = whitelist:clone()
 
@@ -208,25 +209,19 @@ local function AddLinks(comment)
   comment.text = comment.text:gsub('/f/(%S%S%S+)', '<a href = "/f/%1">/f/%1</a>')
 end
 
-local permittedSorts = {
-  best = 'best',
-  new = 'new',
-  top = 'top',
-  funny = 'funny',
-}
-
 local function parseSortBy(sortBy)
   if not sortBy then
     return 'best'
   end
   sortBy = sortBy:lower();
-  return permittedSorts[sortBy] or 'best'
+  return commentSorts[sortBy] and sortBy or 'best'
 end
 
 local function getPostComments(request, postID)
   -- add comments to post
-
+  print(request.params.sort)
   local sortBy = parseSortBy(request.params.sort)
+  print(sortBy)
 
   local userID = request.session.userID or 'default'
   local comments = commentAPI:GetPostComments(userID, postID, sortBy) or {}
@@ -325,6 +320,7 @@ app:match('post.view','/p/:postID', respond_to({
       end
 
       request.page_title = post.title
+      request.commentSorts = commentSorts
 
       --redirect to shorturl
       if (#postID > 10) and post.shortURL then

@@ -498,40 +498,48 @@ function cache:AddUserSettingToComment(userID, postID, flatComments)
   return indexedComments
 end
 
+local function sortByTag(comments)
+  table.sort(comments, function(a,b)
+    local scoreA = a.tags and a.tags.funny and a.tags.funny.score or 0
+    local scoreB = b.tags and b.tags.funny and b.tags.funny.score or 0
+    return scoreA > scoreB
+  end)
+end
+
 local function sortComments(comments, sortBy)
 
   if sortBy == 'top' then
-    table.sort(comments, function(a,b) return a.up-a.down > b.up -b.down end)
+    table.sort(comments, function(a,b) return a.topScore or 0 > b.topScore or 0 end)
+  elseif sortBy == 'best' then
+    table.sort(comments, function(a,b) return (a.bestScore or 0) > (b.bestScore or 0) end)
   elseif sortBy == 'new' then
     table.sort(comments, function(a,b) return a.createdAt > b.createdAt end)
-  elseif sortBy == 'funny' then
-    -- table.sort(comments, function(a,b)
-    --   local scoreA = a.tags and a.tags.funny and a.tags.funny.score or 0
-    --   local scoreB = b.tags and b.tags.funny and b.tags.funny.score or 0
-    --   return scoreA > scoreB
-    -- end)
   else
-    table.sort(comments, function(a,b) return a.score > b.score end)
+    table.sort(comments, function(a,b)
+      local scoreA = a.tags and a.tags[sortBy] and a.tags[sortBy].score or 0
+      local scoreB = b.tags and b.tags[sortBy] and b.tags[sortBy].score or 0
+      return scoreA > scoreB
+    end)
   end
 end
 
-function cache:getScores(comment)
-  local childCount = 1;
-  local score = comment.tags and comment.tags.funny and comment.tags.funny.score or 0;
-  -- print('comment score: ', score)
+-- function cache:getScores(comment)
+--   local childCount = 1;
+--   local score = comment.tags and comment.tags.funny and comment.tags.funny.score or 0;
+--   -- print('comment score: ', score)
 
-  for _,child in pairs(comment.children) do
-    local c, s = self:getScores(child)
-    childCount = childCount + c
-    score = score + s
-  end
-  -- print('childcount: ', childCount, ' score: ', score)
-  table.sort(comment.children, function(a,b) return a.totalScore > b.totalScore end)
-  comment.totalScore = score / childCount -- TODO add weighting
-  comment.childCount = childCount
-  comment.score = score
-  return childCount, score
-end
+--   for _,child in pairs(comment.children) do
+--     local c, s = self:getScores(child)
+--     childCount = childCount + c
+--     score = score + s
+--   end
+--   -- print('childcount: ', childCount, ' score: ', score)
+--   table.sort(comment.children, function(a,b) return a.totalScore > b.totalScore end)
+--   comment.totalScore = score / childCount -- TODO add weighting
+--   comment.childCount = childCount
+--   comment.score = score
+--   return childCount, score
+-- end
 
 function cache:GetSortedComments(userID, postID, sortBy)
 
@@ -554,13 +562,13 @@ function cache:GetSortedComments(userID, postID, sortBy)
     tinsert(keyedComments[comment.parentID].children,comment)
   end
 
-  if sortBy == 'funny' then
-    for k,comment in pairs(keyedComments) do
-      self:getScores(comment)
-    end
-    table.sort(keyedComments[postID].children, function(a,b)
-    return a.totalScore > b.totalScore end)
-  end
+  -- if sortBy == 'funny' then
+  --   for k,comment in pairs(keyedComments) do
+  --     self:getScores(comment)
+  --   end
+  --   table.sort(keyedComments[postID].children, function(a,b)
+  --   return a.totalScore > b.totalScore end)
+  -- end
   
   return keyedComments
 

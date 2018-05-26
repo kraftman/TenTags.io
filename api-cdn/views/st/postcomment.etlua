@@ -19,8 +19,7 @@
         </a>
       <% end %>
 
-      <span class='comment-title-details'><%= (child.up or 0) - (child.down or 0)  -%> votes
-      <%= TimeAgo(ngx.time() - child.createdAt) -%></span>
+      <span class='comment-title-details'><%= TimeAgo(ngx.time() - child.createdAt) -%></span>
 
 
     </div>
@@ -42,11 +41,21 @@
             <strong <%- CalculateColor(filter.title) %> ><%= filter.title -%></strong>
           <% end %>
         </div>
-          <a class='downvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funny'}) %> ">
+          <%- child.topScore -%> 
+          <a class='downvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'funnys'}) %> ">
             <img class = 'svg-icon-small' alt='vote up' src="/static/icons/laughing.svg" >
           </a>
           <a class='upvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'sad'})  %> ">
             <img class = 'svg-icon-small' alt='vote up' src="/static/icons/crying.svg" >
+          </a>
+          <a class='upvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'angry'})  %> ">
+            <img class = 'svg-icon-small' alt='vote up' src="/static/icons/angry.svg" >
+          </a>
+          <a class='upvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'thumbsup'})  %> ">
+            <img class = 'svg-icon-small' alt='vote up' src="/static/icons/like.svg" >
+          </a>
+          <a class='upvotecomment-button' href="<%= url_for('comment.vote',{commentID = child.id,postID = post.id, commentHash = child.commentHash, tag = 'thumbsdown'})  %> ">
+            <img class = 'svg-icon-small' alt='vote up' src="/static/icons/dislike.svg" >
           </a>
         <% if child.shortURL then %>
           <a class='comment-reply-button' href="<%= url_for('viewcommentshort',{ commentShortURL = child.shortURL}) %>" >
