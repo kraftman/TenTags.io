@@ -1,5 +1,7 @@
 std = 'max'
 globals = {
-    'ngx'
+    'ngx',
+    'assert',
+    'describe',
 }
 self = false
