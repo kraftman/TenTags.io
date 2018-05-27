@@ -17660,6 +17660,7 @@ postHandler.prototype = function() {
 
 
     $('.comment-reply-button').click(function(e) {
+      console.log('cllicked')
       var parent = $(e.currentTarget).closest('.comment')
 
       $('#commentform').insertAfter(parent);

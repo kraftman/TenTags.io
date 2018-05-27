@@ -56,7 +56,6 @@ function commentwrite:CreateComment(commentInfo)
 
   local red = self:GetCommentWriteConnection()
   local serialComment = self:to_json(commentInfo)
-  print('writing comment: ', serialComment)
   local ok, err = red:hmset('postComment:'..commentInfo.postID,commentInfo.id,serialComment)
   self:SetKeepalive(red)
   if not ok then
@@ -64,6 +63,20 @@ function commentwrite:CreateComment(commentInfo)
     return false, err
   end
   return true
+end
+
+function commentwrite:IsUnique(bloomKey, bloomValue)
+  local red = self:GetCommentWriteConnection()
+  local ok, err = red['BF.ADD'](red, bloomKey, bloomValue)
+  self:SetKeepalive(red)
+  if not ok then
+    return ok, err
+  end
+
+  if ok == 1 then
+    return true
+  end
+  return false
 end
 
 

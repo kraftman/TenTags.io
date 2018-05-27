@@ -326,3 +326,8 @@ statcollector aggregates and uses hyperloglogs for perf
 
 Comment Mentions:
 Checks post body for mentions and alerts the user if they are mentioned
+
+Basic bot detection:
+Repeat comments are flagged and the user is given a bot score
+highest stored in userbotscores
+after theshold, example repeat comments are stored in userbotcomments:user:<userID>

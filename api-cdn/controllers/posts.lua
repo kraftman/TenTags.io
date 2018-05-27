@@ -219,9 +219,7 @@ end
 
 local function getPostComments(request, postID)
   -- add comments to post
-  print(request.params.sort)
   local sortBy = parseSortBy(request.params.sort)
-  print(sortBy)
 
   local userID = request.session.userID or 'default'
   local comments = commentAPI:GetPostComments(userID, postID, sortBy) or {}

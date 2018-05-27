@@ -79,6 +79,11 @@ function config:GetCommentEdits()
     ngx.log(ngx.ERR, 'couldnt update comment: ', err)
   end
 
+  ok, err = self.redisWrite:QueueJob('CheckSpam:Comment',{id = comment.postID..':'..comment.id})
+  if not ok then
+    return ok, err
+  end
+
   ok, err = self.redisWrite:InvalidateKey('comment', comment.postID)
   if not ok then
     ngx.log(ngx.ERR, 'couldnt invalidate cache: ', err)
@@ -334,6 +339,11 @@ function config:CreateComment(comment)
 	end
 
   ok, err = self.redisWrite:QueueJob('AddCommentShortURL',{id = comment.postID..':'..comment.id})
+  if not ok then
+    return ok, err
+  end
+
+  ok, err = self.redisWrite:QueueJob('CheckSpam:Comment',{id = comment.postID..':'..comment.id})
   if not ok then
     return ok, err
   end

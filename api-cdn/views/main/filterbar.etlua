@@ -9,7 +9,7 @@
         <input class='hidden-search-input' type="submit" tabindex="-1" style="visibility: hidden;" />
       </form>
 
-    <a class = 'viewall-link' href="<%= url_for('filter.all') %>" class='filterbar-all' >View All</a>
+    <a class = 'viewall-link filterbar-all' href="<%= url_for('filter.all') %>" >View All</a>
     <ul class = 'filterbar-results'>
       <% for i, filter in pairs(userFilters or {}) do %>
         <% render("views.st.filterbarelement",{filter = filter}) %>

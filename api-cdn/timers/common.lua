@@ -17,6 +17,7 @@ function M:ConvertToUnique(jsonData)
   for _,v in pairs(jsonData) do
 
     converted = from_json(v)
+    -- keep the key as-is to use for deletion
     converted.json = v
 		if converted.id then
       commentVotes[converted.id] = converted
@@ -32,7 +33,7 @@ function M:ProcessJob(jobName, callback)
   local lockName = 'L:'..jobName
 
 
-  local ok,err = self.redisRead:GetOldestJobs(jobName, 1000)
+  local ok,err = self.redisRead:GetOldestJobs(jobName, 100)
   if err then
     ngx.log(ngx.ERR, 'unable to get list of comment votes:' ,err)
     return
@@ -53,14 +54,12 @@ function M:ProcessJob(jobName, callback)
     ok, err = self.redisWrite:GetLock(lockName..jobID,10)
 
     if err then
-      ngx.log(ngx.ERR, 'unable to lock commentvote: ',err)
+      ngx.log(ngx.ERR, 'unable to lock job: ',err)
     elseif ok ~= ngx.null then
       -- the bit that does stuff
       ok, err = self[callback](self,job)
       if ok then
         self.redisWrite:RemoveJob(jobName,job.json)
-        -- purge the comment from the cache
-        -- dont remove lock, just to limit updates a bit
       else
         ngx.log(ngx.ERR, 'unable to process ',jobName,':', err)
         self.redisWrite:RemLock(lockName..jobID)

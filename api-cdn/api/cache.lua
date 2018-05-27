@@ -406,7 +406,6 @@ function cache:GetPostComments(postID)
   local ok, flatComments
 
   if ENABLE_CACHE then
-    print('getting comments from cache', ENABLE_CACHE, ENABLE_CACHE == 'false')
     ok = commentDict:get(postID)
 
     if ok then

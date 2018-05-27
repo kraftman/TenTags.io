@@ -2,7 +2,7 @@
 
 
 <div class = 'contents'>
-  <form id='createpost' action='' method='post'accept-charset='UTF-8'>
+  <form id='createpost' action='' method='post' accept-charset='UTF-8'>
     <fieldset >
     <legend>Confirm Delete</legend>
 

@@ -116,7 +116,6 @@ function api:EditComment(userID, userComment)
 	postComments[comment.id] = comment
 	cache:WritePostComments(comment.postID, postComments)
 	self:QueueUpdate('comment:edit', comment)
-	--assert_error(self.commentWrite:CreateComment(comment))
 
 	--return assert_error(self:InvalidateKey('comment', userComment.postID))
 

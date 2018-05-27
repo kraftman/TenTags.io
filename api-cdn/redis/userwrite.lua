@@ -167,7 +167,7 @@ function userwrite:CreateAccount(account)
     end
   end
 
-  local ok, err = red:multi()
+  local ok, err = red:multi() 
   if not ok then
     return ok, err
   end
@@ -297,6 +297,22 @@ function userwrite:ToggleFilterSubscription(userID,filterID,subscribe)
   local ok, err = red:commit_pipeline()
   self:SetKeepalive(red)
 
+  return ok, err
+end
+
+function userwrite:SetBotScore(userID, score)
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:zadd('userbotscores', score, userID)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
+function userwrite:AddBotComments(comment)
+
+  local red = self:GetUserWriteConnection()
+  local commentKey = comment.postID..':'..comment.id
+  local ok, err = red:sadd('userbotcomments:user:'..comment.createdBy, commentKey)
+  self:SetKeepalive(red)
   return ok, err
 end
 

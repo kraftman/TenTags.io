@@ -1,11 +1,12 @@
 
 
-<form id="commentform" method="post" action="<%= url_for('newcomment') %>" >
-  <input id="parentID" name='parentID' type="hidden" value="<%= post.id%>" name="name">
-  <input name='postID' type="hidden" value="<%= post.id%>" name="name">
+<form id="commentform" method="POST" action="<%= url_for('newcomment') %>" >
+  <input id="parentID" name='parentID' type="hidden" value="<%= post.id%>" >
+  <input name='postID' type="hidden" value="<%= post.id%>" >
   <input type="hidden" name="csrf_token" value = "<%= csrf_token %>" />
 
   <textarea class='form-input textbox-large' name='commentText' id='commentText' cols='100' rows="15"></textarea>
   </br>
-  <input class = 'btn post-edit-button' type='submit' value='Reply'></input>
+  <input class = 'btn post-edit-button' type='submit' value='Reply' />
+
 </form>

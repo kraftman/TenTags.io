@@ -53,7 +53,7 @@
   <div class = 'panel panel-default'>
     <input type="hidden" id='postID' value="<%= post.id -%>" />
 
-    <form id='createpost' action='' method='post'accept-charset='UTF-8'>
+    <form id='createpost' method='post' accept-charset='UTF-8'>
 
       <% if ((ngx.time() - post.createdAt) < 600) then %>
       <label for='posttitle' >Post Title:</label>
@@ -84,9 +84,9 @@
       <% end %>
 
       <h3>Add Repost Source (URL):</h3>
-      <form id='addsource' action='' method='post'accept-charset='UTF-8'>
+      <form id='addsource' method='post' accept-charset='UTF-8'>
         <input type='text' class='form-input' name='sourceurl' id='sourceurl' value=""/>
-        <input class = 'btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+        <input class = 'btn' id='submitRepost' type='submit' name='Submit' value='Submit' />
       </form>
     </div>
 
@@ -103,11 +103,11 @@
           <% render("views.st.tag",{tag = tag}) %>
         <% end %>
       <% end %>
-      <form id='addtagform' action='' method='post'accept-charset='UTF-8'>
+      <form id='addtagform' method='post' accept-charset='UTF-8'>
 
         <label for='addtag' >Add Tag:</label>
         <input type='text' class='form-input' name='addtag' id='addtag' value=""/>
-        <input class='btn' id='submitButton' type='submit' name='Submit' value='Submit' />
+        <input class='btn' id='tagSubmitButton' type='submit' name='Submit' value='Submit' />
 
       </form>
     </div>
@@ -145,6 +145,7 @@
           <% end %>
         ><%= sortName %></option>
     <% end %>
+  </select>
       
   </br>Show comments by filter:
 

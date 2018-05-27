@@ -140,7 +140,6 @@ function api:VotePost(userID, postID, direction)
   print('queuing post vote')
   self:QueueUpdate('post:vote', postVote)
 
-  --return self.redisWrite:QueueJob('votepost',postVote)
   return postVote
 end
 

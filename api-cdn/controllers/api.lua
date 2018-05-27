@@ -14,7 +14,6 @@ local app_helpers = require("lapis.application")
 local capture_errors_json, assert_error = app_helpers.capture_errors_json, app_helpers.assert_error
 local yield_error = app_helpers.yield_error
 
-
 local function HashIsValid(request)
   local realHash = ngx.md5(request.params.commentID..request.session.userID)
   if realHash ~= request.params.commentHash then

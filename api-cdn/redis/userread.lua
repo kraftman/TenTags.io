@@ -332,6 +332,20 @@ function userread:GetAllUserSeenPosts(userID,startAt,range)
   return ok ~= ngx.null and ok or {}
 end
 
+function userread:GetBotScore(userID)
+
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zscore('userbotscores', userID)
+  self:SetKeepalive(red)
+  if err then
+    return ok, err
+  end
+  if ok == ngx.null then
+    return 0
+  end
+  return ok, err
+end
+
 --replaced with views now?
 -- function userread:GetUserFilterIDs(userID)
 
