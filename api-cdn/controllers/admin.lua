@@ -3,6 +3,8 @@
 local http = require 'lib.http'
 local adminAPI = require 'api.admin'
 local imageAPI = require 'api.images'
+local userAPI = require 'api.users'
+local commentAPI = require 'api.comments'
 
 local app = require 'app'
 local app_helpers = require("lapis.application")
@@ -104,6 +106,26 @@ app:get('admin.takedowns','/admin/takedowns',capture_errors({
       end
     end
 
+    return {render = true}
+  end
+}))
+
+app:get('admin.bots','/admin/bots',capture_errors({
+  on_error = util.HandleError,
+  function(request)
+
+    request.bots = assert_error(userAPI:GetTopBots(10))
+    print(to_json(request.bots))
+
+    return {render = true}
+  end
+}))
+
+app:get('admin.bots.comments','/admin/bots/comments/:userID',capture_errors({
+  on_error = util.HandleError,
+  function(request)
+    request.comments = commentAPI:GetBotComments(request.params.userID)
+    print(to_json(request.comments))
     return {render = true}
   end
 }))

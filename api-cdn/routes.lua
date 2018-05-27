@@ -25,6 +25,7 @@ m.routes['admin.stats'] = {maxCalls = 60, duration = 300, access = Admin}
 m.routes['score'] = {maxCalls = 60, duration = 300, access = Admin}
 m.routes['admin.reports'] = {maxCalls = 60, duration = 300, access = Admin}
 m.routes['admin.takedowns'] = {maxCalls = 60, duration = 300, access = Admin}
+m.routes['admin.bots'] = {maxCalls = 60, duration = 300, access = Admin}
 m.routes['confirmtakedown'] = {maxCalls = 60, duration = 300, access = Admin}
 m.routes['canceltakedown'] = {maxCalls = 60, duration = 300, access = Admin}
 

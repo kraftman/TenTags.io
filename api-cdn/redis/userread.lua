@@ -346,6 +346,29 @@ function userread:GetBotScore(userID)
   return ok, err
 end
 
+function userread:GetTopBots(count)
+
+  local red = self:GetUserReadConnection()
+  local ok, err = red:zrevrange('userbotscores', 0, count-1, 'WITHSCORES')
+  self:SetKeepalive(red)
+  if err then
+    return ok, err
+  end
+
+  if ok == ngx.null then
+    return {}
+  end
+  return self:ConvertListToTable(ok), err
+end
+
+function userread:GetBotComments(userID)
+
+  local red = self:GetUserWriteConnection()
+  local ok, err = red:smembers('userbotcomments:user:'..userID)
+  self:SetKeepalive(red)
+  return ok, err
+end
+
 --replaced with views now?
 -- function userread:GetUserFilterIDs(userID)
 

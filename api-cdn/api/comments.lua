@@ -85,6 +85,10 @@ function api:SubscribeComment(userID, postID, commentID)
 
 end
 
+function api:GetBotComments(userID)
+	return cache:GetBotComments(userID)
+end
+
 
 function api:EditComment(userID, userComment)
 	-- not moving this to backend for now

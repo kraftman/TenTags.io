@@ -356,6 +356,7 @@ function cache:GetUserComments(userID, sortBy, startAt, range)
   end
   local comments = commentRead:GetUserComments(postIDcommentIDs)
   for k,v in pairs(comments) do
+    --print(v, v == ngx.null)
     comments[k] = from_json(v)
   end
   return comments
@@ -395,6 +396,22 @@ function cache:GetUsername(userID)
   if user then
     return user.username
   end
+end
+
+function cache:GetTopBots(count)
+  return userRead:GetTopBots(count)
+end
+
+function cache:GetBotComments(userID)
+  local postCommentPairs = userRead:GetBotComments(userID)
+  local comments = {}
+  local postID, commentID
+  for _,postCommentPair in pairs(postCommentPairs) do
+    postID, commentID = postCommentPair:match('(%w+):(%w+)')
+    local comment = assert_error(cache:GetComment(postID, commentID))
+    table.insert(comments, comment)
+  end
+  return comments
 end
 
 function cache:WritePostComments(postID, postComments)

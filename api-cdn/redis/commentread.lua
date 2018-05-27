@@ -42,12 +42,19 @@ function commentread:GetUserComments(postIDcommentIDs)
     end
   local res, err = red:commit_pipeline()
   self:SetKeepalive(red)
+
   if err then
     ngx.log(ngx.ERR, 'unable to get comments: ',err)
     return {}
   end
+  local realComments = {}
+  for k,v in pairs(res) do
+    if v ~= ngx.null then
+      table.insert(realComments, v)
+    end
+  end
 
-  return res
+  return realComments
 end
 
 
@@ -67,6 +74,7 @@ end
 
 
 function commentread:GetComment(postID, commentID)
+  print(postID, commentID)
   local red = self:GetCommentReadConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
   if not ok then

@@ -35,6 +35,16 @@ function api:GetUserFrontPage(userID, viewID, sortBy, startAt, range)
 
 end
 
+function api:GetTopBots(count)
+	count = math.min(count, 100)
+	local userIDs = cache:GetTopBots(count)
+	local users = {}
+	for userID,score in pairs(userIDs) do
+		users[userID] = cache:GetUser(userID)
+		users[userID].score = score
+	end
+	return users
+end
 
 function api:GetRecentPostVotes(userID, targetUserID, direction)
 
