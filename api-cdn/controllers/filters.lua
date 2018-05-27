@@ -417,7 +417,7 @@ app:match('searchfilters', '/filters/search', capture_errors({
   function(request)
 
     if not request.params.searchString then
-      yield_error('cant search blank!')
+      yield_error('Cant search blank!')
     end
     if not request.session.userID then
       yield_error( 'you must be logged in!')

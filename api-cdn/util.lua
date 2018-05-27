@@ -77,7 +77,7 @@ function util.RateLimit(request)
     return request:write({status = 401, render = 'pleaselogin'})
   end
 
-  if request.userInfo.role == 'Admin' then
+  if request.userInfo and request.userInfo.role == 'Admin' then
     currentRole = roles.Admin
   end
 

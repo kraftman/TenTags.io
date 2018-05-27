@@ -10,7 +10,7 @@
 local url = 'http://localhost'
 local http = require 'socket.http'
 
-local postID = '19f7416f947a439a9c4011cc6aa3524f'
+local postID = '5a405005f0f84160bea886824a245c1f'
 local commentID = '7213c71259584a1e980d9d2fd14e6304'
 
 
@@ -31,8 +31,7 @@ local routes = {
 	['/c/delete/'..postID..'/'..commentID] = {public = 401, user = 401, admin = 200},
 	['/c/aristn'] = {public = 200, user = 200, admin = 200},
 	['/comment/subscribe/'..postID..'/'..commentID] = {public = 401, user = 200, admin = 200},
-	['/comment/upvote/'..postID..'/'..commentID..'/arst'] = {public = 401, user = 200, admin = 200},
-	['/comment/downvote/'..postID..'/'..commentID..'/rstien'] = {public = 401, user = 200, admin = 200},
+	['/comment/votecomment/'..postID..'/'..commentID..'/hash/funny'] = {public = 401, user = 200, admin = 200},
 	['/c/comment/'..postID..'/'..commentID] = {public = 200, user = 200, admin = 200},
 
 	['/f/test/sub'] = {public = 401, user = 200, admin = 200},
@@ -42,7 +41,7 @@ local routes = {
 	['/filters/test/unbanuser/test'] = {public = 401, user = 200, admin = 200},
 	['/filters/test/unbandomain/test'] = {public = 401, user = 200, admin = 200},
 	['/filters/test/banpost/test'] = {public = 401, user = 200, admin = 200},
-	['/filters/search/'] = {public = 200, user = 200, admin = 200},
+	['/filters/search/'] = {public = 200, user = 500, admin = 500},
 
 
 	['/'] = {public = 200, user = 200, admin = 200},
@@ -67,7 +66,7 @@ local routes = {
 	['/login'] = {public = 200, user = 200, admin = 200},
 	['/u/kraftman'] = {public = 401, user = 200, admin = 200},
 	['/u/delete/kraftman'] = {public = 401, user = 200, admin = 200},
-	['/u/confirmlogin'] = {public = 200, user = 200, admin = 200},
+	['/confirmlogin'] = {public = 200, user = 200, admin = 200},
 	['/u/kraftman/comments'] = {public = 401, user = 200, admin = 200},
 	['/u/kraftman/posts'] = {public = 401, user = 200, admin = 200},
 	['/u/kraftman/posts/upvoted'] = {public = 401, user = 200, admin = 200},
