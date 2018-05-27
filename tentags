@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+#!/bin/bash
+
+devfiles='-f dc.yml -f dc-dev.yml -f dc-search.yml';
+testfiles='-f dc.yml -f dc-test.yml -f dc-search.yml'
+case $1 in
+
+  start )
+
+    docker-compose ${devfiles} stop
+    docker-compose ${devfiles} rm -f
+    #docker-compose ${devfiles} up --scale api=3 -d 
+    docker-compose ${devfiles} up -d 
+    ;;
+  stop )
+    docker-compose ${devfiles} stop
+    ;;
+  connect )
+    docker-compose ${devfiles} exec $2 bash
+    ;;
+  build )
+    sudo chown -R chris:chris .
+    docker-compose ${devfiles} build
+    ;;  
+  buildtest )
+    sudo chown -R chris:chris .
+    docker-compose ${testfiles} build
+    ;;
+  test )
+    docker-compose ${testfiles} run filtta
+    ;;
+  logs )
+    docker-compose ${devfiles} logs -f $2
+    ;;
+  * )
+    echo 'unknown command, options are: start/stop/build/logs/test'
+    ;;
+esac

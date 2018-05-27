@@ -1,0 +1,30 @@
+version: '2'
+services:
+  filtta:
+    build: 
+      context: api-cdn/.
+      dockerfile: test.Dockerfile
+    entrypoint: ""
+    command:  busted testing/unit
+    links:
+      - redis-general
+      - redis-comment
+      - redis-user
+  redis-general:
+    build: redis
+    volumes:
+      - ./redis/general:/data
+    expose:
+      - '6379'
+  redis-comment:
+    build: redis
+    volumes:
+      - ./redis/comment:/data
+    expose:
+      - '6379'
+  redis-user:
+    build: redis
+    volumes:
+      - ./redis/user:/data
+    expose:
+      - '6379'

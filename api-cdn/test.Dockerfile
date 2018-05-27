@@ -59,5 +59,5 @@ RUN luarocks install https://raw.githubusercontent.com/woothee/lua-resty-woothee
     luarocks install https://raw.githubusercontent.com/kraftman/lua-resty-busted/master/lua-resty-busted-0.0.1-0.rockspec && \
     luarocks install luacov
 
-ENV PATH="/opt/openresty/bin:${PATH}"
+ENV PATH "/usr/local/openresty/bin:${PATH}"
 ENTRYPOINT ["/opt/openresty/nginx/conf/start.sh"]

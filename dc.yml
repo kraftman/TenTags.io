@@ -3,9 +3,10 @@ services:
   filtta:
     build: api-cdn/.
     volumes:
-      - ./api-cdn:/opt/openresty/nginx/conf
+      - ./api-cdn:/usr/local/openresty/nginx/conf
     env_file:
       - filtta.env
+    restart: always
   imgprocess:
     privileged: true
     build: imgprocess/.
