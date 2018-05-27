@@ -1,0 +1,11 @@
+<% render('views.admin.adminbar') %>
+
+<div class = 'panel panel-default'>
+  <h3> Bots: </h3>
+    <% for k,v in pairs(bots) do %>
+        <div> <%= v.score %> <%= v.username %> 
+            <a href="<%= url_for('admin.bots.comments', {userID = v.id}) %>">comments</a> 
+        </div>
+    <% end %>
+
+</div>

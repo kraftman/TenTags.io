@@ -1,0 +1,13 @@
+<% render('views.admin.adminbar') %>
+
+<div class = 'panel panel-default'>
+    <% for k,comment in pairs(comments) do %>
+    <div class = 'panel panel-default'>
+        <a href="<%= url_for('post.view', {postID = comment.postID}) %>"><%=  comment.text -%></a> </p>
+        <span class = 'usercomment-info'>
+            <%= TimeAgo(ngx.time() - comment.createdAt) %>
+        </span>
+        <p> <%= comment.text -%></p>
+    </div>
+    <% end %>
+</div>
