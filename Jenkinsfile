@@ -4,8 +4,9 @@ pipeline {
     stage('error') {
       steps {
         sh '''echo \'hello world\'
-
-./tentags buildtest'''
+touch filtta.env
+./tentags buildtest
+./tentags test'''
       }
     }
   }
