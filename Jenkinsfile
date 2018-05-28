@@ -5,7 +5,8 @@ pipeline {
       steps {
         sh '''echo \'hello world\'
 touch filtta.env
-./tentags buildtest'''
+./tentags buildtest
+./tentags test'''
       }
     }
   }
