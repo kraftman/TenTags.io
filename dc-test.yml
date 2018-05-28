@@ -10,6 +10,8 @@ services:
       - redis-general
       - redis-comment
       - redis-user
+    env_file:
+      - filtta-test.env
   redis-general:
     build: redis
     volumes:

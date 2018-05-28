@@ -11,6 +11,8 @@ services:
       - redis-general
       - redis-comment
       - redis-user
+    env_file:
+      - filtta.env
 
   imgprocess:
     tty: true
