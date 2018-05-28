@@ -1,12 +1,17 @@
 pipeline {
   agent any
   stages {
-    stage('error') {
+    stage('build docker') {
       steps {
         sh '''echo \'hello world\'
 touch filtta.env
 ./tentags buildtest
 ./tentags test'''
+      }
+    }
+    stage('publish coverage') {
+      steps {
+        cobertura(autoUpdateHealth: true, autoUpdateStability: true, coberturaReportFile: 'api-cdn/luacov.report.out', failNoReports: true)
       }
     }
   }
