@@ -4,7 +4,6 @@ services:
     build: api-cdn/.
     volumes:
       - ./api-cdn:/usr/local/openresty/nginx/conf
-    restart: always
   imgprocess:
     privileged: true
     build: imgprocess/.
