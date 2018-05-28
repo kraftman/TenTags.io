@@ -50,6 +50,10 @@ local DEFAULT_CACHE_TIME = 30
 local ENABLE_CACHE = os.getenv('ENABLE_CACHE') == 'true'
 
 
+function cache:test()
+  return true
+end
+
 function cache:GetThread(threadID)
   return redisRead:GetThreadInfo(threadID)
 end

@@ -11,7 +11,7 @@ return {
   ['statsfile'] = 'luacov.stats.out',
 
   -- filename to store report
-  ['reportfile'] = 'luacov.report.out',
+  ['reportfile'] = 'luacov.reports.out',
 
   -- Run reporter on completion? (won't work for ticks)
   runreport = true,
@@ -50,5 +50,14 @@ return {
     'socket$',
   },
 
+  cobertura = {
+		-- this function will be called for each filename in the stats file
+		-- the function may be used to manipulate the path before the file is
+		-- processed by the report generator
+		filenameparser = function(filename)
+			-- do stuff with the filename here
+			return filename
+		end
+	},
 
 }

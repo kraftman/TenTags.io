@@ -28,9 +28,7 @@ case $1 in
     docker-compose ${testfiles} build
     ;;
   test )
-    docker-compose ${testfiles} stop
-    docker-compose ${testfiles} rm -f
-    docker-compose ${testfiles} run filtta
+    docker-compose ${testfiles} run --rm filtta bash
     ;;
   logs )
     docker-compose ${devfiles} logs -f $2

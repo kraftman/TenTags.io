@@ -8,7 +8,7 @@ local redisread = require 'redis.redisread'
 
 describe('tests the cache', function()
   it('loads the cache correctly', function()
-    
+    assert.is_true(cache:test())
   end)
 end)
 
