@@ -1,10 +1,9 @@
 pipeline {
-  agent none
+  agent any
   stages {
     stage('error') {
       steps {
-        sh '''sh tentags testbuild
-sh tentags test'''
+        sh 'echo \'hello world\''
       }
     }
   }
