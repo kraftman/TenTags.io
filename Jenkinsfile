@@ -11,7 +11,7 @@ touch filtta.env
     }
     stage('publish coverage') {
       steps {
-        cobertura(autoUpdateHealth: true, autoUpdateStability: true, coberturaReportFile: 'api-cdn/luacov.report.out', failNoReports: true)
+        cobertura(autoUpdateHealth: true, autoUpdateStability: true, coberturaReportFile: 'api-cdn/luacov.reports.out', failNoReports: true)
       }
     }
   }
