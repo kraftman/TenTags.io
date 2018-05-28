@@ -1,12 +1,7 @@
 pipeline {
-  agent {
-    docker {
-      image 'helloworld'
-    }
-
-  }
+  agent none
   stages {
-    stage('') {
+    stage('error') {
       steps {
         sh '''./tentags testbuild
 ./tentags test'''
