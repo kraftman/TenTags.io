@@ -5,7 +5,8 @@ pipeline {
       steps {
         sh '''echo \'hello world\'
 pwd
-ls'''
+
+./tentags buildtest'''
       }
     }
   }
