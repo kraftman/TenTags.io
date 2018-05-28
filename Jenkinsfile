@@ -3,8 +3,8 @@ pipeline {
   stages {
     stage('error') {
       steps {
-        sh '''./tentags testbuild
-./tentags test'''
+        sh '''sh tentags testbuild
+sh tentags test'''
       }
     }
   }
