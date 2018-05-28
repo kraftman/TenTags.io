@@ -24,7 +24,7 @@ case $1 in
     docker-compose ${devfiles} build
     ;;  
   buildtest )
-    sudo chown -R chris:chris .
+    #sudo chown -R chris:chris .
     docker-compose ${testfiles} build
     ;;
   test )

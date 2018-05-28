@@ -20,6 +20,8 @@ services:
       - redis-general
     entrypoint: ""
     command: luajit imgconverter.lua
+    env_file:
+     - filtta.env
   redis-general:
     build: redis
     volumes:

@@ -4,16 +4,12 @@ services:
     build: api-cdn/.
     volumes:
       - ./api-cdn:/usr/local/openresty/nginx/conf
-    env_file:
-      - filtta.env
     restart: always
   imgprocess:
     privileged: true
     build: imgprocess/.
     volumes:
      - ./imgprocess/lua:/lua
-    env_file:
-     - filtta.env
   #backup:
   #  build: backup/.
   #  volumes:
