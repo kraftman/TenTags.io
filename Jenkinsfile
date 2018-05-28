@@ -16,11 +16,6 @@ touch filtta.env
             cobertura(autoUpdateHealth: true, autoUpdateStability: true, coberturaReportFile: 'api-cdn/luacov.reports.out', failNoReports: true)
           }
         }
-        stage('test results') {
-          steps {
-            junit 'test.xml'
-          }
-        }
       }
     }
   }
