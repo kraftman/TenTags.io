@@ -5,7 +5,7 @@ services:
       context: api-cdn/.
       dockerfile: test.Dockerfile
     entrypoint: ""
-    command:  busted -o TAP -c testing/unit > test.tap
+    command:  bash -c "busted -o junit -c testing/unit > test.xml"
     links:
       - redis-general
       - redis-comment
