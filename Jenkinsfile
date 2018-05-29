@@ -21,7 +21,7 @@ touch filtta.env
   }
   post {
         always {
-            junit './test.xml'
+            junit './api-cdn/test.xml'
         }
     }
 }
