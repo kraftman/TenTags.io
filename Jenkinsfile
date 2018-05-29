@@ -17,7 +17,7 @@ touch filtta.env
   }
   post {
     always {
-      archive 'api-cdn/**/test.xml',
+      archiveArtifacts artifacts: 'api-cdn/**/test.xml', fingerprint: true
       junit 'api-cdn/**/test.xml'
 
     }
