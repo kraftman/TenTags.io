@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('build docker') {
       steps {
-        sh '''echo \'buildingss\'
+        sh '''echo \'buildsingss\'
 touch filtta.env
 ./tentags buildtest
 ./tentags test'''
@@ -20,5 +20,6 @@ touch filtta.env
       junit 'api-cdn/**/test.xml'
 
     }
+
   }
 }
