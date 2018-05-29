@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('build docker') {
       steps {
-        sh '''
+        sh '''echo \'buildingss\'
 touch filtta.env
 ./tentags buildtest
 ./tentags test'''
@@ -25,4 +25,6 @@ touch filtta.env
 
         }
     }
+
+  }
 }
