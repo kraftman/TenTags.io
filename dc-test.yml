@@ -5,8 +5,8 @@ services:
       context: api-cdn/.
       dockerfile: test.Dockerfile
     entrypoint: ""
-    #command:  bash -c "busted -o junit -c testing/unit > test.xml"
-    command:  bash -c "busted -R -c testing/unit/*"
+    command:  bash -c "busted -o junit -c testing/unit > test.xml"
+    #command:  bash -c "busted -R -c testing/unit/*"
     links:
       - redis-general
       - redis-comment
