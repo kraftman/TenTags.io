@@ -1,5 +1,4 @@
 FROM ubuntu:16.04
-MAINTAINER Erik Wickstrom <erik@erikwickstrom.com>
 
 # install build dependencies
 RUN apt-get -qq update && apt-get -qqy install libreadline-dev libncurses5-dev libpcre3-dev libssl-dev perl make curl git-core luarocks software-properties-common python-software-properties
