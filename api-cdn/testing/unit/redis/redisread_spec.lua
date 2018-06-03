@@ -19,7 +19,6 @@ describe('tests redisread', function()
 
   it('mocks redis', function()
     local read = redisread(utils)
-    print(read:test())
     assert.are.equal(read:test(), 'from utils')
   end)
 
