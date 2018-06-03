@@ -29,6 +29,7 @@ case $1 in
     docker-compose ${testfiles} build
     ;;
   test )
+    docker network create webserver_default
     docker-compose ${testfiles} pull
     docker-compose ${testfiles} build
     docker-compose ${testfiles} run --rm filtta
