@@ -3,6 +3,7 @@ package.path = package.path.. "./controllers/?.lua;;./lib/?.lua;;";
 
 local base = require 'redis.base'
 local redisread = require 'redis.redisread'
+local rediswrite  =require 'redis.rediswrite'
 
 local utils = {
   test = function()
