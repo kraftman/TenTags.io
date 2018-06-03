@@ -1,6 +1,7 @@
 version: '2'
 services:
   filtta:
+    build: api-cdn/.
     ports:
       - "80:8081"
       - "8012:80"

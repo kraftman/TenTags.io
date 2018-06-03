@@ -2,7 +2,9 @@
 
 local tinsert = table.insert
 local base = require 'redis.base'
-local read = setmetatable({}, base)
+local read = {}
+
+read.__index = read
 
 function read:ConvertListToTable(list)
   local info = {}
@@ -15,7 +17,6 @@ end
 function read:GetUnseenElements(checkSHA,baseKey, elements)
   local red = self:GetRedisReadConnection()
   red:init_pipeline()
-  ngx.log(ngx.ERR,'checking for sha: ',checkSHA)
   for _,v in pairs(elements) do
     red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
   end
@@ -855,8 +856,15 @@ function read:GetTagPosts(tagName)
 end
 
 
+function read:test()
+  return self.utils.test()
+end
+
+local new = function(utils)
+  local r = setmetatable({}, read)
+  r.utils = utils
+  return r
+end
 
 
-
-
-return read
+return new

@@ -25,9 +25,12 @@ case $1 in
     ;;  
   buildtest )
     #sudo chown -R chris:chris .
+    docker-compose ${testfiles} pull
     docker-compose ${testfiles} build
     ;;
   test )
+    docker-compose ${testfiles} pull
+    docker-compose ${testfiles} build
     docker-compose ${testfiles} run --rm filtta
     ;;
   logs )

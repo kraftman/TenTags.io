@@ -1,12 +1,13 @@
 version: '2'
 services:
   filtta:
-    build: 
-      context: api-cdn/.
-      dockerfile: test.Dockerfile
+    image: kraftman/tentags.io:test
+    #build: 
+    #  context: api-cdn/.
+    #  dockerfile: test.Dockerfile
     entrypoint: ""
-    command:  bash -c "busted -o junit -c testing/unit > test.xml"
-    #command:  bash -c "busted -R -c testing/unit/*"
+    #command:  bash -c "busted -o junit -c testing/unit > test.xml"
+    command:  bash -c "busted -R -c testing/unit/*"
     links:
       - redis-general
       - redis-comment

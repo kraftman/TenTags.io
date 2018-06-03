@@ -1,7 +1,6 @@
 version: '2'
 services:
   filtta:
-    build: api-cdn/.
     volumes:
       - ./api-cdn:/usr/local/openresty/nginx/conf
   imgprocess:
