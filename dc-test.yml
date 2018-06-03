@@ -15,19 +15,19 @@ services:
     env_file:
       - filtta-test.env
   redis-general:
-    build: redis
+    image: kraftman/tentags.io:redis
     volumes:
       - ./redis/general:/data
     expose:
       - '6379'
   redis-comment:
-    build: redis
+    image: kraftman/tentags.io:redis
     volumes:
       - ./redis/comment:/data
     expose:
       - '6379'
   redis-user:
-    build: redis
+    image: kraftman/tentags.io:redis
     volumes:
       - ./redis/user:/data
     expose:
