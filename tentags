@@ -30,8 +30,6 @@ case $1 in
     ;;
   test )
     docker network create webserver_default
-    docker-compose ${testfiles} pull
-    docker-compose ${testfiles} build
     docker-compose ${testfiles} run --rm filtta
     ;;
   logs )

@@ -2,7 +2,7 @@
 
 local tinsert = table.insert
 local base = require 'redis.base'
-local read = {}
+local read = setmetatable({}, base)
 
 read.__index = read
 
@@ -15,6 +15,7 @@ function read:ConvertListToTable(list)
 end
 
 function read:GetUnseenElements(checkSHA,baseKey, elements)
+
   local red = self:GetRedisReadConnection()
   red:init_pipeline()
   for _,v in pairs(elements) do
@@ -54,10 +55,12 @@ end
 --]]
 
 function read:GetOldestJob(queueName)
+
   local realQName = 'queue:'..queueName
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange(realQName, 0, 1)
   self:SetKeepalive(red)
+
   if not ok then
     ngx.log(ngx.ERR, 'error getting job: ',err)
   end
@@ -370,7 +373,6 @@ function read:GetThreadInfo(threadID)
     ngx.log(ngx.ERR, 'unable to get thread info:',err)
     return {}
   end
-  print(self:to_json(ok))
 
   local thread = read:ConvertThreadFromRedis(ok)
 
@@ -841,7 +843,6 @@ function read:GetTag(tagName)
     return nil
   end
 
-  return tagInfo
 end
 
 function read:GetTagPosts(tagName)
@@ -856,15 +857,4 @@ function read:GetTagPosts(tagName)
 end
 
 
-function read:test()
-  return self.utils.test()
-end
-
-local new = function(utils)
-  local r = setmetatable({}, read)
-  r.utils = utils
-  return r
-end
-
-
-return new
+return read

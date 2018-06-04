@@ -1,15 +1,29 @@
 
 package.path = package.path.. "./controllers/?.lua;;./lib/?.lua;;";
 
-local base = require 'redis.base'
-local redisread = require 'redis.redisread'
-local rediswrite  =require 'redis.rediswrite'
+local realdb = require 'redis.base'
 
-local utils = {
-  test = function()
-    return 'from utils'
-  end
+local fakeRedis = {
+  zrevrange = function()
+    return {'test'}
+  end,
 }
+
+local fakeDb = {
+}
+fakeDb.__index = fakeDb
+
+function fakeDb:GetRedisReadConnection()
+  return fakeRedis
+end
+
+function fakeDb:SetKeepalive()
+  return true
+end
+
+package.loaded['redis.base'] = fakeDb
+
+local redisread = require 'redis.redisread'
 
 describe('tests redisread', function()
   -- it('converts a list to a table', function()
@@ -18,9 +32,15 @@ describe('tests redisread', function()
   --   assert.are.equal(tableOut[1], 'value 1')
   -- end)
 
-  it('mocks redis', function()
-    local read = redisread(utils)
-    assert.are.equal(read:test(), 'from utils')
+  -- it('mocks redis', function()
+  --   local read = redisread(utils)
+  --   assert.are.equal(read:test(), 'from utils')
+  -- end)
+
+  it('tests redis', function()
+    local oldest = redisread:GetOldestJob('test');
+
+    assert.are.equal(oldest, 'test')
   end)
 
 end)
