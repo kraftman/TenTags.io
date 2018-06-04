@@ -7,6 +7,9 @@ local fakeRedis = {
   zrevrange = function()
     return {'test'}
   end,
+  zcard = function()
+    return 'test'
+  end,
 }
 
 local fakeDb = {
@@ -39,6 +42,11 @@ describe('tests redisread', function()
 
   it('tests redis', function()
     local oldest = redisread:GetOldestJob('test');
+
+    assert.are.equal(oldest, 'test')
+  end)
+  it('tests redis q size', function()
+    local oldest = redisread:GetQueueSize('test');
 
     assert.are.equal(oldest, 'test')
   end)
