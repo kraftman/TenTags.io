@@ -51,6 +51,8 @@ return {
     'ngx.process$',
     'resty.redis$',
     'resty.redis',
+    'redis',
+    'redis$'
     'core.base$',
     'testing/*',
     '/usr/local*'
