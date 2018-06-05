@@ -6,7 +6,7 @@ services:
   imgprocess:
     privileged: true
     image: kraftman/tentags.io:imgprocess
-    build: imgprocess/.
+    #build: imgprocess/.
     volumes:
      - ./imgprocess/lua:/lua
   #backup:
