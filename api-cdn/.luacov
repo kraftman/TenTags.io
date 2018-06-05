@@ -50,9 +50,7 @@ return {
     'socket$',
     'ngx.process$',
     'resty.redis$',
-    'core.base',
-    'resty',
-    'core',
+    'core.base$',
   },
 
   cobertura = {
