@@ -51,6 +51,8 @@ return {
     'ngx.process$',
     'resty.redis$',
     'core.base$',
+    'testing/*',
+    '/usr/local*'
   },
 
   cobertura = {
