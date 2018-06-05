@@ -52,7 +52,7 @@ return {
     'resty.redis$',
     'resty.redis',
     'redis',
-    'redis$'
+    'redis$',
     'core.base$',
     'testing/*',
     '/usr/local*'
