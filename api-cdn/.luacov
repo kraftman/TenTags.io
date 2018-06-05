@@ -50,6 +50,7 @@ return {
     'socket$',
     'ngx.process$',
     'resty.redis$',
+    'resty.redis,
     'core.base$',
     'testing/*',
     '/usr/local*'
