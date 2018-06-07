@@ -4,7 +4,7 @@ engines:
 ratings:
   paths:
     - "**.lua"
-# exclude_patterns:
-#   - 'api-cdn/resty/'
-#   - 'api-cdn/static/'
-#   - 'api-cdn/node_modules/'
+exclude_patterns:
+  - 'api-cdn/resty/'
+  - 'api-cdn/static/'
+  - 'api-cdn/node_modules/'
