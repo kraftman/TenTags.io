@@ -1,6 +1,31 @@
 engines:
   luacheck:
     enabled: true
+    config:
+      allow_defined: # you can use both enabled: true/false and just true/false
+        enabled: true
+      allow_defined_top: false
+      module: false
+      compat: true
+      std: # which standard library to use, all are concatenated with +
+        - min
+        - busted
+      globals:
+        - val
+      read_globals:
+        - read
+      new_globals:
+        - new
+      new_read_globals:
+        - new
+      not_globals:
+        - new
+      ignore:
+        - new
+      enable:
+        - new
+      only: # only run global-related warnings
+        - 1
 ratings:
   paths:
     - "**.lua"
