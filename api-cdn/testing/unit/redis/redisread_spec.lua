@@ -48,15 +48,15 @@ describe('tests redisread', function()
 
     assert.are.equal(oldest, 'test')
   end)
-  it('tests redis q size', function()
-    local oldest = redisread:GetQueueSize('test');
+  -- it('tests redis q size', function()
+  --   local oldest = redisread:GetQueueSize('test');
 
-    assert.are.equal(oldest, 'test')
-  end)
-  it('tests redis q size', function()
-    local oldest = redisread:GetBacklogStats('test');
+  --   assert.are.equal(oldest, 'test')
+  -- end)
+  -- it('tests redis q size', function()
+  --   local oldest = redisread:GetBacklogStats('test');
 
-    assert.are.equal(oldest, 'test')
-  end)
+  --   assert.are.equal(oldest, 'test')
+  -- end)
 
 end)
