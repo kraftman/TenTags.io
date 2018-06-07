@@ -4,3 +4,5 @@ engines:
 ratings:
   paths:
     - "**.lua"
+exclude_patterns:
+  - 'api-cdn/resty/'
