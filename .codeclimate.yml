@@ -6,3 +6,4 @@ ratings:
     - "**.lua"
 exclude_patterns:
   - 'api-cdn/resty/'
+  - 'api-cdn/static/'
