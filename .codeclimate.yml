@@ -7,3 +7,4 @@ ratings:
 exclude_patterns:
   - 'api-cdn/resty/'
   - 'api-cdn/static/'
+  - 'api-cdn/node_modules/'
