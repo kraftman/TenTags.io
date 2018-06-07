@@ -1,0 +1,6 @@
+engines:
+  luacheck:
+    enabled: true
+ratings:
+  paths:
+    - "**.lua"
