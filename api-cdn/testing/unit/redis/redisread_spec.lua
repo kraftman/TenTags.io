@@ -13,6 +13,12 @@ local fakeRedis = {
   zrangebyscore = function()
     return 'test'
   end,
+  zrevrange = function()
+    return {}
+  end,
+  pfcount = function()
+    return 'test'
+  end
 }
 
 local fakeDb = {
@@ -56,7 +62,6 @@ describe('tests redisread', function()
   -- it('tests redis q size', function()
   --   local oldest = redisread:GetBacklogStats('test');
 
-  --   assert.are.equal(oldest, 'test')
-  -- end)
+
 
 end)

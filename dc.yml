@@ -5,7 +5,8 @@ services:
       - ./api-cdn:/usr/local/openresty/nginx/conf
   imgprocess:
     privileged: true
-    build: imgprocess/.
+    image: kraftman/tentags.io:imgprocess
+    #build: imgprocess/.
     volumes:
      - ./imgprocess/lua:/lua
   #backup:
