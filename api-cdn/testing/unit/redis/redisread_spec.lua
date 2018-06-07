@@ -18,6 +18,7 @@ local fakeRedis = {
   end
 }
 
+
 local fakeDb = {
 }
 fakeDb.__index = fakeDb
