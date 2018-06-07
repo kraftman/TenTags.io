@@ -30,7 +30,13 @@ case $1 in
     ;;
   test )
     docker network create webserver_default
-    docker-compose ${testfiles} run --rm filtta
+    docker-compose ${testfiles} run --rm filtta bash -c "busted -R -c testing/unit/*"
+    ;;
+  test-jenkins )
+    docker-compose ${testfiles} pull
+    docker-compose ${testfiles} build
+    docker network create webserver_default
+    docker-compose ${testfiles} run --rm filtta 
     ;;
   logs )
     docker-compose ${devfiles} logs -f $2

@@ -48,15 +48,17 @@ return {
     'mediator$',
     'moonscript.*$',
     'socket$',
-    'ngx.process$',
-    'resty.redis$',
-    'resty.redis',
-    'redis',
-    'redis$',
-    '/usr/local/openresty/lualib/resty',
-    'core.base$',
-    'testing/*',
-    '/usr/local*'
+    'ngx.*$',
+    'resty.*$',
+    'testing/*'
+    -- 'resty.redis$',
+    -- 'resty.redis',
+    -- 'redis',
+    -- 'redis$',
+    -- '/usr/local/openresty/lualib/resty',
+    -- 'core.base$',
+    -- 'testing/*',
+    -- '/usr/local*'
   },
 
   cobertura = {

@@ -13,9 +13,6 @@ local fakeRedis = {
   zrangebyscore = function()
     return 'test'
   end,
-  zrevrange = function()
-    return {}
-  end,
   pfcount = function()
     return 'test'
   end
@@ -52,7 +49,7 @@ describe('tests redisread', function()
   it('tests redis', function()
     local oldest = redisread:GetOldestJob('test');
     assert.are.equal(1,1)
-    --assert.are.equal(oldest, 'test')
+    assert.are.equal(oldest, 'test')
   end)
   -- it('tests redis q size', function()
   --   local oldest = redisread:GetQueueSize('test');
