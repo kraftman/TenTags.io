@@ -177,7 +177,7 @@ end
 function read:GetInvalidationRequests(startTime, endTime)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrangebyscore('invalidationRequests', startTime, endTime)
-  red:close()
+  self:SetKeepalive(red)
   if ok == ngx.null then
     return nil
   end

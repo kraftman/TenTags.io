@@ -4,18 +4,7 @@ package.path = package.path.. "./controllers/?.lua;;./lib/?.lua;;";
 local realdb = require 'redis.base'
 
 local fakeRedis = {
-  zrevrange = function()
-    return {'test'}
-  end,
-  zcard = function()
-    return 'test'
-  end,
-  zrangebyscore = function()
-    return 'test'
-  end,
-  pfcount = function()
-    return 'test'
-  end
+
 }
 
 local fakeDb = {
@@ -30,27 +19,83 @@ function fakeDb:SetKeepalive()
   return true
 end
 
+function fakeDb:SplitShortURL()
+  return 'test'
+end
+
+local function createMock(name, returnValue)
+  fakeRedis[name] = function(self, ...)
+    self.calledWith = {...}
+    return returnValue
+  end
+end
+
 package.loaded['redis.base'] = fakeDb
 
 local redisread = require 'redis.redisread'
 
 describe('tests redisread', function()
-  -- it('converts a list to a table', function()
-  --   local tableIn = {1, 'value 1', 2, 'value 2'}
-  --   local tableOut = redisread:ConvertListToTable(tableIn);
-  --   assert.are.equal(tableOut[1], 'value 1')
-  -- end)
 
-  -- it('mocks redis', function()
-  --   local read = redisread(utils)
-  --   assert.are.equal(read:test(), 'from utils')
-  -- end)
 
-  it('tests redis', function()
+  it('tests GetOldestJob', function()
+    createMock('zrevrange', {'test'})
     local oldest = redisread:GetOldestJob('test');
-    assert.are.equal(1,1)
-    assert.are.equal(oldest, 'test')
+    
+    assert.are.equal(oldest, 'test');
+    --assert.are.equal(fakeRedis.zrevrange.calledWith, 'test')
   end)
+
+  it('tests get queue size', function()
+    createMock('zcard', 'test')
+    local qSize = redisread:GetQueueSize('fakeJob')
+    assert.are.equal('test', qSize)
+  end)
+
+  it('test Getview', function()
+    createMock('hgetall', {});
+    local view = redisread:GetView('viewID')
+    assert.are.same(view.filters, { })
+  end)
+
+  it('test GetBacklogStats', function()
+    createMock('zrangebyscore', 'test');
+    local view = redisread:GetBacklogStats('viewID')
+    assert.are.same(view, 'test')
+  end)
+
+  it('test GetOldestJobs', function()
+    createMock('zrange', 'test');
+    local view = redisread:GetOldestJobs('viewID')
+    assert.are.same(view, 'test')
+  end)
+
+  it('test GetSiteUniqueStats', function()
+    createMock('zrevrange', {'test'});
+    createMock('pfcount', 'test');
+    local view = redisread:GetSiteUniqueStats('viewID')
+    assert.are.same(view, {test = 'test'})
+  end)
+
+  it('test GetSiteStats', function()
+    createMock('hgetall', {1, 'test'});
+    local view = redisread:GetSiteStats('viewID')
+    assert.are.same(view, {[1] = 'test'})
+  end)
+
+  it('test ConvertShortURL', function()
+    createMock('hget', 'test');
+    local view = redisread:ConvertShortURL('test:url')
+    assert.are.same(view, 'test')
+  end)
+
+  it('test GetInvalidationRequests', function()
+    createMock('zrangebyscore', 'test');
+    local view = redisread:GetInvalidationRequests('test:url')
+    assert.are.same(view, 'test')
+  end)
+
+
+
   -- it('tests redis q size', function()
   --   local oldest = redisread:GetQueueSize('test');
 
