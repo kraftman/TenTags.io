@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
-
 #!/bin/bash
+
+set -o nounset
+set -o errexit
 
 devfiles='-f dc.yml -f dc-dev.yml -f dc-search.yml';
 testfiles='-f dc.yml -f dc-test.yml -f dc-search.yml'
@@ -29,13 +30,13 @@ case $1 in
     docker-compose ${testfiles} build
     ;;
   test )
-    docker network create webserver_default
+    docker network create webserver_default || true
     docker-compose ${testfiles} run --rm filtta bash -c "busted -R -c testing/unit/*"
     ;;
   test-jenkins )
     docker-compose ${testfiles} pull
     docker-compose ${testfiles} build
-    docker network create webserver_default
+    docker network create webserver_default || true
     docker-compose ${testfiles} run --rm filtta 
     ;;
   logs )

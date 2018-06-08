@@ -95,6 +95,10 @@ describe('tests redisread', function()
   end)
 
 
+  it('test this', function()
+    assert.are.equal(true, false)
+  end)
+
 
   -- it('tests redis q size', function()
   --   local oldest = redisread:GetQueueSize('test');
