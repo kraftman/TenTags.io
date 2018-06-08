@@ -11,5 +11,5 @@ before_install:
  - sudo mv docker-compose /usr/local/bin
 
 script:
-  - ./tentags jenkins-test
+  - ./tentags test-jenkins
 
