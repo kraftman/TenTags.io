@@ -13,3 +13,6 @@ before_install:
 script:
   - ./tentags test-jenkins
 
+after_success:
+  - bash cp api-cdn/luacov.reports.out luacov.reports.out
+  - bash <(curl -s https://codecov.io/bash) -t uuid-repo-token
