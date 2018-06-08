@@ -95,6 +95,21 @@ describe('tests redisread', function()
   end)
 
 
+  it('test GetFilterIDsByTags', function()
+    createMock('init_pipeline', true);
+    createMock('commit_pipeline', true);
+    createMock('hgetall', true);
+    local view = redisread:GetFilterIDsByTags({})
+    assert.are.same(view, true)
+  end)
+
+  it('test GetReports', function()
+    createMock('zrange', 'test');
+    local view = redisread:GetReports(0, 10)
+    assert.are.same(view, 'test')
+  end)
+
+
 
   -- it('tests redis q size', function()
   --   local oldest = redisread:GetQueueSize('test');

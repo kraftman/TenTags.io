@@ -212,10 +212,11 @@ function read:GetReports(startAt, range)
   range = range or 100
 
   local red = self:GetRedisReadConnection()
-  local ok, err = red:zrange('reports:',startAt, startAt+range)
+  local ok, err = red:zrange('reports:', startAt, startAt+range)
   self:SetKeepalive(red)
   return ok, err
 end
+
 function read:GetRelevantFilters(tags)
   local red = self:GetRedisReadConnection()
   -- for each tag
