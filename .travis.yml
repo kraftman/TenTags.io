@@ -14,5 +14,5 @@ script:
   - ./tentags test-jenkins
 
 after_success:
-  - bash cp api-cdn/luacov.reports.out luacov.reports.out
+  - bash cp api-cdn/luacov.reports.out luacov.report.out
   - bash <(curl -s https://codecov.io/bash) -t 36b8954b-c8d2-451a-b8ac-a8bc9ab5ebe5
