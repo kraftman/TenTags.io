@@ -13,6 +13,4 @@ jobs:
             ls
             chmod +x tentags
             sh ./tentags test-jenkins 
-            cp api-cdn/luacov.reports.out luacov.report.out
-            bash <(curl -s https://codecov.io/bash)
 
