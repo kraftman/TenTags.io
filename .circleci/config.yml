@@ -17,6 +17,5 @@ jobs:
           command: |
             ./tentags test-jenkins 
             cp api-cdn/luacov.reports.out luacov.report.out
-  test:
-    post:
-      - bash <(curl -s https://codecov.io/bash)
+            bash <(curl -s https://codecov.io/bash)
+
