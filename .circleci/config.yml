@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: debian:stretch
+    steps:
+      - checkout
+      - run:
+          name: Install Docker Compose
+          command: |
+            curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+            chmod +x ~/docker-compose
+            sudo mv ~/docker-compose /usr/local/bin/docker-compose
+      - setup_remote_docker
+      - run:
+          name: Run tests
+          command: |
+            ./tentags test-jenkins 
+            cp api-cdn/luacov.reports.out luacov.report.out
+  test:
+    post:
+      - bash <(curl -s https://codecov.io/bash)
