@@ -277,16 +277,7 @@ function read:VerifyReset(emailAddr, resetKey)
 
 end
 
-function read:GetTag(tagName)
-  local red = self:GetRedisReadConnection()
-  local ok, err = red:hgetall('tag:'..tagName)
-  self:SetKeepalive(red)
-  if ok then
-    return self:ConvertListToTable(ok)
-  else
-    return nil, err
-  end
-end
+
 
 function read:GetAllTags()
   local red = self:GetRedisReadConnection()
@@ -350,7 +341,6 @@ function read:ConvertThreadFromRedis(thread)
 
   thread  = self:ConvertListToTable(thread)
   local viewers = {}
-
 
   for k,_ in pairs(thread) do
     if k:find('viewer') then
