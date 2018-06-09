@@ -1,8 +1,9 @@
 version: 2
 jobs:
   build:
+    machine: true
     docker:
-      - image: docker/compose:1.16.1
+      - image: moregreenhouse/tm-base
     steps:
       - checkout
       - setup_remote_docker
