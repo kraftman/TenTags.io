@@ -9,6 +9,8 @@ jobs:
       - run:
           name: Run tests
           command: |
+            pwd
+            ls
             ./tentags test-jenkins 
             cp api-cdn/luacov.reports.out luacov.report.out
             bash <(curl -s https://codecov.io/bash)
