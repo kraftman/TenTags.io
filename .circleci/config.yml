@@ -11,7 +11,7 @@ jobs:
           command: |
             pwd
             ls
-            ./tentags test-jenkins 
+            bash ./tentags test-jenkins 
             cp api-cdn/luacov.reports.out luacov.report.out
             bash <(curl -s https://codecov.io/bash)
 
