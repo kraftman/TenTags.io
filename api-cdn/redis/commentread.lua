@@ -72,7 +72,6 @@ function commentread:GetOldestJobs(jobName, size)
   end
 end
 
-
 function commentread:GetComment(postID, commentID)
   print(postID, commentID)
   local red = self:GetCommentReadConnection()
