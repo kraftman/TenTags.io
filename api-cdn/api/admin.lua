@@ -3,7 +3,7 @@ local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
 
 
-local redisRead = (require 'redis.db').redisRead
+local redisRead = (require 'redis.redisread')
 local cache = require 'api.cache'
 
 local M = {}
