@@ -47,7 +47,6 @@ function userread:SavedPostExists(userID, postID)
 
   local ok, err = red:sismember(key, postID)
 
-
   self:SetKeepalive(red)
   if not ok then
     return nil, err
