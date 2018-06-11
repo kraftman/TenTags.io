@@ -6,7 +6,9 @@ local fakeDb = {
 fakeDb.__index = fakeDb
 
 local fakeRedis = {
-
+  init_pipeline = function()
+    return true
+  end,
 }
 
 function fakeDb:createMock(name, returnValue)
@@ -24,7 +26,16 @@ end
 function fakeDb:GetUserReadConnection()
   return fakeRedis
 end
+
 function fakeDb:GetUserWriteConnection()
+  return fakeRedis
+end
+
+function fakeDb:GetCommentReadConnection()
+  return fakeRedis
+end
+
+function fakeDb:GetCommentWriteConnection()
   return fakeRedis
 end
 

@@ -138,8 +138,6 @@ function userread:GetRecentPostVotes(userID, direction)
   end
 end
 
-
-
 function userread:GetUserPostVotes(userID)
   -- replace with bloom later
   local red = self:GetUserReadConnection()
@@ -259,7 +257,6 @@ function userread:GetUserID(username)
   end
 end
 
-
 function userread:GetUserComments(userID, sortBy,startAt, range)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userComments:'..sortBy..':'..userID, startAt, startAt+range)
@@ -275,7 +272,7 @@ function userread:GetUserComments(userID, sortBy,startAt, range)
   end
 end
 
-function userread:GetUserPosts(userID,startAt, range)
+function userread:GetUserPosts(userID, startAt, range)
   local red = self:GetUserReadConnection()
   local ok, err = red:zrange('userPosts:date:'..userID, startAt, startAt+range)
   self:SetKeepalive(red)
