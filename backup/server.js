@@ -12,3 +12,9 @@ filesTobackup.forEach(function(item) {
   var newBB = new bb(item)
   //newBB.Run()
 })
+
+function myFunc(err, result) {
+  if(err) {
+    console.log('error: ' + err)
+  }
+}

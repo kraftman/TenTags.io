@@ -12,8 +12,8 @@ function mocker:CreateMock(moduleName)
     if type(returnValues) == 'function' then
       self[functionName] = returnValues
     else
-      self[functionName] = function( ...)
-        return returnValue or ...
+      self[functionName] = function(...)
+        return returnValues
       end
     end
   end

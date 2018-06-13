@@ -1,4 +1,5 @@
 {"[lua]": {
     "editor.tabSize": 2
 },
+"eslint.enable": true,
 }

@@ -73,7 +73,6 @@ function commentread:GetOldestJobs(jobName, size)
 end
 
 function commentread:GetComment(postID, commentID)
-  print(postID, commentID)
   local red = self:GetCommentReadConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
   if not ok then
