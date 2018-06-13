@@ -3,7 +3,7 @@
 local mocker = {}
 
 function mocker:CreateMock(moduleName)
-  local original = require(moduleName)
+  --local original = require(moduleName)
 
   local fake = {
 
