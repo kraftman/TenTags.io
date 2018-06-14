@@ -7,6 +7,7 @@ local mockRedis = mocker:CreateMock('redis.redisread')
 local mockCache = mocker:CreateMock('api.cache')
 local mockLapis = mocker:CreateMock('lapis.application')
 local mockUUID = mocker:CreateMock('lib.uuid')
+local mockTagAPI = mocker:CreateMock('api.tags')
 
 mockLapis:Mock('assert_error', function(self, ...)
   return self
@@ -22,6 +23,9 @@ end
 mockBase.redisWrite = {
   UpdateFilterTitle = function()
     return true
+  end,
+  UpdateFilterDescription = function()
+    return true
   end
 }
 mockBase.userWrite = {
@@ -36,14 +40,22 @@ describe('tests comment api', function()
     local ok = filter:GetFilters({'fitlerID'})
     assert.are.same({'filter1'}, ok[1])
   end)
+
   it('tests GetFilterInfo', function()
     mockCache:Mock('GetFilterInfo', {'filter1'})
     local ok = filter:GetFilterInfo({'fitlerID'})
     assert.are.same('filter1', ok[1])
   end)
+
   it('tests UpdateFilterTitle', function()
     mockCache:Mock('GetFilterByID', {ownerID = 'userID'})
     local ok = filter:UpdateFilterTitle('userID', 'filterID', 'newTitle')
-    assert.are.same('filter1', ok[1])
+    assert.are.same('newTitle', ok.title)
+  end)
+
+  it('tests UpdateFilterDescription', function()
+    mockCache:Mock('GetFilterByID', {ownerID = 'userID'})
+    local ok = filter:UpdateFilterDescription('userID', 'filterID', 'newDesc')
+    assert.are.same('newDesc', ok.description)
   end)
 end)

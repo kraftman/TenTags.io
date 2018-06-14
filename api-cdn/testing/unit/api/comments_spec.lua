@@ -32,14 +32,6 @@ mockBase.userWrite = {
 
 describe('tests comment api', function() 
 
-  -- before_each(function()
-    
-  --   mockBase  = mocker:CreateMock('api.base')
-  --   mockRedis = mocker:CreateMock('redis.redisread')
-  --   mockCache = mocker:CreateMock('api.cache')
-  --   mockLapis = mocker:CreateMock('lapis.application')
-  -- end)
-
   it('tests VoteComment', function()
     mockCache:Mock('GetUser', {role = 'Admin'})
     mockCache:Mock('GetUserCommentVotes', {})

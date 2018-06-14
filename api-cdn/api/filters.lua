@@ -239,9 +239,9 @@ function api:UpdateFilterTitle(userID, filterID, newTitle)
 
 	filter.title = self:SanitiseUserInput(newTitle, POST_TITLE_LENGTH)
 
-	self.redisWrite:UpdateFilterTitle(filter)
-	return self:InvalidateKey('filter', filter.id)
-
+	assert_error(self.redisWrite:UpdateFilterTitle(filter))
+	assert_error(self:InvalidateKey('filter', filter.id))
+	return filter
 end
 
 
@@ -262,12 +262,9 @@ function api:UpdateFilterDescription(userID, filterID, newDescription)
 
 	filter.description = self:SanitiseUserInput(newDescription, 2000)
 
-	local ok, err =  self.redisWrite:UpdateFilterDescription(filter)
-	if not ok then
-		return ok, err
-	end
-	ok,err = self:InvalidateKey('filter', filter.id)
-	return ok, err
+	assert_error(self.redisWrite:UpdateFilterDescription(filter))
+	assert_error(self:InvalidateKey('filter', filter.id))
+	return filter
 end
 
 
