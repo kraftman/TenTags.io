@@ -8,6 +8,7 @@ function mocker:CreateMock(moduleName)
   local fake = {
 
   }
+  fake.__index = fake
   function fake:Mock(functionName, returnValues)
     if type(returnValues) == 'function' then
       self[functionName] = returnValues

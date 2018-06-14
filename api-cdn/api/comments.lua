@@ -15,9 +15,20 @@ local reactions = (require 'lib.constants').reactions
 local app_helpers = require("lapis.application")
 local assert_error = app_helpers.assert_error
 
+
+function UserHasVotedComment(userID, commentID)
+	-- can only see own
+	local user = cache:GetUser(userID);
+	if user.role == 'Admin' then
+		return false
+	end
+	local userCommentVotes = cache:GetUserCommentVotes(userID)
+	return userCommentVotes[commentID]
+end
+
 function api:VoteComment(userID, postID, commentID, tag)
 
-	if self:UserHasVotedComment(userID, commentID) then
+	if UserHasVotedComment(userID, commentID) then
 		return nil, 'cannot vote more than once!'
 	end
 	tag = tag:lower()
@@ -126,7 +137,7 @@ function api:EditComment(userID, userComment)
 	return comment
 end
 
-function api:GetMentionedUsers(text)
+local GetMentionedUsers = function(text)
 	local mentionedUsers = {}
 	local user
 	for username in text:gmatch('@(%S%S%S%S+)') do
@@ -141,8 +152,8 @@ end
 function api:ProcessMentions(oldComment, newComment)
 
 	oldComment = oldComment or {text = ''}
-	local oldUsers = self:GetMentionedUsers(oldComment.text)
-	local newUsers = self:GetMentionedUsers(newComment.text)
+	local oldUsers = GetMentionedUsers(oldComment.text)
+	local newUsers = GetMentionedUsers(newComment.text)
 
 	for k,v in pairs(newUsers) do
 		if (not oldUsers[k]) and v.allowMentions then
@@ -190,15 +201,6 @@ function api:GetComment(postID, commentID)
 end
 
 
-function api:UserHasVotedComment(userID, commentID)
-	-- can only see own
-	local user = cache:GetUser(userID);
-	if user.role == 'Admin' then
-		return false
-	end
-	local userCommentVotes = cache:GetUserCommentVotes(userID)
-	return userCommentVotes[commentID]
-end
 
 
 
