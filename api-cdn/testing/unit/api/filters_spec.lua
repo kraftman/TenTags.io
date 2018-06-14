@@ -15,8 +15,12 @@ end)
 local filter = require 'api.filters'
 
 mockBase:Mock('QueueUpdate', true);
+mockBase:Mock('InvalidateKey', true);
+function mockBase:SanitiseUserInput(input)
+  return input
+end
 mockBase.redisWrite = {
-  QueueJob = function()
+  UpdateFilterTitle = function()
     return true
   end
 }
@@ -35,6 +39,11 @@ describe('tests comment api', function()
   it('tests GetFilterInfo', function()
     mockCache:Mock('GetFilterInfo', {'filter1'})
     local ok = filter:GetFilterInfo({'fitlerID'})
+    assert.are.same('filter1', ok[1])
+  end)
+  it('tests UpdateFilterTitle', function()
+    mockCache:Mock('GetFilterByID', {ownerID = 'userID'})
+    local ok = filter:UpdateFilterTitle('userID', 'filterID', 'newTitle')
     assert.are.same('filter1', ok[1])
   end)
 end)

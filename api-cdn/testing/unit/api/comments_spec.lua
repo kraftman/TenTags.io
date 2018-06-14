@@ -6,6 +6,11 @@ local mockBase  = mocker:CreateMock('api.base')
 local mockRedis = mocker:CreateMock('redis.redisread')
 local mockCache = mocker:CreateMock('api.cache')
 local mockLapis = mocker:CreateMock('lapis.application')
+local mockUserLib = mocker:CreateMock('lib.userlib')
+local mockUserAPI = mocker:CreateMock('api.users')
+
+mockUserLib:Mock('GetRandom', 'kraftman')
+mockUserAPI:Mock('CreateSubUser', {id = 'userID', currentView = 'default'})
 
 mockLapis:Mock('assert_error', function(self, ...)
   return self
