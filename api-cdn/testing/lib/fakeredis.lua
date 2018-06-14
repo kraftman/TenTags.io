@@ -1,6 +1,4 @@
 
-local realdb = require 'redis.base'
-
 local fakeDb = {
 }
 fakeDb.__index = fakeDb
@@ -11,10 +9,14 @@ local fakeRedis = {
   end,
 }
 
-function fakeDb:createMock(name, returnValue)
-  fakeRedis[name] = function(self, ...)
-    self.calledWith = {...}
-    return returnValue
+function fakeDb:createMock(name, ...)
+  local thisArgs = {...}
+  fakeRedis[name] = function(self)
+    --self.calledWith = {...}
+    if type(returnValue) == 'table' then
+     -- return unpack(returnValue)
+    end
+    return unpack(thisArgs)
   end
 end
 
