@@ -26,6 +26,9 @@ mockBase.redisWrite = {
   end,
   UpdateFilterDescription = function()
     return true
+  end,
+  FilterBanUser = function()
+    return true
   end
 }
 mockBase.userWrite = {
@@ -57,5 +60,27 @@ describe('tests comment api', function()
     mockCache:Mock('GetFilterByID', {ownerID = 'userID'})
     local ok = filter:UpdateFilterDescription('userID', 'filterID', 'newDesc')
     assert.are.same('newDesc', ok.description)
+  end)
+
+  it('tests SearchFilters', function()
+    mockCache:Mock('SearchFilters', 'filterID')
+    local ok = filter:SearchFilters(_, 'searchstring')
+    assert.are.same('filterID', ok)
+  end)
+
+  it('tests UserCanEditFilter', function()
+    local mockFilter = { ownerID = 'userID', mods = {}}
+    mockCache:Mock('GetUser', {role = 'Admin'})
+    mockCache:Mock('GetFilterByID', mockFilter)
+    local ok = filter:UserCanEditFilter(_, 'searchstring')
+    assert.are.same(mockFilter, ok)
+  end)
+
+  it('tests FilterBanUser', function()
+    local mockFilter = { ownerID = 'userID', mods = {}}
+    mockCache:Mock('GetUser', {role = 'Admin'})
+    mockCache:Mock('GetFilterByID', mockFilter)
+    local ok = filter:FilterBanUser('userID', 'filterID', {})
+    assert.are.same(mockFilter, ok)
   end)
 end)

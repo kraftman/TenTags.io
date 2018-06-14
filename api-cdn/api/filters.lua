@@ -275,26 +275,18 @@ function api:SearchFilters(_, searchString)
 	if searchString:len() < 2 then
 		return nil, 'string too short'
 	end
-	local ok, err = cache:SearchFilters(searchString)
-	if not ok then
-		ngx.log(ngx.ERR, 'error loading filters: ', err)
-		return nil, 'search failed'
-	end
-	return ok
+	return assert_error(cache:SearchFilters(searchString))
+
 end
 
 function api:UserCanEditFilter(userID, filterID)
-	local user = cache:GetUser(userID)
-
-	if not user then
-		return nil, 'userID not found'
-	end
+	local user = assert_error(cache:GetUser(userID))
 
 	local filter = cache:GetFilterByID(filterID)
 	if user.role == 'Admin' then
 		return filter
 	end
-	print(userID, filter.ownerID)
+
 	if filter.ownerID == userID then
 		return filter
 	end
@@ -309,37 +301,20 @@ function api:UserCanEditFilter(userID, filterID)
 end
 
 function api:FilterBanUser(userID, filterID, banInfo)
-	local ok, err, filter
-
-
-	filter, err = self:UserCanEditFilter(userID, filterID)
-	if not filter then
-		return filter, err
-	end
+	
+	local filter = assert_error(self:UserCanEditFilter(userID, filterID))
 
 	banInfo.bannedAt = ngx.time()
-	ok, err = self.redisWrite:FilterBanUser(filterID, banInfo)
-	print('filterbanuser:', ok, err)
-	if not ok then
-		return ok, err
-	end
-	ok, err = self:InvalidateKey('filter', filter.id)
-	print('invalidatekey? ', ok, err)
-	return ok, err
+	assert_error(self.redisWrite:FilterBanUser(filterID, banInfo))	
+	assert_error(self:InvalidateKey('filter', filter.id))
+	return filter
 end
 
 function api:FilterUnbanPost(userID, filterID, postID)
-	local ok, err = self:UserCanEditFilter(userID, filterID)
-	if not ok then
-		return ok, err
-	end
-
+	assert_error(self:UserCanEditFilter(userID, filterID))
 
 	local tagName = 'meta:filterban:'..filterID
-	local post = cache:GetPost(postID)
-	if not post then
-		return nil, 'post doesnt exist'
-	end
+	local post = assert_error(cache:GetPost(postID))
 
 	local newTag = tagAPI:CreateTag(userID, tagName)
 	local found = false
@@ -352,7 +327,6 @@ function api:FilterUnbanPost(userID, filterID, postID)
 	if not found then
 		return nil, 'not banned'
 	end
-
 
 	newTag.up = 0
 	newTag.down = -100
