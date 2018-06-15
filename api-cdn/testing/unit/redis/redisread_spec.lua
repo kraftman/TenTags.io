@@ -216,11 +216,11 @@ describe('tests redisread', function()
     assert.are.same(expected, ok)
   end)
 
-  it('test GetThreadInfo', function()
+  it('test GetThreadInfo handles error', function()
     redisBase:createMock('hgetall', nil);
     local ok = redisread:GetThreadInfo('threadID')
 
-    assert.are.same(nil, ok)
+    assert.are.same({}, ok)
   end)
 
   it('test GetFilterID', function()
@@ -230,7 +230,7 @@ describe('tests redisread', function()
   end)
 
   it('gets thread info', function()
-    
+
   end)
 
 

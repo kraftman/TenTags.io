@@ -153,26 +153,41 @@ function userread:GetUserPostVotes(userID)
   end
 end
 
-function userread:GetUser(userID)
+local function ConvertBinaryToBool(user)
+  user.allowSubs = user.allowSubs == '1' and true or false
+  user.allowMentions = user.allowMentions == '1' and true or false
+  user.fakeNames = user.fakeNames == '1' and true or false
+  user.enablePM = user.enablePM == '1' and true or false
+  user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
+  user.hideUnsubbedComments = user.hideUnsubbedComments == '1' and true or false
+  user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
+  user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
+  user.showNSFL = user.showNSFL == '1' and true or false
+  user.nsfwLevel = user.nsfwLevel and tonumber(user.nsfwLevel) or 0
+  user.viewCount = user.viewCount or 1
+  user.views = user.views or {}
+  user.currentView = user.currentView or 'default'
+end
 
-  local red = self:GetUserReadConnection()
-  local ok, err = red:hgetall('user:'..userID)
-  self:SetKeepalive(red)
-  if not ok then
-    ngx.log(ngx.ERR,'unable to get user: ',err)
+local function AddMissingUserFields(user)
+  if user.commentSubscribers == ngx.null or not user.commentSubscribers then
+    user.commentSubscribers = {}
   end
-
-  if not ok or ok == ngx.null then
-
-    return nil
+  if user.blockedUsers == ngx.null or not user.blockedUsers then
+    user.blockedUsers = {}
   end
-
-  local user = self:ConvertListToTable(ok)
-  if not user.username then
-    return nil
+  if user.commentSubscriptions == ngx.null or not user.commentSubscriptions then
+    user.commentSubscriptions = {}
   end
+  if user.postSubscribers == ngx.null or not user.postSubscribers then
+    user.postSubscribers = {}
+  end
+  if user.postSubscriptions == ngx.null or not user.postSubscriptions then
+    user.postSubscriptions = {}
+  end
+end
 
-  user.userLabels = {}
+function userread:ConvertJsonUserFields(user) 
   local targetUserID
   for k, v in pairs(user) do
     if k:find('userlabel:') then
@@ -200,36 +215,33 @@ function userread:GetUser(userID)
       user[k] = nil
     end
   end
+end
 
-  if user.commentSubscribers == ngx.null or not user.commentSubscribers then
-    user.commentSubscribers = {}
-  end
-  if user.blockedUsers == ngx.null or not user.blockedUsers then
-    user.blockedUsers = {}
-  end
-  if user.commentSubscriptions == ngx.null or not user.commentSubscriptions then
-    user.commentSubscriptions = {}
-  end
-  if user.postSubscribers == ngx.null or not user.postSubscribers then
-    user.postSubscribers = {}
-  end
-  if user.postSubscriptions == ngx.null or not user.postSubscriptions then
-    user.postSubscriptions = {}
+function userread:GetUser(userID)
+
+  local red = self:GetUserReadConnection()
+  local ok, err = red:hgetall('user:'..userID)
+  print('result:', ok)
+  self:SetKeepalive(red)
+  if not ok then
+    ngx.log(ngx.ERR,'unable to get user: ',err)
+    return nil
   end
 
-  user.allowSubs = user.allowSubs == '1' and true or false
-  user.allowMentions = user.allowMentions == '1' and true or false
-  user.fakeNames = user.fakeNames == '1' and true or false
-  user.enablePM = user.enablePM == '1' and true or false
-  user.hideSeenPosts = user.hideSeenPosts == '1' and true or false
-  user.hideUnsubbedComments = user.hideUnsubbedComments == '1' and true or false
-  user.hideVotedPosts = user.hideVotedPosts == '1' and true or false
-  user.hideClickedPosts = user.hideClickedPosts == '1' and true or false
-  user.showNSFL = user.showNSFL == '1' and true or false
-  user.nsfwLevel = user.nsfwLevel and tonumber(user.nsfwLevel) or 0
-  user.viewCount = user.viewCount or 1
-  user.views = user.views or {}
-  user.currentView = user.currentView or 'default'
+  if not ok or ok == ngx.null then
+    return nil
+  end
+
+  local user = self:ConvertListToTable(ok)
+  if not user.username then
+    return nil
+  end
+
+  user.userLabels = {}
+  self:ConvertJsonUserFields(user)
+
+  AddMissingUserFields(user)
+  ConvertBinaryToBool(user)
 
   if user.deleted then
     return nil
