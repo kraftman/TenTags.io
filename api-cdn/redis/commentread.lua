@@ -73,12 +73,9 @@ end
 function commentread:GetComment(postID, commentID)
   local red = self:GetCommentReadConnection()
   local ok, err = red:hget('postComment:'..postID,commentID)
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to get comment info: ',err)
-    return nil
-  end
 
   if ok == ngx.null or not ok  then
+    ngx.log(ngx.ERR, 'unable to get comment info: ',err)
     return nil
   else
     ok = self:from_json(ok)

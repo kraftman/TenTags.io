@@ -41,20 +41,31 @@ describe('tests redisread', function()
   it('tests GetOldestJobs', function()
     redisBase:createMock('zrange', {'jobName', {}})
     local ok = redis:GetOldestJobs('jobName', 10)
-    
     assert.are.same({'jobName', {}}, ok)
+
+    redisBase:createMock('zrange', ngx.null)
+    ok = redis:GetOldestJobs('jobName', 10)
+    assert.are.same(nil, ok)
   end)
-  
-  it('tests GetComment', function()
+
+  it('returns a comment', function()
     redisBase:createMock('hget', {id = 'commentID'})
     function redisBase:from_json()
       return {id = 'commentID'}
     end
     local ok = redis:GetComment('postID', 'commentID')
-    
     assert.are.same('default', ok.viewID)
   end)
-  
+
+  it('handles error getting comment', function()
+    redisBase:createMock('hget', nil, 'cant get comment')
+    function redisBase:from_json()
+      return {id = 'commentID'}
+    end
+    local ok = redis:GetComment('postID', 'commentID')
+    assert.are.same(nil, ok)
+  end)
+
   it('tests GetCommentInfos', function()
     redisBase:createMock('hgetall', {id = 'commentID'})
     redisBase:createMock('commit_pipeline', { {1, 'comment'}})
@@ -62,8 +73,21 @@ describe('tests redisread', function()
       return {id = 'commentID'}
     end
     local ok = redis:GetCommentInfos({'commentID1', 'commentID2'})
-    
+
     assert.are.same({{'comment'}}, ok)
+  end)
+
+
+
+  it('GetCommentInfos handles error in pipeline', function()
+    redisBase:createMock('hgetall', {id = 'commentID'})
+    redisBase:createMock('commit_pipeline', nil, 'error in db')
+    function redisBase:from_json()
+      return {id = 'commentID'}
+    end
+    local ok = redis:GetCommentInfos({'commentID1', 'commentID2'})
+
+    assert.are.same({}, ok)
   end)
 
 end)

@@ -14,46 +14,6 @@ function read:ConvertListToTable(list)
   return info
 end
 
-function read:GetUnseenElements(checkSHA,baseKey, elements)
-
-  local red = self:GetRedisReadConnection()
-  red:init_pipeline()
-  for _,v in pairs(elements) do
-    red:evalsha(checkSHA,0,baseKey,10000,0.01,v)
-  end
-  local res, err = red:commit_pipeline()
-  self:SetKeepalive(red)
-  if err then
-    ngx.log(ngx.ERR, 'unable to check for elemets: ',err)
-    return {}
-  end
-  return res
-
-end
-
---[[function read:CheckKey(checkSHA,addSHA)
-  local keys = {'testr','rsitenrsi','rsiteunrsit'}
-  local red = self:GetRedisReadConnection()
-
-  local ok, err = red:evalsha(addSHA,0,'basekey',10000,0.01,'testr')
-  if not ok then
-    ngx.log(ngx.ERR, 'unable to add key: ',err)
-  end
-
-  red:init_pipeline()
-    for k,v in pairs(keys) do
-      red:evalsha(checkSHA,0,'basekey',10000,0.01,v)
-    end
-  local res, err = red:commit_pipeline()
-  self:SetKeepalive(red)
-  for k,v in pairs(res) do
-    ngx.log(ngx.ERR,'k:',k,' v: ',v)
-  end
-
-
-end
---]]
-
 function read:GetOldestJob(queueName)
 
   local realQName = 'queue:'..queueName
@@ -61,10 +21,8 @@ function read:GetOldestJob(queueName)
   local ok, err = red:zrevrange(realQName, 0, 1)
   self:SetKeepalive(red)
 
-  if not ok then
-    ngx.log(ngx.ERR, 'error getting job: ',err)
-  end
   if (not ok) or ok == ngx.null then
+    ngx.log(ngx.ERR, 'error getting job: ',err)
     return nil
   else
     return ok[1]
@@ -77,6 +35,7 @@ function read:GetQueueSize(jobName)
   local ok, err = red:zcard(jobName)
   self:SetKeepalive(red)
   if not ok then
+    ngx.log(ngx.ERR, 'unable to get q size: ', err);
     return ok, err
   end
 
@@ -89,8 +48,10 @@ function read:GetView(viewID)
   local ok, err = red:hgetall('view:'..viewID)
   self:SetKeepalive(red)
   if not ok or ok == ngx.null then
+    ngx.log(ngx.ERR, 'unable to get view: ', err)
     return nil, err
   end
+
   ok = self:ConvertListToTable(ok)
   if ok.filters then
     ok.filters = self:from_json(ok.filters)
@@ -98,6 +59,7 @@ function read:GetView(viewID)
     ok.filters = {}
   end
   for i = #ok.filters, 1, -1 do
+    print(ok.filters[i])
     if ok.filters[i] == ngx.null then
       table.remove(ok.filters, i)
     end
@@ -137,13 +99,12 @@ function read:GetSiteUniqueStats(key)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrevrange(key,0, 10)
   if not ok then
+    ngx.log(ngx.ERR, 'unable to get site stat:', err);
     return ok, err
   end
   local results = {}
   for _, v in pairs(ok) do
-    --print('getting stat for : ',v)
     results[v] = red:pfcount(v)
-    --print('got ', results[v])
   end
   return results
 end
@@ -166,6 +127,7 @@ function read:ConvertShortURL(shortURL)
   local ok, err = red:hget(key,field)
   if err then
     ngx.log(ngx.ERR, 'unable to get short url: ',err)
+    return ok, err
   end
   if ok == ngx.null then
     return nil
@@ -178,6 +140,7 @@ function read:GetInvalidationRequests(startTime, endTime)
   local red = self:GetRedisReadConnection()
   local ok, err = red:zrangebyscore('invalidationRequests', startTime, endTime)
   self:SetKeepalive(red)
+
   if ok == ngx.null then
     return nil
   end
@@ -185,7 +148,6 @@ function read:GetInvalidationRequests(startTime, endTime)
     ngx.log(ngx.ERR, 'unable to get invalidation requests: ',err)
   end
   return ok,err
-
 end
 
 function read:GetFilterIDsByTags(tags)
