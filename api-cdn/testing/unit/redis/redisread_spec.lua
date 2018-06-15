@@ -38,6 +38,12 @@ describe('tests redisread', function()
     assert.are.same({filters = 'test'},view)
   end)
 
+  it('test Getview', function()
+    redisBase:createMock('hgetall', {'filters', '{test}'});
+    local view = redisread:GetView('viewID')
+    assert.are.same({filters = 'test'},view)
+  end)
+
   it('Getview Handles Error', function()
     redisBase:createMock('hgetall', nil);
     local view = redisread:GetView('viewID')
@@ -82,6 +88,12 @@ describe('tests redisread', function()
     assert.are.same(view, {[1] = 'test'})
   end)
 
+  it('test GetSiteStats handles error', function()
+    redisBase:createMock('hgetall', nil);
+    local view = redisread:GetSiteStats('viewID')
+    assert.are.same(nil, view)
+  end)
+
   it('test ConvertShortURL', function()
     redisBase:createMock('hget', 'test');
     local view = redisread:ConvertShortURL('test:url')
@@ -89,7 +101,7 @@ describe('tests redisread', function()
   end)
 
   it('test ConvertShortURL handles error', function()
-    redisBase:createMock('hget', nil);
+    redisBase:createMock('hget', nil, 'error');
     local view = redisread:ConvertShortURL('test:url')
     assert.are.same(nil, view)
   end)
@@ -107,7 +119,7 @@ describe('tests redisread', function()
   end)
 
   it('test GetInvalidationRequests handles error', function()
-    redisBase:createMock('zrangebyscore', nil);
+    redisBase:createMock('zrangebyscore', nil, 'error');
     local view = redisread:GetInvalidationRequests('test:url')
     assert.are.same(nil, view)
   end)
@@ -122,7 +134,7 @@ describe('tests redisread', function()
     redisBase:createMock('init_pipeline', true);
     redisBase:createMock('commit_pipeline', true);
     redisBase:createMock('hgetall', true);
-    local view = redisread:GetFilterIDsByTags({})
+    local view = redisread:GetFilterIDsByTags({{name='test'}})
     assert.are.same(view, true)
   end)
 
@@ -142,6 +154,12 @@ describe('tests redisread', function()
   end)
 
   it('test VerifyReset', function()
+    redisBase:createMock('get', 'test');
+    local ok = redisread:VerifyReset('test', 'test')
+    assert.are.same(ok, true)
+  end)
+
+  it('test VerifyReset handles error', function()
     redisBase:createMock('get', 'test');
     local ok = redisread:VerifyReset('test', 'test')
     assert.are.same(ok, true)
@@ -186,7 +204,7 @@ describe('tests redisread', function()
       'viewer:viewerID', 'viewer'
     }
     redisBase:createMock('hgetall', fakeThread);
-    local ok, err = redisread:GetThreadInfo('threadID')
+    local ok = redisread:GetThreadInfo('threadID')
     local expected = {
       messages = {
         ['viewer:viewerID'] = 'test'
@@ -198,22 +216,22 @@ describe('tests redisread', function()
     assert.are.same(expected, ok)
   end)
 
+  it('test GetThreadInfo', function()
+    redisBase:createMock('hgetall', nil);
+    local ok = redisread:GetThreadInfo('threadID')
+
+    assert.are.same(nil, ok)
+  end)
+
   it('test GetFilterID', function()
     redisBase:createMock('get', 'filterID');
-    local ok, err = redisread:GetFilterID('userID')
+    local ok = redisread:GetFilterID('userID')
     assert.are.same('filterID', ok)
   end)
 
+  it('gets thread info', function()
+    
+  end)
 
-
-  -- it('tests redis q size', function()
-  --   local oldest = redisread:GetQueueSize('test');
-
-  --   assert.are.equal(oldest, 'test')
-  -- end)
-  -- it('tests redis q size', function()
-  --   local oldest = redisread:GetBacklogStats('test');
-
-    -- 36b8954b-c8d2-451a-b8ac-a8bc9ab5ebe5
 
 end)

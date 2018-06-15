@@ -6,7 +6,7 @@ local read = setmetatable({}, base)
 
 read.__index = read
 
-function read:ConvertListToTable(list)
+local ConvertListToTable = function(list)
   local info = {}
   for i = 1,#list, 2 do
     info[list[i]] = list[i+1]
@@ -52,7 +52,7 @@ function read:GetView(viewID)
     return nil, err
   end
 
-  ok = self:ConvertListToTable(ok)
+  ok = ConvertListToTable(ok)
   if ok.filters then
     ok.filters = self:from_json(ok.filters)
   else
@@ -116,7 +116,7 @@ function read:GetSiteStats()
   if not ok then
     return ok, err
   end
-  return self:ConvertListToTable(ok)
+  return ConvertListToTable(ok)
 end
 
 
@@ -152,11 +152,6 @@ end
 
 function read:GetFilterIDsByTags(tags)
   local red = self:GetRedisReadConnection()
-  -- for each tag
-  -- load all of the filters that care about the tag
-  -- if they want the tag , add them to the list
-  -- if they dont want the tag, mark them as out of the list
-  -- purge marked tags
 
   red:init_pipeline()
 
@@ -192,7 +187,7 @@ function read:GetRelevantFilters(tags)
   for _,tag in pairs(tags) do
     local ok, err = red:hgetall('tag:filters:'..tag.name)
 
-    ok = self:ConvertListToTable(ok)
+    ok = ConvertListToTable(ok)
     if not ok then
       return ok, err
     end
@@ -257,7 +252,7 @@ function read:GetAllTags()
    results, err = red:commit_pipeline(#ok)
 
   for k,v in pairs(results) do
-    results[k] = self:ConvertListToTable(v)
+    results[k] = ConvertListToTable(v)
   end
 
   if err then
@@ -301,7 +296,7 @@ end
 
 function read:ConvertThreadFromRedis(thread)
 
-  thread  = self:ConvertListToTable(thread)
+  thread = ConvertListToTable(thread)
   local viewers = {}
 
   for k,_ in pairs(thread) do
@@ -327,7 +322,7 @@ function read:GetThreadInfo(threadID)
     return {}
   end
 
-  local thread = read:ConvertThreadFromRedis(ok)
+  local thread = self:ConvertThreadFromRedis(ok)
 
   ok, err = red:hgetall('ThreadMessages:'..threadID)
   if not ok then
@@ -335,7 +330,7 @@ function read:GetThreadInfo(threadID)
     return thread
   end
 
-  thread.messages = self:ConvertListToTable(ok)
+  thread.messages = ConvertListToTable(ok)
   for k,v in pairs(thread.messages) do
     thread.messages[k] = self:from_json(v)
   end
@@ -351,6 +346,7 @@ function read:GetThreadInfos(threadIDs)
       red:hgetall('Thread:'..threadID)
     end
   local res, err = red:commit_pipeline()
+
   if err then
     ngx.log(ngx.ERR, 'unable to load thread: ',err)
     return {}
@@ -373,7 +369,7 @@ function read:GetThreadInfos(threadIDs)
 
   --convert from json
   for k,message in pairs(msgs) do
-    msgs[k] = self:ConvertListToTable(message)
+    msgs[k] = ConvertListToTable(message)
     local threadID
     for m,n in pairs(msgs[k]) do
 
@@ -420,7 +416,7 @@ function read:GetFilter(filterID)
   if ok == ngx.null then
     return nil
   end
-  local filter = self:ConvertListToTable(ok)
+  local filter = ConvertListToTable(ok)
   --error()
 
   filter.bannedUsers = {}
@@ -497,7 +493,7 @@ function read:GetPost(postID)
     return nil
   end
 
-  local post = self:ConvertListToTable(ok)
+  local post = ConvertListToTable(ok)
   post.viewers = {}
   post.filters = {}
   post.edits = {}
@@ -545,7 +541,7 @@ function read:GetPost(postID)
     end
 
     if ok ~= ngx.null then
-      local tag = self:ConvertListToTable(ok)
+      local tag = ConvertListToTable(ok)
       if tag and tag.score then
         tag.score = tonumber(tag.score)
       end
@@ -597,7 +593,7 @@ end
 function read:GetImage(imageID)
   local red = self:GetRedisReadConnection()
   local ok, err = red:hgetall('image:'..imageID)
-  ok = self:ConvertListToTable(ok)
+  ok = ConvertListToTable(ok)
   self:SetKeepalive(red)
   ok.takedowns = self:from_json(ok.takedowns or '[]')
 
@@ -622,7 +618,7 @@ function read:GetTakedown(requestID)
   if not ok or ok == ngx.null then
     return nil, 'not found'
   end
-  ok = self:ConvertListToTable(ok)
+  ok = ConvertListToTable(ok)
   return ok, err
 end
 
@@ -775,7 +771,7 @@ function read:BatchLoadPosts(posts)
   local processedResults = {}
 
   for _,v in pairs(results) do
-    tinsert(processedResults,self:ConvertListToTable(v))
+    tinsert(processedResults, ConvertListToTable(v))
   end
 
   return results
@@ -789,7 +785,7 @@ function read:GetTag(tagName)
     ngx.log(ngx.ERR, 'unable to load tag:',err)
     return
   end
-  local tagInfo = self:ConvertListToTable(ok)
+  local tagInfo = ConvertListToTable(ok)
   if tagInfo.name then
     return tagInfo
   else
