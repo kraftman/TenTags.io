@@ -12,11 +12,19 @@ describe('tests redisread', function()
 
     assert.are.same({'test'}, ok);
   end)
+
   it('tests GetUserAlerts', function()
     redisBase:createMock('zrangebyscore', {1, 'test'})
     local ok = redisread:GetUserAlerts('userID', 0, 10);
 
     assert.are.same({1, 'test'}, ok);
+  end)
+
+  it('tests GetUserAlerts handles error', function()
+    redisBase:createMock('zrangebyscore', nil, 'error')
+    local ok = redisread:GetUserAlerts('userID', 0, 10);
+
+    assert.are.same({}, ok);
   end)
 
   it('tests SavedPostExists', function()
@@ -25,11 +33,26 @@ describe('tests redisread', function()
 
     assert.are.same(true, ok);
   end)
+
+  it('tests SavedPostExists handles error', function()
+    redisBase:createMock('sismember', nil, 'error')
+    local ok = redisread:SavedPostExists('test');
+
+    assert.are.same(nil, ok);
+  end)
+
   it('tests GetUserCommentVotes', function()
     redisBase:createMock('smembers', {'vote1'})
     local ok = redisread:GetUserCommentVotes('test');
 
     assert.are.same({'vote1'}, ok);
+  end)
+
+  it('tests GetUserCommentVotes handles error', function()
+    redisBase:createMock('smembers', nil, 'error')
+    local ok = redisread:GetUserCommentVotes('test');
+
+    assert.are.same(nil, ok);
   end)
 
   it('tests GetAccount', function()
@@ -48,11 +71,26 @@ describe('tests redisread', function()
     assert.are.same({id = 'sessionID'}, ok.sessions.sessionID)
   end)
 
+  it('tests GetAccount handles error', function()
+
+    redisBase:createMock('hgetall', nil, 'error')
+    local ok = redisread:GetAccount('test')
+
+    assert.are.same(nil, ok)
+  end)
+
   it('tests GetUserTagVotes', function()
     redisBase:createMock('smembers', {'vote1'})
     local ok = redisread:GetUserTagVotes('test');
 
     assert.are.same({'vote1'}, ok);
+  end)
+
+  it('tests GetUserTagVotes handles error', function()
+    redisBase:createMock('smembers', nil, 'error')
+    local ok = redisread:GetUserTagVotes('test');
+
+    assert.are.same({}, ok);
   end)
 
   it('tests GetRecentPostVotes', function()
@@ -112,6 +150,13 @@ describe('tests redisread', function()
     assert.are.same({'userID'}, ok);
   end)
 
+  it('tests GetTopBots handles error', function()
+    redisBase:createMock('zrevrange', nil, 'error')
+    local ok = redisread:GetTopBots(10)
+
+    assert.are.same(nil, ok);
+  end)
+
   it('tests GetBotComments', function()
     redisBase:createMock('smembers', 'test')
     local ok = redisread:GetBotComments(10)
@@ -121,7 +166,14 @@ describe('tests redisread', function()
 
   it('gets a user', function()
     local fakeUser = {
-      'username', 'kraftman'
+      'username', 'kraftman',
+      'userlabel:test', 'something',
+      'commentSubscriptions:', '{"postID:commentID"}',
+      'commentSubscribers:', '{"subscriberID"}',
+      'postSubscriptions:', '{"postID"}',
+      'postSubscribers:', '{"postSubscriberID"}',
+      'views:', '{"postID"}',
+      'blockedUsers:', '{"userID"}'
     }
     redisBase:createMock('hgetall', fakeUser)
     local ok = redisread:GetUser('userID')
@@ -129,6 +181,13 @@ describe('tests redisread', function()
     assert.are.same(false, ok.allowMentions);
     assert.are.same(false, ok.allowSubs);
     assert.are.same(false, ok.enablePM);
+  end)
+
+  it('gets all user seen posts', function()
+    redisBase:createMock('zrange', {})
+    local ok = redisread:GetAllUserSeenPosts('userID', 0, 10);
+
+    assert.are.same({}, ok);
   end)
 
 end)

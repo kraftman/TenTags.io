@@ -34,7 +34,7 @@ function userread:GetUserAlerts(userID, startAt, endAt)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user alerts: ',err)
   end
-  if ok == ngx.null then
+  if not ok or ok == ngx.null then
     return {}
   else
     return ok
@@ -49,6 +49,7 @@ function userread:SavedPostExists(userID, postID)
 
   self:SetKeepalive(red)
   if not ok then
+    ngx.log(ngx.ERR, 'unable to get saved posts: ', err)
     return nil, err
   end
   if tonumber(ok) == 0 then
@@ -79,7 +80,7 @@ function userread:GetAccount(accountID)
     return nil,err
   end
   if not next(ok) then
-    return nil
+    return nil, err
   end
 
   local account = self:ConvertListToTable(ok)
