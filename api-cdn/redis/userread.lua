@@ -147,7 +147,7 @@ function userread:GetUserPostVotes(userID)
   if not ok then
     ngx.log(ngx.ERR, 'unable to get user post votes:',err)
   end
-  if ok == ngx.null then
+  if not ok or ok == ngx.null then
     return {}
   else
     return ok

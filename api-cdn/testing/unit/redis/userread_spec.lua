@@ -34,6 +34,13 @@ describe('tests redisread', function()
     assert.are.same(true, ok);
   end)
 
+  it('tests SavedPostExists returns false if not found', function()
+    redisBase:createMock('sismember', 0)
+    local ok = redisread:SavedPostExists('test');
+
+    assert.are.same(false, ok);
+  end)
+
   it('tests SavedPostExists handles error', function()
     redisBase:createMock('sismember', nil, 'error')
     local ok = redisread:SavedPostExists('test');
@@ -53,6 +60,13 @@ describe('tests redisread', function()
     local ok = redisread:GetUserCommentVotes('test');
 
     assert.are.same(nil, ok);
+  end)
+
+  it('tests GetUserCommentVotes handles not found', function()
+    redisBase:createMock('smembers', ngx.null)
+    local ok = redisread:GetUserCommentVotes('test');
+
+    assert.are.same({}, ok);
   end)
 
   it('tests GetAccount', function()
@@ -79,6 +93,14 @@ describe('tests redisread', function()
     assert.are.same(nil, ok)
   end)
 
+  it('tests GetAccount handles empty', function()
+
+    redisBase:createMock('hgetall', {})
+    local ok = redisread:GetAccount('test')
+
+    assert.are.same(nil, ok)
+  end)
+
   it('tests GetUserTagVotes', function()
     redisBase:createMock('smembers', {'vote1'})
     local ok = redisread:GetUserTagVotes('test');
@@ -100,11 +122,32 @@ describe('tests redisread', function()
     assert.are.same({'vote1'}, ok);
   end)
 
+  it('tests GetRecentPostVotes handles error', function()
+    redisBase:createMock('zrange', nil, 'error')
+    local ok = redisread:GetRecentPostVotes('test', 'up');
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('tests GetRecentPostVotes handles null', function()
+    redisBase:createMock('zrange', ngx.null)
+    local ok = redisread:GetRecentPostVotes('test', 'up');
+
+    assert.are.same({}, ok);
+  end)
+
   it('tests GetUserPostVotes', function()
     redisBase:createMock('smembers', {'vote1'})
     local ok = redisread:GetUserPostVotes('test', 'up');
 
     assert.are.same({'vote1'}, ok);
+  end)
+
+  it('tests GetUserPostVotes handles error', function()
+    redisBase:createMock('smembers', nil, 'error')
+    local ok = redisread:GetUserPostVotes('test', 'up');
+
+    assert.are.same({}, ok);
   end)
 
   it('tests GetUserID', function()
@@ -183,8 +226,42 @@ describe('tests redisread', function()
     assert.are.same(false, ok.enablePM);
   end)
 
+  it('gets a user with missing data', function()
+    local fakeUser = {
+      'username', 'kraftman',
+    }
+    redisBase:createMock('hgetall', fakeUser)
+    local ok = redisread:GetUser('userID')
+
+    assert.are.same(false, ok.allowMentions);
+    assert.are.same(false, ok.allowSubs);
+    assert.are.same(false, ok.enablePM);
+  end)
+
+  it('handles a user with no username', function()
+    local fakeUser = {}
+    redisBase:createMock('hgetall', fakeUser)
+    local ok = redisread:GetUser('userID')
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('gets a user with error', function()
+    redisBase:createMock('hgetall', nil, 'error')
+    local ok = redisread:GetUser('userID')
+
+    assert.are.same(nil, ok);
+  end)
+
   it('gets all user seen posts', function()
     redisBase:createMock('zrange', {})
+    local ok = redisread:GetAllUserSeenPosts('userID', 0, 10);
+
+    assert.are.same({}, ok);
+  end)
+
+  it('gets all user seen posts handles error', function()
+    redisBase:createMock('zrange', nil, 'error')
     local ok = redisread:GetAllUserSeenPosts('userID', 0, 10);
 
     assert.are.same({}, ok);
