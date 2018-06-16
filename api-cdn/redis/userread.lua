@@ -222,7 +222,6 @@ function userread:GetUser(userID)
 
   local red = self:GetUserReadConnection()
   local ok, err = red:hgetall('user:'..userID)
-  print('result:', ok)
   self:SetKeepalive(red)
   if not ok then
     ngx.log(ngx.ERR,'unable to get user: ',err)
@@ -279,7 +278,7 @@ function userread:GetUserComments(userID, sortBy,startAt, range)
     return {}
   end
   if ok == ngx.null then
-    return nil
+    return {}
   else
     return ok
   end

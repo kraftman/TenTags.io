@@ -164,11 +164,39 @@ describe('tests redisread', function()
     assert.are.same({'vote1'}, ok);
   end)
 
+  it('tests GetUserComments handles error', function()
+    redisBase:createMock('zrange', nil, 'error')
+    local ok = redisread:GetUserComments('test', 'top', 0, 1, 2)
+
+    assert.are.same({}, ok);
+  end)
+
+  it('tests GetUserComments handles null', function()
+    redisBase:createMock('zrange', ngx.null)
+    local ok = redisread:GetUserComments('test', 'top', 0, 1, 2)
+
+    assert.are.same({}, ok);
+  end)
+
   it('tests GetUserPosts', function()
     redisBase:createMock('zrange', {'vote1'})
     local ok = redisread:GetUserPosts('test', 0, 10)
 
     assert.are.same({'vote1'}, ok);
+  end)
+
+  it('tests GetUserPosts handles error', function()
+    redisBase:createMock('zrange', nil, 'error')
+    local ok = redisread:GetUserPosts('test', 0, 10)
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('tests GetUserPosts handles null', function()
+    redisBase:createMock('zrange', ngx.null)
+    local ok = redisread:GetUserPosts('test', 0, 10)
+
+    assert.are.same(nil, ok);
   end)
 
   it('tests GetUnseenParentIDs', function()
@@ -179,11 +207,33 @@ describe('tests redisread', function()
     assert.are.same({parentID = true}, ok);
   end)
 
+  it('tests GetUnseenParentIDs handles err', function()
+    redisBase:createMock('BF.EXISTS', {'vote1'})
+    redisBase:createMock('commit_pipeline', nil, 'error')
+    local ok = redisread:GetUnseenParentIDs('test', {postID = {parentID = 'parentID'}})
+
+    assert.are.same({}, ok);
+  end)
+
   it('tests GetBotScore', function()
     redisBase:createMock('zscore', 10)
     local ok = redisread:GetBotScore('userID')
 
     assert.are.same(10, ok);
+  end)
+
+  it('tests GetBotScore handles error', function()
+    redisBase:createMock('zscore', nil, 'error')
+    local ok = redisread:GetBotScore('userID')
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('tests GetBotScore', function()
+    redisBase:createMock('zscore', ngx.null)
+    local ok = redisread:GetBotScore('userID')
+
+    assert.are.same(0, ok);
   end)
 
   it('tests GetTopBots', function()
@@ -255,6 +305,13 @@ describe('tests redisread', function()
 
   it('gets all user seen posts', function()
     redisBase:createMock('zrange', {})
+    local ok = redisread:GetAllUserSeenPosts('userID', 0, 10);
+
+    assert.are.same({}, ok);
+  end)
+
+  it('gets all user seen posts handles error', function()
+    redisBase:createMock('zrange', nil, 'error')
     local ok = redisread:GetAllUserSeenPosts('userID', 0, 10);
 
     assert.are.same({}, ok);
