@@ -268,7 +268,7 @@ describe('tests redisread', function()
     redisBase:createMock('zrevrange', ngx.null)
     local ok = redisread:GetTopBots(10)
 
-    assert.are.same({}}, ok);
+    assert.are.same({}, ok);
   end)
 
   it('tests GetBotComments', function()
