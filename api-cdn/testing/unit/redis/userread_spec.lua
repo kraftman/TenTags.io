@@ -264,6 +264,13 @@ describe('tests redisread', function()
     assert.are.same(nil, ok);
   end)
 
+  it('tests GetTopBots handles null', function()
+    redisBase:createMock('zrevrange', ngx.null)
+    local ok = redisread:GetTopBots(10)
+
+    assert.are.same({}}, ok);
+  end)
+
   it('tests GetBotComments', function()
     redisBase:createMock('smembers', 'test')
     local ok = redisread:GetBotComments(10)
@@ -304,6 +311,17 @@ describe('tests redisread', function()
 
   it('handles a user with no username', function()
     local fakeUser = {}
+    redisBase:createMock('hgetall', fakeUser)
+    local ok = redisread:GetUser('userID')
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('handles a deleted user', function()
+    local fakeUser = {
+      username = 'kraftman',
+      deleted = true
+    }
     redisBase:createMock('hgetall', fakeUser)
     local ok = redisread:GetUser('userID')
 
