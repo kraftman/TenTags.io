@@ -157,6 +157,20 @@ describe('tests redisread', function()
     assert.are.same({'vote1'}, ok);
   end)
 
+  it('tests GetUserID handles error', function()
+    redisBase:createMock('hget', nil, 'error')
+    local ok = redisread:GetUserID('test', 'up');
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('tests GetUserID handles null', function()
+    redisBase:createMock('hget', ngx.null)
+    local ok = redisread:GetUserID('test', 'up');
+
+    assert.are.same(nil, ok);
+  end)
+
   it('tests GetUserComments', function()
     redisBase:createMock('zrange', {'vote1'})
     local ok = redisread:GetUserComments('test', 'top', 0, 1, 2)
@@ -298,6 +312,13 @@ describe('tests redisread', function()
 
   it('gets a user with error', function()
     redisBase:createMock('hgetall', nil, 'error')
+    local ok = redisread:GetUser('userID')
+
+    assert.are.same(nil, ok);
+  end)
+
+  it('handles user with null return', function()
+    redisBase:createMock('hgetall', ngx.null)
     local ok = redisread:GetUser('userID')
 
     assert.are.same(nil, ok);

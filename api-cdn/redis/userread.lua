@@ -251,7 +251,6 @@ function userread:GetUser(userID)
 
 end
 
-
 function userread:GetUserID(username)
   username = username:lower()
   local red = self:GetUserReadConnection()
