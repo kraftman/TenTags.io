@@ -2,4 +2,5 @@
     "editor.tabSize": 2
 },
 "eslint.enable": true,
+"coverage-gutters.xmlname": "api-cdn/luacov.xml"
 }

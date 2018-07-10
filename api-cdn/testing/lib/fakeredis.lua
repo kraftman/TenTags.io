@@ -10,7 +10,12 @@ local fakeRedis = {
 }
 
 function fakeDb:createMock(name, ...)
+  --print(type(...))
   local thisArgs = {...}
+  if type(...) == 'function' then
+    fakeRedis[name] = ...
+    return
+  end
   fakeRedis[name] = function(self)
     --self.calledWith = {...}
     if type(returnValue) == 'table' then

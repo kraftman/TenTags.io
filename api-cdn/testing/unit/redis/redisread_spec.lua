@@ -216,7 +216,61 @@ describe('tests redisread', function()
     assert.are.same(expected, ok)
   end)
 
+  it('test GetThreadInfos #only', function()
+    
+    local fakeThreads = {{
+      'viewer:viewerID', 'viewer',
+      'id', 'testThreadID'
+    }}
+    
+    redisBase:createMock('hgetall', {});
+    redisBase:createMock('from_json', {threadID = 'testThreadID'});
+    local fakeMessages = {
+      {1, '{"threadID": "testThreadID"}'}
+    }
+
+    local callCount = 0;
+    local returnValue = function()
+      callCount = callCount + 1
+      if callCount == 1 then
+        return fakeThreads
+      elseif callCount == 2 then
+        return fakeMessages
+      end
+    end
+
+    redisBase:createMock('commit_pipeline', returnValue);
+    local threadIDs = {'threadID'};
+    local ok = redisread:GetThreadInfos({'testThreadID'})
+    local expected = {{
+      id = 'testThreadID',
+      viewers = {
+        'viewerID'
+      }
+    }}
+    assert.are.same(expected, ok)
+  end)
+
   it('test GetThreadInfo handles error', function()
+    redisBase:createMock('hgetall', nil);
+    local ok = redisread:GetThreadInfo('threadID')
+
+    assert.are.same({}, ok)
+  end)
+
+  it('test GetFilter ', function()
+    local fakeFilter = {
+      'bannedUser', '{}'
+    }
+    local callCount = 0;
+    local returnValue = function()
+      callCount = callCount + 1
+      if callCount == 1 then
+        return ngx.null
+      elseif callCount == 2 then
+        return ngx.null
+      end
+    end
     redisBase:createMock('hgetall', nil);
     local ok = redisread:GetThreadInfo('threadID')
 

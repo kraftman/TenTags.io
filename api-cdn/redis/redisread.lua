@@ -351,10 +351,10 @@ function read:GetThreadInfos(threadIDs)
     ngx.log(ngx.ERR, 'unable to load thread: ',err)
     return {}
   end
+
   for k,v in pairs(res) do
     res[k] = self:ConvertThreadFromRedis(v)
   end
-
 
   red:init_pipeline()
     for _,thread in pairs(res) do
@@ -371,11 +371,10 @@ function read:GetThreadInfos(threadIDs)
   for k,message in pairs(msgs) do
     msgs[k] = ConvertListToTable(message)
     local threadID
-    for m,n in pairs(msgs[k]) do
-
+    for m, n in pairs(msgs[k]) do
       msgs[k][m] = self:from_json(n)
       if not threadID then
-      threadID = msgs[k][m].threadID
+        threadID = msgs[k][m].threadID
       end
     end
     for _,thread in pairs(res) do
@@ -383,9 +382,7 @@ function read:GetThreadInfos(threadIDs)
         thread.messages = msgs[k]
       end
     end
-
   end
-
 
   return res
 end
