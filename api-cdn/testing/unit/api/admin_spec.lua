@@ -2,7 +2,9 @@ package.path = package.path.. "../?.lua;./testing/lib/?.lua;;./controllers/?.lua
 
 
 local mocker = require 'mocker'
+local mockuna = require 'mockuna'
 
+local redisRead = require 'redis.redisread'
 local mockRedis = mocker:CreateMock('redis.redisread')
 local mockCache = mocker:CreateMock('api.cache')
 local mockLapis = mocker:CreateMock('lapis.application')
@@ -15,9 +17,11 @@ local admin = require 'api.admin'
 
 describe('tests admin api', function()
   it('tests get backlog stats', function()
-    mockRedis:Mock('GetBacklogStats', true)
+    --mockRedis:Mock('GetBacklogStats', true)
+    mockuna:stub(redisRead, 'GetBacklogStats', function() return true end)
     local ok = admin:GetBacklogStats('jobName', 0, 10)
     assert.are.same(true, ok)
+    redisRead.GetBacklogStats:restore()
   end)
   
   it('tests GetSiteUniqueStats', function()

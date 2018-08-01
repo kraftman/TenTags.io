@@ -2,7 +2,6 @@
 local base = require 'redis.base'
 local commentread = setmetatable({}, base)
 
-
 function commentread:ConvertListToTable(list)
   local info = {}
   for i = 1,#list, 2 do
