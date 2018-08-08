@@ -5,6 +5,7 @@ set -o errexit
 
 devfiles='-f dc.yml -f dc-dev.yml -f dc-search.yml';
 testfiles='-f dc.yml -f dc-test.yml -f dc-search.yml'
+
 case $1 in
 
   start )
