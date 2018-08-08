@@ -32,7 +32,7 @@ case $1 in
     ;;
   test )
     docker network create webserver_default || true
-    docker-compose ${testfiles} run --rm filtta bash -c "busted -R -c testing/unit/*"
+    docker-compose ${testfiles} run --rm filtta bash -c "busted --no-auto-insulate -R -c testing/unit/*"
     ;;
   test-jenkins )
     docker-compose ${testfiles} pull

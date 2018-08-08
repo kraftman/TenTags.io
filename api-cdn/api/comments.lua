@@ -144,6 +144,7 @@ local GetMentionedUsers = function(text)
 		user = cache:GetUserByName(username)
 		if user then
 			mentionedUsers[username] = user
+			print('found user: ', user)
 		end
 	end
 	return mentionedUsers
