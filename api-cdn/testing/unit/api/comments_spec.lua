@@ -1,74 +1,110 @@
 package.path = package.path.. "../?.lua;./testing/lib/?.lua;;./controllers/?.lua;;./lib/?.lua;;";
 
 
-local mocker = require 'mocker'
-local mockBase  = mocker:CreateMock('api.base')
-local mockRedis = mocker:CreateMock('redis.redisread')
-local mockCache = mocker:CreateMock('api.cache')
-local mockLapis = mocker:CreateMock('lapis.application')
-local mockUserLib = mocker:CreateMock('lib.userlib')
-local mockUserAPI = mocker:CreateMock('api.users')
-
-mockUserLib:Mock('GetRandom', 'kraftman')
-mockUserAPI:Mock('CreateSubUser', {id = 'userID', currentView = 'default'})
-
-mockLapis:Mock('assert_error', function(self, ...)
-  return self
-end)
+-- local redis = require 'redis.redisread'
+ local cache = require 'api.cache'
+-- local lapis = require 'lapis.application'
+-- local userLib = require 'lib.userlib'
+-- local userAPI = require 'api.users'
+ local mockuna = require 'mockuna'
+-- local mockBase  = require 'api.base
 
 local comment = require 'api.comments'
 
-mockBase:Mock('QueueUpdate', true);
-mockBase.redisWrite = {
-  QueueJob = function()
-    return true
-  end
-}
-mockBase.userWrite = {
-  AddUserAlert = function()
-    return true
-  end
-}
 
-describe('tests comment api', function() 
+describe('test VoteComment', function()
+  before_each(function() 
+    mockuna:stub(cache, 'GetUser', function() return {role = 'Admin'} end)
+    mockuna:stub(cache, 'GetUserCommentVotes', function() return {} end)
+    mockuna:stub(comment, 'QueueUpdate', function() return true end)
+  end)
 
-  it('tests VoteComment', function()
-    mockCache:Mock('GetUser', {role = 'Admin'})
-    mockCache:Mock('GetUserCommentVotes', {})
+  after_each(function() 
+    cache.GetUser:restore()
+    cache.GetUserCommentVotes:restore()
+    comment.QueueUpdate:restore()
+  end)
+
+  it('tests valid tag', function() 
     local ok = comment:VoteComment('userID', 'postID', 'commentID', 'funny')
     assert.are.same('commentID', ok.commentID)
     assert.are.same('userID:commentID', ok.id)  
     assert.are.same('postID', ok.postID)
     assert.are.same('funny', ok.tag)
     assert.are.same('userID', ok.userID)
-
-    
-    local ok, err = comment:VoteComment('userID', 'postID', 'commentID', 'invalid')
-    assert.are.equal(err, 'invalid tag')
+    assert.True(comment.QueueUpdate.calledOnce)
   end)
 
-  
-  it('tests SubscribeComment', function()
+  it('tests an invalid tag', function()
+    local ok, err = comment:VoteComment('userID', 'postID', 'commentID', 'invalid')
+    assert.are.equal(err, 'invalid tag')
+    assert.False(comment.QueueUpdate.called)
+  end)
+end)
+
+describe('test SubscribeComment', function() 
+  before_each(function() 
+    mockuna:stub(comment.redisWrite, 'QueueJob', function() return true end)
+  end)
+
+  after_each(function() 
+    comment.redisWrite.QueueJob:restore()
+  end)
+
+  it('tests SubscribeComment', function() 
     local ok = comment:SubscribeComment('userID', 'postID', 'commentID')
     assert.are.same(true, ok)
   end)
+end)
 
-  it('gets bot comments', function()
-    mockCache:Mock('GetBotComments', {})
-    local ok = comment:GetBotComments('userID')
-    assert.are.same({}, ok)
+describe('test getbotcomments', function() 
+  before_each(function() 
+    mockuna:stub(cache, 'GetBotComments', function() return true end)
   end)
 
-  it('Processes mentions', function()
-    mockCache:Mock('GetUserByName', 'kraftman')
-    local ok = comment:ProcessMentions({text = 'old comment'},{text = 'new @kraftman'})
+  after_each(function() 
+   cache.GetBotComments:restore()
+  end)
+
+  it('tests GetBotComments', function() 
+    local ok = comment:GetBotComments('userID', 'postID', 'commentID')
+    assert.are.same(true, ok)
+  end)
+end)
+
+describe('test getbotcomments', function() 
+  before_each(function() 
+    local fakeUser = {allowMentions = true, id = 1}
+    mockuna:stub(cache, 'GetUserByName', function() return {'kraftman', allowMentions = true} end)
+    mockuna:stub(comment.userWrite, 'AddUserAlert', function() return true end)
+  end)
+
+  after_each(function() 
+   cache.GetUserByName:restore()
+   comment.userWrite.AddUserAlert:restore()
+  end)
+
+  it('tests process mentions', function() 
+    local oldComment = {text = 'old comment', id = 3}
+    local newCommment = {text = 'new @kraftman', id = 4, postID = 'postID'}
+    local ok = comment:ProcessMentions(oldComment, newCommment)
     assert.are.same(nil, ok)
+    assert.True(comment.userWrite.AddUserAlert.calledOnce)
+  end)
+end)
+
+describe('test GetComment', function() 
+  before_each(function() 
+    mockuna:stub(cache, 'ConvertShortURL', function() return 'commentID:postID' end)
+    mockuna:stub(cache, 'GetComment', function() return 'myComment' end)
   end)
 
+  after_each(function() 
+    cache.ConvertShortURL:restore()
+    cache.GetComment:restore()
+  end)
 
-  it('Get Comment', function()
-    mockCache:Mock('ConvertShortURL', 'commentID:postID')
-    mockCache:Mock('GetComment', 'myComment')
+  it('tests process mentions', function() 
     local ok = comment:GetComment('postID', 'commentID')
     assert.are.same('myComment', ok)
   end)

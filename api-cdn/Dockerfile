@@ -57,7 +57,8 @@ RUN apt-get update && apt-get install -y ca-certificates stunnel4
 RUN luarocks install https://raw.githubusercontent.com/woothee/lua-resty-woothee/master/lua-resty-woothee-1.10.0-3.rockspec && \
     luarocks install web_sanitize && \
     luarocks install https://raw.githubusercontent.com/kraftman/lua-resty-busted/master/lua-resty-busted-0.0.1-0.rockspec && \
-    luarocks install luacov
+    luarocks install luacov && \
+    luarocks install mockuna
 
 ENV PATH="/opt/openresty/bin:${PATH}"
 ENTRYPOINT ["/opt/openresty/nginx/conf/start.sh"]
